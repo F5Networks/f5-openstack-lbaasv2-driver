@@ -15,6 +15,7 @@ limitations under the License.
 -->
 
 # f5-openstack-lbaasv2-driver
+[![Build Status](https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=master)](https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver)
 
 ## Introduction
 This repo houses the code for F5's OpenStack LBaaSv2 driver. 
