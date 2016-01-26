@@ -38,7 +38,7 @@ See [Documentation]()
 If you find an issue we would love to hear about it. Please let us know by filing an issue in this repository and tell us as much as you can about what you found and how you found it.
 
 ## Contributing
-See [Contributing](CONTRIBUTING)
+See [Contributing](CONTRIBUTING.md)
 
 ## Build
 To make a PyPI package...
