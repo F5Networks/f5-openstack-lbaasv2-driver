@@ -55,7 +55,7 @@ We use pytest for our unit tests.
 $ pip install hacking pytest pytest-cov
 $ pip install -r requirements.txt
 ```
-2. Run the tests and produce a coverage repor. The `--cov-report=html` will
+2. Run the tests and produce a coverage report. The `--cov-report=html` will
 create a `htmlcov/` directory that you can view in your browser to see the
 missing lines of code.
 ```shell
