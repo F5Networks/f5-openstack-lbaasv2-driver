@@ -15,6 +15,7 @@ limitations under the License.
 -->
 
 # f5-openstack-lbaasv2-driver
+[![Build Status](https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=master)](https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver)
 
 ## Introduction
 This repo houses the code for F5's OpenStack LBaaSv2 driver. 
@@ -37,7 +38,7 @@ See [Documentation]()
 If you find an issue we would love to hear about it. Please let us know by filing an issue in this repository and tell us as much as you can about what you found and how you found it.
 
 ## Contributing
-See [Contributing](CONTRIBUTING)
+See [Contributing](CONTRIBUTING.md)
 
 ## Build
 To make a PyPI package...
