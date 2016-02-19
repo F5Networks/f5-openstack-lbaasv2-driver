@@ -31,71 +31,93 @@ cfg.CONF.register_opts(OPTS)
 
 
 class F5DriverV2(object):
-    """Plugin Driver for LBaaSv2.
-
-        This class implements the methods found in the abstract
-        parent class.
-
-        This class interacts with the data model through the
-        core plugin, creates messages to send to agents and then
-        invokes the LoadBalancerAgentApi class methods to
-        send the RPC messages.
-    """
-    def __init__(self, plugin=None, core_plugin=None, env=None):
-        if not plugin and core_plugin:
+    def __init__(self, plugin=None, env=None):
+        if not plugin:
             LOG.error('Required LBaaS Driver and Core Driver Missing')
             sys.exit(1)
+
         self.plugin = plugin
-        self.core_plugin = core_plugin
+        self.core_plugin = plugin.db._core_plugin,
         self.env = env
 
-    def lb_create(self, context, lb):
+        self.load_balancer = LoadBalancerManager(self)
+        self.listener = ListenerManager(self)
+        self.pool = PoolManager(self)
+        self.member = MemberManager(self)
+        self.health_monitor = HealthMonitorManager(self)
+
+
+class LoadBalancerManager(object):
+    def __init__(self, driver):
+        self.driver = driver
+
+    def create(self, context, load_balancer):
         pass
 
-    def lb_update(self, context, old_lb, lb):
+    def update(self, context, old_load_balancer, load_balancer):
         pass
 
-    def lb_delete(self, context, lb):
+    def delete(self, context, load_balancer):
         pass
 
-    def lb_refresh(self, context, lb):
+    def refresh(self, context, load_balancer):
         pass
 
-    def lb_stats(self, context, lb):
+    def stats(self, context, load_balancer):
         pass
 
-    def listener_create(self, context, listener):
+
+class ListenerManager(object):
+    def __init__(self, driver):
+        self.driver = driver
+
+    def create(self, context, listener):
         pass
 
-    def listener_update(self, context, old_listener, listener):
+    def update(self, context, old_listener, listener):
         pass
 
-    def listener_delete(self, context, listener):
+    def delete(self, context, listener):
         pass
 
-    def pool_create(self, context, pool):
+
+class PoolManager(object):
+    def __init__(self, driver):
+        self.driver = driver
+
+    def create(self, context, pool):
         pass
 
-    def pool_update(self, context, old_pool, pool):
+    def update(self, context, old_pool, pool):
         pass
 
-    def pool_delete(self, context, pool):
+    def delete(self, context, pool):
         pass
 
-    def member_create(self, context, member):
+
+class MemberManager(object):
+    def __init__(self, driver):
+        self.driver = driver
+
+    def create(self, context, member):
         pass
 
-    def member_update(self, context, old_member, member):
+    def update(self, context, old_member, member):
         pass
 
-    def member_delete(self, context, member):
+    def delete(self, context, member):
         pass
 
-    def healthmonitor_create(self, context, hm):
+
+class HealthMonitorManager(object):
+    def __init__(self, driver):
+        self.driver = driver
+
+    def create(self, context, health_monitor):
         pass
 
-    def healthmonitor_update(self, context, old_hm, hm):
+    def update(self, context, old_health_monitor, health_monitor):
         pass
 
-    def healthmonitor_delete(self, context, hm):
+    def delete(self, context, health_monitor):
         pass
