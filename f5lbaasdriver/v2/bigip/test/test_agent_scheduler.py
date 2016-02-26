@@ -14,6 +14,8 @@
 
 import mock
 
+from neutron_lbaas.services.loadbalancer import data_models
+
 from f5lbaasdriver.v2.bigip import agent_scheduler
 
 
@@ -43,7 +45,7 @@ def test_schedule():
 
     plugin = mock.MagicMock()
     context = mock.MagicMock()
-    loadbalancer = {'id': 'uuid_1234'}
+    loadbalancer = data_models.LoadBalancer(id='uuid_1234')
 
     sched = agent_scheduler.TenantScheduler()
     agent = sched.schedule(plugin, context, loadbalancer)

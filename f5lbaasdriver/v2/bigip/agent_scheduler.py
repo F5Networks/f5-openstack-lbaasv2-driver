@@ -15,8 +15,9 @@
 import json
 import random
 
-from neutron_lbaas import agent_scheduler
 from oslo_log import log as logging
+
+from neutron_lbaas import agent_scheduler
 
 LOG = logging.getLogger(__name__)
 
@@ -33,38 +34,40 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
 
         with context.session.begin(subtransactions=True):
             # returns {'agent': agent_dict}
-            lbaas_agent = plugin.get_lbaas_agent_hosting_loadbalancer(
+            lbaas_agent = plugin.get_agent_hosting_loadbalancer(
                 context,
                 loadbalancer_id
             )
             # if the agent bound to this loadbalancer is alive, return it
-            if lbaas_agent['agent']['alive']:
-                return lbaas_agent
-            else:
-                # BASIC AGENT TASK REDUDANCY
-                # find another agent in the same environment
-
-                # which environment group is the agent in
-                ac = self.deserialize_agent_configurations(
-                    lbaas_agent['agent']['configurations']
-                )
-                # get a environment group number for the bound agent
-                if 'environment_group_number' in ac:
-                    gn = ac['environment_group_number']
+            if lbaas_agent is not None:
+                if lbaas_agent['agent']['alive']:
+                    return lbaas_agent
                 else:
-                    gn = 1
-                # find all active agents matching the environment
-                # an group number.
-                env_agents = self.get_active_agent_in_env(
-                    plugin,
-                    context,
-                    env,
-                    gn
-                )
-                if env_agents:
-                    # return the first active agent in the
-                    # group to process this task
-                    return {'agent': env_agents[0]}
+                    # BASIC AGENT TASK REDUDANCY
+                    # find another agent in the same environment
+                    # which environment group is the agent in
+                    ac = self.deserialize_agent_configurations(
+                        lbaas_agent['agent']['configurations']
+                    )
+                    # get a environment group number for the bound agent
+                    if 'environment_group_number' in ac:
+                        gn = ac['environment_group_number']
+                    else:
+                        gn = 1
+
+                    # find all active agents matching the environment
+                    # and group number.
+                    if env:
+                        env_agents = self.get_active_agent_in_env(
+                            plugin,
+                            context,
+                            env,
+                            gn
+                        )
+                        if env_agents:
+                            # return the first active agent in the
+                            # group to process this task
+                            return {'agent': env_agents[0]}
             return lbaas_agent
 
     def get_active_agent_in_env(self, plugin, context, env, group=None):
@@ -116,7 +119,7 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
             lbaas_agent = self.get_lbaas_agent_hosting_loadbalancer(
                 plugin,
                 context,
-                loadbalancer['id'],
+                loadbalancer.id,
                 env=None
             )
             if lbaas_agent:
@@ -169,8 +172,8 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                 # then assign this loadbalancer to this agent.
                 assigned_lbs = plugin.list_loadbalancers_on_lbaas_agent(
                     context, candidate['id'])
-                for assigned_lb in assigned_lbs['loadbalancers']:
-                    if loadbalancer['tenant_id'] == assigned_lb['tenant_id']:
+                for assigned_lb in assigned_lbs:
+                    if loadbalancer.tenant_id == assigned_lb.tenant_id:
                         chosen_agent = candidate
                         break
                 if chosen_agent:
@@ -211,10 +214,10 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
 
             binding = agent_scheduler.LoadbalancerAgentBinding()
             binding.agent = chosen_agent
-            binding.loadbalancer_id = loadbalancer['id']
+            binding.loadbalancer_id = loadbalancer.id
             context.session.add(binding)
             LOG.debug(('Loadbalancer %(loadbalancer_id)s is scheduled to '
                        'lbaas agent %(agent_id)s'),
-                      {'loadbalancer_id': loadbalancer['id'],
+                      {'loadbalancer_id': loadbalancer.id,
                        'agent_id': chosen_agent['id']})
             return chosen_agent
