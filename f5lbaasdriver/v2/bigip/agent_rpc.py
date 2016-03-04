@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 import oslo_messaging as messaging
 
@@ -72,6 +73,7 @@ class LBaaSv2AgentRPC(object):
         func = getattr(callee, kwargs['rpc_method'])
         return func(context, msg['method'], **msg['args'])
 
+    @log_helpers.log_method_call
     def create_loadbalancer(self, context, loadbalancer, service, host):
         topic = '%s.%s' % (self.topic, host)
         return self.cast(

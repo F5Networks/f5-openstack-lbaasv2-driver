@@ -1,3 +1,4 @@
+"""Schedule agent to bind to a load balancer."""
 # Copyright 2016 F5 Networks Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +33,7 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
         LOG.debug('Getting agent for loadbalancer %s with env %s' %
                   (loadbalancer_id, env))
 
+        lbaas_agent = None
         with context.session.begin(subtransactions=True):
             # returns {'agent': agent_dict}
             lbaas_agent = plugin.get_agent_hosting_loadbalancer(
@@ -40,10 +42,9 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
             )
             # if the agent bound to this loadbalancer is alive, return it
             if lbaas_agent is not None:
-                if lbaas_agent['agent']['alive']:
-                    return lbaas_agent
-                else:
-                    # BASIC AGENT TASK REDUDANCY
+
+                if not lbaas_agent['agent']['alive'] and env is not None:
+                    # The agent bound to this loadbalancer is not live;
                     # find another agent in the same environment
                     # which environment group is the agent in
                     ac = self.deserialize_agent_configurations(
@@ -57,17 +58,16 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
 
                     # find all active agents matching the environment
                     # and group number.
-                    if env:
-                        env_agents = self.get_active_agent_in_env(
-                            plugin,
-                            context,
-                            env,
-                            gn
-                        )
-                        if env_agents:
-                            # return the first active agent in the
-                            # group to process this task
-                            return {'agent': env_agents[0]}
+                    env_agents = self.get_active_agent_in_env(
+                        plugin,
+                        context,
+                        env,
+                        gn
+                    )
+                    if env_agents:
+                        # return the first active agent in the
+                        # group to process this task
+                        lbaas_agent = {'agent': env_agents[0]}
             return lbaas_agent
 
     def get_active_agent_in_env(self, plugin, context, env, group=None):
@@ -83,8 +83,8 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                 if 'environment_prefix' in ac:
                     if ac['environment_prefix'] == env:
                         if group:
-                            if 'environment_group_number' in ac and \
-                                    ac['environment_group_number'] == group:
+                            if ('environment_group_number' in ac and
+                                    ac['environment_group_number'] == group):
                                 return_agents.append(candidate)
                         else:
                             return_agents.append(candidate)
@@ -135,7 +135,7 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
             candidates = self.get_active_agent_in_env(plugin,
                                                       context,
                                                       env)
-            if not candidates:
+            if len(candidates) == 0:
                 LOG.warn('No f5 lbaas agents are active for env %s' % env)
                 return None
 
@@ -146,7 +146,7 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
             capacity_by_group = {}
 
             for candidate in candidates:
-                # Organize agents by their evn group
+                # Organize agents by their environment group
                 # and collect each group's max capacity.
                 ac = self.deserialize_agent_configurations(
                     candidate['configurations']
@@ -199,7 +199,7 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                 LOG.debug('%s group %s scheduled with capacity %s'
                           % (env, selected_group, lowest_capacity))
                 if lowest_capacity < 1.0:
-                    # Choose a agent in the env froup for this
+                    # Choose a agent in the env group for this
                     # tenant at random.
                     chosen_agent = random.choice(
                         agents_by_group[selected_group]

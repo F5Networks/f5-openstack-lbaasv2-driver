@@ -1,4 +1,4 @@
-"""RPC Callbacks for f5 LBaaSv2 Plugins"""
+"""RPC Callbacks for f5 LBaaSv2 Plugins."""
 # Copyright 2016 F5 Networks Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,9 +23,9 @@ from neutron.common import constants as neutron_const
 from neutron.common import rpc as neutron_rpc
 from neutron.db import agents_db
 from neutron.extensions import portbindings
-from neutron.plugins.common import constants as plugin_const
-
-from neutron_lbaas._i18n import _
+from neutron.plugins.common import constants as plugin_constants
+from neutron_lbaas.db.loadbalancer import models
+from neutron_lbaas.extensions import loadbalancerv2
 
 from f5lbaasdriver.v2.bigip import constants_v2 as constants
 
@@ -33,8 +33,10 @@ LOG = logging.getLogger(__name__)
 
 
 class LBaaSv2PluginCallbacksRPC(object):
+    """Agent to plugin RPC API."""
 
     def __init__(self, driver=None):
+        """LBaaSv2PluginCallbacksRPC constructor."""
         self.driver = driver
         self._create_rpc_listener()
 
@@ -46,51 +48,49 @@ class LBaaSv2PluginCallbacksRPC(object):
         self.conn = neutron_rpc.create_connection(new=True)
         self.conn.create_consumer(
             topic,
-            [self, agents_db.AgentExtRpcCallback(self.driver.plugin.db)],
+            [self,
+             agents_db.AgentExtRpcCallback(self.driver.plugin.db)],
             fanout=False)
         self.conn.consume_in_threads()
-
-    # get a service definition by its id
-    @log_helpers.log_method_call
-    def get_service_by_id(self, context, service_id):
-        return self.sb.get_service_by_loadbalancer_id(
-            context,
-            loadbalancer_id=service_id
-        )
 
     # get a list of service ids which are active on this agent host
     @log_helpers.log_method_call
     def get_active_services_for_agent(self, context, host=None):
+        """Get a list of loadbalancers active on this host."""
         with context.session.begin(subtransactions=True):
             if not host:
                 return []
-            agents = self.plugin.get_lbaas_agents(context,
-                                                  filters={'host': [host]})
+            agents = self.driver.plugin.db.get_lbaas_agents(
+                context,
+                filters={'host': [host]}
+            )
             if not agents:
                 return []
             elif len(agents) > 1:
-                LOG.warning(_('Multiple lbaas agents found on host %s'), host)
-            lbs = self.plugin.list_loadbalancers_on_lbaas_agent(context,
-                                                                agents[0].id)
-            lb_ids = [loadbalancer['id']
-                      for loadbalancer in lbs['loadbalancers']]
+                LOG.warning('Multiple lbaas agents found on host %s' % host)
+            lbs = self.driver.plugin.db.list_loadbalancers_on_lbaas_agent(
+                context,
+                agents[0].id
+            )
+            lb_ids = [loadbalancer.id
+                      for loadbalancer in lbs]
             active_lb_ids = set()
-            lbs = self.plugin.get_loadbalancers(
+            lbs = self.driver.plugin.db.get_loadbalancers(
                 context,
                 filters={
-                    'status': [plugin_const.ACTIVE],
+                    'status': [plugin_constants.ACTIVE],
                     'id': lb_ids,
                     'admin_state_up': [True]
-                },
-                fields=['id'])
+                })
             for lb in lbs:
-                active_lb_ids.add(lb['id'])
+                active_lb_ids.add(lb.id)
             return active_lb_ids
 
     # get a list of services which have a pending state of some object
     # for this agent host
     @log_helpers.log_method_call
     def get_pending_services_for_agent(self, context, host=None):
+        """Get a list of loadbalancers that are in the pending state."""
         pass
 
     # LBaaSv2 object status update methods
@@ -107,7 +107,7 @@ class LBaaSv2PluginCallbacksRPC(object):
     @log_helpers.log_method_call
     def update_service_stats(self, context, service_id=None,
                              stats=None, host=None):
-        """Update service stats """
+        """Update service stats."""
         pass
 
     # Neutron core plugin core object management
@@ -116,7 +116,7 @@ class LBaaSv2PluginCallbacksRPC(object):
     def create_network(self, context, tenant_id=None, name=None,
                        shared=False, admin_state_up=True, network_type=None,
                        physical_network=None, segmentation_id=None):
-        """Create neutron network """
+        """Create neutron network."""
         network_data = {
             'tenant_id': tenant_id,
             'name': name,
@@ -129,62 +129,61 @@ class LBaaSv2PluginCallbacksRPC(object):
             network_data['provider:physical_network'] = physical_network
         if segmentation_id:
             network_data['provider:segmentation_id'] = segmentation_id
-        return self.driver.core_plugin.create_network(
+        return self.driver.plugin.db._core_plugin.create_network(
             context, {'network': network_data})
 
     @log_helpers.log_method_call
     def delete_network(self, context, network_id):
-        """Delete neutron network """
-        self.driver.core_plugin.delete_network(context, network_id)
+        """Delete neutron network."""
+        self.driver.plugin.db._core_plugin.delete_network(context, network_id)
 
     @log_helpers.log_method_call
     def create_subnet(self, context, tenant_id=None, network_id=None,
-                      name=None, shared=False, cidr=None, enable_dhcp=False,
-                      gateway_ip=None, allocation_pools=None,
-                      dns_nameservers=None, host_routes=None):
-        """Create neutron subnet """
+                      name=None, shared=False, cidr=None, ip_version=None,
+                      enable_dhcp=False, gateway_ip=None,
+                      allocation_pools=None, dns_nameservers=None,
+                      host_routes=None):
+        """Create neutron subnet."""
         subnet_data = {'tenant_id': tenant_id,
                        'network_id': network_id,
                        'name': name,
                        'shared': shared,
                        'enable_dhcp': enable_dhcp}
         subnet_data['cidr'] = cidr
-        if gateway_ip:
-            subnet_data['gateway_ip'] = gateway_ip
-        if allocation_pools:
-            subnet_data['allocation_pools'] = allocation_pools
-        if dns_nameservers:
-            subnet_data['dns_nameservers'] = dns_nameservers
-        if host_routes:
-            subnet_data['host_routes'] = host_routes
-        return self.driver.core_plugin.create_subnet(
+        subnet_data['ip_version'] = ip_version
+        subnet_data['allocation_pools'] = allocation_pools
+        subnet_data['dns_nameservers'] = dns_nameservers
+        subnet_data['gateway_ip'] = gateway_ip
+        subnet_data['host_routes'] = host_routes
+
+        return self.driver.plugin.db._core_plugin.create_subnet(
             context,
-            {'subenet': subnet_data}
+            {'subnet': subnet_data}
         )
 
     @log_helpers.log_method_call
     def delete_subnet(self, context, subnet_id):
-        """Delete neutron subnet """
-        self.driver.core_plugin.delete_subnet(context, subnet_id)
+        """Delete neutron subnet."""
+        self.driver.plugin.db._core_plugin.delete_subnet(context, subnet_id)
 
     @log_helpers.log_method_call
     def get_ports_for_mac_addresses(self, context, mac_addresses=None):
-        """Get ports for mac addresses """
+        """Get ports for mac addresses."""
         if not isinstance(mac_addresses, list):
             mac_addresses = [mac_addresses]
         filters = {'mac_address': mac_addresses}
-        return self.driver.core_plugin.get_ports(
+        return self.driver.plugin.db._core_plugin.get_ports(
             context,
             filters=filters
         )
 
     @log_helpers.log_method_call
     def get_ports_on_network(self, context, network_id=None):
-        """Get ports for network """
+        """Get ports for network."""
         if not isinstance(network_id, list):
             network_ids = [network_id]
         filters = {'network_id': network_ids}
-        return self.driver.core_plugin.get_ports(
+        return self.driver.plugin.db._core_plugin.get_ports(
             context,
             filters=filters
         )
@@ -193,15 +192,18 @@ class LBaaSv2PluginCallbacksRPC(object):
     def create_port_on_subnet(self, context, subnet_id=None,
                               mac_address=None, name=None,
                               fixed_address_count=1, host=None):
-        """Create port on subnet """
+        """Create port on subnet."""
         if subnet_id:
-            subnet = self.driver.core_plugin.get_subnet(context, subnet_id)
+            subnet = self.driver.plugin.db._core_plugin.get_subnet(
+                context,
+                subnet_id
+            )
             if not mac_address:
                 mac_address = attributes.ATTR_NOT_SPECIFIED
             fixed_ip = {'subnet_id': subnet['id']}
             if fixed_address_count > 1:
                 fixed_ips = []
-                for i in range(0, fixed_address_count):
+                for _ in range(0, fixed_address_count):
                     fixed_ips.append(fixed_ip)
             else:
                 fixed_ips = [fixed_ip]
@@ -222,16 +224,16 @@ class LBaaSv2PluginCallbacksRPC(object):
             }
             port_data[portbindings.HOST_ID] = host
             port_data[portbindings.VIF_TYPE] = constants.VIF_TYPE
-            if 'binding:capabilities' in \
-                    portbindings.EXTENDED_ATTRIBUTES_2_0['ports']:
+            if ('binding:capabilities' in
+                    portbindings.EXTENDED_ATTRIBUTES_2_0['ports']):
                 port_data['binding:capabilities'] = {'port_filter': False}
-            port = self.driver.core_plugin.create_port(
+            port = self.driver.plugin.db._core_plugin.create_port(
                 context, {'port': port_data})
             # Because ML2 marks ports DOWN by default on creation
             update_data = {
                 'status': neutron_const.PORT_STATUS_ACTIVE
             }
-            self.driver.core_plugin.update_port(
+            self.driver.plugin.db._core_plugin.update_port(
                 context, port['id'], {'port': update_data})
             return port
 
@@ -239,12 +241,18 @@ class LBaaSv2PluginCallbacksRPC(object):
     def create_port_on_subnet_with_specific_ip(self, context, subnet_id=None,
                                                mac_address=None, name=None,
                                                ip_address=None, host=None):
-        """Create port on subnet with specific ip address """
+        """Create port on subnet with specific ip address."""
         if subnet_id and ip_address:
-            subnet = self.driver.core_plugin.get_subnet(context, subnet_id)
+            subnet = self.driver.plugin.db._core_plugin.get_subnet(
+                context,
+                subnet_id
+            )
             if not mac_address:
                 mac_address = attributes.ATTR_NOT_SPECIFIED
-            fixed_ip = {'subnet_id': subnet['id'], 'ip_address': ip_address}
+            fixed_ip = {
+                'subnet_id': subnet['id'],
+                'ip_address': ip_address
+            }
             if not host:
                 host = ''
             if not name:
@@ -262,56 +270,96 @@ class LBaaSv2PluginCallbacksRPC(object):
             }
             port_data[portbindings.HOST_ID] = host
             port_data[portbindings.VIF_TYPE] = 'f5'
-            if 'binding:capabilities' in \
-                    portbindings.EXTENDED_ATTRIBUTES_2_0['ports']:
+            if ('binding:capabilities' in
+                    portbindings.EXTENDED_ATTRIBUTES_2_0['ports']):
                 port_data['binding:capabilities'] = {'port_filter': False}
-            port = self.driver.core_plugin.create_port(
+            port = self.driver.plugin.db._core_plugin.create_port(
                 context, {'port': port_data})
             # Because ML2 marks ports DOWN by default on creation
             update_data = {
                 'status': neutron_const.PORT_STATUS_ACTIVE
             }
-            self.driver.core_plugin.update_port(
+            self.driver.plugin.db._core_plugin.update_port(
                 context, port['id'], {'port': update_data})
             return port
 
     @log_helpers.log_method_call
     def get_port_by_name(self, context, port_name=None):
-        """Get port by name """
+        """Get port by name."""
         if port_name:
             filters = {'name': [port_name]}
-            return self.driver.core_plugin.get_ports(
+            return self.driver.plugin.db._core_plugin.get_ports(
                 context,
                 filters=filters
             )
 
     @log_helpers.log_method_call
     def delete_port(self, context, port_id=None, mac_address=None):
-        """Delete port """
+        """Delete port."""
         if port_id:
-            self.driver.core_plugin.delete_port(context, port_id)
+            self.driver.plugin.db._core_plugin.delete_port(context, port_id)
         elif mac_address:
             filters = {'mac_address': [mac_address]}
-            ports = self.driver.core_plugin.get_ports(context, filters=filters)
+            ports = self.driver.plugin.db._core_plugin.get_ports(
+                context,
+                filters=filters
+            )
             for port in ports:
-                self.driver.core_plugin.delete_port(context, port['id'])
+                self.driver.plugin.db._core_plugin.delete_port(
+                    context,
+                    port['id']
+                )
 
     @log_helpers.log_method_call
     def delete_port_by_name(self, context, port_name=None):
-        """Delete port by name """
+        """Delete port by name."""
         if port_name:
             filters = {'name': [port_name]}
-            ports = self.driver.core_plugin.get_ports(context, filters=filters)
+            ports = self.driver.plugin.db._core_plugin.get_ports(
+                context,
+                filters=filters
+            )
             for port in ports:
-                self.driver.core_plugin.delete_port(context, port['id'])
+                self.driver.plugin.db._core_plugin.delete_port(
+                    context,
+                    port['id']
+                )
+
+    @log_helpers.log_method_call
+    def update_loadbalancer_status(self, context,
+                                   loadbalancer_id=None,
+                                   status=plugin_constants.ERROR,
+                                   operating_status=None):
+        """Agent confirmation hook to update loadbalancer status."""
+        try:
+            lb_db = self.driver.plugin.db.get_loadbalancer(
+                context,
+                loadbalancer_id
+            )
+            if lb_db.provisioning_status == plugin_constants.PENDING_DELETE:
+                status = plugin_constants.PENDING_DELETE
+            self.driver.plugin.db.update_status(
+                context,
+                models.LoadBalancer,
+                loadbalancer_id,
+                status,
+                operating_status
+            )
+        except loadbalancerv2.EntityNotFound:
+            LOG.debug('Entity Not Found')
 
     @log_helpers.log_method_call
     def allocate_fixed_address_on_subnet(self, context, subnet_id=None,
                                          port_id=None, name=None,
                                          fixed_address_count=1, host=None):
-        """Allocate a fixed ip address on subnet """
+        """Allocate a fixed ip address on subnet."""
         if subnet_id:
-            subnet = self.driver.core_plugin.get_subnet(context, subnet_id)
+            subnet = self.driver.plugin.db._core_plugin.get_subnet(
+                context,
+                subnet_id
+            )
+            fixed_ips = []
+            existing_fixed_ips = []
             if not port_id:
                 port = self.create_port_on_subnet(
                     context,
@@ -322,17 +370,27 @@ class LBaaSv2PluginCallbacksRPC(object):
                     host=host
                 )
             else:
-                port = self.driver.core_plugin.get_port(context, port_id)
+                port = self.driver.plugin.db._core_plugin.get_port(
+                    context,
+                    port_id
+                )
                 existing_fixed_ips = port['fixed_ips']
+
                 fixed_ip = {'subnet_id': subnet['id']}
+
                 if fixed_address_count > 1:
                     fixed_ips = []
-                    for i in range(0, fixed_address_count):
+                    for _ in range(0, fixed_address_count):
                         fixed_ips.append(fixed_ip)
                 else:
                     fixed_ips = [fixed_ip]
-            port['fixed_ips'] = existing_fixed_ips + fixed_ips
-            port = self.driver.core_plugin.update_port(context, {'port': port})
+
+                port['fixed_ips'] = existing_fixed_ips + fixed_ips
+                port = self.driver.plugin.db._core_plugin.update_port(
+                    context,
+                    port['id'], {'port': port}
+                )
+
             new_fixed_ips = port['fixed_ips']
             port['new_fixed_ips'] = []
             for new_fixed_ip in new_fixed_ips:
@@ -351,9 +409,12 @@ class LBaaSv2PluginCallbacksRPC(object):
                                                   port_id=None, name=None,
                                                   ip_address=None,
                                                   host=None):
-        """Allocate specific fixed ip address on subnet """
+        """Allocate specific fixed ip address on subnet."""
         if subnet_id and ip_address:
-            subnet = self.driver.core_plugin.get_subnet(context, subnet_id)
+            subnet = self.driver.plugin.db._core_plugin.get_subnet(
+                context,
+                subnet_id
+            )
             if not port_id:
                 port = self.create_port_on_subnet_with_specific_ip(
                     context,
@@ -364,19 +425,25 @@ class LBaaSv2PluginCallbacksRPC(object):
                     host=host
                 )
             else:
-                port = self.driver.core_plugin.get_port(context, port_id)
+                port = self.driver.plugin.db._core_plugin.get_port(
+                    context,
+                    port_id
+                )
                 existing_fixed_ips = port['fixed_ips']
                 fixed_ip = {'subnet_id': subnet['id'],
                             'ip_address': ip_address}
-            port['fixed_ips'] = existing_fixed_ips + [fixed_ip]
-            port = self.driver.core_plugin.update_port(context, {'port': port})
+                port['fixed_ips'] = existing_fixed_ips + [fixed_ip]
+                port = self.driver.plugin.db._core_plugin.update_port(
+                    context,
+                    {'port': port}
+                )
             return port
 
     @log_helpers.log_method_call
     def deallocate_fixed_address_on_subnet(self, context, fixed_addresses=None,
                                            subnet_id=None, host=None,
                                            auto_delete_port=False):
-        """Allocate fixed ip address on subnet """
+        """Allocate fixed ip address on subnet."""
         if fixed_addresses:
             if not isinstance(fixed_addresses, list):
                 fixed_addresses = [fixed_addresses]
@@ -387,14 +454,19 @@ class LBaaSv2PluginCallbacksRPC(object):
                     fixed_addresses[i] = fixed_addresses[i][:decorator_index]
                 except Exception:
                     pass
-            subnet = self.driver.core_plugin.get_subnet(context, subnet_id)
+            subnet = self.driver.plugin.db._core_plugin.get_subnet(
+                context,
+                subnet_id
+            )
             # get all ports for this host on the subnet
             filters = {
                 'network_id': [subnet['network_id']],
                 'tenant_id': [subnet['tenant_id']],
                 'device_id': [str(uuid.uuid5(uuid.NAMESPACE_DNS, str(host)))]
             }
-            ports = self.driver.core_plugin.get_ports(context, filters=filters)
+            ports = self.driver.plugin.db._core_plugin.get_ports(
+                context,
+                filters=filters)
             fixed_ips = {}
             ok_to_delete_port = {}
             for port in ports:
@@ -404,7 +476,7 @@ class LBaaSv2PluginCallbacksRPC(object):
             # only get rid of associated fixed_ips
             for fixed_ip in fixed_ips:
                 if fixed_ip in fixed_addresses:
-                    self.driver.core_plugin._delete_ip_allocation(
+                    self.driver.plugin.db._core_plugin._delete_ip_allocation(
                         context,
                         subnet['network_id'],
                         subnet_id,
@@ -420,16 +492,16 @@ class LBaaSv2PluginCallbacksRPC(object):
 
     @log_helpers.log_method_call
     def add_allowed_address(self, context, port_id=None, ip_address=None):
-        """Add allowed addresss """
+        """Add allowed addresss."""
         if port_id and ip_address:
             try:
-                port = self.driver.core_plugin.get_port(
+                port = self.driver.plugin.db._core_plugin.get_port(
                     context=context, id=port_id)
                 address_pairs = []
                 if 'allowed_address_pairs' in port:
                     for aap in port['allowed_address_pairs']:
-                        if aap['ip_address'] == ip_address and \
-                                aap['mac_address'] == port['mac_address']:
+                        if (aap['ip_address'] == ip_address and
+                                aap['mac_address'] == port['mac_address']):
                             return True
                         address_pairs.append(aap)
                 address_pairs.append(
@@ -439,27 +511,35 @@ class LBaaSv2PluginCallbacksRPC(object):
                     }
                 )
                 port = {'port': {'allowed_address_pairs': address_pairs}}
-                self.driver.core_plugin.update_port(context, port_id, port)
+                self.driver.plugin.db._core_plugin.update_port(
+                    context,
+                    port_id,
+                    port
+                )
             except Exception as exc:
                 LOG.error('could not add allowed address pair: %s'
                           % exc.message)
 
     @log_helpers.log_method_call
     def remove_allowed_address(self, context, port_id=None, ip_address=None):
-        """Remove allowed addresss """
+        """Remove allowed addresss."""
         if port_id and ip_address:
             try:
-                port = self.driver.core_plugin.get_port(
+                port = self.driver.plugin.db._core_plugin.get_port(
                     context=context, id=port_id)
                 address_pairs = []
                 if 'allowed_address_pairs' in port:
                     for aap in port['allowed_address_pairs']:
-                        if aap['ip_address'] == ip_address and \
-                                aap['mac_address'] == port['mac_address']:
+                        if (aap['ip_address'] == ip_address and
+                                aap['mac_address'] == port['mac_address']):
                             continue
                         address_pairs.append(aap)
                 port = {'port': {'allowed_address_pairs': address_pairs}}
-                self.driver.core_plugin.update_port(context, port_id, port)
+                self.driver.plugin.db._core_plugin.update_port(
+                    context,
+                    port_id,
+                    port
+                )
             except Exception as exc:
                 LOG.error('could not add allowed address pair: %s'
                           % exc.message)
