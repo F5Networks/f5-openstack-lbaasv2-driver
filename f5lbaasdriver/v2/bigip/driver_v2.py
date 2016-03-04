@@ -29,14 +29,19 @@ LOG = logging.getLogger(__name__)
 OPTS = [
     cfg.StrOpt(
         'f5_loadbalancer_pool_scheduler_driver_v2',
-        default=('f5lbaasdriver.v2.bigip.agent_scheduler.TenantScheduler'),
+        default=(
+            'f5lbaasdriver.v2.bigip.agent_scheduler.TenantScheduler'
+        ),
         help=('Driver to use for scheduling '
-              'pool to a default loadbalancer agent')),
+              'pool to a default loadbalancer agent')
+    ),
     cfg.StrOpt(
         'f5_loadbalancer_service_builder_v2',
         default=(
-            'f5lbaasdriver.v2.bigip.service_builder.LBaaSv2ServiceBuilder'),
-        help=('Default class to use for building a service object.'))
+            'f5lbaasdriver.v2.bigip.service_builder.LBaaSv2ServiceBuilder'
+        ),
+        help=('Default class to use for building a service object.')
+    )
 ]
 
 cfg.CONF.register_opts(OPTS)
@@ -61,6 +66,9 @@ class F5DriverV2(object):
         self.scheduler = importutils.import_object(
             cfg.CONF.f5_loadbalancer_pool_scheduler_driver_v2)
 
+        self.service_builder = importutils.import_object(
+            cfg.CONF.f5_loadbalancer_service_builder_v2, self)
+
         self.agent_rpc = LBaaSv2AgentRPC(self)
         self.plugin_rpc = LBaaSv2PluginCallbacksRPC(self)
 
@@ -76,9 +84,8 @@ class LoadBalancerManager(object):
 
     @log_helpers.log_method_call
     def create(self, context, loadbalancer):
-        service = {}
         driver = self.driver
-
+        service = driver.service_builder.build(context, loadbalancer)
         agent = driver.scheduler.schedule(
             driver.plugin.db,
             context,
