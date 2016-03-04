@@ -1,0 +1,238 @@
+{
+  "service": {
+    "loadbalancer": {
+      "description": "test load balancer",
+      "admin_state_up": true,
+      "tenant_id": "cd6a91ccb44945129ac78e7c992655eb",
+      "provisioning_status": "ACTIVE",
+      "listeners": [
+        {
+          "id": "4e0f3a46-b28b-48c7-8ad6-23fa2141ceba"
+        },
+        {
+          "id": "2916d7c6-dae0-4700-8e18-98d8240a070b"
+        }
+      ],
+      "vip_address": "172.16.101.3",
+      "vip_port_id": "4582d963-80de-46f5-ba59-40af71f9acbe",
+      "provider": "octavia",
+      "vip_subnet_id": "b064a1a3-70e5-40fa-a61f-3f200933c892",
+      "id": "56f52985-33c4-4321-8ef8-435b4b4b9919",
+      "operating_status": "ONLINE",
+      "name": "lb1",
+      "port": {
+        "status": "DOWN",
+        "port_security_enabled": true,
+        "binding:host_id": "",
+        "name": "loadbalancer-56f52985-33c4-4321-8ef8-435b4b4b9919",
+        "allowed_address_pairs": "",
+        "admin_state_up": false,
+        "network_id": "a8f301b2-b7b9-404a-a746-53c442fa1a4f",
+        "dns_name": "",
+        "binding:vif_details": "{}",
+        "dns_assignment": {},
+        "binding:vnic_type": "normal",
+        "binding:vif_type": "unbound",
+        "device_owner": "neutron:LOADBALANCERV2",
+        "tenant_id": "cd6a91ccb44945129ac78e7c992655eb",
+        "mac_address": "fa:16:3e:7c:b1:f4",
+        "id": "4582d963-80de-46f5-ba59-40af71f9acbe",
+        "binding:profile": "{}",
+        "fixed_ips": [
+          {
+            "subnet_id": "b064a1a3-70e5-40fa-a61f-3f200933c892",
+            "ip_address": "172.16.101.3"
+          },
+          {
+            "subnet_id": "663df7ac-bde9-4d65-96ff-5169bbdf68ba",
+            "ip_address": "fdd2:c4c1:bf85:0:f816:3eff:fe7c:b1f4"
+          }
+        ],
+        "extra_dhcp_opts": "",
+        "security_groups": "a57a3524-bc75-4e70-9709-6f89a5195639",
+        "device_id": "56f52985-33c4-4321-8ef8-435b4b4b9919"
+      },
+      "vxlan_vteps": [
+        {
+          "endpoint": "10.1.0.140"
+        }
+      ],
+      "gre_vteps": []
+    },
+    "networks": [
+      {
+        "status": "ACTIVE",
+        "router:external": false,
+        "availability_zone_hints": "",
+        "availability_zones": "nova",
+        "name": "private",
+        "provider:physical_network": "",
+        "admin_state_up": true,
+        "tenant_id": "822022f87c3a47189a0b1a4a8d855ce4",
+        "mtu": 0,
+        "shared": false,
+        "subnets": [
+          "663df7ac-bde9-4d65-96ff-5169bbdf68ba",
+          "b064a1a3-70e5-40fa-a61f-3f200933c892"
+        ],
+        "port_security_enabled": true,
+        "provider:network_type": "vxlan",
+        "id": "a8f301b2-b7b9-404a-a746-53c442fa1a4f",
+        "provider:segmentation_id": 1042
+      }
+    ],
+    "listeners": [
+      {
+        "protocol_port": 80,
+        "protocol": "HTTP",
+        "description": "",
+        "default_tls_container_ref": "",
+        "admin_state_up": true,
+        "loadbalancers": {
+          "id": "56f52985-33c4-4321-8ef8-435 b4b4b9919"
+        },
+        "tenant_id": "cd6a91ccb44945129ac78e7c992655eb",
+        "sni_container_refs": "",
+        "connection_limit": -1,
+        "default_pool_id": "9c78a69e-9cd5-4d51-ba02-2d9cfde043a2",
+        "id": "2916d7c6-dae0-4700-8e18-98d8240a070b",
+        "name": "listener1"
+      },
+      {
+        "protocol_port": 8080,
+        "protocol": "HTTP",
+        "description": "",
+        "default_tls_container_ref": "",
+        "admin_state_up": true,
+        "loadbalancers": {
+          "id": "56f52985-33c4-4321-8ef8-435b4b4b9919"
+        },
+        "tenant_id": "cd6a91ccb44945129ac78e7c992655eb",
+        "sni_container_refs": "",
+        "connection_limit": -1,
+        "default_pool_id": "",
+        "id": "4e0f3a46-b28b-48c7-8ad6-23fa2141ceba",
+        "name": "listener2"
+      }
+    ],
+    "pools": [
+      {
+        "lb_algorithm": "ROUND_ROBIN",
+        "protocol": "HTTP",
+        "description": "",
+        "admin_state_up": true,
+        "tenant_id": "cd6a91ccb44945129ac78e7c992655eb",
+        "session_persistence": "",
+        "healthmonitor_id": "42dc3312-332a-405d-a761-4c517b4dda92",
+        "listeners": [
+          {
+            "id": "2916d7c6-dae0-4700-8e18-98d8240a070b"
+          }
+        ],
+        "members": [
+          "25c7746b-73da-45cb-a28d-043993f5ba1d",
+          "2e8a89ce-1a01-454c-8e1f-c71ae2589234",
+          "55c44558-0fcc-403a-a61b-7ca03110f9f8",
+          "64dddc23-5057-4ca6-b8ed-95b95f917928"
+        ],
+        "id": "9c78a69e-9cd5-4d51-ba02-2d9cfde043a2",
+        "name": "pool1"
+      }
+    ],
+    "members": [
+      {
+        "name": "",
+        "weight": 1,
+        "admin_state_up": true,
+        "subnet_id": "b064a1a3-70e5-40fa-a61f-3f200933c892",
+        "address": "172.16.101.9",
+        "protocol_port": 8080,
+        "id": "25c7746b-73da-45cb-a28d-043993f5ba1d",
+        "tenant_id": "cd6a91ccb44945129ac78e7c992655eb",
+        "pool_id": "9c78a69e-9cd5-4d51-ba02-2d9cfde043a2"
+      },
+      {
+        "name": "",
+        "weight": 1,
+        "admin_state_up": true,
+        "subnet_id": "b064a1a3-70e5-40fa-a61f-3f200933c892",
+        "address": "172.16.101.9",
+        "protocol_port": 80,
+        "id": "2e8a89ce-1a01-454c-8e1f-c71ae2589234",
+        "tenant_id": "cd6a91ccb44945129ac78e7c992655eb",
+        "pool_id": "9c78a69e-9cd5-4d51-ba02-2d9cfde043a2"
+      },
+      {
+        "name": "",
+        "weight": 1,
+        "admin_state_up": true,
+        "subnet_id": "b064a1a3-70e5-40fa-a61f-3f200933c892",
+        "address": "172.16.101.10",
+        "protocol_port": 80,
+        "id": "55c44558-0fcc-403a-a61b-7ca03110f9f8",
+        "tenant_id": "cd6a91ccb44945129ac78e7c992655eb",
+        "pool_id": "9c78a69e-9cd5-4d51-ba02-2d9cfde043a2"
+      }
+    ],
+    "subnets": [
+      {
+        "name": "private-subnet",
+        "enable_dhcp": true,
+        "network_id": "a8f301b2-b7b9-404a-a746-53c442fa1a4f",
+        "tenant_id": "822022f87c3a47189a0b1a4a8d855ce4",
+        "dns_nameservers": "",
+        "ipv6_ra_mode": "",
+        "allocation_pools": {
+          "start": "172.16.101.2",
+          "end": "172.16.101.254"
+        },
+        "host_routes": "",
+        "ipv6_address_mode": "",
+        "ip_version": 4,
+        "gateway_ip": "172.16.101.1",
+        "cidr": "172.16.101.0/24",
+        "id": "b064a1a3-70e5-40fa-a61f-3f200933c892",
+        "subnetpool_id": ""
+      },
+      {
+        "name": "public-subnet",
+        "enable_dhcp": false,
+        "network_id": "5b1d6136-cb33-4366-ab12-6fc1f42903d4",
+        "tenant_id": "cd6a91ccb44945129ac78e7c992655eb",
+        "dns_nameservers": "",
+        "ipv6_ra_mode": "",
+        "allocation_pools": {
+          "start": "10.1.0.200",
+          "end": "10.1.0.224"
+        },
+        "host_routes": "",
+        "ipv6_address_mode": "",
+        "ip_version": 4,
+        "gateway_ip": "10.1.0.2",
+        "cidr": "10.1.0.0/24",
+        "id": "a90cee4a-ed53-405f-acf9-4a7f7dd8f413",
+        "subnetpool_id": ""
+      }
+    ],
+    "healthmonitors": [
+      {
+        "name": "",
+        "admin_state_up": true,
+        "tenant_id": "cd6a91ccb44945129ac78e7c992655eb",
+        "delay": 5,
+        "expected_codes": "200",
+        "max_retries": 10,
+        "http_method": "GET",
+        "timeout": 1,
+        "pools": [
+          {
+            "id": "9c78a69e-9cd5-4d51-ba02-2d9cfde043a2"
+          }
+        ],
+        "url_path": "/",
+       "type": "PING",
+        "id": "42dc3312-332a-405d-a761-4c517b4dda92"
+      }
+    ]
+  }
+}
