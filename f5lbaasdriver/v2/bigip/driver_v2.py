@@ -85,16 +85,13 @@ class LoadBalancerManager(object):
     @log_helpers.log_method_call
     def create(self, context, loadbalancer):
         driver = self.driver
-        service = driver.service_builder.build(context, loadbalancer)
+        service = driver.service_builder.build(context, loadbalancer.id)
         agent = driver.scheduler.schedule(
             driver.plugin.db,
             context,
-            loadbalancer,
+            loadbalancer.id,
             driver.env
         )
-        if agent:
-            LOG.debug("Found agent for loadbalancer create: %s", agent['host'])
-
         driver.agent_rpc.create_loadbalancer(
             context,
             loadbalancer.to_api_dict(),
@@ -125,7 +122,23 @@ class ListenerManager(object):
 
     @log_helpers.log_method_call
     def create(self, context, listener):
-        pass
+        driver = self.driver
+        loadbalancer_id = listener.loadbalancer_id
+        service = driver.service_builder.build(context, loadbalancer_id)
+        print service
+
+        agent = driver.scheduler.schedule(
+            driver.plugin.db,
+            context,
+            loadbalancer_id,
+            driver.env
+        )
+        driver.agent_rpc.create_listener(
+            context,
+            listener.to_api_dict(),
+            service,
+            agent['host']
+        )
 
     @log_helpers.log_method_call
     def update(self, context, old_listener, listener):

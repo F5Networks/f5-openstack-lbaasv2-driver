@@ -108,12 +108,18 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                 agent_conf = {}
         return agent_conf
 
-    def schedule(self, plugin, context, loadbalancer, env=None):
+    def schedule(self, plugin, context, loadbalancer_id, env=None):
         """Schedule the loadbalancer to an active loadbalancer agent.
 
         If there is no enabled agent hosting it.
         """
         with context.session.begin(subtransactions=True):
+            # Get the loadbalancer
+            loadbalancer = plugin.get_loadbalancer(
+                context,
+                loadbalancer_id
+            )
+
             # If the loadbalancer is hosted on an active agent
             # already, return that agent or one in its env
             lbaas_agent = self.get_lbaas_agent_hosting_loadbalancer(

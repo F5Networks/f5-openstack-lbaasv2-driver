@@ -50,7 +50,7 @@ class LBaaSv2ServiceBuilder(object):
         self.last_cache_update = datetime.datetime.fromtimestamp(0)
         self.plugin = self.driver.plugin
 
-    def build(self, context, loadbalancer):
+    def build(self, context, loadbalancer_id):
         """Get full service definition from loadbalancer ID."""
         # Invalidate cache if it is too old
         if ((datetime.datetime.now() - self.last_cache_update).seconds >
@@ -61,19 +61,21 @@ class LBaaSv2ServiceBuilder(object):
         service = {}
         with context.session.begin(subtransactions=True):
             LOG.debug('Building service definition entry for %s'
-                      % loadbalancer.id)
+                      % loadbalancer_id)
 
             # Start with the neutron loadbalancer definition
-            service['loadbalancer'] = self._get_extended_loadbalancer(
+            loadbalancer = self._get_extended_loadbalancer(
                 context,
-                loadbalancer
+                loadbalancer_id
             )
+            service['loadbalancer'] = loadbalancer
+
             LOG.debug('returned ladbalancer %s' % service['loadbalancer'])
 
             service['subnets'] = []
             subnet = self._get_subnet_cached(
                 context,
-                loadbalancer.vip_subnet_id
+                loadbalancer['vip_subnet_id']
             )
             service['subnets'].append(subnet)
 
@@ -85,11 +87,26 @@ class LBaaSv2ServiceBuilder(object):
             )
             service['networks'].append(network)
 
+            if not 'listeners' in service:
+                service['listeners'] = []
+            listeners = self.plugin.db.get_listeners(
+                context,
+                filters = {
+                    'loadbalancer_id': [loadbalancer_id]
+                }
+            )
+            for listener in listeners:
+                service['listeners'].append(listener.to_api_dict())
+
         return service
 
     @log_helpers.log_method_call
-    def _get_extended_loadbalancer(self, context, loadbalancer):
+    def _get_extended_loadbalancer(self, context, loadbalancer_id):
         """Get loadbalancer from Neutron and add extended data(e.g. VIP)."""
+        loadbalancer = self.plugin.db.get_loadbalancer(
+            context,
+            loadbalancer_id
+        )
         loadbalancer_dict = loadbalancer.to_api_dict()
         vip_port = self.plugin.db._core_plugin.get_port(
             context,
@@ -125,3 +142,12 @@ class LBaaSv2ServiceBuilder(object):
             self.net_cache[network_id] = network
 
         return self.net_cache[network_id]
+
+    @log_helpers.log_method_call
+    def _get_listener(self, context, listener_id):
+        """Retrieve listener from Neutron db."""
+        listener = self.plugin.db.get_listener(
+            context,
+            listener_id
+        )
+        return listener.to_api_dict()

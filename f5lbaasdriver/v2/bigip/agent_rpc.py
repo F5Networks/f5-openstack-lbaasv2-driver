@@ -84,3 +84,15 @@ class LBaaSv2AgentRPC(object):
                 service=service
             ),
             topic=topic)
+
+    @log_helpers.log_method_call
+    def create_listener(self, context, listener, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'create_listener',
+                listener=listener,
+                service=service
+            ),
+            topic=topic)

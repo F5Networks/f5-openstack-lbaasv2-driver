@@ -35,6 +35,9 @@ def make_msg(method, **kwargs):
 
 if __name__ == '__main__':
 
+    args = sys.argv
+    lb_id = args[1]
+
     environment_prefix = 'Test'
     topic = '%s_%s' % (constants_v2.TOPIC_PROCESS_ON_HOST_V2, environment_prefix)
     default_version = '1.0'
@@ -48,7 +51,7 @@ if __name__ == '__main__':
     ctxt=context.get_admin_context().to_dict()
 
     client.call(ctxt, 'update_loadbalancer_status',
-                loadbalancer_id='4806f0e5-b4d2-448f-9896-c3c20fdf1a3a',
+                loadbalancer_id=lb_id,
                 status=constants.ACTIVE,
                 operating_status=lb_const.ONLINE
     )
