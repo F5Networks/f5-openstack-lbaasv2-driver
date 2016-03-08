@@ -87,7 +87,7 @@ class LoadBalancerManager(object):
         driver = self.driver
         service = driver.service_builder.build(context, loadbalancer.id)
         agent = driver.scheduler.schedule(
-            driver.plugin.db,
+            driver.plugin,
             context,
             loadbalancer.id,
             driver.env
@@ -104,7 +104,7 @@ class LoadBalancerManager(object):
         driver = self.driver
         service = driver.service_builder.build(context, loadbalancer.id)
         agent = driver.scheduler.schedule(
-            driver.plugin.db,
+            driver.plugin,
             context,
             loadbalancer.id,
             driver.env
@@ -122,7 +122,7 @@ class LoadBalancerManager(object):
         driver = self.driver
         service = driver.service_builder.build(context, loadbalancer.id)
         agent = driver.scheduler.schedule(
-            driver.plugin.db,
+            driver.plugin,
             context,
             loadbalancer.id,
             driver.env
@@ -173,7 +173,7 @@ class ListenerManager(object):
         service = driver.service_builder.build(context, loadbalancer_id)
 
         agent = driver.scheduler.schedule(
-            driver.plugin.db,
+            driver.plugin,
             context,
             loadbalancer_id,
             driver.env
@@ -192,7 +192,7 @@ class ListenerManager(object):
         service = driver.service_builder.build(context, loadbalancer_id)
 
         agent = driver.scheduler.schedule(
-            driver.plugin.db,
+            driver.plugin,
             context,
             loadbalancer_id,
             driver.env
@@ -212,7 +212,7 @@ class ListenerManager(object):
         service = driver.service_builder.build(context, loadbalancer_id)
 
         agent = driver.scheduler.schedule(
-            driver.plugin.db,
+            driver.plugin,
             context,
             loadbalancer_id,
             driver.env

@@ -29,14 +29,14 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
 
     def get_lbaas_agent_hosting_loadbalancer(self, plugin, context,
                                              loadbalancer_id, env=None):
-
+        """Return the agent that is hosting the loadbalancer."""
         LOG.debug('Getting agent for loadbalancer %s with env %s' %
                   (loadbalancer_id, env))
 
         lbaas_agent = None
         with context.session.begin(subtransactions=True):
             # returns {'agent': agent_dict}
-            lbaas_agent = plugin.get_agent_hosting_loadbalancer(
+            lbaas_agent = plugin.db.get_agent_hosting_loadbalancer(
                 context,
                 loadbalancer_id
             )
@@ -71,8 +71,9 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
             return lbaas_agent
 
     def get_active_agent_in_env(self, plugin, context, env, group=None):
+        """Get an active agent in the specified environment."""
         with context.session.begin(subtransactions=True):
-            candidates = plugin.get_lbaas_agents(context, active=True)
+            candidates = plugin.db.get_lbaas_agents(context, active=True)
             return_agents = []
             if not candidates:
                 return return_agents
@@ -92,12 +93,14 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
             return return_agents
 
     def get_capacity(self, configurations):
+        """Get environment capacity."""
         if 'environment_capacity_score' in configurations:
             return configurations['environment_capacity_score']
         else:
             return 0.0
 
     def deserialize_agent_configurations(self, configurations):
+        """Return a dictionary for the agent configuration."""
         agent_conf = configurations
         if not isinstance(agent_conf, dict):
             try:
@@ -115,7 +118,7 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
         """
         with context.session.begin(subtransactions=True):
             # Get the loadbalancer
-            loadbalancer = plugin.get_loadbalancer(
+            loadbalancer = plugin.db.get_loadbalancer(
                 context,
                 loadbalancer_id
             )
@@ -176,7 +179,7 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                 # Do we already have tenants assigned to this
                 # agent candidate? If we do and it has capacity
                 # then assign this loadbalancer to this agent.
-                assigned_lbs = plugin.list_loadbalancers_on_lbaas_agent(
+                assigned_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
                     context, candidate['id'])
                 for assigned_lb in assigned_lbs:
                     if loadbalancer.tenant_id == assigned_lb.tenant_id:
