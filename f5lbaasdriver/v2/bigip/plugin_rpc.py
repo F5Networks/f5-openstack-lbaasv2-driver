@@ -349,6 +349,39 @@ class LBaaSv2PluginCallbacksRPC(object):
             LOG.debug('Entity Not Found')
 
     @log_helpers.log_method_call
+    def loadbalancer_destroyed(self, context, loadbalancer_id=None):
+        """Agent confirmation hook that loadbalancer has been destroyed."""
+        self.driver.plugin.db.delete_loadbalancer(context, loadbalancer_id)
+
+    def update_listener_status(
+            self,
+            context,
+            listener_id=None,
+            provisioning_status=plugin_constants.ERROR):
+        """Agent confirmation hook to update listener status."""
+        try:
+            listener_db = self.driver.plugin.db.get_listener(
+                context,
+                listener_id
+            )
+            if (listener_db.provisioning_status ==
+                    plugin_constants.PENDING_DELETE):
+                provisioning_status = plugin_constants.PENDING_DELETE
+            self.driver.plugin.db.update_status(
+                context,
+                models.Listener,
+                listener_id,
+                provisioning_status
+            )
+        except Exception:
+            LOG.debug('Entity Not Found')
+
+    @log_helpers.log_method_call
+    def listener_destroyed(self, context, listener_id=None):
+        """Agent confirmation hook that listener has been destroyed."""
+        self.driver.plugin.db.delete_listener(context, listener_id)
+
+    @log_helpers.log_method_call
     def allocate_fixed_address_on_subnet(self, context, subnet_id=None,
                                          port_id=None, name=None,
                                          fixed_address_count=1, host=None):

@@ -86,12 +86,62 @@ class LBaaSv2AgentRPC(object):
             topic=topic)
 
     @log_helpers.log_method_call
+    def update_loadbalancer(self, context, old_loadbalancer, loadbalancer, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'update_loadbalancer',
+                old_loadbalancer=old_loadbalancer,
+                loadbalancer=loadbalancer,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def delete_loadbalancer(self, context, loadbalancer, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'delete_loadbalancer',
+                loadbalancer=loadbalancer,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
     def create_listener(self, context, listener, service, host):
         topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
                 'create_listener',
+                listener=listener,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def update_listener(self, context, old_listener, listener, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'update_listener',
+                old_listener=old_listener,
+                listener=listener,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def delete_listener(self, context, listener, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'delete_listener',
                 listener=listener,
                 service=service
             ),

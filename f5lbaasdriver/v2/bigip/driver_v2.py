@@ -101,11 +101,39 @@ class LoadBalancerManager(object):
 
     @log_helpers.log_method_call
     def update(self, context, old_loadbalancer, loadbalancer):
-        pass
+        driver = self.driver
+        service = driver.service_builder.build(context, loadbalancer.id)
+        agent = driver.scheduler.schedule(
+            driver.plugin.db,
+            context,
+            loadbalancer.id,
+            driver.env
+        )
+        driver.agent_rpc.update_loadbalancer(
+            context,
+            old_loadbalancer.to_api_dict(),
+            loadbalancer.to_api_dict(),
+            service,
+            agent['host']
+        )
 
     @log_helpers.log_method_call
     def delete(self, context, loadbalancer):
-        pass
+        driver = self.driver
+        service = driver.service_builder.build(context, loadbalancer.id)
+        agent = driver.scheduler.schedule(
+            driver.plugin.db,
+            context,
+            loadbalancer.id,
+            driver.env
+        )
+        driver.agent_rpc.delete_loadbalancer(
+            context,
+            loadbalancer.to_api_dict(),
+            service,
+            agent['host']
+        )
+
 
     @log_helpers.log_method_call
     def refresh(self, context, loadbalancer):
@@ -120,12 +148,29 @@ class ListenerManager(object):
     def __init__(self, driver):
         self.driver = driver
 
+    def _make_listener_dict(self, listener):
+        """ Create a dictionary from the db listener"""
+        res = {'id': listener.id,
+               'tenant_id': listener.tenant_id,
+               'name': listener.name,
+               'description': listener.description,
+               'protocol': listener.protocol,
+               'protocol_port': listener.protocol_port,
+               'connection_limit': listener.connection_limit,
+               'loadbalancer_id': listener.loadbalancer_id,
+               'default_pool_id': listener.default_pool_id,
+               'admin_state_up': listener.admin_state_up,
+               'provisioning_status': listener.provisioning_status,
+               'operating_status': listener.operating_status,
+               'default_tls_container_id': listener.default_tls_container_id
+        }
+        return res
+
     @log_helpers.log_method_call
     def create(self, context, listener):
         driver = self.driver
         loadbalancer_id = listener.loadbalancer_id
         service = driver.service_builder.build(context, loadbalancer_id)
-        print service
 
         agent = driver.scheduler.schedule(
             driver.plugin.db,
@@ -135,19 +180,49 @@ class ListenerManager(object):
         )
         driver.agent_rpc.create_listener(
             context,
-            listener.to_api_dict(),
+            self._make_listener_dict(listener),
             service,
             agent['host']
         )
 
     @log_helpers.log_method_call
     def update(self, context, old_listener, listener):
-        pass
+        driver = self.driver
+        loadbalancer_id = listener.loadbalancer_id
+        service = driver.service_builder.build(context, loadbalancer_id)
+
+        agent = driver.scheduler.schedule(
+            driver.plugin.db,
+            context,
+            loadbalancer_id,
+            driver.env
+        )
+        driver.agent_rpc.update_listener(
+            context,
+            self._make_listener_dict(old_listener),
+            self._make_listener_dict(listener),
+            service,
+            agent['host']
+        )
 
     @log_helpers.log_method_call
     def delete(self, context, listener):
-        pass
+        driver = self.driver
+        loadbalancer_id = listener.loadbalancer_id
+        service = driver.service_builder.build(context, loadbalancer_id)
 
+        agent = driver.scheduler.schedule(
+            driver.plugin.db,
+            context,
+            loadbalancer_id,
+            driver.env
+        )
+        driver.agent_rpc.delete_listener(
+            context,
+            self._make_listener_dict(listener),
+            service,
+            agent['host']
+        )
 
 class PoolManager(object):
     def __init__(self, driver):

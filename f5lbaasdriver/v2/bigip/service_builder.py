@@ -50,6 +50,24 @@ class LBaaSv2ServiceBuilder(object):
         self.last_cache_update = datetime.datetime.fromtimestamp(0)
         self.plugin = self.driver.plugin
 
+    def _make_listener_dict(self, listener):
+        """ Create a dictionary from the db listener"""
+        res = {'id': listener.id,
+               'tenant_id': listener.tenant_id,
+               'name': listener.name,
+               'description': listener.description,
+               'protocol': listener.protocol,
+               'protocol_port': listener.protocol_port,
+               'connection_limit': listener.connection_limit,
+               'loadbalancer_id': listener.loadbalancer_id,
+               'default_pool_id': listener.default_pool_id,
+               'admin_state_up': listener.admin_state_up,
+               'provisioning_status': listener.provisioning_status,
+               'operating_status': listener.operating_status,
+               'default_tls_container_id': listener.default_tls_container_id
+        }
+        return res
+
     def build(self, context, loadbalancer_id):
         """Get full service definition from loadbalancer ID."""
         # Invalidate cache if it is too old
@@ -96,7 +114,8 @@ class LBaaSv2ServiceBuilder(object):
                 }
             )
             for listener in listeners:
-                service['listeners'].append(listener.to_api_dict())
+                listener_dict = self._make_listener_dict(listener)
+                service['listeners'].append(listener_dict)
 
         return service
 
