@@ -1,4 +1,4 @@
-"""RPC Calls to Agents for f5 LBaaSv2"""
+"""RPC Calls to Agents for f5 LBaaSv2."""
 # Copyright 2016 F5 Networks Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -86,7 +86,14 @@ class LBaaSv2AgentRPC(object):
             topic=topic)
 
     @log_helpers.log_method_call
-    def update_loadbalancer(self, context, old_loadbalancer, loadbalancer, service, host):
+    def update_loadbalancer(
+            self,
+            context,
+            old_loadbalancer,
+            loadbalancer,
+            service,
+            host
+    ):
         topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
@@ -143,6 +150,124 @@ class LBaaSv2AgentRPC(object):
             self.make_msg(
                 'delete_listener',
                 listener=listener,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def create_pool(self, context, pool, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'create_pool',
+                pool=pool,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def update_pool(self, context, old_pool, pool, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'update_pool',
+                old_pool=old_pool,
+                pool=pool,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def delete_pool(self, context, pool, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'delete_pool',
+                pool=pool,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def create_member(self, context, member, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'create_member',
+                member=member,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def update_member(self, context, old_member, member, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'update_member',
+                old_member=old_member,
+                member=member,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def delete_member(self, context, member, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'delete_member',
+                member=member,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def create_health_monitor(self, context, health_monitor, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'create_health_monitor',
+                health_monitor=health_monitor,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def update_health_monitor(
+            self,
+            context,
+            old_health_monitor,
+            health_monitor,
+            service,
+            host
+    ):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'update_health_monitor',
+                old_health_monitor=old_health_monitor,
+                health_monitor=health_monitor,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def delete_health_monitor(self, context, health_monitor, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'delete_health_monitor',
+                health_monitor=health_monitor,
                 service=service
             ),
             topic=topic)

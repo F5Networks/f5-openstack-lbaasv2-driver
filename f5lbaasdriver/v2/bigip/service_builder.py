@@ -14,13 +14,10 @@
 # limitations under the License.
 #
 import datetime
-import json
 
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 
-from neutron.db import agents_db
-from neutron.db import models_v2
 from neutron.db import portbindings_db
 
 from f5lbaasdriver.v2.bigip import constants_v2
@@ -50,25 +47,7 @@ class LBaaSv2ServiceBuilder(object):
         self.last_cache_update = datetime.datetime.fromtimestamp(0)
         self.plugin = self.driver.plugin
 
-    def _make_listener_dict(self, listener):
-        """ Create a dictionary from the db listener"""
-        res = {'id': listener.id,
-               'tenant_id': listener.tenant_id,
-               'name': listener.name,
-               'description': listener.description,
-               'protocol': listener.protocol,
-               'protocol_port': listener.protocol_port,
-               'connection_limit': listener.connection_limit,
-               'loadbalancer_id': listener.loadbalancer_id,
-               'default_pool_id': listener.default_pool_id,
-               'admin_state_up': listener.admin_state_up,
-               'provisioning_status': listener.provisioning_status,
-               'operating_status': listener.operating_status,
-               'default_tls_container_id': listener.default_tls_container_id
-        }
-        return res
-
-    def build(self, context, loadbalancer_id):
+    def build(self, context, loadbalancer):
         """Get full service definition from loadbalancer ID."""
         # Invalidate cache if it is too old
         if ((datetime.datetime.now() - self.last_cache_update).seconds >
@@ -79,21 +58,20 @@ class LBaaSv2ServiceBuilder(object):
         service = {}
         with context.session.begin(subtransactions=True):
             LOG.debug('Building service definition entry for %s'
-                      % loadbalancer_id)
+                      % loadbalancer.id)
 
             # Start with the neutron loadbalancer definition
-            loadbalancer = self._get_extended_loadbalancer(
+            service['loadbalancer'] = self._get_extended_loadbalancer(
                 context,
-                loadbalancer_id
+                loadbalancer
             )
-            service['loadbalancer'] = loadbalancer
 
             LOG.debug('returned ladbalancer %s' % service['loadbalancer'])
 
             service['subnets'] = []
             subnet = self._get_subnet_cached(
                 context,
-                loadbalancer['vip_subnet_id']
+                loadbalancer.vip_subnet_id
             )
             service['subnets'].append(subnet)
 
@@ -105,27 +83,48 @@ class LBaaSv2ServiceBuilder(object):
             )
             service['networks'].append(network)
 
-            if not 'listeners' in service:
-                service['listeners'] = []
+            service['listeners'] = []
+            service['pools'] = []
             listeners = self.plugin.db.get_listeners(
                 context,
-                filters = {
-                    'loadbalancer_id': [loadbalancer_id]
-                }
+                filters={'loadbalancer_id': [loadbalancer.id]}
             )
             for listener in listeners:
-                listener_dict = self._make_listener_dict(listener)
+                listener_dict = listener.to_dict(
+                    loadbalancer=False,
+                    default_pool=False
+                )
                 service['listeners'].append(listener_dict)
+
+                if listener.default_pool:
+                    pool = self.plugin.db.get_pool(
+                        context,
+                        listener.default_pool.id)
+                    pool_dict = pool.to_api_dict()
+                    pool_dict['provisioning_status'] = pool.provisioning_status
+                    pool_dict['operating_status'] = pool.operating_status
+                    service['pools'].append(pool_dict)
+
+            service['members'] = []
+            service['healthmonitors'] = []
+            for pool in service['pools']:
+                for member in pool['members']:
+                    service['members'].append(member.to_dict(pool=False))
+
+                healthmonitor_id = pool['healthmonitor_id']
+                if healthmonitor_id:
+                    healthmonitor = self.plugin.db.get_healthmonitor(
+                        context,
+                        healthmonitor_id)
+                    if healthmonitor:
+                        service['healthmonitors'].append(
+                            healthmonitor.to_dict(pool=False))
 
         return service
 
     @log_helpers.log_method_call
-    def _get_extended_loadbalancer(self, context, loadbalancer_id):
-        """Get loadbalancer from Neutron and add extended data(e.g. VIP)."""
-        loadbalancer = self.plugin.db.get_loadbalancer(
-            context,
-            loadbalancer_id
-        )
+    def _get_extended_loadbalancer(self, context, loadbalancer):
+        """Get loadbalancer dictionary and add extended data(e.g. VIP)."""
         loadbalancer_dict = loadbalancer.to_api_dict()
         vip_port = self.plugin.db._core_plugin.get_port(
             context,
