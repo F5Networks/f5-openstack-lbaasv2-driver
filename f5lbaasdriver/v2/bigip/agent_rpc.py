@@ -18,7 +18,7 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 import oslo_messaging as messaging
 
-from neutron.common.rpc import get_client
+from neutron.common import rpc
 
 from f5lbaasdriver.v2.bigip import constants_v2 as constants
 
@@ -38,7 +38,7 @@ class LBaaSv2AgentRPC(object):
             self.topic = self.topic + "_" + self.driver.env
         target = messaging.Target(topic=self.topic,
                                   version=constants.BASE_RPC_API_VERSION)
-        self._client = get_client(target, version_cap=None)
+        self._client = rpc.get_client(target, version_cap=None)
 
     def make_msg(self, method, **kwargs):
         return {'method': method,
