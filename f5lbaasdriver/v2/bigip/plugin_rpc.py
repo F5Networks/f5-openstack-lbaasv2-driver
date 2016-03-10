@@ -110,6 +110,155 @@ class LBaaSv2PluginCallbacksRPC(object):
         """Update service stats."""
         pass
 
+    @log_helpers.log_method_call
+    def update_loadbalancer_status(self, context,
+                                   loadbalancer_id=None,
+                                   status=plugin_constants.ERROR,
+                                   operating_status=None):
+        """Agent confirmation hook to update loadbalancer status."""
+        try:
+            lb_db = self.driver.plugin.db.get_loadbalancer(
+                context,
+                loadbalancer_id
+            )
+            if lb_db.provisioning_status == plugin_constants.PENDING_DELETE:
+                status = plugin_constants.PENDING_DELETE
+            self.driver.plugin.db.update_status(
+                context,
+                models.LoadBalancer,
+                loadbalancer_id,
+                status,
+                operating_status
+            )
+        except loadbalancerv2.EntityNotFound:
+            LOG.debug('Entity Not Found')
+
+    @log_helpers.log_method_call
+    def loadbalancer_destroyed(self, context, loadbalancer_id=None):
+        """Agent confirmation hook that loadbalancer has been destroyed."""
+        self.driver.plugin.db.delete_loadbalancer(context, loadbalancer_id)
+
+    @log_helpers.log_method_call
+    def update_listener_status(
+            self,
+            context,
+            listener_id=None,
+            provisioning_status=plugin_constants.ERROR,
+            operating_status=None):
+        """Agent confirmation hook to update listener status."""
+        try:
+            listener_db = self.driver.plugin.db.get_listener(
+                context,
+                listener_id
+            )
+            if (listener_db.provisioning_status ==
+                    plugin_constants.PENDING_DELETE):
+                provisioning_status = plugin_constants.PENDING_DELETE
+            self.driver.plugin.db.update_status(
+                context,
+                models.Listener,
+                listener_id,
+                provisioning_status,
+                operating_status
+            )
+        except Exception:
+            LOG.debug('Entity Not Found')
+
+    @log_helpers.log_method_call
+    def listener_destroyed(self, context, listener_id=None):
+        """Agent confirmation hook that listener has been destroyed."""
+        self.driver.plugin.db.delete_listener(context, listener_id)
+
+    @log_helpers.log_method_call
+    def update_pool_status(
+            self,
+            context,
+            pool_id=None,
+            provisioning_status=plugin_constants.ERROR,
+            operating_status=None):
+        """Agent confirmations hook to update pool status."""
+        try:
+            pool = self.driver.plugin.db.get_pool(
+                context,
+                pool_id
+            )
+            if (pool.provisioning_status !=
+                    plugin_constants.PENDING_DELETE):
+                self.driver.plugin.db.update_status(
+                    context,
+                    models.Pool,
+                    pool_id,
+                    provisioning_status,
+                    operating_status
+                )
+        except Exception:
+            LOG.debug('Entity Not Found')
+
+    @log_helpers.log_method_call
+    def pool_destroyed(self, context, pool_id=None):
+        """Agent confirmation hook that pool has been destroyed."""
+        self.driver.plugin.db.delete_pool(context, pool_id)
+
+    @log_helpers.log_method_call
+    def update_member_status(
+            self,
+            context,
+            member_id=None,
+            provisioning_status=plugin_constants.ERROR,
+            operating_status=None):
+        """Agent confirmations hook to update member status."""
+        try:
+            member = self.driver.plugin.db.get_member(
+                context,
+                member_id
+            )
+            if (member.provisioning_status !=
+                    plugin_constants.PENDING_DELETE):
+                self.driver.plugin.db.update_status(
+                    context,
+                    models.Member,
+                    member_id,
+                    provisioning_status,
+                    operating_status
+                )
+        except Exception:
+            LOG.debug('Entity Not Found')
+
+    @log_helpers.log_method_call
+    def member_destroyed(self, context, member_id=None):
+        """Agent confirmation hook that member has been destroyed."""
+        self.driver.plugin.db.delete_member(context, member_id)
+
+    @log_helpers.log_method_call
+    def update_health_monitor_status(
+            self,
+            context,
+            health_monitor_id,
+            provisioning_status=plugin_constants.ERROR,
+            operating_status=None):
+        """Agent confirmation hook to update health monitor status."""
+        try:
+            health_monitor = self.driver.plugin.db.get_healthmonitor(
+                context,
+                health_monitor_id
+            )
+            if (health_monitor.provisioning_status !=
+                    plugin_constants.PENDING_DELETE):
+                self.driver.plugin.db.update_status(
+                    context,
+                    models.HealthMonitor,
+                    health_monitor_id,
+                    provisioning_status,
+                    operating_status
+                )
+        except Exception:
+            LOG.debug('Entity Not Found')
+                
+    @log_helpers.log_method_call
+    def healthmonitor_destroyed(self, context, healthmonitor_id=None):
+        """Agent confirmation hook that health_monitor has been destroyed."""
+        self.driver.plugin.db.delete_healthmonitor(context, healthmonitor_id)
+
     # Neutron core plugin core object management
 
     @log_helpers.log_method_call
@@ -324,29 +473,6 @@ class LBaaSv2PluginCallbacksRPC(object):
                     context,
                     port['id']
                 )
-
-    @log_helpers.log_method_call
-    def update_loadbalancer_status(self, context,
-                                   loadbalancer_id=None,
-                                   status=plugin_constants.ERROR,
-                                   operating_status=None):
-        """Agent confirmation hook to update loadbalancer status."""
-        try:
-            lb_db = self.driver.plugin.db.get_loadbalancer(
-                context,
-                loadbalancer_id
-            )
-            if lb_db.provisioning_status == plugin_constants.PENDING_DELETE:
-                status = plugin_constants.PENDING_DELETE
-            self.driver.plugin.db.update_status(
-                context,
-                models.LoadBalancer,
-                loadbalancer_id,
-                status,
-                operating_status
-            )
-        except loadbalancerv2.EntityNotFound:
-            LOG.debug('Entity Not Found')
 
     @log_helpers.log_method_call
     def allocate_fixed_address_on_subnet(self, context, subnet_id=None,
