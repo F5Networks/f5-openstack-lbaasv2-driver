@@ -108,7 +108,12 @@ class LBaaSv2ServiceBuilder(object):
             service['members'] = []
             service['healthmonitors'] = []
             for pool in service['pools']:
-                for member in pool['members']:
+                pool_id = pool['id']
+                members = self.plugin.db.get_pool_members(
+                    context,
+                    filters={'pool_id': [pool_id]}
+                )
+                for member in members:
                     service['members'].append(member.to_dict(pool=False))
 
                 healthmonitor_id = pool['healthmonitor_id']

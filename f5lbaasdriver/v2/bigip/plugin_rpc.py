@@ -253,7 +253,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                 )
         except Exception:
             LOG.debug('Entity Not Found')
-                
+
     @log_helpers.log_method_call
     def healthmonitor_destroyed(self, context, healthmonitor_id=None):
         """Agent confirmation hook that health_monitor has been destroyed."""
