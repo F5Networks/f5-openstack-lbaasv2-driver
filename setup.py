@@ -49,7 +49,7 @@ def release():
 
 
 def readme():
-    with open('README.md') as f:
+    with open('README.rst') as f:
         return f.read()
 
 setup(name='f5-openstack-lbaasv2-driver',
