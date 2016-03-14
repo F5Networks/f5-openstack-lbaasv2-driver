@@ -122,8 +122,10 @@ class LBaaSv2ServiceBuilder(object):
                         context,
                         healthmonitor_id)
                     if healthmonitor:
+                        healthmonitor_dict = healthmonitor.to_dict(pool=False)
+                        healthmonitor_dict['pool_id'] = pool_id
                         service['healthmonitors'].append(
-                            healthmonitor.to_dict(pool=False))
+                            healthmonitor_dict)
 
         return service
 
