@@ -94,6 +94,9 @@ class LBaaSv2ServiceBuilder(object):
                     loadbalancer=False,
                     default_pool=False
                 )
+                if listener.default_pool:
+                    listener_dict['default_pool_id'] = listener.default_pool.id
+
                 service['listeners'].append(listener_dict)
 
                 if listener.default_pool:
