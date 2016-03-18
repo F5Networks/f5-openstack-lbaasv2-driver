@@ -10,8 +10,7 @@ install:
     - sudo pip install -r requirements.txt
     - sudo pip install -r requirements.docs.txt
 script:
-    - flake8 --exclude=docs .
-    - py.test --cov --ignore=test/,docs/
+    - flake8 ./f5lbaasdriver
     - cd docs
     - make html
     - cd ..

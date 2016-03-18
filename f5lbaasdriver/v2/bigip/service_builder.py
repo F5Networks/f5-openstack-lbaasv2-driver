@@ -18,8 +18,6 @@ import datetime
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 
-from neutron.db import portbindings_db
-
 from f5lbaasdriver.v2.bigip import constants_v2
 
 LOG = logging.getLogger(__name__)
