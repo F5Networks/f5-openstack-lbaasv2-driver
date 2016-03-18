@@ -26,8 +26,7 @@ Creating issues is good, creating good issues is even better.  By filing meaning
 If you are submitting a pull request you need to make sure that you have done a few things first.
 
 * If an issue doesn't exist, file one.
-* Make sure you have tested your code because we are going to do that when when you make your PR.  You don't want 
-_The Hat_ because your request fails unit tests.
+* Make sure you have tested your code because we are going to do that when when you make your PR.  You don't want _The Hat_ because your request fails unit tests.
 *  Clean up your git history because no one wants to see 75 commits for one issue
 *  Use our [commit template](.git-commit-template.txt)
 *  Use our pull request template
@@ -55,7 +54,7 @@ shell
 $ py.test --cov ./ --cov-report=html
 $ open htmlcov/index.html
 ```
-If you are running our functional tests you will need a real BIG-IP to run
+If you are running our functional tests you will need a real BIG-IP® to run
 them against, but you can get one of those pretty easily in [Amazon EC2](https://aws.amazon.com/marketplace/pp/B00JL3UASY/ref=srh_res_product_title?ie=UTF8&sr=0-10&qid=1449332167461).
 
 ## License
@@ -74,6 +73,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
  
 ### Contributor License Agreement
-Individuals or business entities who contribute to this project must have completed and submitted the [F5 Contributor License Agreement](http://f5networks.github.io/f5-openstack-docs/cla_landing/index.html) to Openstack_CLA@f5.com prior to their
-code submission being included in this project.
+Individuals or business entities who contribute to this project must have completed and submitted the [F5 Contributor License Agreement](http://f5-openstack-docs.readthedocs.org/en/latest/cla_landing.html) to Openstack_CLA@f5.com prior to their code submission being included in this project.
 
