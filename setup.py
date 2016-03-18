@@ -12,41 +12,11 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import f5lbaasdriver
 import os
 
 from setuptools import find_packages
 from setuptools import setup
-
-if 'PROJECT_DIR' in os.environ:
-    project_dir = os.environ['PROJECT_DIR']
-else:
-    project_dir = os.path.curdir
-
-
-def version():
-    version = ""
-    if 'VERSION' in os.environ:
-        version = os.environ['VERSION']
-    elif os.path.isfile('VERSION'):
-        with open('VERSION') as f:
-            version = f.read()
-    else:
-        version = 'Unknown'
-
-    return version
-
-
-def release():
-    if 'RELEASE' in os.environ:
-        release = os.environ['RELEASE']
-    elif os.path.isfile('RELEASE'):
-        with open('RELEASE') as f:
-            release = f.read().strip()
-    else:
-        release = 'Unknown'
-
-    return release
-
 
 def readme():
     with open('README.rst') as f:
@@ -56,7 +26,7 @@ setup(name='f5-openstack-lbaasv2-driver',
 
       description='F5 Networks Driver for OpenStack LBaaSv2 service',
       long_description=readme(),
-      # version=version(),
+      version=f5lbaasdriver.__version__,
       author='f5-openstack-lbaasv2-driver',
       author_email='f5-openstack-lbaasv2-driver@f5.com',
       url='https://github.com/F5Networks/f5-openstack-lbaasv2-driver',
