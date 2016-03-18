@@ -3,21 +3,17 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-F5 OpenStack LBaaSv2
-====================
+F5 OpenStack LBaaSv2 Driver
+===========================
 
 .. include:: ../README.rst
     :start-line: 21
-    :end-line: 33
-
-.. include:: ../README.rst
-    :start-line: 37
-    :end-line: 166
+    :end-line: 143
 
 
 .. toctree::
    :hidden:
-   :maxdepth: 3
+   :maxdepth: 2
 
 
 
