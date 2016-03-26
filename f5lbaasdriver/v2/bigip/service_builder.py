@@ -171,6 +171,8 @@ class LBaaSv2ServiceBuilder(object):
             network_id
         )
 
+        member_dict['network_id'] = network_id
+
         # Use the fixed ip.
         filter = {'fixed_ips': {'subnet_id': [subnet_id],
                                 'ip_address': [member.address]}}
