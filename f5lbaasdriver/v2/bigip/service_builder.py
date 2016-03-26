@@ -64,23 +64,37 @@ class LBaaSv2ServiceBuilder(object):
                 loadbalancer
             )
 
-            LOG.debug('returned ladbalancer %s' % service['loadbalancer'])
-
-            service['subnets'] = []
-            subnet = self._get_subnet_cached(
+            # Get the subnet network associated with the VIP.
+            subnet_map = {}
+            subnet_id = loadbalancer.vip_subnet_id
+            vip_subnet = self._get_subnet_cached(
                 context,
-                loadbalancer.vip_subnet_id
+                subnet_id
             )
-            service['subnets'].append(subnet)
+            subnet_map[subnet_id] = vip_subnet
 
-            service['networks'] = []
+            # Get the network associated with the Loadbalancer.
+            network_map = {}
             vip_port = service['loadbalancer']['vip_port']
+            network_id = vip_port['network_id']
             network = self._get_network_cached(
                 context,
-                vip_port['network_id']
+                network_id
             )
-            service['networks'].append(network)
+            network_map[network_id] = network
 
+            # Get the network VTEPs if the network provider type is
+            # either gre or vxlan.
+            if 'provider:network_type' in network:
+                net_type = network['provider:network_type']
+                if net_type == 'vxlan' or net_type == 'gre':
+                    self._populate_loadbalancer_network_vteps(
+                        context,
+                        service['loadbalancer'],
+                        net_type
+                    )
+
+            # Get listeners and pools.
             service['listeners'] = []
             service['pools'] = []
             listeners = self.plugin.db.get_listeners(
@@ -106,6 +120,9 @@ class LBaaSv2ServiceBuilder(object):
                     pool_dict['operating_status'] = pool.operating_status
                     service['pools'].append(pool_dict)
 
+            # Pools have multiple members and one healthmonitor.  Iterate
+            # over the list of pools, and popuate the service with members
+            # and healthmonitors.
             service['members'] = []
             service['healthmonitors'] = []
             for pool in service['pools']:
@@ -115,7 +132,13 @@ class LBaaSv2ServiceBuilder(object):
                     filters={'pool_id': [pool_id]}
                 )
                 for member in members:
-                    service['members'].append(member.to_dict(pool=False))
+                    # Get extended member attributes, network, and subnet.
+                    (member_dict, subnet, network) = (
+                        self._get_extended_member(context, member)
+                    )
+                    subnet_map[subnet['id']] = subnet
+                    network_map[network['id']] = network
+                    service['members'].append(member_dict)
 
                 healthmonitor_id = pool['healthmonitor_id']
                 if healthmonitor_id:
@@ -128,7 +151,43 @@ class LBaaSv2ServiceBuilder(object):
                         service['healthmonitors'].append(
                             healthmonitor_dict)
 
+            service['subnets'] = subnet_map
+            service['networks'] = network_map
+
         return service
+
+    @log_helpers.log_method_call
+    def _get_extended_member(self, context, member):
+        """Get extended member attributes and member networking."""
+        member_dict = member.to_dict(pool=False)
+        subnet_id = member.subnet_id
+        subnet = self._get_subnet_cached(
+            context,
+            subnet_id
+        )
+        network_id = subnet['network_id']
+        network = self._get_network_cached(
+            context,
+            network_id
+        )
+
+        # Use the fixed ip.
+        filter = {'fixed_ips': {'subnet_id': [subnet_id],
+                                'ip_address': [member.address]}}
+        ports = self.plugin.db._core_plugin.get_ports(
+            context,
+            filter
+        )
+
+        # There should be only one.
+        if len(ports) == 1:
+            member_dict['port'] = ports[0]
+        else:
+            LOG.error("Unexpected number of ports returned for member")
+
+        self._populate_member_network(context, member_dict, network)
+
+        return (member_dict, subnet, network)
 
     @log_helpers.log_method_call
     def _get_extended_loadbalancer(self, context, loadbalancer):
@@ -177,3 +236,93 @@ class LBaaSv2ServiceBuilder(object):
             listener_id
         )
         return listener.to_api_dict()
+
+    def _populate_member_network(self, context, member, network):
+        """Add vtep networking info to pool member and update the network."""
+        member['vxlan_vteps'] = []
+        member['gre_vteps'] = []
+
+        if 'provider:network_type' in network:
+            net_type = network['provider:network_type']
+            if net_type == 'vxlan':
+                if 'binding:host_id' in member['port']:
+                    host = member['port']['binding:host_id']
+                    member['vxlan_vteps'] = self._get_endpoints(
+                        context, 'vxlan', host)
+            if net_type == 'gre':
+                if 'binding:host_id' in member['port']:
+                    host = member['port']['binding:host_id']
+                    member['gre_vteps'] = self._get_endpoints(
+                        context, 'gre', host)
+        if 'provider:network_type' not in network:
+            network['provider:network_type'] = 'undefined'
+        if 'provider:segmentation_id' not in network:
+            network['provider:segmentation_id'] = 0
+
+    @log_helpers.log_method_call
+    def _populate_loadbalancer_network_vteps(
+            self,
+            context,
+            loadbalancer,
+            net_type):
+        """Put related tunnel endpoints in loadbalancer definiton."""
+        loadbalancer['vxlan_vteps'] = []
+        loadbalancer['gre_vteps'] = []
+        network_id = loadbalancer['vip_port']['network_id']
+
+        ports = self._get_ports_on_network(
+            context,
+            network_id=network_id
+        )
+
+        vtep_hosts = []
+        for port in ports:
+            if ('binding:host_id' in port and
+                    port['binding:host_id'] not in vtep_hosts):
+                vtep_hosts.append(port['binding:host_id'])
+
+        for vtep_host in vtep_hosts:
+            if net_type == 'vxlan':
+                endpoints = self._get_endpoints(context, 'vxlan')
+                for ep in endpoints:
+                    if ep not in loadbalancer['vxlan_vteps']:
+                        loadbalancer['vxlan_vteps'].append(ep)
+            elif net_type == 'gre':
+                endpoints = self._get_endpoints(context, 'gre')
+                for ep in endpoints:
+                    if ep not in loadbalancer['gre_vteps']:
+                        loadbalancer['gre_vteps'].append(ep)
+
+    def _get_endpoints(self, context, net_type, host=None):
+        """Get vxlan or gre tunneling endpoints from all agents."""
+        endpoints = []
+
+        agents = self.plugin.db._core_plugin.get_agents(context)
+        for agent in agents:
+            if ('configurations' in agent and (
+                    'tunnel_types' in agent['configurations'])):
+
+                if net_type in agent['configurations']['tunnel_types']:
+                    if 'tunneling_ip' in agent['configurations']:
+                        if not host or (agent['host'] == host):
+                            endpoints.append(
+                                agent['configurations']['tunneling_ip']
+                            )
+                    if 'tunneling_ips' in agent['configurations']:
+                        for ip_addr in (
+                                agent['configurations']['tunneling_ips']):
+                            if not host or (agent['host'] == host):
+                                endpoints.append(ip_addr)
+
+        return endpoints
+
+    @log_helpers.log_method_call
+    def _get_ports_on_network(self, context, network_id=None):
+        """Get ports for network."""
+        if not isinstance(network_id, list):
+            network_ids = [network_id]
+        filters = {'network_id': network_ids}
+        return self.driver.plugin.db._core_plugin.get_ports(
+            context,
+            filters=filters
+        )
