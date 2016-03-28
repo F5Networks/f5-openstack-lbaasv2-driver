@@ -1,4 +1,4 @@
-"""RPC Callbacks for f5 LBaaSv2 Plugins."""
+"""RPC Callbacks for F5® LBaaSv2 Plugins."""
 # Copyright 2016 F5 Networks Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
