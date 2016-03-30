@@ -139,7 +139,7 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
 
             # There is no existing loadbalancer agent binding.
             # Find all active agent candidates in this env.
-            # We use environment_prefix to find f5 agents
+            # We use environment_prefix to find F5® agents
             # rather then map to the agent binary name.
             candidates = self.get_active_agent_in_env(plugin,
                                                       context,
