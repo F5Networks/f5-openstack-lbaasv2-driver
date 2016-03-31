@@ -19,11 +19,11 @@
 f5-openstack-lbaasv2-driver
 ===========================
 
-|Build Status| |Docs Build Status|
+|Build Status| |Docs Build Status| |slack badge|
 
 Introduction
 ------------
-The F5 OpenStack LBaaSv2 plugin enables F5 services in OpenStack's Neutron LBaaSv2 service. The plugin comprises an agent and a service provider driver. This repo houses the code for the driver.
+The F5® OpenStack LBaaSv2 plugin enables F5® services in OpenStack's Neutron LBaaSv2 service. The plugin comprises an agent and a service provider driver. This repo houses the code for the driver.
 
 The code for the agent, which allows Neutron services to communicate with BIG-IP®, is in the `F5Networks/f5-openstack-agent <https://github.com/F5Networks/f5-openstack-agent>`_ repo.
 
@@ -36,11 +36,11 @@ The LBaaSv2 plugin is compatible with OpenStack releases from Liberty forward. I
 you are using an earlier release, you'll have to use the `LBaaSv1
 plugin <https://github.com/F5Networks/f5-openstack-lbaasv1>`__.
 
-For more information, please see the F5 OpenStack `Releases, Versioning, and Support Matrix <http://f5-openstack-docs.readthedocs.org/en/latest/releases_and_versioning.html>`_.
+For more information, please see the F5® OpenStack `Releases, Versioning, and Support Matrix <http://f5-openstack-docs.readthedocs.org/en/latest/releases_and_versioning.html>`_.
 
 Documentation
 -------------
-Please refer to the F5 OpenStack LBaaSv2 `project documentation <http://f5-openstack-lbaasv2.readthedocs.org/en/>`_ for installation and configuration instructions.
+Please refer to the F5® OpenStack LBaaSv2 `project documentation <http://f5-openstack-lbaasv2.readthedocs.org/en/>`_ for installation and configuration instructions.
 
 Filing Issues
 -------------
@@ -93,10 +93,6 @@ We use the hacking module for our style checks (installed as part of step 1 in t
     $ flake8 ./
 
 
-Contact
--------
-f5_openstack_lbaasv2@f5.com
-
 Copyright
 ---------
 Copyright 2015-2016 F5 Networks Inc.
@@ -139,3 +135,6 @@ in this project.
     :target: http://f5-openstack-lbaasv2.readthedocs.org/en/latest/?badge=latest
     :alt: Documentation Status
 
+.. |slack badge| image:: https://f5-openstack-slack.herokuapp.com/badge.svg
+    :target: https://f5-openstack-slack.herokuapp.com/
+    :alt: Slack
