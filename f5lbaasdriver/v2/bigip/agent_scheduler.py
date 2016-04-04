@@ -1,3 +1,4 @@
+# coding=utf-8
 """Schedule agent to bind to a load balancer."""
 # Copyright 2016 F5 Networks Inc.
 #
