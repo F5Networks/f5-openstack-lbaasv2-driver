@@ -78,6 +78,7 @@ class LBaaSv2ServiceBuilder(object):
             network_map = {}
             vip_port = service['loadbalancer']['vip_port']
             network_id = vip_port['network_id']
+            service['loadbalancer']['network_id'] = network_id
             network = self._get_network_cached(
                 context,
                 network_id
