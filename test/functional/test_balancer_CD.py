@@ -27,13 +27,17 @@ def nclientmanager(polling_neutronclient):
         'auth_url': 'http://10.190.4.153:5000/v2.0'}
 
     neutronclient = client.Client(**nclient_config)
-    return polling_neutronclient(neutronclient)
+    pnc = polling_neutronclient(neutronclient)
+    pnc.interval = 1
+    pnc.max_attemps = 20
+    return pnc
 
 
 @pytest.fixture
 def setup_with_nclientmanager(request, nclientmanager):
     def teardown():
-        pp('Entered clear_listeners')
+        pp('Entered setup/teardown.')
+        nclientmanager.delete_all_lbaas_pools()
         nclientmanager.delete_all_listeners()
         nclientmanager.delete_all_loadbalancers()
 
@@ -113,3 +117,38 @@ def test_listener_CD(setup_with_loadbalancer, bigip):
     virts = bigip.ltm.virtuals.get_collection()
     pp(virts)
     assert virts == []
+
+
+@pytest.fixture
+def setup_with_listener(setup_with_loadbalancer):
+    nclientmanager, activelb = setup_with_loadbalancer
+    listener_config =\
+        {'listener': {'name': 'test_listener',
+                      'loadbalancer_id': activelb['loadbalancer']['id'],
+                      'protocol': 'HTTP',
+                      'protocol_port': 80}}
+    listener = nclientmanager.create_listener(listener_config)
+    return nclientmanager, listener
+
+
+def test_pool_CD(setup_with_listener, bigip):
+    nclientmanager, listener = setup_with_listener
+    pool_config = {'pool': {
+                   'name': 'test_pool_anur23rgg',
+                   'lb_algorithm': 'ROUND_ROBIN',
+                   'listener_id': listener['listener']['id'],
+                   'protocol': 'HTTP'}}
+    pp(nclientmanager.list_lbaas_pools()['pools'])
+    # The bigip starts life with 0 pools
+    assert not bigip.ltm.pools.get_collection()
+    pool = nclientmanager.create_lbaas_pool(pool_config)
+    pp(bigip.ltm.pools.get_collection()[0].raw)
+    # The create_lbaas_pool call adds a pool to the bigip
+    assert bigip.ltm.pools.get_collection()[0].name == 'test_pool_anur23rgg'
+    nclientmanager.delete_lbaas_pool(pool['pool']['id'])
+    pp(bigip.ltm.pools.get_collection())
+    assert not bigip.ltm.pools.get_collection()
+
+
+def test_dump_pool_list(nclientmanager):
+    pp(nclientmanager.list_lbaas_pools()['pools'])
