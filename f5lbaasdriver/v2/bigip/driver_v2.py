@@ -116,7 +116,7 @@ class LoadBalancerManager(object):
             'status': q_const.PORT_STATUS_ACTIVE
         }
         port_data[portbindings.HOST_ID] = agent['host']
-        self.plugin.db._core_plugin.update_port(
+        driver.plugin.db._core_plugin.update_port(
             context,
             loadbalancer.vip_port_id,
             {'port': port_data}
