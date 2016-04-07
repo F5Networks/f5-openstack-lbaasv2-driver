@@ -16,6 +16,8 @@
 from neutronclient.v2_0 import client
 from pprint import pprint as pp
 import pytest
+import sys
+import time
 
 
 @pytest.fixture
@@ -28,8 +30,6 @@ def nclientmanager(polling_neutronclient):
 
     neutronclient = client.Client(**nclient_config)
     pnc = polling_neutronclient(neutronclient)
-    pnc.interval = 1
-    pnc.max_attemps = 20
     return pnc
 
 
@@ -150,5 +150,51 @@ def test_pool_CD(setup_with_listener, bigip):
     assert not bigip.ltm.pools.get_collection()
 
 
-def test_dump_pool_list(nclientmanager):
-    pp(nclientmanager.list_lbaas_pools()['pools'])
+@pytest.fixture
+def setup_with_pool(setup_with_listener):
+    nclientmanager, activelistener = setup_with_listener
+    pool_config = {'pool': {
+                   'name': 'test_pool_anur23rgg',
+                   'lb_algorithm': 'ROUND_ROBIN',
+                   'listener_id': activelistener['listener']['id'],
+                   'protocol': 'HTTP'}}
+    pool = nclientmanager.create_lbaas_pool(pool_config)
+    return nclientmanager, pool
+
+
+def test_member_CD(setup_with_pool, bigip):
+    nclientmanager, pool = setup_with_pool
+    poolname = pool['pool']['name']
+    pool_id = pool['pool']['id']
+    bigip_pool_members = bigip.ltm.pools.get_collection()[0].members_s
+    assert not nclientmanager.list_lbaas_members(pool_id)['members']
+    for sn in nclientmanager.list_subnets()['subnets']:
+        if 'server-v4' in sn['name']:
+            address = sn['allocation_pools'][0]['start']
+            subnet_id = sn['id']
+            break
+
+    member_config = {'member': {
+                     'subnet_id': subnet_id,
+                     'address': address,
+                     'protocol_port': 80}}
+    member = nclientmanager.create_lbaas_member(pool_id, member_config)
+    attempts = 0
+    while not bigip_pool_members.get_collection():
+        attempts = attempts + 1
+        time.sleep(.5)
+        if attempts > 8:
+            sys.exit(9999)
+
+    bigip_pool_member = bigip_pool_members.get_collection()[0]
+    assert poolname in bigip_pool_member.selfLink
+    address_plus_port =\
+        '%s:%s' % (address, member_config['member']['protocol_port'])
+    assert address_plus_port in bigip_pool_member.selfLink
+    nclientmanager.delete_lbaas_member(member['member']['id'], pool_id)
+    assert not bigip_pool_members.get_collection()
+
+
+def itest_dump_member_list(nclientmanager):
+    pp(nclientmanager.list_lbaas_members(
+        '9fa600ce-5abd-47a1-b43c-b7242cee6413')['members'])
