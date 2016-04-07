@@ -15,6 +15,7 @@ u"""F5 Networks® LBaaSv2 Driver Implementation."""
 #   limitations under the License.
 
 import sys
+import uuid
 
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
@@ -22,6 +23,7 @@ from oslo_log import log as logging
 from oslo_utils import importutils
 
 from neutron.common import constants as q_const
+from neutron.extensions import portbindings
 
 from f5lbaasdriver.v2.bigip import agent_rpc
 from f5lbaasdriver.v2.bigip import plugin_rpc
@@ -101,6 +103,25 @@ class LoadBalancerManager(object):
             loadbalancer.id,
             driver.env
         )
+
+        # Update the port for the VIP to show ownership by this driver
+        port_data = {
+            'admin_state_up': True,
+            'device_id': str(
+                uuid.uuid5(
+                    uuid.NAMESPACE_DNS, str(agent['host'])
+                )
+            ),
+            'device_owner': 'network:f5lbaasv2',
+            'status': q_const.PORT_STATUS_ACTIVE
+        }
+        port_data[portbindings.HOST_ID] = agent['host']
+        self.plugin.db._core_plugin.update_port(
+            context,
+            loadbalancer.vip_port_id,
+            {'port': port_data}
+        )
+
         driver.agent_rpc.create_loadbalancer(
             context,
             loadbalancer.to_api_dict(),
