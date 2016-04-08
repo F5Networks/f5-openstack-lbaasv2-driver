@@ -13,24 +13,10 @@
 # limitations under the License.
 #
 
-from neutronclient.v2_0 import client
 from pprint import pprint as pp
 import pytest
 import sys
 import time
-
-
-@pytest.fixture
-def nclientmanager(polling_neutronclient):
-    nclient_config = {
-        'username': 'testlab',
-        'password': 'changeme',
-        'tenant_name': 'testlab',
-        'auth_url': 'http://10.190.4.153:5000/v2.0'}
-
-    neutronclient = client.Client(**nclient_config)
-    pnc = polling_neutronclient(neutronclient)
-    return pnc
 
 
 @pytest.fixture
