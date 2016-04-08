@@ -186,10 +186,11 @@ class LBaaSv2ServiceBuilder(object):
         # There should be only one.
         if len(ports) == 1:
             member_dict['port'] = ports[0]
+            self._populate_member_network(context, member_dict, network)
         else:
+            # FIXME(RJB: raise an exception here and let the driver handle
+            # the port that is not on the network.
             LOG.error("Unexpected number of ports returned for member")
-
-        self._populate_member_network(context, member_dict, network)
 
         return (member_dict, subnet, network)
 
