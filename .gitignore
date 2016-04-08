@@ -2,5 +2,7 @@
 venv/*
 .idea/*
 .venv/*
+.cache/*
 docs/_build/*
 docs/_htmlbuild/*
+*.pyc
