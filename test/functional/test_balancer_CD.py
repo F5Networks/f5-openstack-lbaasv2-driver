@@ -35,21 +35,21 @@ def nclientmanager(polling_neutronclient):
 
 @pytest.fixture
 def setup_with_nclientmanager(request, nclientmanager):
-    def teardown():
-        pp('Entered setup/teardown.')
+    def finalize():
+        pp('Entered setup/finalize.')
+        nclientmanager.delete_all_lbaas_healthmonitors()
         nclientmanager.delete_all_lbaas_pools()
         nclientmanager.delete_all_listeners()
         nclientmanager.delete_all_loadbalancers()
 
-    teardown()
-    request.addfinalizer(teardown)
+    finalize()
+    request.addfinalizer(finalize)
     return nclientmanager
 
 
 def test_lb_CD(setup_with_nclientmanager, bigip):
     # set initial state
     nclientmanager = setup_with_nclientmanager
-    pp('test started')
     subnets = nclientmanager.list_subnets()['subnets']
     for sn in subnets:
         if 'client-v4' in sn['name']:
@@ -61,14 +61,12 @@ def test_lb_CD(setup_with_nclientmanager, bigip):
     assert len(start_folders) == 2
     for sf in start_folders:
         assert sf.name == '/' or sf.name == 'Common'
-    pp('folders start correct')
     # Initialize lb and wait for confirmation from neutron
     active_lb = nclientmanager.create_loadbalancer({'loadbalancer': lbconf})
     lbid = active_lb['loadbalancer']['id']
     assert active_lb['loadbalancer']['provisioning_status'] == 'ACTIVE'
     assert active_lb['loadbalancer']['provider'] == 'f5networkstest'
     # verify the creation of the appropriate partition on the bigip
-    pp(bigip._meta_data['uri'])
     active_folders = bigip.sys.folders.get_collection()
     assert len(active_folders) == 3
     for sf in active_folders:
@@ -111,11 +109,9 @@ def test_listener_CD(setup_with_loadbalancer, bigip):
     assert init_virts == []
     listener = nclientmanager.create_listener(listener_config)
     active_virts = bigip.ltm.virtuals.get_collection()
-    pp(active_virts[0].raw)
     assert active_virts[0].name == 'test_listener'
     nclientmanager.delete_listener(listener['listener']['id'])
     virts = bigip.ltm.virtuals.get_collection()
-    pp(virts)
     assert virts == []
 
 
@@ -138,15 +134,12 @@ def test_pool_CD(setup_with_listener, bigip):
                    'lb_algorithm': 'ROUND_ROBIN',
                    'listener_id': listener['listener']['id'],
                    'protocol': 'HTTP'}}
-    pp(nclientmanager.list_lbaas_pools()['pools'])
     # The bigip starts life with 0 pools
     assert not bigip.ltm.pools.get_collection()
     pool = nclientmanager.create_lbaas_pool(pool_config)
-    pp(bigip.ltm.pools.get_collection()[0].raw)
     # The create_lbaas_pool call adds a pool to the bigip
     assert bigip.ltm.pools.get_collection()[0].name == 'test_pool_anur23rgg'
     nclientmanager.delete_lbaas_pool(pool['pool']['id'])
-    pp(bigip.ltm.pools.get_collection())
     assert not bigip.ltm.pools.get_collection()
 
 
@@ -195,6 +188,45 @@ def test_member_CD(setup_with_pool, bigip):
     assert not bigip_pool_members.get_collection()
 
 
-def itest_dump_member_list(nclientmanager):
-    pp(nclientmanager.list_lbaas_members(
-        '9fa600ce-5abd-47a1-b43c-b7242cee6413')['members'])
+@pytest.fixture
+def setup_with_pool_member(setup_with_pool):
+    nclientmanager, activepool = setup_with_pool
+    pool_id = activepool['pool']['id']
+    for sn in nclientmanager.list_subnets()['subnets']:
+        if 'server-v4' in sn['name']:
+            address = sn['allocation_pools'][0]['start']
+            subnet_id = sn['id']
+            break
+
+    member_config = {'member': {
+                     'subnet_id': subnet_id,
+                     'address': address,
+                     'protocol_port': 80}}
+    member = nclientmanager.create_lbaas_member(pool_id, member_config)
+    return nclientmanager, activepool, member
+
+
+def test_health_monitor_CD(setup_with_pool_member, bigip):
+    nclientmanager, pool, member = setup_with_pool_member
+    init_bip_http_monitors = bigip.ltm.monitor.https.get_collection()
+    pp(init_bip_http_monitors)
+    assert len(init_bip_http_monitors) == 2
+    monitor_dict = {}
+    for monitor in init_bip_http_monitors:
+        monitor_dict[monitor.selfLink] = monitor
+    monitor_config = {'healthmonitor': {
+                      'delay': 3,
+                      'pool_id': pool['pool']['id'],
+                      'type': 'HTTP',
+                      'timeout': 13,
+                      'max_retries': 7}}
+    monitor = nclientmanager.create_lbaas_healthmonitor(monitor_config)
+    interval = .05
+    total = 0
+    while len(bigip.ltm.monitor.https.get_collection()) == 2:
+        time.sleep(interval)
+        total = total + interval
+    pp(total)
+    assert len(bigip.ltm.monitor.https.get_collection()) == 3
+    nclientmanager.delete_lbaas_healthmonitor(monitor['healthmonitor']['id'])
+    assert len(bigip.ltm.monitor.https.get_collection()) == 2
