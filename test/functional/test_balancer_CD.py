@@ -14,23 +14,8 @@
 #
 
 from pprint import pprint as pp
-import pytest
 import sys
 import time
-
-
-@pytest.fixture
-def setup_with_nclientmanager(request, nclientmanager):
-    def finalize():
-        pp('Entered setup/finalize.')
-        nclientmanager.delete_all_lbaas_healthmonitors()
-        nclientmanager.delete_all_lbaas_pools()
-        nclientmanager.delete_all_listeners()
-        nclientmanager.delete_all_loadbalancers()
-
-    finalize()
-    request.addfinalizer(finalize)
-    return nclientmanager
 
 
 def test_loadbalancer_CLUDS(setup_with_nclientmanager, bigip):
@@ -77,20 +62,6 @@ def test_loadbalancer_CLUDS(setup_with_nclientmanager, bigip):
         assert sf.name == '/' or sf.name == 'Common'
 
 
-@pytest.fixture
-def setup_with_loadbalancer(setup_with_nclientmanager):
-    nclientmanager = setup_with_nclientmanager
-    subnets = nclientmanager.list_subnets()['subnets']
-    for sn in subnets:
-        if 'client-v4' in sn['name']:
-            lbconf = {'vip_subnet_id': sn['id'],
-                      'tenant_id':     sn['tenant_id'],
-                      'name':          'testlb_01'}
-    activelb =\
-        nclientmanager.create_loadbalancer({'loadbalancer': lbconf})
-    return nclientmanager, activelb
-
-
 def test_listener_CLUDS(setup_with_loadbalancer, bigip):
     nclientmanager, loadbalancer = setup_with_loadbalancer
     listener_config =\
@@ -119,18 +90,6 @@ def test_listener_CLUDS(setup_with_loadbalancer, bigip):
     assert virts == []
 
 
-@pytest.fixture
-def setup_with_listener(setup_with_loadbalancer):
-    nclientmanager, activelb = setup_with_loadbalancer
-    listener_config =\
-        {'listener': {'name': 'test_listener',
-                      'loadbalancer_id': activelb['loadbalancer']['id'],
-                      'protocol': 'HTTP',
-                      'protocol_port': 80}}
-    listener = nclientmanager.create_listener(listener_config)
-    return nclientmanager, listener
-
-
 def test_pool_CLUDS(setup_with_listener, bigip):
     nclientmanager, listener = setup_with_listener
     pool_config = {'pool': {
@@ -148,7 +107,7 @@ def test_pool_CLUDS(setup_with_listener, bigip):
     assert len(nclientmanager.list_lbaas_pools()['pools']) == 1
     # The create_lbaas_pool call adds a pool to the bigip
     assert bigip.ltm.pools.get_collection()[0].name == 'test_pool_anur23rgg'
-    # Test Update, Show, 
+    # Test Update, Show
     nclientmanager.update_lbaas_pool(
         pool_id, {'pool': {'description': '5978iuw34ghle'}})
     shown = nclientmanager.show_lbaas_pool(pool_id)
@@ -156,18 +115,6 @@ def test_pool_CLUDS(setup_with_listener, bigip):
     # Test Delete
     nclientmanager.delete_lbaas_pool(pool_id)
     assert not bigip.ltm.pools.get_collection()
-
-
-@pytest.fixture
-def setup_with_pool(setup_with_listener):
-    nclientmanager, activelistener = setup_with_listener
-    pool_config = {'pool': {
-                   'name': 'test_pool_anur23rgg',
-                   'lb_algorithm': 'ROUND_ROBIN',
-                   'listener_id': activelistener['listener']['id'],
-                   'protocol': 'HTTP'}}
-    pool = nclientmanager.create_lbaas_pool(pool_config)
-    return nclientmanager, pool
 
 
 def test_member_CLUDS(setup_with_pool, bigip):
@@ -209,24 +156,6 @@ def test_member_CLUDS(setup_with_pool, bigip):
     assert shown['member']['weight'] == 5
     nclientmanager.delete_lbaas_member(member['member']['id'], pool_id)
     assert not bigip_pool_members.get_collection()
-
-
-@pytest.fixture
-def setup_with_pool_member(setup_with_pool):
-    nclientmanager, activepool = setup_with_pool
-    pool_id = activepool['pool']['id']
-    for sn in nclientmanager.list_subnets()['subnets']:
-        if 'server-v4' in sn['name']:
-            address = sn['allocation_pools'][0]['start']
-            subnet_id = sn['id']
-            break
-
-    member_config = {'member': {
-                     'subnet_id': subnet_id,
-                     'address': address,
-                     'protocol_port': 80}}
-    member = nclientmanager.create_lbaas_member(pool_id, member_config)
-    return nclientmanager, activepool, member
 
 
 def test_healthmonitor_CLD(setup_with_pool_member, bigip):
