@@ -4,4 +4,6 @@
 
 # Test Requirements
 mock==1.3.0
-pytest
+pytest==2.9.1
+decorator==4.0.9
+paramiko==1.16.0
