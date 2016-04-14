@@ -24,8 +24,6 @@ from oslo_utils import importutils
 
 from neutron.common import constants as q_const
 from neutron.extensions import portbindings
-from neutron.plugins.common import constants as plugin_const
-from neutron_lbaas.services.loadbalancer import constants as lb_const
 
 from f5lbaasdriver.v2.bigip import agent_rpc
 from f5lbaasdriver.v2.bigip import exceptions as f5_exc
