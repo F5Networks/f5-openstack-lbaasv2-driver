@@ -21,7 +21,15 @@ from oslo_log import log as logging
 
 from neutron_lbaas import agent_scheduler
 
+from f5lbaasdriver.v2.bigip import exceptions as f5_exc
+
 LOG = logging.getLogger(__name__)
+
+
+class F5AgentNotFoundException(f5_exc.F5LBaaSv2DriverException):
+    """Throw when no elegible agent is found for the request."""
+
+    message = "LBaaSv2 agent not found"
 
 
 class TenantScheduler(agent_scheduler.ChanceScheduler):
@@ -180,7 +188,7 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
             )
             if len(candidates) == 0:
                 LOG.warn('No f5 lbaas agents are active for env %s' % env)
-                return None
+                raise F5AgentNotFoundException()
 
             # We have active candidates to choose from.
             # Qualify them by tenant affinity and then capacity.
@@ -248,12 +256,12 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                         agents_by_group[selected_group]
                     )
 
-            # If there are no agents with available capacity, return None
+            # If there are no agents with available capacity, raise exception
             if not chosen_agent:
                 LOG.warn('No capacity left on any agents in env: %s' % env)
                 LOG.warn('Group capacity in %s were %s.'
                          % (env, capacity_by_group))
-                return None
+                raise F5AgentNotFoundException()
 
             binding = agent_scheduler.LoadbalancerAgentBinding()
             binding.agent = chosen_agent
