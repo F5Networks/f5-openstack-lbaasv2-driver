@@ -21,11 +21,22 @@ from oslo_log import log as logging
 
 from neutron_lbaas import agent_scheduler
 
+from f5lbaasdriver.v2.bigip import exceptions as f5_exc
+
 LOG = logging.getLogger(__name__)
 
 
+class F5AgentNotFoundException(f5_exc.F5LBaaSv2DriverException):
+    """Throw when no elegible agent is found for the request."""
+
+    message = "LBaaSv2 agent not found"
+
+
 class TenantScheduler(agent_scheduler.ChanceScheduler):
+    """Finds an available agent for the tenant/environment."""
+
     def __init__(self):
+        """Initialze with the ChanceScheduler base class."""
         super(TenantScheduler, self).__init__()
 
     def get_lbaas_agent_hosting_loadbalancer(self, plugin, context,
@@ -59,9 +70,9 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
 
                     # find all active agents matching the environment
                     # and group number.
-                    env_agents = self.get_active_agent_in_env(
-                        plugin,
+                    env_agents = self.get_active_agents_in_env(
                         context,
+                        plugin,
                         env,
                         gn
                     )
@@ -71,13 +82,16 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                         lbaas_agent = {'agent': env_agents[0]}
             return lbaas_agent
 
-    def get_active_agent_in_env(self, plugin, context, env, group=None):
-        """Get an active agent in the specified environment."""
+    def get_active_agents_in_env(self, context, plugin, env, group=None):
+        """Get an active agents in the specified environment."""
+        return_agents = []
+
         with context.session.begin(subtransactions=True):
-            candidates = plugin.db.get_lbaas_agents(context, active=True)
-            return_agents = []
-            if not candidates:
-                return return_agents
+            candidates = []
+            try:
+                candidates = plugin.db.get_lbaas_agents(context, active=True)
+            except Exception:
+                LOG.error("Caught Exception: get_lbaas_agents")
 
             for candidate in candidates:
                 ac = self.deserialize_agent_configurations(
@@ -91,7 +105,32 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                         else:
                             return_agents.append(candidate)
 
-            return return_agents
+        return return_agents
+
+    def get_agents_in_env(self, context, plugin, env, group=None):
+        """Get an active agent in the specified environment."""
+        return_agents = []
+
+        with context.session.begin(subtransactions=True):
+            candidates = []
+            try:
+                candidates = plugin.db.get_lbaas_agents(context, active=True)
+            except Exception:
+                LOG.error("Caught Exception: get_lbaas_agents")
+
+            for candidate in candidates:
+                ac = self.deserialize_agent_configurations(
+                    candidate['configurations'])
+                if 'environment_prefix' in ac:
+                    if ac['environment_prefix'] == env:
+                        if group:
+                            if ('environment_group_number' in ac and
+                                    ac['environment_group_number'] == group):
+                                return_agents.append(candidate)
+                        else:
+                            return_agents.append(candidate)
+
+        return return_agents
 
     def get_capacity(self, configurations):
         """Get environment capacity."""
@@ -142,12 +181,14 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
             # Find all active agent candidates in this env.
             # We use environment_prefix to find F5® agents
             # rather then map to the agent binary name.
-            candidates = self.get_active_agent_in_env(plugin,
-                                                      context,
-                                                      env)
+            candidates = self.get_active_agents_in_env(
+                context,
+                plugin,
+                env
+            )
             if len(candidates) == 0:
                 LOG.warn('No f5 lbaas agents are active for env %s' % env)
-                return None
+                raise F5AgentNotFoundException()
 
             # We have active candidates to choose from.
             # Qualify them by tenant affinity and then capacity.
@@ -215,12 +256,12 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                         agents_by_group[selected_group]
                     )
 
-            # If there are no agents with available capacity, return None
+            # If there are no agents with available capacity, raise exception
             if not chosen_agent:
                 LOG.warn('No capacity left on any agents in env: %s' % env)
                 LOG.warn('Group capacity in %s were %s.'
                          % (env, capacity_by_group))
-                return None
+                raise F5AgentNotFoundException()
 
             binding = agent_scheduler.LoadbalancerAgentBinding()
             binding.agent = chosen_agent

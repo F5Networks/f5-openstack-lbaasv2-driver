@@ -190,7 +190,11 @@ class LBaaSv2ServiceBuilder(object):
         else:
             # FIXME(RJB: raise an exception here and let the driver handle
             # the port that is not on the network.
-            LOG.error("Unexpected number of ports returned for member")
+            LOG.error("Unexpected number of ports returned for member: ")
+            if not ports:
+                LOG.error("No port found")
+            else:
+                LOG.error("Multiple ports found: %s" % ports)
 
         return (member_dict, subnet, network)
 

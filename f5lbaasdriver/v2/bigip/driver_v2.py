@@ -26,6 +26,7 @@ from neutron.common import constants as q_const
 from neutron.extensions import portbindings
 
 from f5lbaasdriver.v2.bigip import agent_rpc
+from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 from f5lbaasdriver.v2.bigip import plugin_rpc
 
 LOG = logging.getLogger(__name__)
@@ -49,6 +50,12 @@ OPTS = [
 ]
 
 cfg.CONF.register_opts(OPTS)
+
+
+class F5NoAttachedLoadbalancerException(f5_exc.F5LBaaSv2DriverException):
+    """Exception thrown when an LBaaSv2 object has not parent Loadbalancer."""
+
+    message = "Entity has no associated loadalancer"
 
 
 class F5DriverV2(object):
@@ -96,75 +103,89 @@ class LoadBalancerManager(object):
     def create(self, context, loadbalancer):
         """Create a loadbalancer."""
         driver = self.driver
-        service = driver.service_builder.build(context, loadbalancer)
-        agent = driver.scheduler.schedule(
-            driver.plugin,
-            context,
-            loadbalancer.id,
-            driver.env
-        )
+        try:
+            service = driver.service_builder.build(context, loadbalancer)
+            agent = driver.scheduler.schedule(
+                driver.plugin,
+                context,
+                loadbalancer.id,
+                driver.env
+            )
+            # Update the port for the VIP to show ownership by this driver
+            port_data = {
+                'admin_state_up': True,
+                'device_id': str(
+                    uuid.uuid5(
+                        uuid.NAMESPACE_DNS, str(agent['host'])
+                    )
+                ),
+                'device_owner': 'network:f5lbaasv2',
+                'status': q_const.PORT_STATUS_ACTIVE
+            }
+            port_data[portbindings.HOST_ID] = agent['host']
+            driver.plugin.db._core_plugin.update_port(
+                context,
+                loadbalancer.vip_port_id,
+                {'port': port_data}
+            )
 
-        # Update the port for the VIP to show ownership by this driver
-        port_data = {
-            'admin_state_up': True,
-            'device_id': str(
-                uuid.uuid5(
-                    uuid.NAMESPACE_DNS, str(agent['host'])
-                )
-            ),
-            'device_owner': 'network:f5lbaasv2',
-            'status': q_const.PORT_STATUS_ACTIVE
-        }
-        port_data[portbindings.HOST_ID] = agent['host']
-        driver.plugin.db._core_plugin.update_port(
-            context,
-            loadbalancer.vip_port_id,
-            {'port': port_data}
-        )
+            driver.agent_rpc.create_loadbalancer(
+                context,
+                loadbalancer.to_api_dict(),
+                service,
+                agent['host']
+            )
 
-        driver.agent_rpc.create_loadbalancer(
-            context,
-            loadbalancer.to_api_dict(),
-            service,
-            agent['host']
-        )
+        except Exception as e:
+            LOG.error("Exception: loadbalancer create: %s" % e.message)
+            raise e
 
     @log_helpers.log_method_call
     def update(self, context, old_loadbalancer, loadbalancer):
         """Update a loadbalancer."""
         driver = self.driver
-        service = driver.service_builder.build(context, loadbalancer)
-        agent = driver.scheduler.schedule(
-            driver.plugin,
-            context,
-            loadbalancer.id,
-            driver.env
-        )
-        driver.agent_rpc.update_loadbalancer(
-            context,
-            old_loadbalancer.to_api_dict(),
-            loadbalancer.to_api_dict(),
-            service,
-            agent['host']
-        )
+        try:
+            service = driver.service_builder.build(context, loadbalancer)
+            agent = driver.scheduler.schedule(
+                driver.plugin,
+                context,
+                loadbalancer.id,
+                driver.env
+            )
+            driver.agent_rpc.update_loadbalancer(
+                context,
+                old_loadbalancer.to_api_dict(),
+                loadbalancer.to_api_dict(),
+                service,
+                agent['host']
+            )
+
+        except Exception as e:
+            LOG.error("Exception: loadbalancer update: %s" % e.message)
+            raise e
 
     @log_helpers.log_method_call
     def delete(self, context, loadbalancer):
         """Delete a loadbalancer."""
         driver = self.driver
-        service = driver.service_builder.build(context, loadbalancer)
-        agent = driver.scheduler.schedule(
-            driver.plugin,
-            context,
-            loadbalancer.id,
-            driver.env
-        )
-        driver.agent_rpc.delete_loadbalancer(
-            context,
-            loadbalancer.to_api_dict(),
-            service,
-            agent['host']
-        )
+        try:
+            service = driver.service_builder.build(context, loadbalancer)
+            agent = driver.scheduler.schedule(
+                driver.plugin,
+                context,
+                loadbalancer.id,
+                driver.env
+            )
+            driver.agent_rpc.delete_loadbalancer(
+                context,
+                loadbalancer.to_api_dict(),
+                service,
+                agent['host']
+            )
+
+        except Exception as e:
+            LOG.error("Exception: loadbalancer delete: %s" % e.message)
+            raise e
 
     @log_helpers.log_method_call
     def refresh(self, context, loadbalancer):
@@ -188,62 +209,84 @@ class ListenerManager(object):
     def create(self, context, listener):
         """Create a listener."""
         driver = self.driver
-        if listener.attached_to_loadbalancer():
-            loadbalancer = listener.loadbalancer
-            service = driver.service_builder.build(context, loadbalancer)
-            agent = driver.scheduler.schedule(
-                driver.plugin,
-                context,
-                loadbalancer.id,
-                driver.env
-            )
-            driver.agent_rpc.create_listener(
-                context,
-                listener.to_dict(loadbalancer=False, default_pool=False),
-                service,
-                agent['host']
-            )
+        try:
+            if listener.attached_to_loadbalancer():
+                loadbalancer = listener.loadbalancer
+                service = driver.service_builder.build(context, loadbalancer)
+                agent = driver.scheduler.schedule(
+                    driver.plugin,
+                    context,
+                    loadbalancer.id,
+                    driver.env
+                )
+                driver.agent_rpc.create_listener(
+                    context,
+                    listener.to_dict(loadbalancer=False, default_pool=False),
+                    service,
+                    agent['host']
+                )
+            else:
+                raise F5NoAttachedLoadbalancerException()
+
+        except Exception as e:
+            LOG.error("Exception: listener create: %s" % e.message)
+            raise e
 
     @log_helpers.log_method_call
     def update(self, context, old_listener, listener):
         """Update a listener."""
         driver = self.driver
-        if listener.attached_to_loadbalancer():
-            loadbalancer = listener.loadbalancer
-            service = driver.service_builder.build(context, loadbalancer)
-            agent = driver.scheduler.schedule(
-                driver.plugin,
-                context,
-                loadbalancer.id,
-                driver.env
-            )
-            driver.agent_rpc.update_listener(
-                context,
-                old_listener.to_dict(loadbalancer=False, default_pool=False),
-                listener.to_dict(loadbalancer=False, default_pool=False),
-                service,
-                agent['host']
-            )
+        try:
+            if listener.attached_to_loadbalancer():
+                loadbalancer = listener.loadbalancer
+                service = driver.service_builder.build(context, loadbalancer)
+                agent = driver.scheduler.schedule(
+                    driver.plugin,
+                    context,
+                    loadbalancer.id,
+                    driver.env
+                )
+                driver.agent_rpc.update_listener(
+                    context,
+                    old_listener.to_dict(loadbalancer=False,
+                                         default_pool=False),
+                    listener.to_dict(loadbalancer=False, default_pool=False),
+                    service,
+                    agent['host']
+                )
+            else:
+                raise F5NoAttachedLoadbalancerException()
+
+        except Exception as e:
+            LOG.error("Exception: listener update: %s" % e.message)
+            raise e
 
     @log_helpers.log_method_call
     def delete(self, context, listener):
         """Delete a listener."""
         driver = self.driver
-        if listener.attached_to_loadbalancer():
-            loadbalancer = listener.loadbalancer
-            service = driver.service_builder.build(context, loadbalancer)
-            agent = driver.scheduler.schedule(
-                driver.plugin,
-                context,
-                loadbalancer.id,
-                driver.env
-            )
-            driver.agent_rpc.delete_listener(
-                context,
-                listener.to_dict(loadbalancer=False, default_pool=False),
-                service,
-                agent['host']
-            )
+        try:
+            if listener.attached_to_loadbalancer():
+                loadbalancer = listener.loadbalancer
+                service = driver.service_builder.build(context, loadbalancer)
+                agent = driver.scheduler.schedule(
+                    driver.plugin,
+                    context,
+                    loadbalancer.id,
+                    driver.env
+                )
+                driver.agent_rpc.delete_listener(
+                    context,
+                    listener.to_dict(loadbalancer=False, default_pool=False),
+                    service,
+                    agent['host']
+                )
+            else:
+                raise F5NoAttachedLoadbalancerException()
+
+        except Exception as e:
+            LOG.error("Exception: listener delete: %s" % e.message)
+            raise e
 
 
 class PoolManager(object):
@@ -263,62 +306,83 @@ class PoolManager(object):
     def create(self, context, pool):
         """Create a pool."""
         driver = self.driver
-        if pool.attached_to_loadbalancer():
-            loadbalancer = pool.listener.loadbalancer
-            service = driver.service_builder.build(context, loadbalancer)
-            agent = driver.scheduler.schedule(
-                driver.plugin,
-                context,
-                loadbalancer.id,
-                driver.env
-            )
-            driver.agent_rpc.create_pool(
-                context,
-                self._get_pool_dict(pool),
-                service,
-                agent['host']
-            )
+        try:
+            if pool.attached_to_loadbalancer():
+                loadbalancer = pool.listener.loadbalancer
+                service = driver.service_builder.build(context, loadbalancer)
+                agent = driver.scheduler.schedule(
+                    driver.plugin,
+                    context,
+                    loadbalancer.id,
+                    driver.env
+                )
+                driver.agent_rpc.create_pool(
+                    context,
+                    self._get_pool_dict(pool),
+                    service,
+                    agent['host']
+                )
+            else:
+                raise F5NoAttachedLoadbalancerException()
+
+        except Exception as e:
+            LOG.error("Exception: pool create: %s" % e.message)
+            raise e
 
     @log_helpers.log_method_call
     def update(self, context, old_pool, pool):
         """Update a pool."""
         driver = self.driver
-        if pool.attached_to_loadbalancer():
-            loadbalancer = pool.listener.loadbalancer
-            service = driver.service_builder.build(context, loadbalancer)
-            agent = driver.scheduler.schedule(
-                driver.plugin,
-                context,
-                loadbalancer.id,
-                driver.env
-            )
-            driver.agent_rpc.update_pool(
-                context,
-                self._get_pool_dict(old_pool),
-                self._get_pool_dict(pool),
-                service,
-                agent['host']
-            )
+        try:
+            if pool.attached_to_loadbalancer():
+                loadbalancer = pool.listener.loadbalancer
+                service = driver.service_builder.build(context, loadbalancer)
+                agent = driver.scheduler.schedule(
+                    driver.plugin,
+                    context,
+                    loadbalancer.id,
+                    driver.env
+                )
+                driver.agent_rpc.update_pool(
+                    context,
+                    self._get_pool_dict(old_pool),
+                    self._get_pool_dict(pool),
+                    service,
+                    agent['host']
+                )
+            else:
+                raise F5NoAttachedLoadbalancerException()
+
+        except Exception as e:
+            LOG.error("Exception: pool update: %s" % e.message)
+            raise e
 
     @log_helpers.log_method_call
     def delete(self, context, pool):
         """Delete a pool."""
         driver = self.driver
-        if pool.attached_to_loadbalancer():
-            loadbalancer = pool.listener.loadbalancer
-            service = driver.service_builder.build(context, loadbalancer)
-            agent = driver.scheduler.schedule(
-                driver.plugin,
-                context,
-                loadbalancer.id,
-                driver.env
-            )
-            driver.agent_rpc.delete_pool(
-                context,
-                self._get_pool_dict(pool),
-                service,
-                agent['host']
-            )
+        try:
+            if pool.attached_to_loadbalancer():
+                loadbalancer = pool.listener.loadbalancer
+                service = driver.service_builder.build(context, loadbalancer)
+                agent = driver.scheduler.schedule(
+                    driver.plugin,
+                    context,
+                    loadbalancer.id,
+                    driver.env
+                )
+                driver.agent_rpc.delete_pool(
+                    context,
+                    self._get_pool_dict(pool),
+                    service,
+                    agent['host']
+                )
+            else:
+                raise F5NoAttachedLoadbalancerException()
+
+        except Exception as e:
+            LOG.error("Exception: pool delete: %s" % e.message)
+            raise e
 
 
 class MemberManager(object):
@@ -332,64 +396,83 @@ class MemberManager(object):
     def create(self, context, member):
         """Create a member."""
         driver = self.driver
-        if member.attached_to_loadbalancer():
-            loadbalancer = member.pool.listener.loadbalancer
-            service = driver.service_builder.build(context, loadbalancer)
-            agent = driver.scheduler.schedule(
-                driver.plugin,
-                context,
-                loadbalancer.id,
-                driver.env
-            )
-            driver.agent_rpc.create_member(
-                context,
-                member.to_dict(pool=False),
-                service,
-                agent['host']
-            )
-        else:
-            LOG.error("member not attached to loadbalancer")
+        try:
+            if member.attached_to_loadbalancer():
+                loadbalancer = member.pool.listener.loadbalancer
+                service = driver.service_builder.build(context, loadbalancer)
+                agent = driver.scheduler.schedule(
+                    driver.plugin,
+                    context,
+                    loadbalancer.id,
+                    driver.env
+                )
+                driver.agent_rpc.create_member(
+                    context,
+                    member.to_dict(pool=False),
+                    service,
+                    agent['host']
+                )
+            else:
+                raise F5NoAttachedLoadbalancerException()
+
+        except Exception as e:
+            LOG.error("Exception: member create: %s" % e.message)
+            raise e
 
     @log_helpers.log_method_call
     def update(self, context, old_member, member):
         """Update a member."""
-        driver = self.driver
-        if member.attached_to_loadbalancer():
-            loadbalancer = member.pool.listener.loadbalancer
-            service = driver.service_builder.build(context, loadbalancer)
-            agent = driver.scheduler.schedule(
-                driver.plugin,
-                context,
-                loadbalancer.id,
-                driver.env
-            )
-            driver.agent_rpc.update_member(
-                context,
-                old_member.to_dict(pool=False),
-                member.to_dict(pool=False),
-                service,
-                agent['host']
-            )
+        try:
+            driver = self.driver
+            if member.attached_to_loadbalancer():
+                loadbalancer = member.pool.listener.loadbalancer
+                service = driver.service_builder.build(context, loadbalancer)
+                agent = driver.scheduler.schedule(
+                    driver.plugin,
+                    context,
+                    loadbalancer.id,
+                    driver.env
+                )
+                driver.agent_rpc.update_member(
+                    context,
+                    old_member.to_dict(pool=False),
+                    member.to_dict(pool=False),
+                    service,
+                    agent['host']
+                )
+            else:
+                raise F5NoAttachedLoadbalancerException()
+
+        except Exception as e:
+            LOG.error("Exception: member update: %s" % e.message)
+            raise e
 
     @log_helpers.log_method_call
     def delete(self, context, member):
         """Delete a member."""
         driver = self.driver
-        if member.attached_to_loadbalancer():
-            loadbalancer = member.pool.listener.loadbalancer
-            service = driver.service_builder.build(context, loadbalancer)
-            agent = driver.scheduler.schedule(
-                driver.plugin,
-                context,
-                loadbalancer.id,
-                driver.env
-            )
-            driver.agent_rpc.delete_member(
-                context,
-                member.to_dict(pool=False),
-                service,
-                agent['host']
-            )
+        try:
+            if member.attached_to_loadbalancer():
+                loadbalancer = member.pool.listener.loadbalancer
+                service = driver.service_builder.build(context, loadbalancer)
+                agent = driver.scheduler.schedule(
+                    driver.plugin,
+                    context,
+                    loadbalancer.id,
+                    driver.env
+                )
+                driver.agent_rpc.delete_member(
+                    context,
+                    member.to_dict(pool=False),
+                    service,
+                    agent['host']
+                )
+            else:
+                raise F5NoAttachedLoadbalancerException()
+
+        except Exception as e:
+            LOG.error("Exception: member delete: %s" % e.message)
+            raise e
 
 
 class HealthMonitorManager(object):
@@ -403,61 +486,80 @@ class HealthMonitorManager(object):
     def create(self, context, health_monitor):
         """Create a health monitor."""
         driver = self.driver
-        if health_monitor.attached_to_loadbalancer():
-            loadbalancer = health_monitor.pool.listener.loadbalancer
-            service = driver.service_builder.build(context, loadbalancer)
-            agent = driver.scheduler.schedule(
-                driver.plugin,
-                context,
-                loadbalancer.id,
-                driver.env
-            )
-            driver.agent_rpc.create_health_monitor(
-                context,
-                health_monitor.to_dict(pool=False),
-                service,
-                agent['host']
-            )
-        else:
-            LOG.error("health monitor not attached to loadbalancer")
+        try:
+            if health_monitor.attached_to_loadbalancer():
+                loadbalancer = health_monitor.pool.listener.loadbalancer
+                service = driver.service_builder.build(context, loadbalancer)
+                agent = driver.scheduler.schedule(
+                    driver.plugin,
+                    context,
+                    loadbalancer.id,
+                    driver.env
+                )
+                driver.agent_rpc.create_health_monitor(
+                    context,
+                    health_monitor.to_dict(pool=False),
+                    service,
+                    agent['host']
+                )
+            else:
+                raise F5NoAttachedLoadbalancerException()
+
+        except Exception as e:
+            LOG.error("Exception: health monitor create: %s" % e.message)
+            raise e
 
     @log_helpers.log_method_call
     def update(self, context, old_health_monitor, health_monitor):
         """Update a health monitor."""
         driver = self.driver
-        if health_monitor.attached_to_loadbalancer():
-            loadbalancer = health_monitor.pool.listener.loadbalancer
-            service = driver.service_builder.build(context, loadbalancer)
-            agent = driver.scheduler.schedule(
-                driver.plugin,
-                context,
-                loadbalancer.id,
-                driver.env
-            )
-            driver.agent_rpc.update_health_monitor(
-                context,
-                old_health_monitor.to_dict(pool=False),
-                health_monitor.to_dict(pool=False),
-                service,
-                agent['host']
-            )
+        try:
+            if health_monitor.attached_to_loadbalancer():
+                loadbalancer = health_monitor.pool.listener.loadbalancer
+                service = driver.service_builder.build(context, loadbalancer)
+                agent = driver.scheduler.schedule(
+                    driver.plugin,
+                    context,
+                    loadbalancer.id,
+                    driver.env
+                )
+                driver.agent_rpc.update_health_monitor(
+                    context,
+                    old_health_monitor.to_dict(pool=False),
+                    health_monitor.to_dict(pool=False),
+                    service,
+                    agent['host']
+                )
+            else:
+                raise F5NoAttachedLoadbalancerException()
+
+        except Exception as e:
+            LOG.error("Exception: health monitor update: %s" % e.message)
+            raise e
 
     @log_helpers.log_method_call
     def delete(self, context, health_monitor):
         """Delete a health monitor."""
         driver = self.driver
-        if health_monitor.attached_to_loadbalancer():
-            loadbalancer = health_monitor.pool.listener.loadbalancer
-            service = driver.service_builder.build(context, loadbalancer)
-            agent = driver.scheduler.schedule(
-                driver.plugin,
-                context,
-                loadbalancer.id,
-                driver.env
-            )
-            driver.agent_rpc.delete_health_monitor(
-                context,
-                health_monitor.to_dict(pool=False),
-                service,
-                agent['host']
-            )
+        try:
+            if health_monitor.attached_to_loadbalancer():
+                loadbalancer = health_monitor.pool.listener.loadbalancer
+                service = driver.service_builder.build(context, loadbalancer)
+                agent = driver.scheduler.schedule(
+                    driver.plugin,
+                    context,
+                    loadbalancer.id,
+                    driver.env
+                )
+                driver.agent_rpc.delete_health_monitor(
+                    context,
+                    health_monitor.to_dict(pool=False),
+                    service,
+                    agent['host']
+                )
+            else:
+                raise F5NoAttachedLoadbalancerException()
+
+        except Exception as e:
+            LOG.error("Exception: health monitor: %s" % e.message)
+            raise e
