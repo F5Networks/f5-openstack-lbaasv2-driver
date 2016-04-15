@@ -158,7 +158,7 @@ def test_member_CLUDS(setup_with_pool, bigip):
     assert not bigip_pool_members.get_collection()
 
 
-def test_healthmonitor_CLD(setup_with_pool_member, bigip):
+def test_healthmonitor_CLUDS(setup_with_pool_member, bigip):
     nclientmanager, pool, member = setup_with_pool_member
     # Test List
     assert not nclientmanager.list_lbaas_healthmonitors()['healthmonitors']
@@ -186,11 +186,11 @@ def test_healthmonitor_CLD(setup_with_pool_member, bigip):
     pp(total)
     assert len(bigip.ltm.monitor.https.get_collection()) == 3
     # Test show, update
-    # nclientmanager.update_lbaas_healthmonitor(
-    #    healthmonitor_id,
-    #    {'healthmonitor': {'delay': 77}}
-    # )
-    # shown = nclientmanager.show_lbaas_healthmonitor(healthmonitor_id)
-    # assert shown['healthmonitor']['delay'] == 77
+    nclientmanager.update_lbaas_healthmonitor(
+        healthmonitor_id,
+        {'healthmonitor': {'delay': 77}}
+    )
+    shown = nclientmanager.show_lbaas_healthmonitor(healthmonitor_id)
+    assert shown['healthmonitor']['delay'] == 77
     nclientmanager.delete_lbaas_healthmonitor(healthmonitor_id)
     assert len(bigip.ltm.monitor.https.get_collection()) == 2
