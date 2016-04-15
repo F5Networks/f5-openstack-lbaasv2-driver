@@ -15,11 +15,13 @@ u"""Service Module for F5® LBaaSv2."""
 # limitations under the License.
 #
 import datetime
+import json
 
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 
 from f5lbaasdriver.v2.bigip import constants_v2
+from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 
 LOG = logging.getLogger(__name__)
 
@@ -46,7 +48,7 @@ class LBaaSv2ServiceBuilder(object):
         self.last_cache_update = datetime.datetime.fromtimestamp(0)
         self.plugin = self.driver.plugin
 
-    def build(self, context, loadbalancer):
+    def build(self, context, loadbalancer, agent=None):
         """Get full service definition from loadbalancer ID."""
         # Invalidate cache if it is too old
         if ((datetime.datetime.now() - self.last_cache_update).seconds >
@@ -84,6 +86,12 @@ class LBaaSv2ServiceBuilder(object):
                 network_id
             )
             network_map[network_id] = network
+
+            # Check if the tenant can create a loadbalancer on the network.
+            if (agent and not self._valid_tenant_ids(network,
+                                                     loadbalancer.tenant_id,
+                                                     agent)):
+                raise f5_exc.F5MismatchedTenants()
 
             # Get the network VTEPs if the network provider type is
             # either gre or vxlan.
@@ -324,6 +332,40 @@ class LBaaSv2ServiceBuilder(object):
                                 endpoints.append(ip_addr)
 
         return endpoints
+
+    def deserialize_agent_configurations(self, configurations):
+        """Return a dictionary for the agent configuration."""
+        agent_conf = configurations
+        if not isinstance(agent_conf, dict):
+            try:
+                agent_conf = json.loads(configurations)
+            except ValueError as ve:
+                LOG.error('can not JSON decode %s : %s'
+                          % (agent_conf, ve.message))
+                agent_conf = {}
+        return agent_conf
+
+    @log_helpers.log_method_call
+    def _is_common_network(self, network, agent):
+        if agent and "configurations" in agent:
+            agent_configs = self.deserialize_agent_configurations(
+                agent['configurations'])
+
+            common_networks = agent_configs['common_networks']
+            common_external_networks = (
+                agent_configs['f5_common_external_networks'])
+
+            return (network['shared'] or
+                    (network['id'] in common_networks) or
+                    ('router:external' in network and
+                     network['router:external'] and
+                     common_external_networks))
+
+    def _valid_tenant_ids(self, network, lb_tenant_id, agent):
+        if (network['tenant_id'] == lb_tenant_id):
+            return True
+        else:
+            return self._is_common_network(network, agent)
 
     @log_helpers.log_method_call
     def _get_ports_on_network(self, context, network_id=None):
