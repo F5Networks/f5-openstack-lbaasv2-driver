@@ -24,6 +24,10 @@ from oslo_utils import importutils
 
 from neutron.common import constants as q_const
 from neutron.extensions import portbindings
+from neutron.plugins.common import constants as plugin_constants
+
+from neutron_lbaas.db.loadbalancer import models
+from neutron_lbaas.extensions import lbaas_agentschedulerv2
 
 from f5lbaasdriver.v2.bigip import agent_rpc
 from f5lbaasdriver.v2.bigip import exceptions as f5_exc
@@ -104,13 +108,15 @@ class LoadBalancerManager(object):
         """Create a loadbalancer."""
         driver = self.driver
         try:
-            service = driver.service_builder.build(context, loadbalancer)
             agent = driver.scheduler.schedule(
                 driver.plugin,
                 context,
                 loadbalancer.id,
                 driver.env
             )
+            service = driver.service_builder.build(context,
+                                                   loadbalancer,
+                                                   agent=agent)
             # Update the port for the VIP to show ownership by this driver
             port_data = {
                 'admin_state_up': True,
@@ -136,6 +142,15 @@ class LoadBalancerManager(object):
                 agent['host']
             )
 
+        except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
+                lbaas_agentschedulerv2.NoActiveLbaasAgent,
+                f5_exc.F5MismatchedTenants) as e:
+            LOG.error("Exception: loadbalancer create: %s" % e.message)
+            driver.plugin.db.update_status(
+                context,
+                models.LoadBalancer,
+                loadbalancer.id,
+                plugin_constants.ERROR)
         except Exception as e:
             LOG.error("Exception: loadbalancer create: %s" % e.message)
             raise e
@@ -145,13 +160,13 @@ class LoadBalancerManager(object):
         """Update a loadbalancer."""
         driver = self.driver
         try:
-            service = driver.service_builder.build(context, loadbalancer)
             agent = driver.scheduler.schedule(
                 driver.plugin,
                 context,
                 loadbalancer.id,
                 driver.env
             )
+            service = driver.service_builder.build(context, loadbalancer)
             driver.agent_rpc.update_loadbalancer(
                 context,
                 old_loadbalancer.to_api_dict(),
@@ -159,7 +174,13 @@ class LoadBalancerManager(object):
                 service,
                 agent['host']
             )
-
+        except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
+                lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
+            LOG.error("Exception: loadbalancer update: %s" % e.message)
+            driver._handle_driver_error(context,
+                                        models.LoadBalancer,
+                                        loadbalancer.id,
+                                        plugin_constants.ERROR)
         except Exception as e:
             LOG.error("Exception: loadbalancer update: %s" % e.message)
             raise e
@@ -169,13 +190,13 @@ class LoadBalancerManager(object):
         """Delete a loadbalancer."""
         driver = self.driver
         try:
-            service = driver.service_builder.build(context, loadbalancer)
             agent = driver.scheduler.schedule(
                 driver.plugin,
                 context,
                 loadbalancer.id,
                 driver.env
             )
+            service = driver.service_builder.build(context, loadbalancer)
             driver.agent_rpc.delete_loadbalancer(
                 context,
                 loadbalancer.to_api_dict(),
@@ -183,6 +204,10 @@ class LoadBalancerManager(object):
                 agent['host']
             )
 
+        except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
+                lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
+            LOG.error("Exception: loadbalancer delete: %s" % e.message)
+            driver.plugin.db.delete_loadbalancer(context, loadbalancer.id)
         except Exception as e:
             LOG.error("Exception: loadbalancer delete: %s" % e.message)
             raise e
@@ -212,13 +237,15 @@ class ListenerManager(object):
         try:
             if listener.attached_to_loadbalancer():
                 loadbalancer = listener.loadbalancer
-                service = driver.service_builder.build(context, loadbalancer)
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
                     loadbalancer.id,
                     driver.env
                 )
+                service = driver.service_builder.build(context,
+                                                       loadbalancer,
+                                                       agent=agent)
                 driver.agent_rpc.create_listener(
                     context,
                     listener.to_dict(loadbalancer=False, default_pool=False),
@@ -239,13 +266,13 @@ class ListenerManager(object):
         try:
             if listener.attached_to_loadbalancer():
                 loadbalancer = listener.loadbalancer
-                service = driver.service_builder.build(context, loadbalancer)
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
                     loadbalancer.id,
                     driver.env
                 )
+                service = driver.service_builder.build(context, loadbalancer)
                 driver.agent_rpc.update_listener(
                     context,
                     old_listener.to_dict(loadbalancer=False,
@@ -268,13 +295,13 @@ class ListenerManager(object):
         try:
             if listener.attached_to_loadbalancer():
                 loadbalancer = listener.loadbalancer
-                service = driver.service_builder.build(context, loadbalancer)
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
                     loadbalancer.id,
                     driver.env
                 )
+                service = driver.service_builder.build(context, loadbalancer)
                 driver.agent_rpc.delete_listener(
                     context,
                     listener.to_dict(loadbalancer=False, default_pool=False),
@@ -309,13 +336,15 @@ class PoolManager(object):
         try:
             if pool.attached_to_loadbalancer():
                 loadbalancer = pool.listener.loadbalancer
-                service = driver.service_builder.build(context, loadbalancer)
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
                     loadbalancer.id,
                     driver.env
                 )
+                service = driver.service_builder.build(context,
+                                                       loadbalancer,
+                                                       agent=agent)
                 driver.agent_rpc.create_pool(
                     context,
                     self._get_pool_dict(pool),
@@ -336,13 +365,13 @@ class PoolManager(object):
         try:
             if pool.attached_to_loadbalancer():
                 loadbalancer = pool.listener.loadbalancer
-                service = driver.service_builder.build(context, loadbalancer)
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
                     loadbalancer.id,
                     driver.env
                 )
+                service = driver.service_builder.build(context, loadbalancer)
                 driver.agent_rpc.update_pool(
                     context,
                     self._get_pool_dict(old_pool),
@@ -364,13 +393,13 @@ class PoolManager(object):
         try:
             if pool.attached_to_loadbalancer():
                 loadbalancer = pool.listener.loadbalancer
-                service = driver.service_builder.build(context, loadbalancer)
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
                     loadbalancer.id,
                     driver.env
                 )
+                service = driver.service_builder.build(context, loadbalancer)
                 driver.agent_rpc.delete_pool(
                     context,
                     self._get_pool_dict(pool),
@@ -399,13 +428,15 @@ class MemberManager(object):
         try:
             if member.attached_to_loadbalancer():
                 loadbalancer = member.pool.listener.loadbalancer
-                service = driver.service_builder.build(context, loadbalancer)
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
                     loadbalancer.id,
                     driver.env
                 )
+                service = driver.service_builder.build(context,
+                                                       loadbalancer,
+                                                       agent=agent)
                 driver.agent_rpc.create_member(
                     context,
                     member.to_dict(pool=False),
@@ -426,13 +457,13 @@ class MemberManager(object):
             driver = self.driver
             if member.attached_to_loadbalancer():
                 loadbalancer = member.pool.listener.loadbalancer
-                service = driver.service_builder.build(context, loadbalancer)
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
                     loadbalancer.id,
                     driver.env
                 )
+                service = driver.service_builder.build(context, loadbalancer)
                 driver.agent_rpc.update_member(
                     context,
                     old_member.to_dict(pool=False),
@@ -454,13 +485,13 @@ class MemberManager(object):
         try:
             if member.attached_to_loadbalancer():
                 loadbalancer = member.pool.listener.loadbalancer
-                service = driver.service_builder.build(context, loadbalancer)
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
                     loadbalancer.id,
                     driver.env
                 )
+                service = driver.service_builder.build(context, loadbalancer)
                 driver.agent_rpc.delete_member(
                     context,
                     member.to_dict(pool=False),
@@ -489,13 +520,15 @@ class HealthMonitorManager(object):
         try:
             if health_monitor.attached_to_loadbalancer():
                 loadbalancer = health_monitor.pool.listener.loadbalancer
-                service = driver.service_builder.build(context, loadbalancer)
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
                     loadbalancer.id,
                     driver.env
                 )
+                service = driver.service_builder.build(context,
+                                                       loadbalancer,
+                                                       agent=agent)
                 driver.agent_rpc.create_health_monitor(
                     context,
                     health_monitor.to_dict(pool=False),
@@ -516,13 +549,13 @@ class HealthMonitorManager(object):
         try:
             if health_monitor.attached_to_loadbalancer():
                 loadbalancer = health_monitor.pool.listener.loadbalancer
-                service = driver.service_builder.build(context, loadbalancer)
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
                     loadbalancer.id,
                     driver.env
                 )
+                service = driver.service_builder.build(context, loadbalancer)
                 driver.agent_rpc.update_health_monitor(
                     context,
                     old_health_monitor.to_dict(pool=False),
@@ -544,13 +577,13 @@ class HealthMonitorManager(object):
         try:
             if health_monitor.attached_to_loadbalancer():
                 loadbalancer = health_monitor.pool.listener.loadbalancer
-                service = driver.service_builder.build(context, loadbalancer)
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
                     loadbalancer.id,
                     driver.env
                 )
+                service = driver.service_builder.build(context, loadbalancer)
                 driver.agent_rpc.delete_health_monitor(
                     context,
                     health_monitor.to_dict(pool=False),
