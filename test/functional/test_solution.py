@@ -50,7 +50,7 @@ class ExecTestEnv(object):
             'bigip_password':   'admin',
             # The provider string for v2 needs to change to match the
             # environment prefix in the f5 agent ini file
-            'provider':         ('F5NetworksTest' if lbaas_version == 2 else
+            'provider':         ('f5networks' if lbaas_version == 2 else
                                  'f5'),
             'admin_name':       'admin',
             'admin_username':   'admin',
@@ -484,7 +484,7 @@ def test_solution(tst_setup):
         # HACK workaround until openstack supports the status field
         folders = te.bigip.sys.folders.get_collection()
         for f in folders:
-            if f.name.startswith('Test_'):
+            if f.name.startswith('Project_'):
                 break
         params = {'params': {'$filter': 'partition eq %s' % f.name}}
         pool = te.bigip.ltm.pools.pool.load(name=proxy.pool['name'],
