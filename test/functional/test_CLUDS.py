@@ -38,7 +38,7 @@ def test_loadbalancer_CLUDS(setup_with_nclientmanager, bigip):
     lbid = active_lb['loadbalancer']['id']
     assert active_lb['loadbalancer']['description'] == ''
     assert active_lb['loadbalancer']['provisioning_status'] == 'ACTIVE'
-    assert active_lb['loadbalancer']['provider'] == 'f5networkstest'
+    assert active_lb['loadbalancer']['provider'] == 'f5networks'
     # Test show and update
     nclientmanager.update_loadbalancer(
         lbid, {'loadbalancer': {'description': 'as;iofnypq3489'}})
@@ -50,7 +50,7 @@ def test_loadbalancer_CLUDS(setup_with_nclientmanager, bigip):
     for sf in active_folders:
         assert sf.name == '/' or\
             sf.name == 'Common' or\
-            sf.name.startswith('Test_')
+            sf.name.startswith('Project_')
     # delete
     nclientmanager.delete_loadbalancer(lbid)
     # verify removal from OS on delete
