@@ -372,38 +372,17 @@ class LBaaSv2(object):
 
 
 @pytest.fixture
-def tst_setup(request):
+def tst_setup(request, symbols):
     print 'test setup'
     # change the following settings to use your TLC session
     # temp solution until we integrate with Kevin's py-symbols module.
-    symbols = {
-        'bigip_public_mgmt_ip':     '10.190.7.xxx',
-        'client_public_mgmt_ip':    '10.190.3.xxx',
-        'server_public_mgmt_ip':    '10.190.3.xxx',
-        'openstack_auth_url':       'http://10.190.4.xxx:5000/v2.0'
+    symbols_env = {
+        'bigip_public_mgmt_ip':     symbols.bigip_ip,
+        'client_public_mgmt_ip':    symbols.client_ip,
+        'server_public_mgmt_ip':    symbols.server_ip,
+        'openstack_auth_url':       symbols.auth_url
     }
-    # lbaasv2 undercloud
-    symbols_mgreene_lbv2_u = {
-        'bigip_public_mgmt_ip':     '10.190.7.211',
-        'client_public_mgmt_ip':    '10.190.3.24',
-        'server_public_mgmt_ip':    '10.190.3.23',
-        'openstack_auth_url':       'http://10.190.4.146:5000/v2.0'
-    }
-    # lbaasv1 undercloud
-    symbols_mgreene_lbv2_u2 = {
-        'bigip_public_mgmt_ip':     '10.190.3.60',
-        'client_public_mgmt_ip':    '10.190.3.58',
-        'server_public_mgmt_ip':    '10.190.3.59',
-        'openstack_auth_url':       'http://10.190.4.144:5000/v2.0'
-    }
-    # lbaasv2 overcloud
-    symbols_mgreene_lbv2_o = {
-        'bigip_public_mgmt_ip':     '10.190.3.37',
-        'client_public_mgmt_ip':    '10.190.3.38',
-        'server_public_mgmt_ip':    '10.190.3.39',
-        'openstack_auth_url':       'http://10.190.4.129:5000/v2.0'
-    }
-    testenv = ExecTestEnv(symbols_mgreene_lbv2_u)
+    testenv = ExecTestEnv(symbols_env)
 
     def tst_teardown():
         print 'test teardown'

@@ -1,0 +1,45 @@
+
+In the test_env.json file,
+
+    *  Replace angle-bracketed data locations with required IP Addresses.
+    *  Change any other default data as needed.
+
+The following test files need to be run with the pytest symbols plugin:
+
+    *  test_balancer_updates_scans.py
+    *  test_solution.py
+
+Install the pytest_symbols plugin:
+
+    https://bldr-git.int.lineratesystems.com/tools/pytest-symbols
+
+After configuring the envirnomental data in test_env.json,
+execute those tests similar to this:
+
+    py.test --symbols ./test_env.json -sv -- test_solution.py
+
+
+
+Reference test data preserved for Matt Greene:
+
+lbaasv2 undercloud
+------------------
+  "auth_url":  "http://10.190.4.146:5000/v2.0",
+  "bigip_ip":  "10.190.7.211",
+  "client_ip": "10.190.3.24",
+  "server_ip": "10.190.3.23"
+
+lbaasv1 undercloud
+------------------
+  "auth_url":  "http://10.190.4.144:5000/v2.0",
+  "bigip_ip":  "10.190.3.60",
+  "client_ip": "10.190.3.58",
+  "server_ip": "10.190.3.59"
+
+lbaasv2 overcloud
+-----------------
+  "auth_url":  "http://10.190.4.129:5000/v2.0",
+  "bigip_ip":  "10.190.3.37",
+  "client_ip": "10.190.3.38",
+  "server_ip": "10.190.3.39"
+
