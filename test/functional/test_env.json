@@ -1,0 +1,9 @@
+{
+  "username":    "testlab",
+  "password":    "changeme",
+  "tenant_name": "testlab",
+  "auth_url":    "http://<controller floating IP>:5000/v2.0",
+  "bigip_ip":    "<BipIP floating IP>",
+  "client_ip":   "<Client floating IP>",
+  "server_ip":   "<Serrver floating IP>"
+}
