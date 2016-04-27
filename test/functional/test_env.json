@@ -1,6 +1,6 @@
 {
   "lbaas_version":    2,
-  "auth_url":         "http://<controller floating IP>:5000/v2.0",
+  "auth_url":         "http://<controller IP>:5000/v2.0",
   "bigip_ip":         "<BipIP floating IP>",
   "client_ip":        "<Client floating IP>",
   "server_ip":        "<Serrver floating IP>",
