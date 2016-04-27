@@ -58,7 +58,7 @@ class ExecTestEnv(object):
             'tenant_name':      'testlab',
             'tenant_username':  'testlab',
             'tenant_password':  'changeme',
-            'client_subnet':    'client-v4-subnet',
+            'client_subnet':    'testlab-client-v4-subnet',
             'guest_username':   'centos',
             'guest_password':   'changeme',
             'server_http_port': '8080',
