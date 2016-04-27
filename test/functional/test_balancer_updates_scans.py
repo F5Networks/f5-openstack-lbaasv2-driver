@@ -6,12 +6,15 @@ from pprint import pprint as pp
 from f5_os_test.polling_clients import NeutronClientPollingManager
 from neutronclient.common.exceptions import BadRequest
 
+from pytest import symbols as symbols_data
+
 
 nclient_config = {
-    'username': 'testlab',
-    'password': 'changeme',
-    'tenant_name': 'testlab',
-    'auth_url': 'http://FIXMEHARDCODED:5000/v2.0'}
+    'username':    symbols_data.username,
+    'password':    symbols_data.password,
+    'tenant_name': symbols_data.tenant_name,
+    'auth_url':    symbols_data.auth_url
+}
 
 
 class UnexpectedTypeFromJson(TypeError):
