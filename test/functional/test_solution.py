@@ -25,6 +25,8 @@ from neutronclient.v2_0 import client
 from f5_os_test.polling_clients import NeutronClientPollingManager
 from f5_os_test.polling_clients import MaximumNumberOfAttemptsExceeded
 
+# Note: symbols_data provided through commandline json file.
+from pytest import symbols as symbols_data
 
 def log_test_call(func):
     def wrapper(func, *args, **kwargs):
@@ -34,35 +36,34 @@ def log_test_call(func):
 
 
 class ExecTestEnv(object):
-    lbaas_version = 2
 
     def __init__(self, symbols):
         self.symbols = symbols.copy()
         if 'lbaas_version' in self.symbols:
-            lbaas_version =  self.symbols['lbaas_version']
+            lbaas_version = self.symbols['lbaas_version']
         else:
-            lbaas_version = ExecTestEnv.lbaas_version
+            lbaas_version = symbols_data.lbaas_version
         new_symbols = {
             'debug':            True,
             'lbaas_version':    lbaas_version,
             # leave the following settings alone
-            'bigip_username':   'admin',
-            'bigip_password':   'admin',
+            'bigip_username':   symbols_data.bigip_username,
+            'bigip_password':   symbols_data.bigip_password,
             # The provider string for v2 needs to change to match the
             # environment prefix in the f5 agent ini file
-            'provider':         ('F5NetworksTest' if lbaas_version == 2 else
+            'provider':         (symbols_data.provider if lbaas_version == 2 else
                                  'f5'),
-            'admin_name':       'admin',
-            'admin_username':   'admin',
-            'admin_password':   'changeme',
-            'tenant_name':      'testlab',
-            'tenant_username':  'testlab',
-            'tenant_password':  'changeme',
-            'client_subnet':    'testlab-client-v4-subnet',
-            'guest_username':   'centos',
-            'guest_password':   'changeme',
-            'server_http_port': '8080',
-            'server_client_ip': '10.2.2.3'
+            'admin_name':       symbols_data.admin_name,
+            'admin_username':   symbols_data.admin_username,
+            'admin_password':   symbols_data.admin_password,
+            'tenant_name':      symbols_data.tenant_name,
+            'tenant_username':  symbols_data.tenant_username,
+            'tenant_password':  symbols_data.tenant_password,
+            'client_subnet':    symbols_data.tenant_name + '-client-v4-subnet',
+            'guest_username':   symbols_data.guest_username,
+            'guest_password':   symbols_data.guest_password,
+            'server_http_port': symbols_data.server_http_port,
+            'server_client_ip': symbols_data.server_client_ip
         }
         self.symbols.update(new_symbols)
 

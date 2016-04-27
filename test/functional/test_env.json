@@ -1,9 +1,20 @@
 {
-  "username":    "testlab",
-  "password":    "changeme",
-  "tenant_name": "testlab",
-  "auth_url":    "http://<controller floating IP>:5000/v2.0",
-  "bigip_ip":    "<BipIP floating IP>",
-  "client_ip":   "<Client floating IP>",
-  "server_ip":   "<Serrver floating IP>"
+  "lbaas_version":    2,
+  "auth_url":         "http://<controller floating IP>:5000/v2.0",
+  "bigip_ip":         "<BipIP floating IP>",
+  "client_ip":        "<Client floating IP>",
+  "server_ip":        "<Serrver floating IP>",
+  "tenant_name":      "testlab",
+  "tenant_username":  "testlab",
+  "tenant_password":  "changeme",
+  "admin_name":       "admin",
+  "admin_username":   "admin",
+  "admin_password":   "changeme",
+  "bigip_username":   "admin",
+  "bigip_password":   "admin",
+  "guest_username":   "centos",
+  "guest_password":   "changeme",
+  "server_http_port": "8080",
+  "server_client_ip": "10.2.2.3",
+  "provider":         "f5networks"
 }
