@@ -464,7 +464,7 @@ def test_solution(tst_setup):
         # HACK workaround until openstack supports the status field
         folders = te.bigip.sys.folders.get_collection()
         for f in folders:
-            if f.name.startswith('Test_'):
+            if f.name.startswith('Project_'):
                 break
         params = {'params': {'$filter': 'partition eq %s' % f.name}}
         pool = te.bigip.ltm.pools.pool.load(name=proxy.pool['name'],
