@@ -1,6 +1,6 @@
-git+https://bldr-git.int.lineratesystems.com/tools/pytest-symbols.git
-git+https://bldr-git.int.lineratesystems.com/tools/pytest-meta.git
-git+https://github.com/F5Networks/f5-openstack-test.git
+git+ssh://git@bldr-git.int.lineratesystems.com/tools/pytest-meta.git
+git+ssh://git@bldr-git.int.lineratesystems.com/tools/pytest-symbols.git
+git+ssh://git@github.com/F5Networks/f5-openstack-test.git
 
 mock==1.3.0
 pytest==2.9.1
