@@ -1,9 +1,9 @@
 {
   "lbaas_version":    2,
-  "auth_url":         "http://<controller IP>:5000/v2.0",
-  "bigip_ip":         "<BipIP floating IP>",
-  "client_ip":        "<Client floating IP>",
-  "server_ip":        "<Serrver floating IP>",
+  "auth_url":         "http://<controller ip address>:5000/v2.0",
+  "bigip_ip":         "<bigip  floating ip address>",
+  "client_ip":        "<client floating ip address>",
+  "server_ip":        "<server floating ip address>",
   "tenant_name":      "testlab",
   "tenant_username":  "testlab",
   "tenant_password":  "changeme",
@@ -16,5 +16,9 @@
   "guest_password":   "changeme",
   "server_http_port": "8080",
   "server_client_ip": "10.2.2.3",
-  "provider":         "f5networks"
+  "provider":         "f5networks",
+  "os_tentant_name":  "",
+  "os_tenant_id":     "",
+  "os_username":      "",
+  "os_password":      ""
 }
