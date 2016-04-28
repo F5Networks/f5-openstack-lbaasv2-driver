@@ -1,6 +1,8 @@
 {
   "lbaas_version":    2,
   "auth_url":         "http://<auth ip address>:5000/v2.0",
+  "heatclient_url":   "http://<auth ip address>:8004/v1/<tentant ID>",
+  "glanceclient_url": "http://<auth ip address>:9292",
   "bigip_ip":         "<bigip  floating ip address>",
   "client_ip":        "<client floating ip address>",
   "server_ip":        "<server floating ip address>",
