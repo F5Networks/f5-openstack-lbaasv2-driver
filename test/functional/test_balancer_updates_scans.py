@@ -10,8 +10,8 @@ from pytest import symbols as symbols_data
 
 
 nclient_config = {
-    'username':    symbols_data.username,
-    'password':    symbols_data.password,
+    'username':    symbols_data.tenant_username,
+    'password':    symbols_data.tenant_password,
     'tenant_name': symbols_data.tenant_name,
     'auth_url':    symbols_data.auth_url
 }
