@@ -25,6 +25,8 @@ from neutronclient.v2_0 import client
 from f5_os_test.polling_clients import NeutronClientPollingManager
 from f5_os_test.polling_clients import MaximumNumberOfAttemptsExceeded
 
+# Note: symbols_data provided through commandline json file.
+from pytest import symbols as symbols_data
 
 def log_test_call(func):
     def wrapper(func, *args, **kwargs):
@@ -34,37 +36,30 @@ def log_test_call(func):
 
 
 class ExecTestEnv(object):
-    lbaas_version = 2
 
-    def __init__(self, symbols):
-        self.symbols = symbols.copy()
-        if 'lbaas_version' in self.symbols:
-            lbaas_version =  self.symbols['lbaas_version']
-        else:
-            lbaas_version = ExecTestEnv.lbaas_version
-        new_symbols = {
-            'debug':            True,
-            'lbaas_version':    lbaas_version,
-            # leave the following settings alone
-            'bigip_username':   'admin',
-            'bigip_password':   'admin',
-            # The provider string for v2 needs to change to match the
-            # environment prefix in the f5 agent ini file
-            'provider':         ('f5networks' if lbaas_version == 2 else
-                                 'f5'),
-            'admin_name':       'admin',
-            'admin_username':   'admin',
-            'admin_password':   'changeme',
-            'tenant_name':      'testlab',
-            'tenant_username':  'testlab',
-            'tenant_password':  'changeme',
-            'client_subnet':    'testlab-client-v4-subnet',
-            'guest_username':   'centos',
-            'guest_password':   'changeme',
-            'server_http_port': '8080',
-            'server_client_ip': '10.2.2.3'
-        }
-        self.symbols.update(new_symbols)
+    def __init__(self):
+        self.symbols = {}
+        self.symbols['bigip_public_mgmt_ip']  = symbols_data.bigip_ip
+        self.symbols['client_public_mgmt_ip'] = symbols_data.client_ip
+        self.symbols['server_public_mgmt_ip'] = symbols_data.server_ip
+        self.symbols['openstack_auth_url']    = symbols_data.auth_url
+        self.symbols['lbaas_version']         = symbols_data.lbaas_version
+        self.symbols['debug']                 = True
+        self.symbols['bigip_username']        = symbols_data.bigip_username
+        self.symbols['bigip_password']        = symbols_data.bigip_password
+        self.symbols['provider']              = ('f5' if symbols_data.lbaas_version < 2 \
+                                                  else symbols_data.provider)
+        self.symbols['admin_name']            = symbols_data.admin_name
+        self.symbols['admin_username']        = symbols_data.admin_username
+        self.symbols['admin_password']        = symbols_data.admin_password
+        self.symbols['tenant_name']           = symbols_data.tenant_name
+        self.symbols['tenant_username']       = symbols_data.tenant_username
+        self.symbols['tenant_password']       = symbols_data.tenant_password
+        self.symbols['client_subnet']         = symbols_data.tenant_name + '-client-v4-subnet'
+        self.symbols['guest_username']        = symbols_data.guest_username
+        self.symbols['guest_password']        = symbols_data.guest_password
+        self.symbols['server_http_port']      = symbols_data.server_http_port
+        self.symbols['server_client_ip']      = symbols_data.server_client_ip
 
 
 def nclientmanager(symbols):
@@ -374,15 +369,7 @@ class LBaaSv2(object):
 @pytest.fixture
 def tst_setup(request, symbols):
     print 'test setup'
-    # change the following settings to use your TLC session
-    # temp solution until we integrate with Kevin's py-symbols module.
-    symbols_env = {
-        'bigip_public_mgmt_ip':     symbols.bigip_ip,
-        'client_public_mgmt_ip':    symbols.client_ip,
-        'server_public_mgmt_ip':    symbols.server_ip,
-        'openstack_auth_url':       symbols.auth_url
-    }
-    testenv = ExecTestEnv(symbols_env)
+    testenv = ExecTestEnv()
 
     def tst_teardown():
         print 'test teardown'
