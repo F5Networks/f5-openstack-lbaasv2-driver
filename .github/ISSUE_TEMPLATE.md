@@ -1,7 +1,4 @@
 * Title: A short but descriptive summary of the issue, whether it be a bug or enhancement.
-* Labels: Click on the gear icon and give us some direction on the type of issue you are filing.
-* Milestone: Leave this field empty.
-* Assignee: If you're not fixing the issue, leave this field empty.
 * Attachments: For bugs, attach the agent log and configuration files
   * /etc/neutron/services/f5/f5-openstack-agent.ini
   * /var/log/neutron/f5-openstack-agent.log
