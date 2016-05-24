@@ -1,5 +1,3 @@
-.. _lbaasv2-deploy-before-you-begin:
-
 Before You Begin
 ----------------
 
@@ -21,7 +19,7 @@ In order to follow this guide, you will need the following:
 Install the F5® Service Provider Package
 ````````````````````````````````````````
 
-Install the F5® LBaaSv2 service provider package *before* you :ref:`install the F5® LBaaSv2 plugin packages <install-f5-agent-driver>`. If the F5® service provider package isn't present on your Neutron controller,  the F5® agent and LBaaSv2 driver will not work.
+Install the F5® LBaaSv2 service provider package *before* you install the F5® LBaaSv2 driver. If the F5® service provider package isn't present on your Neutron controller, the F5® LBaaSv2 driver will not work.
 
 .. topic:: Download the F5® LBaaSv2 service provider package and add it to the python path for ``neutron_lbaas``.
 
@@ -45,3 +43,14 @@ Install the F5® LBaaSv2 service provider package *before* you :ref:`install the
     .. code-block:: text
 
         $ sudo tar xvf f5.tgz –C /usr/lib/python2.7/dist-packages/neutron_lbaas/drivers/
+
+
+Install and Configure the F5® Agent
+```````````````````````````````````
+
+See the F5® Agent `Quick Start <http://f5-openstack-agent.readthedocs.io/en/liberty/#quick-start>`_ guide for instructions.
+
+.. tip::
+
+    The F5® agent should, at minimum, be installed on your Neutron controller. You can also install it on any host for which you'd like to provision BIG-IP® services.
+

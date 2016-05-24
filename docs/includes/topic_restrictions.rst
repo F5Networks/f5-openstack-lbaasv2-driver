@@ -1,5 +1,13 @@
-Restrictions
-------------
+Unsupported Features
+--------------------
+
+The following features are unsupported in |release|; they will be introduced in future releases.
+
+* vCMP® (multi-tenancy)
+* Agent High Availability
+* BIG-IP® Device Service Clustering
+* Multiple environments (Prod, Dev, Test)
+* `SSL Offloading <https://f5.com/glossary/ssl-offloading>`_ / Terminated HTTPS
 
 .. note::
 
@@ -19,12 +27,4 @@ Restrictions
         |                || SSL (TLS protocol)                                |
         +----------------+----------------------------------------------------+
 
-Unsupported Features
---------------------
 
-The following features are unsupported in |release|; they will be introduced in future releases.
-
-* vCMP® (multi-tenancy)
-* Agent High Availability
-* BIG-IP® Device Service Clustering
-* Multiple environments (Prod, Dev, Test)

@@ -1,10 +1,6 @@
-.. toctree::
-    :hidden:
+.. _lbaasv2-driver-release-notes:
 
-
-.. _release-notes:
-
-Release Notes |release|
+Release Notes |version|
 =======================
 
 This release provides an implementation of the OpenStack Neutron LBaaSv2 driver and agent to support F5 Networks® BIG-IP® systems.
@@ -16,7 +12,7 @@ This release provides a limited set of configuration objects for use by OpenStac
 Available Features
 ~~~~~~~~~~~~~~~~~~
 
-.. include:: includes/topic_features.rst
+.. include:: includes/topic_lbaasv2-features.rst
     :start-line: 3
 
 Restrictions
@@ -26,3 +22,5 @@ Restrictions
     :start-line: 3
 
 
+.. toctree::
+    :hidden:
