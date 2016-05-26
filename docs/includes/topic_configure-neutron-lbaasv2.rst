@@ -1,3 +1,5 @@
+.. _configure-neutron-lbaasv2:
+
 Configure Neutron for LBaaSv2
 -----------------------------
 

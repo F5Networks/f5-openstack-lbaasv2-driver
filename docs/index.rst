@@ -1,15 +1,19 @@
 .. _home:
 
-F5® OpenStack LBaaSv2 Driver
-============================
-|Build Status|
+F5® OpenStack Neutron LBaaSv2 Plugin
+====================================
+
+|Build Status| |Docs Build Status|
+
 
 .. raw:: html
 
     <script async defer src="https://f5-openstack-slack.herokuapp.com/slackin.js"></script>
 
 
-.. include:: includes/topic_lbaasv2-driver-overview.rst
+.. include:: includes/topic_lbaasv2-plugin-overview.rst
+    :start-line: 3
+    :end-line: 5
 
 .. include:: includes/ref_lbaasv2-version-compatibility.rst
 
@@ -21,11 +25,14 @@ Site Contents
     :maxdepth: 2
 
     Release Notes <release_notes>
-    Supported Features <includes/topic_lbaasv2-features>
+    Supported Features <map_lbaasv2-features>
     Unsupported Features <includes/topic_restrictions>
-    User Guide <map_f5-lbaasv2-driver-user-guide>
+    User Guide <map_f5-lbaasv2-user-guide>
     Coding Example <coding-example-lbaasv2>
 
 .. |Build Status| image:: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=liberty
     :target: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver
     :alt: Build Status
+.. |Docs Build Status| image:: http://readthedocs.org/projects/f5-openstack-lbaasv2-driver/badge/?version=latest
+    :target: http://f5-openstack-lbaasv2-driver.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status

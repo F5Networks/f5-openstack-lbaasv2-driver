@@ -1,9 +1,6 @@
 Before You Begin
 ----------------
 
-Prerequisites
-`````````````
-
 In order to follow this guide, you will need the following:
 
 * A functional OpenStack |openstack| environment with at least one controller node, one compute node, and one network node.
@@ -45,12 +42,10 @@ Install the F5® LBaaSv2 service provider package *before* you install the F5® 
         $ sudo tar xvf f5.tgz –C /usr/lib/python2.7/dist-packages/neutron_lbaas/drivers/
 
 
-Install and Configure the F5® Agent
-```````````````````````````````````
+Install the F5® Agent
+`````````````````````
 
-See the F5® Agent `Quick Start <http://f5-openstack-agent.readthedocs.io/en/liberty/#quick-start>`_ guide for instructions.
+See the :ref:`F5® Agent documentation <agent:home>` for installation instructions.
 
-.. tip::
-
-    The F5® agent should, at minimum, be installed on your Neutron controller. You can also install it on any host for which you'd like to provision BIG-IP® services.
+The F5® agent should, at minimum, be installed on your Neutron controller. You can also install it on any host for which you'd like to provision BIG-IP® services.
 

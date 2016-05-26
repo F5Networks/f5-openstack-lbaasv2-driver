@@ -9,17 +9,17 @@ Release Highlights
 ------------------
 This release provides a limited set of configuration objects for use by OpenStack Neutron LBaaSv2 service plugin. It has support for L3 binding and L2 orchestration for standalone BIG-IP® devices.
 
-Available Features
-~~~~~~~~~~~~~~~~~~
+Supported Features
+------------------
 
-.. include:: includes/topic_lbaasv2-features.rst
-    :start-line: 3
+.. include:: map_lbaasv2-features.rst
+    :start-line: 5
 
-Restrictions
-~~~~~~~~~~~~
+Unsupported Features
+--------------------
 
 .. include:: includes/topic_restrictions.rst
-    :start-line: 3
+    :start-line: 5
 
 
 .. toctree::
