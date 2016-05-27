@@ -1,0 +1,17 @@
+.. _config-agent-overview:
+
+Overview
+````````
+
+To use the F5® OpenStack agent, edit the agent configuration file -- :file:`/etc/neutron/services/f5/f5-openstack-agent.ini` -- as appropriate for your environment.
+
+.. topic:: Example:
+
+    .. code-block:: text
+
+        $ sudo vi /etc/neutron/services/f5/f5-openstack-agent.ini
+
+
+All of the agent's functions are described in detail in the :ref:`agent configuration file <agent:agent-configuration-file>`. Please see :ref:`Supported features` for a list of the features supported in |version| with configuration examples for each feature.
+
+
