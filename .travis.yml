@@ -11,7 +11,7 @@ install:
     - sudo pip install -r requirements.docs.txt
 script:
     - flake8 ./f5lbaasdriver
-    - sphinx-build -W docs/ docs/_build/
+    - sphinx-build docs/ docs/_build/
 
 notifications:
   slack:
