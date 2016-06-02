@@ -19,6 +19,7 @@
   "server_http_port": "8080",
   "server_client_ip": "10.2.2.3",
   "provider":         "f5networks",
+  "partition_prefix": "Project",
   "os_tentant_name":  "",
   "os_tenant_id":     "",
   "os_username":      "",
