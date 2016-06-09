@@ -7,7 +7,9 @@ This release provides an implementation of the OpenStack Neutron LBaaSv2 driver 
 
 Release Highlights
 ------------------
-This release provides a limited set of configuration objects for use by OpenStack Neutron LBaaSv2 service plugin. It has support for L3 binding and L2 orchestration for standalone BIG-IP® devices.
+
+This release introduces support for SSL offloading and for BIG-IP® clustering (active-standby and scalen configurations).
+
 
 .. include:: map_release-summary.rst
 
