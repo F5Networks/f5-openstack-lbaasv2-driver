@@ -16,6 +16,7 @@ The certificate manager settings are for use with the ``TERMINATED_HTTPS`` featu
     - ``os_user_domain_name``: OpenStack domain in which the user account resides (v3 only)
     - ``os_project_name``: OpenStack project name (v3 only; refers to the same data as ``os_tenant_name`` in v2)
     - ``os_project_domain_name``: OpenStack domain in which the project resides
+    - ``f5_parent_ssl_profile``: The parent SSL profile on the BIG-IP® from which the agent SSL profile should inherit settings
 
     .. code-block:: text
 
@@ -44,4 +45,15 @@ The certificate manager settings are for use with the ``TERMINATED_HTTPS`` featu
         os_user_domain_name = default
         os_project_name = admin
         os_project_domain_name = default
+        #
+        # Parent SSL profile name
+        #
+        # A client SSL profile is created for LBaaS listeners that use TERMINATED_HTTPS
+        # protocol. You can define the parent profile for this profile by setting
+        # f5_parent_ssl_profile. The profile created to support TERMINATTED_HTTPS will
+        # inherit settings from the parent you define. This must be an existing profile,
+        # and if it does not exist on your BIG-IP® system the agent will use the default
+        # profile, clientssl.
+        #f5_parent_ssl_profile = clientssl
+        #
 
