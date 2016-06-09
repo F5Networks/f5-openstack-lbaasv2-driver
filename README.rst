@@ -39,7 +39,7 @@ For more information, please see the F5® OpenStack `Releases, Versioning, and S
 Documentation
 -------------
 
-Please refer to the F5® OpenStack LBaaSv2 Driver `project documentation <http://f5-openstack-lbaasv2.readthedocs.org/en/>`_ for installation and configuration instructions.
+Please refer to the F5® OpenStack LBaaSv2 `project documentation <http://f5-openstack-lbaasv2-driver.readthedocs.io>`_ for installation and configuration instructions.
 
 Filing Issues
 -------------

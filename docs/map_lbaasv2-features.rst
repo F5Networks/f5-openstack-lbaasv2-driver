@@ -19,4 +19,3 @@ Supported Features
 
 
 
-.. [#fn1] Not supported in this release.
