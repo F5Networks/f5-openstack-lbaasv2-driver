@@ -61,6 +61,7 @@ class ExecTestEnv(object):
         self.symbols['guest_password']        = symbols_data.guest_password
         self.symbols['server_http_port']      = symbols_data.server_http_port
         self.symbols['server_client_ip']      = symbols_data.server_client_ip
+        self.symbols['nc_interval']           = symbols_data.nc_interval
 
 
 def nclientmanager(symbols):
@@ -69,7 +70,7 @@ def nclientmanager(symbols):
         'password': symbols['tenant_password'],
         'tenant_name': symbols['tenant_name'],
         'auth_url': symbols['openstack_auth_url'],
-        'interval': 1
+        'interval': symbols['nc_interval']
     }
 
     return NeutronClientPollingManager(**nclient_config)
@@ -298,7 +299,7 @@ class LBaaSv2(object):
     def create_lbaas_member(self, p_id):
         subnet_id = None
         for sn in self.ncm.list_subnets()['subnets']:
-            if 'server-v4' in sn['name']:
+            if 'client-v4' in sn['name']:
                 subnet_id = sn['id']
                 break
 
