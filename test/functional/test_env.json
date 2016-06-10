@@ -25,6 +25,6 @@
   "os_tenant_id":     "",
   "os_username":      "barbican",
   "os_password":      "orange",
-  "os_auth_version":  "v3"
+  "os_auth_version":  "v3",
   "nc_interval":      1
 }
