@@ -53,7 +53,7 @@ Use the command below to create a health monitor for the pool specifying the del
 Create a tls load balancer
 ``````````````````````````
 
-The example command below shows how to create a listener that uses the ``TERMINATED_HTTPS`` protocol.
+The example command below shows how to create a listener that uses the ``TERMINATED_HTTPS`` protocol. You'll need to specify the protocol (``TERMINATED_HTTPS``); port; and the location of the `Barbican container <http://docs.openstack.org/developer/barbican/api/quickstart/containers.html>`_ where the certificate is stored.
 
 .. code-block:: shell
 

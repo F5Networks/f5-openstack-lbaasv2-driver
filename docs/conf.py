@@ -31,7 +31,7 @@ VERSION = f5lbaasdriver.__version__
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-#needs_sphinx = '1.0'
+needs_sphinx = '1.4'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -61,7 +61,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'F5 OpenStack LBaaSv2 Driver'
+project = u'F5 OpenStack LBaaSv2'
 copyright = u'2016, F5 Networks Inc.'
 author = u'F5 Networks'
 
@@ -141,7 +141,7 @@ html_theme = 'sphinx_rtd_theme'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = 'F5 OpenStack LBaaSv2 Driver'
+html_title = 'F5 OpenStack LBaaSv2'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #html_short_title = None
@@ -221,7 +221,7 @@ html_show_copyright = True
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'F5OpenStackLBaaSv2Driverdoc'
+htmlhelp_basename = 'F5OpenStackLBaaSv2doc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -243,7 +243,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'F5OpenStackLBaaSv2Driver.tex', u'F5 OpenStack LBaaSv2 Driver'
+    (master_doc, 'F5OpenStackLBaaSv2.tex', u'F5 OpenStack LBaaSv2'
                                             u'Documentation',
      u'F5 Networks', 'manual'),
 ]
@@ -274,7 +274,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'f5openstacklbaasv2driver', u'F5 OpenStack LBaaSv2 Driver'
+    (master_doc, 'f5openstacklbaasv2', u'F5 OpenStack LBaaSv2'
                                           u'Documentation',
      [author], 1)
 ]
@@ -289,9 +289,9 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'F5OpenStackLBaaSv2Driver', u'F5 OpenStack LBaaSv2 '
-                                       u'Driver Documentation',
-     author, 'F5OpenStackLBaaSv2Driver', 'One line description of project.',
+    (master_doc, 'F5OpenStackLBaaSv2', u'F5 OpenStack LBaaSv2'
+                                       u'Documentation',
+     author, 'F5OpenStackLBaaSv2', 'One line description of project.',
      'Miscellaneous'),
 ]
 
