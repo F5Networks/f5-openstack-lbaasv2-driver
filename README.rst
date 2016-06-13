@@ -23,82 +23,43 @@ f5-openstack-lbaasv2-driver
 
 Introduction
 ------------
-The F5® OpenStack LBaaSv2 plugin enables F5® services in OpenStack's Neutron LBaaSv2 service. The plugin comprises an agent and a service provider driver. This repo houses the code for the driver.
 
-The code for the agent, which allows Neutron services to communicate with BIG-IP®, is in the `F5Networks/f5-openstack-agent <https://github.com/F5Networks/f5-openstack-agent>`_ repo.
+The F5® OpenStack LBaaSv2 service provider driver (also called the 'F5® LBaaSv2 driver') makes it possible to provision F5® BIG-IP® local traffic management (LTM®) services in an OpenStack cloud.
 
-The code for the plugin that gets upstreamed to the OpenStack community is in the `F5Networks/f5-openstack-lbaasv2 <https://github.com/F5Networks/f5-openstack-lbaasv2>`_ repo.
-
+The F5® LBaaSv2 driver works in conjunction with the F5® OpenStack agent, which uses the :ref:`f5-sdk <f5sdk:home>` to translate Neutron API calls into BIG-IP® REST API calls.
 
 Compatibility
 -------------
-The LBaaSv2 plugin is compatible with OpenStack releases from Liberty forward. If
-you are using an earlier release, you'll have to use the `LBaaSv1
-plugin <https://github.com/F5Networks/f5-openstack-lbaasv1>`__.
+
+The F5® LBaaSv2 driver is compatible with OpenStack releases from Liberty forward. If
+you are using an earlier release, you'll need the `F5® OpenStack LBaaSv1 plugin <http://f5-openstack-lbaasv1.readthedocs.io>`_.
 
 For more information, please see the F5® OpenStack `Releases, Versioning, and Support Matrix <http://f5-openstack-docs.readthedocs.org/en/latest/releases_and_versioning.html>`_.
 
 Documentation
 -------------
-Please refer to the F5® OpenStack LBaaSv2 `project documentation <http://f5-openstack-lbaasv2.readthedocs.org/en/>`_ for installation and configuration instructions.
+
+Please refer to the F5® OpenStack LBaaSv2 `project documentation <http://f5-openstack-lbaasv2-driver.readthedocs.io>`_ for installation and configuration instructions.
 
 Filing Issues
 -------------
-If you find an issue, we would love to hear about it. Please let us know by filing an `issue <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/issues>`_ in this repository. Use the issue template to tell us as much as you can about what you found, how you found it, your environment, etc.. We also welcome feature requests, which can be filed as issues and marked with the ``enhancement`` label.
+
+If you find an issue, we would love to hear about it. Please let us know by filing an `issue <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/issues>`_ in this repository. Use the issue template to tell us as much as you can about what you found, how you found it, your environment, etc.. We also welcome you to file feature requests as issues.
 
 Contributing
 ------------
+
 See `Contributing <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/blob/master/CONTRIBUTING.md>`_.
-
-Build
------
-To make a PyPI package:
-
-.. code:: shell
-
-    $ python setup.py sdist
-
-
-Test
-----
-Before you open a pull request, your code must have passing `pytest <http://pytest.org>`_ unit tests. In addition, you should include a set of functional tests written to use a real BIG-IP® for testing. Information on how to run our set of tests is provided below.
-
-Unit Tests
-~~~~~~~~~~
-We use pytest for our unit tests.
-
-1. If you haven't already, install the required test packages in the :file:`requirements.txt` in your virtual environment.
-
-.. code:: shell
-
-    $ pip install hacking pytest pytest-cov
-    $ pip install -r requirements.txt
-
-
-2. Run the tests and produce a coverage report. The ``--cov-report=html`` will create a ``htmlcov/`` directory that you can view in your browser to see the missing lines of code.
-
-.. code:: shell
-
-   $ py.test --cov ./icontrol --cov-report=html
-   $ open htmlcov/index.html
-
-
-Style Checks
-~~~~~~~~~~~~
-
-We use the hacking module for our style checks (installed as part of step 1 in the Unit Test section).
-
-.. code:: shell
-
-    $ flake8 ./
 
 
 Copyright
 ---------
+
 Copyright 2015-2016 F5 Networks Inc.
 
 Support
 -------
+
 See `Support <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/blob/master/SUPPORT>`_.
 
 License

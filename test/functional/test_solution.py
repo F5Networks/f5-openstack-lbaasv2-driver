@@ -21,7 +21,6 @@ import sys
 
 from f5.bigip import BigIP
 from pprint import pprint as pp
-from neutronclient.v2_0 import client
 from f5_os_test.polling_clients import NeutronClientPollingManager
 from f5_os_test.polling_clients import MaximumNumberOfAttemptsExceeded
 
@@ -44,11 +43,13 @@ class ExecTestEnv(object):
         self.symbols['server_public_mgmt_ip'] = symbols_data.server_ip
         self.symbols['openstack_auth_url']    = symbols_data.auth_url
         self.symbols['lbaas_version']         = symbols_data.lbaas_version
-        self.symbols['debug']                 = True
+        self.symbols['debug']                 = False
         self.symbols['bigip_username']        = symbols_data.bigip_username
         self.symbols['bigip_password']        = symbols_data.bigip_password
         self.symbols['provider']              = ('f5' if symbols_data.lbaas_version < 2 \
                                                   else symbols_data.provider)
+        self.symbols['partition_prefix']      = ('uuid' if symbols_data.lbaas_version < 2 \
+                                                     else symbols_data.partition_prefix)
         self.symbols['admin_name']            = symbols_data.admin_name
         self.symbols['admin_username']        = symbols_data.admin_username
         self.symbols['admin_password']        = symbols_data.admin_password
@@ -60,6 +61,7 @@ class ExecTestEnv(object):
         self.symbols['guest_password']        = symbols_data.guest_password
         self.symbols['server_http_port']      = symbols_data.server_http_port
         self.symbols['server_client_ip']      = symbols_data.server_client_ip
+        self.symbols['nc_interval']           = symbols_data.nc_interval
 
 
 def nclientmanager(symbols):
@@ -67,11 +69,10 @@ def nclientmanager(symbols):
         'username': symbols['tenant_username'],
         'password': symbols['tenant_password'],
         'tenant_name': symbols['tenant_name'],
-        'auth_url': symbols['openstack_auth_url']
+        'auth_url': symbols['openstack_auth_url'],
+        'interval': symbols['nc_interval']
     }
 
-    neutronclient = client.Client(**nclient_config)
-    #return NeutronClientPollingManager(neutronclient)
     return NeutronClientPollingManager(**nclient_config)
 
 
@@ -159,24 +160,30 @@ class LBaaSv1(object):
         # for passing traffic between client and server
         proxy = Proxy()
         proxy.pool = self.create_pool()
+        time.sleep(1)
         proxy.vip = self.create_vip(proxy.pool['id'], proxy.pool['subnet_id'])
+        time.sleep(1)
         proxy.members.append(self.create_member(proxy.pool['id']))
+        time.sleep(1)
         proxy.healthmonitors.append(self.create_healthmonitor())
+        time.sleep(1)
         hmconf = proxy.healthmonitors[0]
         hmconf = {'health_monitor': {'id': hmconf['id'],
                                      'tenant_id': hmconf['tenant_id']}}
-        self.ncm.client.associate_health_monitor(proxy.pool['id'], hmconf)
+        self.ncm.associate_health_monitor(proxy.pool['id'], hmconf)
         self.proxies.append(proxy)
         return proxy
 
     def delete_proxy(self, proxy):
         # destroy a proxy and all associated objects
         for healthmonitor in proxy.healthmonitors:
-            self.ncm.client.disassociate_health_monitor(proxy.pool['id'],
-                                                        proxy.healthmonitors[0]['id'])
+            self.ncm.disassociate_health_monitor(proxy.pool['id'],
+                                                 proxy.healthmonitors[0]['id'])
+            time.sleep(1)
             self.ncm.delete_health_monitor(healthmonitor['id'])
         for member in proxy.members:
             self.ncm.delete_member(member['id'])
+        time.sleep(1)
         self.ncm.delete_vip(proxy.vip['id'])
         self.wait_for_object_state('vip_id', None,
                                    self.ncm.show_pool, 'pool', proxy.pool['id'])
@@ -185,18 +192,23 @@ class LBaaSv1(object):
         # for the pool to be deleted, otherwise it is stuck in pending.
 
     def clear_proxies(self):
+        if self.symbols['debug']:
+            self.debug()
         for vip in self.ncm.list_vips()['vips']:
             self.ncm.delete_vip(vip['id'])
-        for member in self.ncm.list_members()['members']:
-            self.ncm.delete_member(member['id'])
+        time.sleep(1)
         for pool in self.ncm.list_pools()['pools']:
-            pp(pool)
             for health_monitor in \
                     self.ncm.list_health_monitors()['health_monitors']:
-                self.ncm.client.disassociate_health_monitor(pool['id'],
-                                                            health_monitor['id'])
-                time.sleep(5)
+                self.ncm.disassociate_health_monitor(pool['id'],
+                                                     health_monitor['id'])
+                time.sleep(1)
                 self.ncm.delete_health_monitor(health_monitor['id'])
+                time.sleep(1)
+        for member in self.ncm.list_members()['members']:
+            self.ncm.delete_member(member['id'])
+        time.sleep(1)
+        for pool in self.ncm.list_pools()['pools']:
             self.wait_for_object_state('vip_id', None,
                                        self.ncm.show_pool, 'pool', pool['id'])
             self.ncm.delete_pool(pool['id'])
@@ -261,7 +273,6 @@ class LBaaSv2(object):
         while value != current_value:
             sys.stdout.flush()
             current_state = method(*args)[key]
-            pp(current_state)
             current_value = current_state[field]
             time.sleep(self.polling_interval)
             attempts = attempts + 1
@@ -288,7 +299,7 @@ class LBaaSv2(object):
     def create_lbaas_member(self, p_id):
         subnet_id = None
         for sn in self.ncm.list_subnets()['subnets']:
-            if 'server-v4' in sn['name']:
+            if 'client-v4' in sn['name']:
                 subnet_id = sn['id']
                 break
 
@@ -403,7 +414,7 @@ def tst_setup(request, symbols):
                    testenv.symbols['lbaas_version'] == 1 else
                    LBaaSv2(testenv.symbols))
     testenv.lbm.clear_proxies()
-    #request.addfinalizer(tst_teardown)
+    request.addfinalizer(tst_teardown)
     return testenv
 
 
@@ -450,7 +461,7 @@ def test_solution(tst_setup):
         # HACK workaround until openstack supports the status field
         folders = te.bigip.sys.folders.get_collection()
         for f in folders:
-            if f.name.startswith('Project_'):
+            if f.name.startswith(te.symbols['partition_prefix']):
                 break
         params = {'params': {'$filter': 'partition eq %s' % f.name}}
         pool = te.bigip.ltm.pools.pool.load(name=proxy.pool['name'],
@@ -466,7 +477,7 @@ def test_solution(tst_setup):
         while member.state != 'up':
             time.sleep(1)
             attempts = attempts + 1
-            if attempts >= 15:
+            if attempts >= 20:
                 raise MaximumNumberOfAttemptsExceeded
             member.refresh()
     print 'COMPLETE'
