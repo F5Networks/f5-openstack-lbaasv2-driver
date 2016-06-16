@@ -1,13 +1,15 @@
+:orphan: true
+
 .. _ha-mode:
 
 HA mode
-```````
+=======
 
-- ``f5_ha_type``: Defines the high availability (HA) mode used by the BIG-IP®.
+- ``f5_ha_type``: Defines the :term:`high availability` (HA) mode used by the BIG-IP®.
 
-    * ``standalone``: Single BIG-IP® device; no HA.
-    * ``pair``: Active/standby two device HA.
-    * ``scalen``: Active device cluster.
+    * :term:`standalone`
+    * :term:`pair`
+    * :term:`scalen`
 
     .. code-block:: text
 

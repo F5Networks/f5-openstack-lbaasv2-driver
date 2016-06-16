@@ -1,3 +1,5 @@
+:orphan: true
+
 Agent Configuration File
 ========================
 
@@ -8,7 +10,7 @@ For reference, we've provided here a set of 'pre-configured' agent config files.
 :ref:`Global Routed Mode`
 -------------------------
 
-Can be used for standalone, :ref:`overcloud <Before You Begin>` BIG-IP® VE deployments.
+Can be used for :term:`standalone`, :term:`overcloud` BIG-IP® VE deployments.
 
 * :download:`f5-openstack-agent.grm.ini <../_static/f5-openstack-agent.grm.ini>`
 
@@ -16,7 +18,7 @@ Can be used for standalone, :ref:`overcloud <Before You Begin>` BIG-IP® VE depl
 :ref:`L2/L3 Segmentation Modes`
 -------------------------------
 
-Can be used for standalone or clustered :ref:`undercloud <Before You Begin>` BIG-IP® hardware or VE deployments.
+Can be used for :term:`standalone` or :term:`clustered` :term:`undercloud` BIG-IP® hardware or VE deployments.
 
 * :download:`f5-openstack-agent.gre.ini <../_static/f5-openstack-agent.gre.ini>`
 

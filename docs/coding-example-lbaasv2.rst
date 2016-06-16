@@ -66,5 +66,5 @@ The example command below shows how to create a listener that uses the ``TERMINA
 
     See the `OpenStack LBaaS documentation <https://wiki.openstack.org/wiki/Network/LBaaS/docs/how-to-create-tls-loadbalancer>`_ for further information and configuration instructions for the OpenStack pieces.
 
-    The necessary F5® agent configurations are described in :ref:`Certificate Manager`.
+    The necessary F5® agent configurations are described in :ref:`Certificate Manager / SSL Offloading`.
 

@@ -1,7 +1,7 @@
 .. _configure-the-f5-openstack-agent:
 
-Configure the F5® OpenStack Agent
----------------------------------
+Configure the F5 OpenStack Agent
+################################
 
 .. toctree::
 

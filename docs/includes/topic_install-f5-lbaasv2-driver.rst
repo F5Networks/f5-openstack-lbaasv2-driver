@@ -1,3 +1,5 @@
+:orphan: true
+
 .. _install-f5-lbaasv2-driver:
 
 Install the F5® LBaaSv2 Driver

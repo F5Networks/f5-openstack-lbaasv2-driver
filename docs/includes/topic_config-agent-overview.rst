@@ -1,3 +1,5 @@
+:orphan: true
+
 .. _config-agent-overview:
 
 Overview
