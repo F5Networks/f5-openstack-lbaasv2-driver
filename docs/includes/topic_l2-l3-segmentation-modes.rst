@@ -55,5 +55,5 @@ L2/L3 segmentation modes allow you to provision LBaaS services for BIG-IP® devi
         #
         # If you are using only vlans only it should be:
         #
-        # advertised_tunnel_types = vlan
+        # advertised_tunnel_types =
         #

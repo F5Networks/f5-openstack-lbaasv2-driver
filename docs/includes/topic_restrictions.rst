@@ -7,7 +7,6 @@ The following features are unsupported in |release|; they will be introduced in 
 
 * `BIG-IP® vCMP® <https://f5.com/resources/white-papers/virtual-clustered-multiprocessing-vcmp>`_
 * Agent High Availability (HA)
-* :ref:`Auto-sync mode <Sync mode>` for clustered devices
 * Differentiated environments [#]_
 
 

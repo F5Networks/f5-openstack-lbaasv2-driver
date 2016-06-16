@@ -1,0 +1,49 @@
+:orphan: true
+
+.. Internal use only:
+    Use the following template to create a corresponding doc for each new feature.
+
+title
+=====
+
+Overview
+--------
+
+
+Use Case
+--------
+
+
+
+Prerequisites
+-------------
+
+-
+-
+-
+
+
+Caveats
+-------
+
+-
+-
+-
+
+
+Configuration
+-------------
+
+
+Further Reading
+---------------
+
+.. seealso::
+
+    * x
+    * y
+    * z
+
+
+
+
