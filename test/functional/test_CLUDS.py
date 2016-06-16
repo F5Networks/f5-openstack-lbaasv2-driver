@@ -46,7 +46,6 @@ def test_loadbalancer_CLUDS(setup_with_nclientmanager, BigIPSetup):
     # Initialize lb and wait for confirmation from neutron
     active_lb = nclientmanager.create_loadbalancer({'loadbalancer': lbconf})
     lbid = active_lb['loadbalancer']['id']
-    print lbid
     assert active_lb['loadbalancer']['description'] == ''
     assert active_lb['loadbalancer']['provisioning_status'] == 'ACTIVE'
     assert active_lb['loadbalancer']['provider'] == 'f5networks'
@@ -141,24 +140,24 @@ def test_member_CLUDS(setup_with_pool, BigIPSetup):
     nclientmanager, pool = setup_with_pool
     poolname = pool['pool']['name']
     pool_id = pool['pool']['id']
+    # Test List
+    assert not nclientmanager.list_lbaas_members(pool_id)['members']
+    for sn in nclientmanager.list_subnets()['subnets']:
+        if 'server-v4' in sn['name']:
+            address = sn['allocation_pools'][0]['start']
+            subnet_id = sn['id']
+            break
+
+    member_config = {'member': {
+                 'subnet_id': subnet_id,
+                 'address': address,
+                 'protocol_port': 80}}
+    member = nclientmanager.create_lbaas_member(pool_id, member_config)
+    member_id = member['member']['id']
+    assert member['member']['weight'] == 1
+    attempts = 0
     for bigip in BigIPSetup:
         bigip_pool_members = bigip.tm.ltm.pools.get_collection()[0].members_s
-        # Test List
-        assert not nclientmanager.list_lbaas_members(pool_id)['members']
-        for sn in nclientmanager.list_subnets()['subnets']:
-            if 'server-v4' in sn['name']:
-                address = sn['allocation_pools'][0]['start']
-                subnet_id = sn['id']
-                break
-
-        member_config = {'member': {
-                     'subnet_id': subnet_id,
-                     'address': address,
-                     'protocol_port': 80}}
-        member = nclientmanager.create_lbaas_member(pool_id, member_config)
-        member_id = member['member']['id']
-        assert member['member']['weight'] == 1
-        attempts = 0
         while not bigip_pool_members.get_collection():
             attempts = attempts + 1
             time.sleep(.5)
@@ -171,11 +170,14 @@ def test_member_CLUDS(setup_with_pool, BigIPSetup):
             '%s:%s' % (address, member_config['member']['protocol_port'])
         assert address_plus_port in bigip_pool_member.selfLink
         # Test Update, Show
-        nclientmanager.update_lbaas_member(
-            member_id, pool_id, {'member': {'weight': 5}})
-        shown = nclientmanager.show_lbaas_member(member_id, pool_id)
-        assert shown['member']['weight'] == 5
-        nclientmanager.delete_lbaas_member(member['member']['id'], pool_id)
+    nclientmanager.update_lbaas_member(
+        member_id, pool_id, {'member': {'weight': 5}})
+    shown = nclientmanager.show_lbaas_member(member_id, pool_id)
+    assert shown['member']['weight'] == 5
+    nclientmanager.delete_lbaas_member(member['member']['id'], pool_id)
+
+    for bigip in BigIPSetup:
+        bigip_pool_members = bigip.tm.ltm.pools.get_collection()[0].members_s
         assert not bigip_pool_members.get_collection()
 
 def test_healthmonitor_CLUDS(setup_with_pool_member, BigIPSetup):
