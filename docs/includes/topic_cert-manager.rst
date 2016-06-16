@@ -1,7 +1,58 @@
 Certificate Manager
+===================
+
+Overview
+--------
+
+OpenStack's 'Barbican' certificate manager provides a secure location where users can store sensitive information, such as SSH keys, private keys, certificates, and user passwords (referred to as "`secrets`_ " in OpenStack lingo).
+
+The F5® agent allows users to use their Barbican certificates in conjunction with :term:`SSL offloading`, shifting client authentication and encryption/decryption tasks from the target server. It also allows users to designate an existing BIG-IP® SSL profile as the parent from which all client profiles created in OpenStack inherit settings.
+
+Use Case
+--------
+
+In general, SSL offloading increases server and application capacity by moving authentication processing from the target server to a designated authentication server. When you configure  certificate manager in your OpenStack cloud, you can create LBaaS listeners that use the ``TERMINATED_HTTPS`` protocol for TLS/SSL termination. If you have already defined SSL profiles on your BIG-IP, you can designate one as the parent profile from which all of the client SSL profile settings will be inherited.
+
+
+Prerequisites
+-------------
+
+- `OpenStack Barbican`_ certificate manager is configured and operational.
+-
+-
+
+
+Caveats
+-------
+
+-
+-
+-
+
+
+Configuration
+-------------
+
+
+Further Reading
+---------------
+
+.. seealso::
+
+    * `BIG-IP SSL Administration Guide`_
+    * y
+    * z
+
+
+.. _OpenStack Barbican:
+.. _secrets: http://developer.openstack.org/api-guide/key-manager/secrets.html
+.. _BIG-IP SSL Administration Guide: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-ssl-administration-12-0-0.html?sr=54998771
+
+
+
 ```````````````````
 
-The certificate manager settings are for use with the ``TERMINATED_HTTPS`` feature (used to configure `SSL offloading <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-ssl-administration-11-6-0/4.html#unique_375045972>`_ on BIG-IP®).
+
 
 
 - ``cert_manager``: The certificate manager that manages access to certificates and keys for user authentication. Must be set to ``f5_openstack_agent.lbaasv2.drivers.bigip.barbican_cert.BarbicanCertManager``.

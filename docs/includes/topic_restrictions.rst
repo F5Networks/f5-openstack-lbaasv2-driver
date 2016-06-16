@@ -6,7 +6,7 @@ Unsupported Features
 The following features are unsupported in |release|; they will be introduced in future releases.
 
 * `BIG-IP® vCMP® <https://f5.com/resources/white-papers/virtual-clustered-multiprocessing-vcmp>`_
-* Agent High Availability (HA)
+* Agent High Availability (HA) [#]_
 * Differentiated environments [#]_
 
 
@@ -24,4 +24,9 @@ The following features are unsupported in |release|; they will be introduced in 
         +----------------+----------------------------------------------------+
 
 
-.. [#] Running multiple F5® agents on the same host to manage separate BIG-IP® environments.
+.. rubric:: Footnotes
+.. [#] Similar to BIG-IP :term:`high availability`, but applies to the F5 agent processes.
+.. [#] Multiple F5 agents running on the same host, managing *separate* BIG-IP environments.
+.. [#] Creating a pool with no listener.
+
+

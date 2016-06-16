@@ -3,7 +3,7 @@
 Device Driver / iControl® Driver Settings
 `````````````````````````````````````````
 
-* The device driver setting defines the driver that's used to communicate with BIG-IP®. Do **not** change this entry.
+* The device driver setting defines the driver that's used to communicate with BIG-IP®. **Do not** change this entry.
 
 * The iControl® Driver settings identify the BIG-IP®(s) that the agent is expected to manage.
 
