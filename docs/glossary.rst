@@ -1,5 +1,5 @@
 Glossary
-========
+########
 
 .. glossary::
     :sorted:
@@ -20,6 +20,7 @@ Glossary
     clustered
     device cluster
     device service cluster
+    device service clusters
     device service group
     DSC
     DSG
@@ -40,6 +41,7 @@ Glossary
         Both `BIG-IP®`_ devices in a :term:`pair` are in an active state, processing traffic for different virtual servers or SNATs. If one device :term:`fails over`, the remaining device processes traffic from the failed device in addition to its own traffic.
 
     active/standby
+    active-standby
         Only one of the two `BIG-IP®`_ devices is in an active state -- that is, processing traffic -- at any given time. If the active device :term:`fails over`, the second device enters active mode and processes traffic that was originally targeted for the primary device.
 
     failover
@@ -54,12 +56,18 @@ Glossary
     SSL offloading
         SSL offloading relieves a Web server of the processing burden of encrypting and/or decrypting traffic sent via SSL, the security protocol that is implemented in every Web browser. For more information, see the `F5 Glossary <https://f5.com/glossary/ssl-offloading>`_.
 
+    one-arm
     one-arm mode
         One-arm mode is a network topology wherein servers/clients connect to the BIG-IP via a single interface; a single VLAN handles all traffic.
 
+    multi-arm
+    multiple-arm
     multi-arm mode
     multiple-arm mode
         Multi-arm mode is a network topology wherein servers/clients connect to the BIG-IP via different interfaces; two or more VLANs can be used to handle management and data traffic.
+
+    pair
+        Two BIG-IP devices configured for :term:`high availability` with either :term:`active/active` or :term:`active/standby` mode.
 
 
 

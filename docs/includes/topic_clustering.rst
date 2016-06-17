@@ -1,4 +1,4 @@
-.. orphan::
+:orphan: true
 
 Managing BIG-IP Clusters
 ========================
@@ -8,30 +8,31 @@ Overview
 
 The F5® LBaaSv2 agent and driver can manage BIG-IP® :term:`device service clusters`, providing :term:`high availability`, :term:`mirroring`, and :term:`failover` services within your OpenStack cloud.
 
-The F5 agent applies LBaaS configuration changes to each BIG-IP :term:`device` in a cluster at the same time, in real time. This is referred to in the :ref:`Agent Configuration File` as ``replication mode``.
+The F5 agent applies LBaaS configuration changes to each BIG-IP :term:`device` in a cluster at the same time, in real time. This is referred to in the :ref:`Agent Configuration File` as ``replication mode``. Replication mode makes it unnecessary to use  BIG-IP's '`configuration synchronization`_ mode' for LBaaS objects managed by the agent.
 
 Use Case
 --------
 
-Generally, clustering is used in :term:`undercloud` deployments which may contain :ref:`multiple tenants <multi-tenancy>`.
+Clustering provides a greater degree of redundancy than a standalone device offers. It helps to avoid service interruptions that could otherwise occur if a device should go down. A few commonly-used BIG-IP clustering examples are `Sync-Failover device groups`_ and `Sync-Only device groups`_.
 
 
 Prerequisites
 -------------
 
-- An existing, functional BIG-IP device service cluster.
+- Basic understanding of `BIG-IP® device service clustering <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-device-service-clustering-admin-12-0-0.html>`_.
 
-    .. seealso::
+- Licensed, operational BIG-IP :term:`device service cluster`. [#]_
 
-        The following F5 Heat templates can be used to prep and deploy an :term:`active-standby` cluster:
+- Operational OpenStack cloud (|openstack| release).
 
-        - :ref:`heat:F5® BIG-IP® VE: Cluster-Ready, 4-nic`
-        - :ref:`heat:F5® BIG-IP®: Active-Standby Cluster`
+- Administrator access to both BIG-IP device(s) and OpenStack cloud.
+
+- F5 :ref:`agent <agent:home>` and :ref:`service provider driver <install-f5-lbaasv2-driver>` installed on the Neutron controller and all other hosts for which you want to provision LBaaS services.
 
 Caveats
 -------
 
-- Currently, only clusters of two (2) BIG-IP devices are supported.
+- Clusters of more than two (2) BIG-IP devices are not supported in this release (v |release|).
 
 
 Configuration
@@ -67,9 +68,21 @@ Configuration
     --------------
 
 
+.. rubric:: Footnotes
+.. [#] You can use the following F5 Heat templates to prep an :term:`overcloud` VE and deploy an :term:`active-standby` cluster of BIG-IP devices (over- or :term:`undercloud`).
+
+    - `F5 BIG-IP VE: Cluster-Ready, 4-nic <http://f5-openstack-heat.readthedocs.io/en/latest/templates/supported/ref_ve_common_cluster-ready-ve-4nic.html>`_
+    - `F5 BIG-IP: Active-Standby Cluster <http://f5-openstack-heat.readthedocs.io/en/latest/templates/supported/ref_f5-plugins_active-standby.html>`_
+
 
 
 
 .. _BIG-IP device service clustering: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-device-service-clustering-admin-12-0-0.html
 
 .. _BIG-IP Device Service Clustering -- Administration guide: <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-device-service-clustering-admin-12-0-0.html
+
+.. _Sync-Failover device groups: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-device-service-clustering-admin-12-0-0/5.html#unique_457113521
+
+.. _Sync-Only device groups: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-device-service-clustering-admin-12-0-0/5.html#unique_558181421
+
+.. _configuration synchronization: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-device-service-clustering-admin-12-0-0/6.html#unique_1589362110

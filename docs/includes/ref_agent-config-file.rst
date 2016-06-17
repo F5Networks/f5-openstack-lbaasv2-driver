@@ -1,3 +1,5 @@
+:orphan: true
+
 Agent Configuration File
 ========================
 

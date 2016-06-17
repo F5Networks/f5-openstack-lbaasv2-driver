@@ -1,21 +1,21 @@
 .. _lbaasv2-supported-features:
 
 Supported Features
-------------------
+##################
 
 .. include:: includes/topic_supported-features-intro.rst
+    :start-line: 7
 
-.. include:: includes/topic_ha-modes.rst
+.. toctree::
+    :maxdepth: 1
 
-.. include:: includes/topic_sync-mode.rst
-
-.. include:: includes/topic_l2-l3-segmentation-modes.rst
-
-.. include:: includes/topic_global-routed-mode.rst
-
-.. include:: includes/topic_device-driver-settings.rst
-
-.. include:: includes/topic_cert-manager.rst
+    includes/topic_ha-modes
+    includes/topic_sync-mode
+    includes/topic_l2-l3-segmentation-modes
+    includes/topic_global-routed-mode
+    includes/topic_device-driver-settings
+    includes/topic_cert-manager
+    includes/topic_clustering
 
 
 
