@@ -351,7 +351,10 @@ class LBaaSv2ServiceBuilder(object):
             agent_configs = self.deserialize_agent_configurations(
                 agent['configurations'])
 
-            common_networks = agent_configs['common_networks']
+            if 'common_networks' in agent_configs:
+                common_networks = agent_configs['common_networks']
+            else:
+                common_networks = {}
             common_external_networks = (
                 agent_configs['f5_common_external_networks'])
 
