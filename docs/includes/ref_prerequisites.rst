@@ -7,7 +7,7 @@
 
 - F5 LBaaSv2 driver and :ref:`agent <agent:home>` installed on each server for which BIG-IP LTM services are required.
 
-- `OpenStack Barbican`_ certificate manager configured and operational.
+- `OpenStack Barbican <OpenStack Barbican: https://wiki.openstack.org/wiki/Barbican>`_ certificate manager configured and operational.
 
 - Administrator access to both BIG-IP device(s) and OpenStack cloud.
 
@@ -43,7 +43,5 @@
 
 - BIG-IP `License base key <https://support.f5.com/kb/en-us/solutions/public/7000/700/sol7752.html>`_.
 
-- Existing `BIG-IP® SSL profile`_ (*optional*).
+- Existing `BIG-IP® SSL profile <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-ssl-administration-12-0-0/5.html#unique_527799714>`_ (*optional*).
 
-
-.. _BIG-IP® SSL Profile: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-ssl-administration-12-0-0/5.html#unique_527799714
