@@ -69,8 +69,11 @@ Configuration
 
 
 .. rubric:: Footnotes
+.. [#] You can use the following F5 Heat templates to prep an :term:`overcloud` VE and deploy an :term:`active-standby` cluster of BIG-IP devices (over- or :term:`undercloud`).
 
-..[#] You can use the following F5 Heat templates to prep and deploy an overcloud :term:`active-standby` cluster: :ref:`heat:F5® BIG-IP® VE: Cluster-Ready, 4-nic`; :ref:`heat:F5® BIG-IP®: Active-Standby Cluster`
+    - `F5 BIG-IP VE: Cluster-Ready, 4-nic <http://f5-openstack-heat.readthedocs.io/en/latest/templates/supported/ref_ve_common_cluster-ready-ve-4nic.html>`_
+    - `F5 BIG-IP: Active-Standby Cluster <http://f5-openstack-heat.readthedocs.io/en/latest/templates/supported/ref_f5-plugins_active-standby.html>`_
+
 
 
 
