@@ -311,7 +311,7 @@ texinfo_documents = [
 # Example configuration for intersphinx: refer to the Python standard library.
 
 intersphinx_mapping = {'heat': (
-     'http://f5-openstack-heat.readthedocs.io/en/liberty', None),
+     'http://f5-openstack-heat.readthedocs.io/en/latest', None),
      'heatplugins': (
      'http://f5-openstack-heat-plugins.readthedocs.io/en/liberty', None),
      'lbaasv1': (
