@@ -1,7 +1,7 @@
 .. _f5-openstack-lbaasv2-driver-user-guide:
 
 F5® OpenStack LBaaSv2 User Guide
-================================
+################################
 
 This guide provides instructions for installing and using the F5® OpenStack LBaaSv2 plugin (also called the 'F5® LBaaSv2 plugin').
 

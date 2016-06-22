@@ -1,7 +1,9 @@
+:orphan: true
+
 .. _l2-l3-segmentation-modes:
 
 L2/L3 Segmentation Modes
-````````````````````````
+========================
 
 L2/L3 segmentation modes allow you to provision LBaaS services for BIG-IP® device(s) deployed outside of your OpenStack cloud.
 
@@ -55,5 +57,5 @@ L2/L3 segmentation modes allow you to provision LBaaS services for BIG-IP® devi
         #
         # If you are using only vlans only it should be:
         #
-        # advertised_tunnel_types = vlan
+        # advertised_tunnel_types =
         #

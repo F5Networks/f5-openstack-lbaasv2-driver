@@ -1,24 +1,21 @@
+:orphan: true
+
 Before You Begin
-----------------
+================
 
-In order to follow this guide, you will need the following:
+In order to use this guide, you will need the following:
 
-* A functional OpenStack |openstack| environment with at least one controller node, one compute node, and one network node.
-* An overcloud [#f1]_ or undercloud [#f2]_ BIG-IP® deployment.
+* A functional OpenStack |openstack| environment [#]_
+* An :term:`overcloud` or :term:`undercloud` BIG-IP® deployment.
 * Basic understanding of OpenStack networking concepts. See the `OpenStack docs <http://docs.openstack.org/liberty/>`_ for more information.
 * F5® service provider package installed on Neutron controller (see below).
 
+Install the F5 Service Provider Package
+---------------------------------------
 
-.. [#f1] BIG-IP® VE deployed as an OpenStack instance
-.. [#f2] BIG-IP® VE or hardware deployed outside of OpenStack
+Install the F5 LBaaSv2 service provider package *before* you install the F5 LBaaSv2 driver. If the F5 service provider package isn't present on your Neutron controller, the F5 LBaaSv2 driver will not work.
 
-
-Install the F5® Service Provider Package
-````````````````````````````````````````
-
-Install the F5® LBaaSv2 service provider package *before* you install the F5® LBaaSv2 driver. If the F5® service provider package isn't present on your Neutron controller, the F5® LBaaSv2 driver will not work.
-
-.. topic:: Download the F5® LBaaSv2 service provider package and add it to the python path for ``neutron_lbaas``.
+.. topic:: Download the F5 LBaaSv2 service provider package and add it to the python path for ``neutron_lbaas``.
 
     1. Download from GitHub
 
@@ -42,10 +39,12 @@ Install the F5® LBaaSv2 service provider package *before* you install the F5® 
         $ sudo tar xvf f5.tgz –C /usr/lib/python2.7/dist-packages/neutron_lbaas/drivers/
 
 
-Install the F5® Agent
-`````````````````````
+Install the F5 Agent
+--------------------
 
-See the :ref:`F5® Agent documentation <agent:home>` for installation instructions.
+See the :ref:`F5 Agent documentation <agent:home>` for installation instructions.
 
-The F5® agent should, at minimum, be installed on your Neutron controller. You can also install it on any host for which you'd like to provision BIG-IP® services.
+The F5 agent should, at minimum, be installed on your Neutron controller. You can also install it on any host for which you'd like to provision BIG-IP services.
 
+
+.. [#] See :ref:`Environment Recommendations`
