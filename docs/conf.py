@@ -75,7 +75,7 @@ version = VERSION
 release = VERSION
 
 # OpenStack release
-openstack_release = "Liberty"
+openstack_release = "Mitaka"
 rst_epilog = """
 .. |openstack| replace:: {0}
 """.format(openstack_release)
@@ -311,13 +311,13 @@ texinfo_documents = [
 # Example configuration for intersphinx: refer to the Python standard library.
 
 intersphinx_mapping = {'heat': (
-     'http://f5-openstack-heat.readthedocs.io/en/liberty', None),
+     'http://f5-openstack-heat.readthedocs.io/en/latest', None),
      'heatplugins': (
-     'http://f5-openstack-heat-plugins.readthedocs.io/en/liberty', None),
+     'http://f5-openstack-heat-plugins.readthedocs.io/en/latest', None),
      'lbaasv1': (
-     'http://f5-openstack-lbaasv1.readthedocs.io/en/liberty/', None),
+     'http://f5-openstack-lbaasv1.readthedocs.io/en/mitaka/', None),
      'agent': (
-     'http://f5-openstack-agent.readthedocs.io/en/liberty/', None),
+     'http://f5-openstack-agent.readthedocs.io/en/mitaka/', None),
      'f5sdk': (
      'http://f5-sdk.readthedocs.io/en/latest/', None),
  }
