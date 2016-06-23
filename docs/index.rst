@@ -1,7 +1,7 @@
 .. _home:
 
-F5® OpenStack Neutron LBaaSv2 Plugin
-====================================
+F5® OpenStack Neutron LBaaSv2
+=============================
 
 |Build Status| |Docs Build Status|
 

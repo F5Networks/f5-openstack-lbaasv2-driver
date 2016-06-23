@@ -3,7 +3,7 @@
 F5® OpenStack LBaaSv2 Coding Example
 ====================================
 
-We've provided some code examples below to help you get started with the F5® OpenStack LBaaSv2 plugin. This series demonstrates how to configure basic load balancing via the Neutron CLI. To access the full Neutron LBaaS command set, please see the `OpenStack CLI Documentation <http://docs.openstack.org/cli-reference/neutron.html>`_. LBaaSv2 commands all begin with ``lbaas``.
+We've provided some code examples below to help you get started with the F5® OpenStack LBaaSv2 agent and driver. This series demonstrates how to configure basic load balancing via the Neutron CLI. To access the full Neutron LBaaS command set, please see the `OpenStack CLI Documentation <http://docs.openstack.org/cli-reference/neutron.html>`_. LBaaSv2 commands all begin with ``lbaas``.
 
 
 Create a load balancer

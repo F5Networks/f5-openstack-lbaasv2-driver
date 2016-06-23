@@ -3,7 +3,7 @@
 F5 OpenStack LBaaSv2 User Guide
 ###############################
 
-This guide provides instructions for installing and using the F5® OpenStack LBaaSv2 plugin (also called the 'F5® LBaaSv2 plugin').
+This guide provides instructions for installing and using the F5® OpenStack LBaaSv2 service provider driver and agent (also sometimes referred to as the 'F5 LBaaSv2 plugin').
 
 .. toctree::
     :maxdepth: 2
@@ -15,7 +15,7 @@ This guide provides instructions for installing and using the F5® OpenStack LBa
     includes/topic_upgrading-f5-lbaasv2-plugin.rst
     includes/topic_configure-neutron-lbaasv2.rst
     map_configure-f5-agent
-    map_deployments
+    Deployments <map_deployments>
     troubleshooting
     glossary
 
