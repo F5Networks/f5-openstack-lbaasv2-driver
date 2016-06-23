@@ -6,7 +6,7 @@ HA mode
 Overview
 --------
 
-:term:`HA`, or, 'high availability', mode refers to high availability of the BIG-IP® device(s). The F5® agent can configure BIG-IP to operate in :term:`standalone`, :term:`pair`, or :term:`scalen` mode. The F5 agent uses :ref:`replication` to configure LBaaS objects on HA devices in real time.
+:term:`HA`, or, 'high availability', mode refers to high availability of the BIG-IP® device(s). The F5® agent can configure BIG-IP to operate in :term:`standalone`, :term:`pair`, or :term:`scalen` mode. The F5 agent uses :ref:`replication mode <Managing BIG-IP Clusters>` to configure LBaaS objects on HA devices in real time.
 
 Use Case
 --------

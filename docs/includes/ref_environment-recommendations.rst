@@ -37,7 +37,7 @@ OpenStack:
  - One (1) VLAN
 
 BIG-IP:
-- A licensed, operational BIG-IP device that meets the OpenStack :ref:`compatibility requirements <docs: F5 OpenStack Releases and Support Matrix>`.
+- A licensed, operational BIG-IP device that meets the OpenStack :ref:`compatibility requirements <docs:releases-and-support>`.
     - :term:`one-arm mode`: one (1) nic and one (1) VLAN
     - :term:`multi-arm mode`: at least two (2) nics and two (2) VLANS
 

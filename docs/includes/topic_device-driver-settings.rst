@@ -52,10 +52,10 @@ Configuration
 
 2. Enter the iControl endpoint(s), username, and password for your BIG-IP(s).
 
-    * ``icontrol_hostname``: the IP address(es) of the BIG-IP(s) the agent will manage;
-    * ``icontrol_vcmp_hostname``: *unsupported in this release*.
-    * ``icontrol_username``: the username of an adminstrative user; *must have access to all BIG-IP devices*.
-    * ``icontrol_password``: the password of an adminstrative user; *must have access to all BIG-IP devices*.
+    * ``icontrol_hostname``: The IP address(es) of the BIG-IP(s) the agent will manage. If you're using multiple devices, provide a comma-separated list containing the management IP address of each device.
+    * ``icontrol_vcmp_hostname``: *Unsupported in this release*.
+    * ``icontrol_username``: The username of the adminstrative user; *must have access to all BIG-IP devices*.
+    * ``icontrol_password``: The password of the adminstrative user; *must have access to all BIG-IP devices*.
 
 .. topic:: Example
 

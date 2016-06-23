@@ -7,7 +7,7 @@ Supported Features
     :start-line: 7
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     includes/topic_ha-modes
     includes/topic_sync-mode
@@ -15,7 +15,7 @@ Supported Features
     includes/topic_global-routed-mode
     includes/topic_device-driver-settings
     includes/topic_cert-manager
-    includes/topic_clustering
+
 
 
 

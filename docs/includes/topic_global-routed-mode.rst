@@ -17,7 +17,7 @@ In the most common client-server network configuration,
 Use Case
 --------
 
-Global routed mode is generally used for :term:`undercloud` BIG-IP hardware deployments. The BIG-IP device(s) is deployed in the external :ref:`provider network <docs:provider network>` at the service tier.
+Global routed mode is generally used for :term:`undercloud` BIG-IP hardware deployments. The BIG-IP device(s) is deployed in the external :ref:`provider network <docs:provider-network>` at the service tier.
 
 .. figure:: ../media/big-ip_undercloud.png
     :alt: Undercloud BIG-IP

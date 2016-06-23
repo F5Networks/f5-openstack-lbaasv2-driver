@@ -40,7 +40,7 @@ Configuration
 
     $ sudo emacs /etc/neutron/services/f5/f5-openstack-agent.ini
 
-2. Configure the :ref:`L2 segmentation mode` settings as appropriate for your environment.
+2. Configure the :ref:`L2 Segmentation Mode Settings` as appropriate for your environment.
 
     Specifically, you will need to configure the Device VLAN to interface and tag mapping and/or VLAN device and interface to port mappings to ensure your tenant networks connect to the correct interfaces on your BIG-IP, and that traffic is allowed to flow through the corresponding ports.
 

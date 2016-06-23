@@ -18,6 +18,7 @@ Glossary
 
     cluster
     clustered
+    clustering
     device cluster
     device service cluster
     device service clusters
