@@ -19,11 +19,7 @@ High availability modes provide redundancy, helping to ensure service interrupti
 
   BIG-IP pairs can operate in :term:`active/standby` or :term:`active/active` mode. Active/standby is the recommended mode for redundant system configuration. When an event occurs that prevents the 'active' BIG-IP device from processing network traffic, the 'standby' device immediately begins processing that traffic so users experience no interruption in service.
 
-  In active/active mode, both devices in the pair are actively handling traffic. If an event occurs that prevents one device from porcessing traffic, traffic is automatically directed to the other active device in the pair.
-
-* :term:`scalen` mode requires a :term:`device service cluster` of more than two (2) BIG-IP devices. Scalen allows you to configure multiple active devices which can fail over to any of many available standby devices.
-
-
+* :term:`scalen` mode requires a :term:`device service cluster` of two (2) - four (4) BIG-IP devices. Scalen allows you to configure multiple active devices, each of which can fail over to other available active or standby devices. For example, if two BIG-IPs are configured in active/active mode, both devices in the pair are actively handling traffic. If an event occurs that prevents one device from processing traffic, that traffic is automatically directed to the other active device.
 
 Prerequisites
 -------------
@@ -62,9 +58,9 @@ Configuration
 
 2. Set the ``f5_ha_type`` as appropriate for your environment.
 
-    - ``standalone``: single BIG-IP device
-    - ``pair``: :term:`active/standby` or :term:`active/active` pair of BIG-IP devices
-    - ``scalen``: BIG-IP :term:`device service cluster`
+    - ``standalone``: A single BIG-IP device
+    - ``pair``: An :term:`active/standby` pair of BIG-IP devices
+    - ``scalen``: An active :term:`device service cluster` of up to 4 BIG-IP devices
 
 .. topic:: Example
 

@@ -32,7 +32,7 @@ The F5® agent L2/L3 segmentation mode settings tell the agent how the user's BI
 Use Case
 --------
 
-Using the F5 agent to manage one (1) or more :term:`undercloud` BIG-IP devices  is the most common use case, as it allows users to insert their existing BIG-IP(s) into an OpenStack cloud.
+Typically, the F5 agent is used to manage one (1) or more :term:`undercloud` BIG-IP devices, deployed at the services layer of an external :ref:`provider network <docs:provider network>`. This allows users to apply existing BIG-IP services and configurations to resources in an OpenStack cloud. The flexibility of the L2/L3 segmentation mode settings make it possible to configure the agent to match your existing external network. Knowledge of the external network configuration, and that of the BIG-IP device(s) is required to configure these settings.
 
 
 Prerequisites
@@ -75,10 +75,10 @@ Configuration
     - ``f5_populate_static_arp``: Value must be True or False; indicates whether or not static arp entries are added for pool member IP addresses that are associated with VxLAN or GRE tunnel networks.
     - ``l2_population``: Value must be True or False; indicates whether BIG-IP will use L2 population service to update fbd tunnel entries.
 
-.. topic:: Example
+.. topic:: Example: Device VLAN to interface and tag mapping
 
     .. code-block:: text
-        :emphasize-lines:
+        :emphasize-lines: 31
 
         ###############################################################################
         #  L2 Segmentation Mode Settings
@@ -112,41 +112,6 @@ Configuration
         #
         f5_external_physical_mappings = default:1.1:True
         #
-        # VLAN device and interface to port mappings
-        #
-        # Some systems require the need to bind and prune VLANs ids
-        # allowed to specific ports, often for security.
-        #
-        # An example would be if a LBaaS iControl® endpoint is using
-        # tagged VLANs. When a VLAN tagged network is added to a
-        # specific BIG-IP® device, the facing switch port will need
-        # to allow traffic for that VLAN tag through to the BIG-IP®'s
-        # port for traffic to flow.
-        #
-        # What is required is a software hook which allows the binding.
-        # A vlan_binding_driver class needs to reference a subclass of the
-        # VLANBindingBase class and provides the methods to bind and prune
-        # VLAN tags to ports.
-        #
-        # vlan_binding_driver = f5.oslbaasv1agent.drivers.bigip.vlan_binding.NullBinding
-        #
-        # The interface_port_static_mappings allows for a JSON encoded dictionary
-        # mapping BigIP devices and interfaces to corresponding ports. A port id can be
-        # any string which is meaningful to a vlan_binding_driver. It can be a
-        # switch_id and port, or it might be a neutron port_id.
-        #
-        # In addition to any static mappings, when the iControl® endpoints
-        # are initialized, all their TMM interfaces will be collect
-        # for each device and neutron will be queried to see if which
-        # device port_ids correspond to known neutron ports. If they do,
-        # automatic entries for all mapped port_ids will be made referencing
-        # the BIG-IP® device name and interface and the neutron port_ids.
-        #
-        # interface_port_static_mappings = {"device_name_1":{"interface_ida":"port_ida","interface_idb":"port_idb"}, {"device_name_2":{"interface_ida":"port_ida","interface_idb":"port_idb"}}
-        #
-        # example:
-        #
-        # interface_port_static_mappings = {"bigip1":{"1.1":"switch1:g2/32","1.2":"switch1:g2/33"},"bigip2":{"1.1":"switch1:g3/32","1.2":"switch1:g3/33"}}
         #
         # Device Tunneling (VTEP) selfips
         #
