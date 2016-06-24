@@ -63,6 +63,15 @@ Configuration
     #
     #
 
+3. Add the IP address for each BIG-IP to the :ref:`Device Driver - iControl® Driver Setting <Device Driver Settings / iControl® Driver Settings>` section of the config file. Values must be comma-separated.
+
+.. code-block:: text
+    :emphasize-lines: 10
+
+    #
+    icontrol_hostname = 10.190.7.232,10.190.4.193
+    #
+
 
 .. Further Reading
     --------------
