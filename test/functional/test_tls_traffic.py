@@ -22,6 +22,7 @@ import pytest
 import time
 import sys, re
 
+import f5_os_test
 from f5.bigip import BigIP
 from f5.bigip import ManagementRoot
 from pprint import pprint as pp
@@ -88,6 +89,7 @@ class LBaaSv2(object):
         self.proxies = []
 
     def create_loadbalancer(self):
+        lb_name = f5_os_test.random_name('test_lb_', 6)
         lb_conf = {}
         for sn in self.ncm.list_subnets()['subnets']:
             if sn['name'] == self.symbols['client_subnet']:
@@ -97,7 +99,7 @@ class LBaaSv2(object):
                         #'lb_method':  'ROUND_ROBIN',
                         'tenant_id':   sn['tenant_id'],
                         'provider':    self.symbols['provider'],
-                        'name':        'testlb_01'}}
+                        'name':        lb_name}}
         return self.ncm.create_loadbalancer(lb_conf)['loadbalancer']
 
     def delete_loadbalancer(self, lb):
@@ -132,8 +134,9 @@ class LBaaSv2(object):
                 raise MaximumNumberOfAttemptsExceeded
 
     def create_listener(self, lb_id, tls_container_ref, sni_container_refs=[]):
+        listener_name = f5_os_test.random_name('test_listener_', 6)
         listener_config =\
-        {'listener': {'name': 'test_listener',
+        {'listener': {'name': listener_name,
                       'loadbalancer_id': lb_id,
                       'protocol': 'TERMINATED_HTTPS',
                       'protocol_port': 443,
@@ -142,9 +145,10 @@ class LBaaSv2(object):
         return self.ncm.create_listener(listener_config)['listener']
 
     def create_lbaas_pool(self, l_id):
+        pool_name = f5_os_test.random_name('test_pool_', 6)
         pool_config = {
             'pool': {
-                'name': 'test_pool_anur23rgg',
+                'name': pool_name,
                 'lb_algorithm': 'ROUND_ROBIN',
                 'listener_id': l_id,
                 'protocol': 'HTTP'}}
