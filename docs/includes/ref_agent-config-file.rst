@@ -24,6 +24,6 @@ Can be used for :term:`standalone` or :term:`clustered` :term:`undercloud` BIG-I
 
 * :download:`f5-openstack-agent.vlan.ini <../_static/f5-openstack-agent.vlan.ini>`
 
-* :download:`f5-openstack-agent.vxlan.ini <../_static/f5-openstack-agent.gre.ini>`
+* :download:`f5-openstack-agent.vxlan.ini <../_static/f5-openstack-agent.vxlan.ini>`
 
 
