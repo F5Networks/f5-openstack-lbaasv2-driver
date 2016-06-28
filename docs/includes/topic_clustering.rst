@@ -8,7 +8,7 @@ Overview
 
 The F5® LBaaSv2 agent and driver can manage BIG-IP® :term:`device service clusters`, providing :term:`high availability`, :term:`mirroring`, and :term:`failover` services within your OpenStack cloud.
 
-The F5 agent applies LBaaS configuration changes to each BIG-IP :term:`device` in a cluster at the same time, in real time. This is referred to in the :ref:`Agent Configuration File` as ``replication mode``. Replication mode makes it unnecessary to use  BIG-IP's '`configuration synchronization`_ mode' for LBaaS objects managed by the agent.
+The F5 agent applies LBaaS configuration changes to each BIG-IP :term:`device` in a cluster at the same time, in real time. It is unnecessary to use BIG-IP's '`configuration synchronization`_ mode' to sync LBaaS objects managed by the agent across the devices in a cluster.
 
 Use Case
 --------
@@ -32,7 +32,7 @@ Prerequisites
 Caveats
 -------
 
-- Clusters of more than two (2) BIG-IP devices are not supported in this release (v |release|).
+- The F5 agent can manage clusters of two (2) to four (4) BIG-IP devices.
 
 
 Configuration
@@ -78,10 +78,10 @@ Configuration
 
 
 .. rubric:: Footnotes
-.. [#] You can use the following F5 Heat templates to prep an :term:`overcloud` VE and deploy an :term:`active-standby` cluster of BIG-IP devices (over- or :term:`undercloud`).
+.. [#] You can use the following F5 Heat templates to prep an :term:`overcloud` VE and deploy an :term:`active/standby` cluster of BIG-IP devices (over- or :term:`undercloud`).
 
     - `F5 BIG-IP VE: Cluster-Ready, 4-nic <http://f5-openstack-heat.readthedocs.io/en/latest/templates/supported/ref_ve_common_cluster-ready-ve-4nic.html>`_
-    - `F5 BIG-IP: Active-Standby Cluster <http://f5-openstack-heat.readthedocs.io/en/latest/templates/supported/ref_f5-plugins_active-standby.html>`_
+    - `F5 BIG-IP: Active/Standby Cluster <http://f5-openstack-heat.readthedocs.io/en/latest/templates/supported/ref_f5-plugins_active-standby.html>`_
 
 
 

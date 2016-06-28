@@ -1,3 +1,6 @@
+:orphan: true
+:hidden:
+
 Environment Recommendations
 ===========================
 
@@ -51,7 +54,7 @@ Basic Recommendations
 ~~~~~~~~~~~~~~~~~~~~~
 
 - :term:`Overcloud`: One (1) BIG-IP device with two (2) nics, two (2) VLANS (management & data)
-- :term:`Undercloud`: One (1) BIG-IP device with two (2) nicstwo (2) VLANS; must have a VXLAN or GRE VTEP
+- :term:`Undercloud`: One (1) BIG-IP device with two (2) nics, two (2) VLANS; must have a VXLAN or GRE VTEP
 - :term:`Clustering`: Two (2) BIG-IP devices with three (3) nics each; management, data, and :term:`high availability` (HA).
 
 

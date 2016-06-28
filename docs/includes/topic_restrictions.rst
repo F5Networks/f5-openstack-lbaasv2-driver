@@ -27,6 +27,6 @@ The following features are unsupported in |release|; they will be introduced in 
 .. rubric:: Footnotes
 .. [#] Similar to BIG-IP :term:`high availability`, but applies to the F5 agent processes.
 .. [#] Multiple F5 agents running on the same host, managing *separate* BIG-IP environments.
-.. [#] Creating a pool with no listener.
+
 
 

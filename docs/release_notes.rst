@@ -8,7 +8,7 @@ This release provides an implementation of the OpenStack Neutron LBaaSv2 driver 
 Release Highlights
 ==================
 
-This release introduces support for SSL offloading and for BIG-IP® clustering (active-standby and scalen configurations).
+This release introduces support for SSL offloading and for BIG-IP® clustering (:term:`pair` and :term:`scalen` configurations).
 
 
 .. include:: map_release-summary.rst
