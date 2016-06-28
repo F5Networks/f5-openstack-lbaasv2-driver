@@ -1,5 +1,8 @@
+Release Summary
+###############
+
 New Supported Features
-----------------------
+======================
 
 Support for the following features is introduced in v |release|:
 
@@ -8,7 +11,7 @@ Support for the following features is introduced in v |release|:
 
 
 Unsupported Features
---------------------
+====================
 
 .. include:: includes/topic_restrictions.rst
     :start-line: 5
