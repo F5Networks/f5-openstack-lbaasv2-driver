@@ -8,11 +8,19 @@ Global Routed Mode
 Overview
 --------
 
-The F5® agent doesn't manage any networking components. Thus, when it is configured to use global routed mode, the F5 agent makes the following assumptions: that LBaaS objects are accessible via global L3 routes; that all virtual IPs are routable from clients; and that all members are routable from BIG-IP®. This means that all L2 and L3 objects, including routes, must be provisioned on your BIG-IP device(s) *before* you configure the F5 agent to manage them.
+The F5® agent determines BIG-IP® devices' L2 and L3 network configurations based on the settings provided in the :ref:`L2/L3 segmentation modes` settings in the :ref:`agent configuration file`. When configured to use global routed mode, the F5 agent makes the following assumptions:
 
-Global routed mode uses BIG-IP `secure network address translation`_ (SNAT) 'automapping' to map one or more origin IP addresses to a pool of translation addresses. The pool is created by the BIG-IP Local Traffic Manager® (LTM) from existing `self IP`_ addresses. This means that *before* you configure the F5 agent to use global routed mode, you should create enough `self IP`_ addresses on the BIG-IP(s) to handle anticipated connection loads. [#]_ You do not need to configure a SNAT pool, as one will be created automatically.
+    #. LBaaS objects are accessible via global L3 routes;
+    #. All virtual IPs are routable from clients;
+    #. All pool members are routable from BIG-IP.
 
-In the most common client-server network configuration,
+This means that all L2 and L3 objects, including routes, must be provisioned on your BIG-IP devices *before* you configure the F5 agent to manage them.
+
+.. topic:: Example: Global Routed Mode
+
+    .. figure:: ../media/f5-lbaas-global-routed-mode.png
+        :width: 500
+        :alt: Global Routed Mode
 
 Use Case
 --------

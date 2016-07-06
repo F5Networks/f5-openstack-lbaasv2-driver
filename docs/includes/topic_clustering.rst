@@ -1,7 +1,7 @@
 :orphan: true
 
-Managing BIG-IP Clusters
-========================
+Managing BIG-IP Clusters with F5 LBaaS
+======================================
 
 Overview
 --------
@@ -10,10 +10,13 @@ The F5® LBaaSv2 agent and driver can manage BIG-IP® :term:`device service clus
 
 The F5 agent applies LBaaS configuration changes to each BIG-IP :term:`device` in a cluster at the same time, in real time. It is unnecessary to use BIG-IP's '`configuration synchronization`_ mode' to sync LBaaS objects managed by the agent across the devices in a cluster.
 
-Use Case
---------
+Clustering provides a greater degree of redundancy than a standalone device offers. It helps to avoid service interruptions that could otherwise occur if a device should go down. F5 LBaaSv2 can manage BIG-IP `Sync-Failover device groups`_ when set to use either the :term:`pair` or the :term:`scalen` :ref:`High Availability mode <HA mode>`.
 
-Clustering provides a greater degree of redundancy than a standalone device offers. It helps to avoid service interruptions that could otherwise occur if a device should go down. A few commonly-used BIG-IP clustering examples are `Sync-Failover device groups`_ and `Sync-Only device groups`_.
+.. topic:: Example: BIG-IP ``scalen`` cluster
+
+    .. figure:: ../media/f5-lbaas-scalen-cluster.png
+        :alt: BIG-IP scalen cluster
+        :width: 500
 
 
 Prerequisites
