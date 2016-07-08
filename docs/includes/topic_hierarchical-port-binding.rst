@@ -4,7 +4,7 @@ Hierarchical Port Binding
 Overview
 --------
 
-Neutron `hierarchical port binding`_ [#]_ allows software-defined networking (SDN) users to dynamically configure VLANs and VLAN tags for a physical BIG-IP® :term:`device` or :term`device service cluster` connected to a 'top of rack' L3 switch (a network 'segment'). Telling the F5® agent what physical switch and port the BIG-IPs are connected to allows the agent to configure the BIG-IPs to process traffic for VLANs that are dynamically created in that segment.
+Neutron `hierarchical port binding`_ [#]_ allows software-defined networking (SDN) users to dynamically configure VLANs and VLAN tags for a physical BIG-IP® :term:`device` or :term`device service cluster` connected to a 'top of rack' L3 switch (a network 'segment'). Telling the F5® agent what physical switch and port the BIG-IPs are connected to allows the agent to configure the BIG-IPs to process traffic for networks that are dynamically created in that segment.
 
 Disconnected Services
 `````````````````````
@@ -27,13 +27,11 @@ The most common use case for heirarchical port binding is an :term:`undercloud` 
 Prerequisites
 -------------
 
-- Licensed, operational BIG-IP :term:`device` or :term:`device cluster`.
+- Operational BIG-IP :term:`device` or :term:`device cluster` licensed for SDN services.
 
 - Operational OpenStack cloud (|openstack| release).
 
 - Administrator access to both BIG-IP device(s) and OpenStack cloud.
-
-- Software Defined Networking (SDN) service.
 
 - F5 :ref:`agent <agent:home>` and :ref:`service provider driver <install-f5-lbaasv2-driver>` installed on the Neutron controller and all other hosts for which you want to provision LBaaS services.
 
@@ -45,7 +43,7 @@ Prerequisites
 Caveats
 -------
 
-- In release v |release| of the F5 LBaaSv2 driver and agent, ``VLAN`` is the only supported ML2 network type.
+- In release v |release| of the F5 LBaaSv2 driver and agent, ``VLAN`` is the only supported ML2 network type when employing Hierarchical Port Binding.
 
 - Each F5 agent managing a BIG-IP :term:`device service cluster` must have the same ``f5_network_segment_physical_network`` setting. [#]_
 
@@ -82,6 +80,9 @@ Configuration
     |                                      || See :ref:`disconnected services`.        |               |
     +--------------------------------------+-------------------------------------------+---------------+
 
+.. important::
+
+    If you are running in 'traditional mode', the ``f5_network_segment_physical_network`` setting **must** be commented out. To use disconnected mode, the setting must be uncommented and configured with a valid network name.
 
 
 .. topic:: Example
@@ -97,16 +98,16 @@ Configuration
         # Restrict discovery of network segmentation ID to a specific physical network
         # name.
         #
-        # f5_network_segment_physical_network = <name-of-network-segment>
+        f5_network_segment_physical_network = edgeswitch002ports0305
         #
         # Periodically scan for disconected listeners (a.k.a virtual servers).  The
         # interval is number of seconds between attempts.
         #
-        # f5_network_segment_polling_interval = 10
+        f5_network_segment_polling_interval = 10
         #
         # Maximum amount of time in seconds for wait for a network to become connected.
         #
-        # f5_network_segment_gross_timeout = 300
+        f5_network_segment_gross_timeout = 300
 
 
 3. Configure the related :ref:`L2/L3 Segmentation Modes` settings as appropriate for your environment.
