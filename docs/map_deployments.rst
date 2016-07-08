@@ -3,9 +3,10 @@
 F5 OpenStack LBaaSv2 Deployments
 ################################
 
-This section contains common deployments that can be managed in OpenStack by the F5® agent.
+This section features common BIG-IP® deployments that can be managed in OpenStack with F5® LBaaS.
 
 .. toctree::
     :maxdepth: 2
 
     includes/topic_clustering
+    includes/topic_multi-tenancy
