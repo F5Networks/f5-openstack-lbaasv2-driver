@@ -1,12 +1,14 @@
+:orphan: true
+
 .. _topic-start-the-agent:
 
 Start the F5® OpenStack Agent
------------------------------
+=============================
 
 Once you have configured the F5® agent as appropriate for your environment, use the command(s) appropriate for your OS to start the agent.
 
 Debian/Ubuntu
-`````````````
+-------------
 
 .. code-block:: text
 
@@ -14,7 +16,7 @@ Debian/Ubuntu
 
 
 RedHat/CentOS
-`````````````
+-------------
 
 .. code-block:: text
 

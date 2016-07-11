@@ -19,6 +19,7 @@ import pytest
 import time
 import sys
 
+import f5_os_test
 from f5.bigip import BigIP
 from pprint import pprint as pp
 from f5_os_test.polling_clients import NeutronClientPollingManager
@@ -87,6 +88,7 @@ class LBaaSv1(object):
         self.max_attempts = 60
 
     def create_pool(self):
+        pool_name = f5_os_test.random_name('test_pool_', 6)
         pool_conf = {}
         for sn in self.ncm.list_subnets()['subnets']:
             if sn['name'] == self.symbols['client_subnet']:
@@ -95,7 +97,7 @@ class LBaaSv1(object):
                                       'protocol':   'HTTP',
                                       'subnet_id':  sn['id'],
                                       'provider':   self.symbols['provider'],
-                                      'name':       'test_pool_01'}}
+                                      'name':       pool_name}}
 
         return self.ncm.create_pool(pool_conf)['pool']
 
@@ -127,7 +129,8 @@ class LBaaSv1(object):
                 raise MaximumNumberOfAttemptsExceeded
 
     def create_vip(self, pool_id, subnet_id):
-        vip_conf = {'vip': {'name': 'test_vip_01',
+        vip_name = f5_os_test.random_name('test_vip_', 6)
+        vip_conf = {'vip': {'name': vip_name,
                             'pool_id': pool_id,
                             'subnet_id': subnet_id,
                             'protocol': 'HTTP',
@@ -236,6 +239,7 @@ class LBaaSv2(object):
         self.proxies = []
 
     def create_loadbalancer(self):
+        lb_name = f5_os_test.random_name('test_lb_', 6)
         lb_conf = {}
         for sn in self.ncm.list_subnets()['subnets']:
             if sn['name'] == self.symbols['client_subnet']:
@@ -246,7 +250,7 @@ class LBaaSv2(object):
                         #'protocol':      'HTTP',
                         'tenant_id':     sn['tenant_id'],
                         'provider':      self.symbols['provider'],
-                        'name':          'testlb_01'}}
+                        'name':          lb_name}}
         return self.ncm.create_loadbalancer(lb_conf)['loadbalancer']
 
     def delete_loadbalancer(self, lb):
@@ -280,17 +284,19 @@ class LBaaSv2(object):
                 raise MaximumNumberOfAttemptsExceeded
 
     def create_listener(self, lb_id):
+        listener_name = f5_os_test.random_name('test_listener_', 6)
         listener_config =\
-        {'listener': {'name': 'test_listener',
+        {'listener': {'name': listener_name,
                       'loadbalancer_id': lb_id,
                       'protocol': 'HTTP',
                       'protocol_port': 80}}
         return self.ncm.create_listener(listener_config)['listener']
 
     def create_lbaas_pool(self, l_id):
+        pool_name = f5_os_test.random_name('test_pool_', 6)
         pool_config = {
             'pool': {
-                'name': 'test_pool_anur23rgg',
+                'name': pool_name,
                 'lb_algorithm': 'ROUND_ROBIN',
                 'listener_id': l_id,
                 'protocol': 'HTTP'}}

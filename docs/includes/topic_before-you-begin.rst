@@ -1,24 +1,31 @@
+:orphan: true
+
 Before You Begin
-----------------
+================
 
-In order to follow this guide, you will need the following:
+In order to use F5® LBaaSv2 services, you will need the following:
 
-* A functional OpenStack |openstack| environment with at least one controller node, one compute node, and one network node.
-* An overcloud [#f1]_ or undercloud [#f2]_ BIG-IP® deployment.
-* Basic understanding of OpenStack networking concepts. See the `OpenStack docs <http://docs.openstack.org/liberty/>`_ for more information.
-* F5® service provider package installed on Neutron controller (see below).
+- Operational OpenStack cloud (|openstack| release).
+
+- Licensed, operational BIG-IP® :term:`device` or :term:`device cluster`; can be deployed either as an OpenStack instance (BIG-IP VE) or external to the cloud (VE or hardware).
+
+    .. important::
+
+        You must have the appropriate `license`_ for the BIG-IP features you wish to use. For example, the use of GRE or VxLAN tunnels requires an active BIG-IP SDN Services License.
+
+- Basic understanding of `OpenStack networking concepts`_.
+
+- Basic understanding of `BIG-IP® Local Traffic Management <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-basics-12-0-0.html>`_
+
+- F5 :ref:`service provider package <Install the F5 Service Provider Package>` installed on Neutron controller.
 
 
-.. [#f1] BIG-IP® VE deployed as an OpenStack instance
-.. [#f2] BIG-IP® VE or hardware deployed outside of OpenStack
+Install the F5 Service Provider Package
+---------------------------------------
 
+Install the F5 LBaaSv2 service provider package *before* you install the F5 LBaaSv2 driver. If the F5 service provider package isn't present on your Neutron controller, the F5 LBaaSv2 driver will not work.
 
-Install the F5® Service Provider Package
-````````````````````````````````````````
-
-Install the F5® LBaaSv2 service provider package *before* you install the F5® LBaaSv2 driver. If the F5® service provider package isn't present on your Neutron controller, the F5® LBaaSv2 driver will not work.
-
-.. topic:: Download the F5® LBaaSv2 service provider package and add it to the python path for ``neutron_lbaas``.
+.. topic:: Download the F5 LBaaSv2 service provider package and add it to the python path for ``neutron_lbaas``.
 
     1. Download from GitHub
 
@@ -42,10 +49,15 @@ Install the F5® LBaaSv2 service provider package *before* you install the F5® 
         $ sudo tar xvf f5.tgz –C /usr/lib/python2.7/dist-packages/neutron_lbaas/drivers/
 
 
-Install the F5® Agent
-`````````````````````
+Install the F5 Agent
+--------------------
 
-See the :ref:`F5® Agent documentation <agent:home>` for installation instructions.
+See the :ref:`F5 Agent documentation <agent:home>` for installation instructions.
 
-The F5® agent should, at minimum, be installed on your Neutron controller. You can also install it on any host for which you'd like to provision BIG-IP® services.
+The F5 agent should, at minimum, be installed on your Neutron controller. You can also install it on any host from which you want to use F5 LBaaSv2 to provision BIG-IP services.
 
+
+..  todo: add footnote: See :ref:`Environment Recommendations`
+
+.. _license: https://f5.com/products/how-to-buy/simplified-licensing
+.. _OpenStack Networking Concepts: http://docs.openstack.org/liberty/networking-guide/
