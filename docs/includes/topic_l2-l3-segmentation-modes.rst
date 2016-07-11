@@ -8,7 +8,7 @@ L2/L3 Segmentation Modes
 Overview
 --------
 
-The F5® agent doesn't manage any networking components. Rather, it relies on the L2/L3 segmentation mode settings to determine how your BIG-IP® device(s) is configured.
+The F5® agent uses the L2/L3 segmentation mode settings to determine the L2/L3 network configurations for your BIG-IP® device(s).
 
 .. warning::
 
@@ -32,13 +32,17 @@ The F5® agent doesn't manage any networking components. Rather, it relies on th
 Use Case
 --------
 
-Typically, the F5 agent is used to manage one (1) or more :term:`undercloud` BIG-IP devices, deployed at the service tier of an external :ref:`provider network <docs:provider-network>`. This allows users to apply existing BIG-IP services and configurations to resources in an OpenStack cloud. The flexibility of the L2/L3 segmentation mode settings make it possible to configure the agent to match your existing external network.
+Typically, the F5 agent is used to manage one (1) or more BIG-IP devices deployed at the service layer of an external :ref:`provider network <docs:provider-network>`. F5 LBaaSv2 makes it possible to provision services from your existing BIG-IP(s) in an OpenStack cloud. The F5 agent L2/L3 segmentation mode settings must match the configurations of your existing external network and BIG-IP device(s).
 
-.. figure:: ../media/big-ip_undercloud.png
-    :alt: Undercloud BIG-IP
+The default mode of operation for the F5 agent is **L2 adjacent mode** (``f5_global_routed_mode = False``).
 
+.. topic:: Example: L2-adjacent BIG-IP cluster
 
-.. important:: Knowledge of the external network configuration, and that of the BIG-IP device(s) is required to configure these settings.
+    .. figure:: ../media/f5-lbaas-l2-3-adjacent-mode.png
+        :alt: L2 adjacent mode
+        :width: 350
+
+.. important:: Knowledge of the external network configuration, and that of the BIG-IP device(s), is required to configure these settings.
 
 
 Prerequisites
@@ -54,7 +58,9 @@ Prerequisites
 
 - Knowledge of BIG-IP `system configuration`_, `local traffic management`_, & `device service clustering`_.
 
-- VLANs :ref:`configured in Neutron <docs:os-neutron-network-setup>` or `on the BIG-IP <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/tmos-routing-administration-12-0-0/5.html#conceptid>`_, as appropriate for your environment.
+- VLANs and VxLAN or GRE tunnels configured as as appropriate for your environment.
+
+- If you are using GRE or VxLAN tunnels, you must have a `BIG-IP license`_ that supports SDN.
 
 Caveats
 -------
@@ -240,7 +246,7 @@ L3 Segmentation Mode Settings
 
 .. note::
 
-    This section covers L3 Segmentation Mode Settings with the assumption that :ref:`Global Routed Mode` is set to False.
+    This section covers L3 Segmentation Mode Settings with the assumption that :ref:`Global Routed Mode` is set to 'False'. This is the default mode of operation.
 
 Namespaces and Routing
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -421,9 +427,9 @@ Common Networks
 L3 Binding
 ~~~~~~~~~~
 
-The L3 Binding driver is required for :term:`overcloud` BIG-IP deployments. This setting binds L3 addresses to specific ports to allow communications between Nova guest instances.
+The L3 Binding driver is **required** for BIG-IP VE(s) deployed within your OpenStack cloud. This setting binds L3 addresses to specific ports to allow communications between Nova guest instances.
 
-Uncomment this line in the :ref:`agent configuration file` if you're using an :term:`undercloud` VE.
+- ``l3_binding_driver``: uncomment this line in the :ref:`agent configuration file` if you're using an :term:`overcloud` VE.
 
 .. topic:: Example
 
@@ -436,8 +442,15 @@ Uncomment this line in the :ref:`agent configuration file` if you're using an :t
 
 
 
-.. Further Reading
-    ---------------
+Further Reading
+---------------
+
+.. seealso::
+
+    * `BIG-IP System - Initial Configuration <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-system-initial-configuration-12-0-0/2.html#conceptid>`_
+    * `BIG-IP Local Traffic Management Basics <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-basics-12-0-0.html>`_
+    * `BIG-IP Routing Administration Guide <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/tmos-routing-administration-12-0-0/5.html#conceptid>`_
+    * `BIG-IP Device Service Clustering Administration <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-device-service-clustering-admin-12-0-0.html>`_
 
 
 .. rubric:: Footnotes
@@ -450,4 +463,5 @@ Uncomment this line in the :ref:`agent configuration file` if you're using an :t
 .. _VTEP: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-tmos-tunnels-ipsec-12-0-0/3.html#unique_1403984487
 .. _SNATs: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/tmos-routing-administration-12-0-0/8.html#unique_427846607
 .. _self IP: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/tmos-routing-administration-12-0-0/6.html#conceptid
+.. _BIG-IP license: https://f5.com/products/how-to-buy/simplified-licensing
 
