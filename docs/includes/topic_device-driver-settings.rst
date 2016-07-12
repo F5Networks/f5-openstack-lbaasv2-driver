@@ -17,7 +17,7 @@ Use Case
 
 If you want to use the F5 agent to manage BIG-IP from within your OpenStack cloud, you **must** provide the correct information in this section of the agent config file. The F5 agent can manage a :term:`standalone` device or a :term:`device service cluster`.
 
-.. seealso:: :ref:`Managing BIG-IP Clusters`
+.. seealso:: :ref:`Managing BIG-IP Clusters with F5 LBaaS`
 
 
 Prerequisites
@@ -38,7 +38,6 @@ Caveats
 -------
 
 - vCMP® is unsupported in this release (v |release|).
-- Clustering is limited to two (2) BIG-IP devices in this release.
 
 
 Configuration

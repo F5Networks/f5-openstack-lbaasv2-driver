@@ -15,7 +15,7 @@ In order to use F5® LBaaSv2 services, you will need the following:
 
 - Basic understanding of `OpenStack networking concepts`_.
 
-- Basic understanding of `BIG-IP® Local Traffic Management <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-basics-12-0-0.html>`_
+- Basic understanding of `BIG-IP Local Traffic Management <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-basics-12-0-0.html>`_
 
 - F5 :ref:`service provider package <Install the F5 Service Provider Package>` installed on Neutron controller.
 

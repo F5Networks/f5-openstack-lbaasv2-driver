@@ -311,15 +311,15 @@ texinfo_documents = [
 # Example configuration for intersphinx: refer to the Python standard library.
 
 intersphinx_mapping = {'heat': (
-     'http://f5-openstack-heat.readthedocs.io/en/liberty', None),
+     'http://f5-openstack-heat.readthedocs.io/en/mitaka', None),
      'heatplugins': (
-     'http://f5-openstack-heat-plugins.readthedocs.io/en/liberty', None),
+     'http://f5-openstack-heat-plugins.readthedocs.io/en/mitaka', None),
      'lbaasv1': (
-     'http://f5-openstack-lbaasv1.readthedocs.io/en/liberty/', None),
+     'http://f5-openstack-lbaasv1.readthedocs.io/en/mitaka/', None),
      'agent': (
-     'http://f5-openstack-agent.readthedocs.io/en/liberty/', None),
+     'http://f5-openstack-agent.readthedocs.io/en/mitaka/', None),
      'f5sdk': (
      'http://f5-sdk.readthedocs.io/en/latest/', None),
      'docs': (
-     'http://f5-openstack-docs.readthedocs.io/en/liberty/', None),
+     'http://f5-openstack-docs.readthedocs.io/en/mitaka/', None),
  }
