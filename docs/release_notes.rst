@@ -1,19 +1,19 @@
 .. _lbaasv2-driver-release-notes:
 
-Release Notes |version|
-#######################
+Release Notes v |version|
+#########################
 
-This release provides an implementation of the OpenStack Neutron LBaaSv2 driver and agent to support F5 Networks® BIG-IP® systems.
+This release introduces support for OpenStack |openstack|.
 
 Release Highlights
 ==================
 
-This release introduces support for SSL offloading and for BIG-IP® clustering (:term:`pair` and :term:`scalen` configurations).
+This is the initial release for OpenStack |openstack|.
 
 
-.. include:: map_release-summary.rst
-    :start-line: 2
+.. include:: includes/topic_new-supported-features.rst
+    :start-line: 3
+
+.. include:: includes/topic_restrictions.rst
 
 
-.. toctree::
-    :hidden:
