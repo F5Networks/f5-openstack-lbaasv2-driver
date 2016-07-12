@@ -1,17 +1,15 @@
 .. _lbaasv2-driver-release-notes:
 
-Release Notes |version|
-#######################
+Release Notes v |version|
+#########################
 
 .. rubric:: Summary
-
-This release includes quality enhancements for the OpenStack Neutron LBaaSv2 service provider driver to support F5 Networks® BIG-IP® systems.
+This release introduces support for OpenStack |openstack|.
 
 .. rubric:: Release Highlights
+This is the initial release for OpenStack |openstack|.
 
-This release resolves API incompatibilities between agent and BIG-IP 11.5.4.
-
-See the `changelog <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/compare/v8.0.4...v8.0.5>`_ for the full list of changes in this release.
+See the `changelog <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/compare/v8.0.4...v9.0.1>`_ for the full list of changes in this release.
 
 .. rubric:: Caveats
 
