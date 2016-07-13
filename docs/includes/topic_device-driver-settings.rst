@@ -2,8 +2,8 @@
 
 .. _device-driver-settings:
 
-Device Driver Settings / iControl® Driver Settings
-==================================================
+Device Driver Settings / iControl Driver Settings
+=================================================
 
 Overview
 --------

@@ -8,7 +8,7 @@ Global Routed Mode
 Overview
 --------
 
-The F5® agent determines BIG-IP® devices' L2 and L3 network configurations based on the settings provided in the :ref:`L2/L3 segmentation modes` settings in the :ref:`agent configuration file`. When configured to use global routed mode, the F5 agent makes the following assumptions:
+The F5® agent determines BIG-IP® devices' L2 and L3 network configurations based on the settings provided in the :ref:`L2/L3 segmentation modes <L2 adjacent mode>` settings in the :ref:`agent configuration file`. When configured to use global routed mode, the F5 agent makes the following assumptions:
 
     #. LBaaS objects are accessible via global L3 routes;
     #. All virtual IPs are routable from clients;

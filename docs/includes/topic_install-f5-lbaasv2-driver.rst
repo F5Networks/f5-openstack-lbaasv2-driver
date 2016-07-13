@@ -1,26 +1,21 @@
 :orphan: true
 
-.. _install-f5-lbaasv2-driver:
+Install the F5 LBaaSv2 Driver
+-----------------------------
 
-Install the F5® LBaaSv2 Driver
-------------------------------
-
-.. include:: topic_tip-sudo-pip-git.rst
-
-.. topic:: To install the ``f5-openstack-lbaasv2-driver`` package:
+.. topic:: To install the ``f5-openstack-lbaasv2-driver`` package for v |release|:
 
     .. code-block:: text
 
-        $ sudo pip install git+https://github.com/F5Networks/f5-openstack-lbaasv2-driver
+        $ sudo pip install git+https://github.com/F5Networks/f5-openstack-lbaasv2-driver@<release_tag>
 
 
-.. important::
+.. tip::
 
-    The command above will install the package from the default branch (liberty). You can install specific releases by adding ``@<release_tag>`` to the end of the install command.
+    You can install packages from HEAD on a specific branches by adding ``@<branch_name>`` to the end of the install command instead of the release tag.
 
-    For example:
-
+    .. rubric:: Example:
     .. code-block:: text
 
-        $ sudo pip install git+https://github.com/F5Networks/f5-openstack-lbaasv2-driver@v8.0.3
+        $ sudo pip install git+https://github.com/F5Networks/f5-openstack-lbaasv2-driver@liberty
 

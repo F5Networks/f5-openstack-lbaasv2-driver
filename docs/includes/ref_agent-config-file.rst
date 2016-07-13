@@ -15,7 +15,7 @@ Can be used for :term:`standalone`, :term:`overcloud` BIG-IP® VE deployments.
 * :download:`f5-openstack-agent.grm.ini <../_static/f5-openstack-agent.grm.ini>`
 
 
-:ref:`L2/L3 Segmentation Modes`
+:ref:`L2 Adjacent Mode`
 -------------------------------
 
 Can be used for :term:`standalone` or :term:`clustered` :term:`undercloud` BIG-IP® hardware or VE deployments.

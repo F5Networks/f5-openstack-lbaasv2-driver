@@ -1,3 +1,5 @@
+:orphan: true
+
 New Supported Features
 ======================
 

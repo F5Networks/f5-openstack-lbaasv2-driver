@@ -10,7 +10,6 @@ Supported Features
     :maxdepth: 2
 
     includes/topic_ha-modes
-    includes/topic_sync-mode
     includes/topic_l2-l3-segmentation-modes
     includes/topic_global-routed-mode
     includes/topic_device-driver-settings
