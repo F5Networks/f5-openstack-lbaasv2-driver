@@ -3,17 +3,28 @@
 Release Notes |version|
 #######################
 
-This release provides an implementation of the OpenStack Neutron LBaaSv2 driver and agent to support F5 Networks® BIG-IP® systems.
+.. rubric:: Summary
 
-Release Highlights
-==================
+This release includes quality enhancements for the OpenStack Neutron LBaaSv2 service provider driver to support F5 Networks® BIG-IP® systems.
 
-This release introduces support for SSL offloading and for BIG-IP® clustering (:term:`pair` and :term:`scalen` configurations).
+.. rubric:: Release Highlights
 
+This release resolves API incompatibilities between agent and BIG-IP 11.5.4.
 
-.. include:: map_release-summary.rst
-    :start-line: 2
+See the `changelog <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/compare/v8.0.4...v8.0.5>`_ for the full list of changes in this release.
 
+.. rubric:: Caveats
 
-.. toctree::
-    :hidden:
+The following are not supported in this release:
+
+* BIG-IP vCMP
+* Agent High Availability (HA)
+* Differentiated environments
+* L7 routing
+* Unattached pools
+* Loadbalancer statistics (e.g., ``neutron lbaas-loadbalancer-stats``)
+
+.. rubric:: Open Issues
+
+See the project `issues page <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/issues>`_ for a full list of open issues in this release.
+

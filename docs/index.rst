@@ -1,7 +1,7 @@
 .. _home:
 
-F5® OpenStack Neutron LBaaSv2
-=============================
+F5 OpenStack Neutron LBaaSv2
+############################
 
 |Build Status| |Docs Build Status|
 
@@ -10,31 +10,29 @@ F5® OpenStack Neutron LBaaSv2
 
     <script async defer src="https://f5-openstack-slack.herokuapp.com/slackin.js"></script>
 
+
+Contents
+========
+
 .. toctree::
     :maxdepth: 1
 
-    Quick Start Guide
+    Quick Start Guide <map_quick-start-guide>
     User Guide <map_f5-lbaasv2-user-guide>
+    F5 LBaaSv2 to BIG-IP Mapping <includes/topic_neutron-bigip-command-mapping>
+    Sample Configuration Files <includes/ref_agent-config-file>
+    Supported Features
     Coding Example <coding-example-lbaasv2>
-    Supported Features <map_lbaasv2-features>
     Release Notes <release_notes>
+    Upgrading <includes/topic_upgrading-f5-lbaasv2-plugin>
     Glossary <glossary>
-
-
-.. include:: includes/topic_lbaasv2-plugin-overview.rst
-    :start-line: 3
-    :end-line: 5
+    troubleshooting
 
 .. include:: includes/ref_lbaasv2-version-compatibility.rst
     :start-line: 2
 
-
-.. toctree::
-    :hidden:
-    :maxdepth: 2
-
-
-
+.. include:: includes/topic_lbaasv2-plugin-overview.rst
+    :start-line: 2
 
 .. |Build Status| image:: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=liberty
     :target: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver

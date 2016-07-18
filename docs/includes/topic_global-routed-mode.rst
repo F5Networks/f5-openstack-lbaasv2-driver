@@ -44,7 +44,7 @@ Prerequisites
 
 - Administrator access to both BIG-IP device(s) and OpenStack cloud.
 
-- F5 :ref:`LBaaSv2 driver <install-f5-lbaasv2-driver>` and :ref:`agent <agent:home>` installed on each server for which BIG-IP LTM services are required.
+- F5 :ref:`LBaaSv2 driver <Install the F5 LBaaSv2 Driver>` and :ref:`agent <agent:home>` installed on each server for which BIG-IP LTM services are required.
 
 - Understanding of `NATs and SNATs <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/tmos-routing-administration-12-0-0/8.html#conceptid>`_.
 

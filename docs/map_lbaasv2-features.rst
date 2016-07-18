@@ -1,18 +1,20 @@
 .. _lbaasv2-supported-features:
 
 Supported Features
-##################
+------------------
 
 .. include:: includes/topic_supported-features-intro.rst
-    :start-line: 7
+    :start-line: 2
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
-    includes/topic_ha-modes
-    includes/topic_l2-l3-segmentation-modes
-    includes/topic_global-routed-mode
     includes/topic_device-driver-settings
+    includes/topic_l2-l3-segmentation-modes
+    High Availability <includes/topic_ha-modes>
+    Device Clusters <includes/topic_clustering>
+    Multi-Tenancy <includes/topic_multi-tenancy>
+    includes/topic_global-routed-mode
     includes/topic_cert-manager
 
 

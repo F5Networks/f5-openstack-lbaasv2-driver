@@ -17,7 +17,7 @@ Use Case
 
 If you want to use the F5 agent to manage BIG-IP from within your OpenStack cloud, you **must** provide the correct information in this section of the agent config file. The F5 agent can manage a :term:`standalone` device or a :term:`device service cluster`.
 
-.. seealso:: :ref:`Managing BIG-IP Clusters`
+.. seealso:: :ref:`Managing BIG-IP Clusters with F5 LBaaS`
 
 
 Prerequisites
@@ -31,7 +31,7 @@ Prerequisites
 
 - Basic understanding of `BIG-IP® system configuration <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-system-initial-configuration-12-0-0/2.html#conceptid>`_.
 
-- F5 :ref:`agent <agent:home>` and :ref:`service provider driver <install-f5-lbaasv2-driver>` installed on the Neutron controller and all other hosts for which you want to provision LBaaS services.
+- F5 :ref:`agent <agent:home>` and :ref:`service provider driver <Install the F5 LBaaSv2 Driver>` installed on the Neutron controller and all other hosts for which you want to provision LBaaS services.
 
 
 Caveats

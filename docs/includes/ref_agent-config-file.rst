@@ -5,7 +5,7 @@ Agent Configuration File
 
 The agent configuration file -- :file:`/etc/neutron/services/f5/f5-openstack-agent.ini` -- controls how the agent interacts with your BIG-IP®(s). The file contains detailed descriptions of each available configuration option.
 
-For reference, we've provided here a set of 'pre-configured' agent config files. These examples can help guide you in setting up the agent to work with your specific environment.
+For reference, we've provided here a set of 'pre-configured' agent config files. These examples can help guide you in setting up the F5 agent to work with your specific environment.
 
 :ref:`Global Routed Mode`
 -------------------------
