@@ -21,9 +21,9 @@ Contents
     User Guide <map_f5-lbaasv2-user-guide>
     F5 LBaaSv2 to BIG-IP Mapping <includes/topic_neutron-bigip-command-mapping>
     Sample Configuration Files <includes/ref_agent-config-file>
-    Supported Features
     Coding Example <coding-example-lbaasv2>
     Release Notes <release_notes>
+    Supported Features <map_lbaasv2-features>
     Upgrading <includes/topic_upgrading-f5-lbaasv2-plugin>
     Glossary <glossary>
     troubleshooting

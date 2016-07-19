@@ -46,7 +46,7 @@ F5 LBaaSv2 Configuration Options
 | f5_populate_static_arp     | TRUE               | | When set to TRUE, the agent populates   |
 |                            |                    | | the BIG-IP's ARP table with the IP and  |
 |                            |                    | | MAC information from the LBaaS service  |
-|                            |                    | | definition. This reducse the amount of  |
+|                            |                    | | definition. This reduces the amount of  |
 |                            |                    | | flood learning required to discover     |
 |                            |                    | | pool members for the BIG-IP.            |
 +----------------------------+--------------------+-------------------------------------------+

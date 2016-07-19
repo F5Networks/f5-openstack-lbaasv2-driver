@@ -3,13 +3,13 @@
 Neutron Command to BIG-IP Configuration Mapping Table
 =====================================================
 
-F5 LBaaSv2 uses the f5-sdk to communicate with BIG-IP via the iControl® REST API. The table below shows the corresponding iControl endpoint and BIG-IP object for each neutron lbaas- ‘create’ command.
+F5 LBaaSv2 uses the :ref:`f5-sdk <f5sdk:home>` to communicate with BIG-IP via the iControl® REST API. The table below shows the corresponding iControl endpoint and BIG-IP object for each neutron lbaas- ‘create’ command.
 
 +----------------------------------------+-----------------------------------------------------------------------------------------+-----------------------------------+
 | Command                                | URI                                                                                     | BIG-IP Configurations Applied     |
 +========================================+=========================================================================================+===================================+
 | ``neutron lbaas-loadbalancer-create``  | \https://<icontrol_endpoint>:443/mgmt/tm/sys/folder/~Project_<os_tenant_id>             | new partition created using the   |
-|                                        |                                                                                         | uuid prefix [#]_ and tenant ID    |
+|                                        |                                                                                         | uuid prefix and tenant ID         |
 +----------------------------------------+-----------------------------------------------------------------------------------------+-----------------------------------+
 | ``neutron lbaas-listener-create``      | \https://<icontrol_endpoint>:443/mgmt/tm/ltm/virtual/                                   | new virtual server created in the |
 |                                        |                                                                                         | tenant partition                  |
