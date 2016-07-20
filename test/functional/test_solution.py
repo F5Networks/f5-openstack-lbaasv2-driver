@@ -362,9 +362,14 @@ class LBaaSv2(object):
         self.ncm.delete_loadbalancer(proxy.loadbalancer['id'])
 
     def clear_proxies(self):
+        if self.symbols['debug']:
+            self.debug()
         self.ncm.delete_all_lbaas_healthmonitors()
+        time.sleep(1)
         self.ncm.delete_all_lbaas_pools()
+        time.sleep(1)
         self.ncm.delete_all_listeners()
+        time.sleep(1)
         self.ncm.delete_all_loadbalancers()
         if self.symbols['debug']:
             self.debug()
@@ -388,14 +393,15 @@ def tst_setup(request, symbols):
     print 'test setup'
     testenv = ExecTestEnv()
 
+    def tst_cleanup():
+        print 'test cleanup'
+        testenv.lbm.clear_proxies()
+        exec_command(testenv.server_ssh, 'pkill -f SimpleHTTPServer')
+
     def tst_teardown():
         print 'test teardown'
-        # pool delete sometimes get stuck in pending due to one or more of the
-        # following objects existing on BIG-IP:
-        # selfip, snat, route-domain, vxlan tunnel, gre tunnel
-        testenv.lbm.clear_proxies()
-        if testenv.webserver_started:
-            exec_command(testenv.server_ssh, 'pkill -f SimpleHTTPServer')
+        if not testenv.lbm.symbols['debug']:
+            tst_cleanup()
         testenv.client_ssh.close()
         testenv.server_ssh.close()
 
@@ -419,7 +425,7 @@ def tst_setup(request, symbols):
     testenv.lbm = (LBaaSv1(testenv.symbols) if
                    testenv.symbols['lbaas_version'] == 1 else
                    LBaaSv2(testenv.symbols))
-    testenv.lbm.clear_proxies()
+    tst_cleanup()
     request.addfinalizer(tst_teardown)
     return testenv
 
