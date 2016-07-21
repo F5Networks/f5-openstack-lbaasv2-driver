@@ -1,5 +1,10 @@
 sudo: required
-
+env:
+  global:
+    - DIST_REPO="f5-openstack-agent-dist"
+  matrix:
+    - OS_TYPE="redhat" OS_VERSION="7"
+    - OS_TYPE="redhat" OS_VERSION="6"
 services:
   - docker
 
@@ -14,6 +19,14 @@ install:
     - sudo pip install hacking pytest pytest-cov .
     - sudo pip install -r requirements.txt
     - sudo pip install -r requirements.docs.txt
-    - sudo apt-get install git -y
 script:
     - flake8 ./f5lbaasdriver
+    - f5-openstack-lbaasv2-driver-dist/scripts/package_driver.sh ${OS_TYPE} ${OS_VERSION} ${DIST_REPO}
+
+notifications:
+  slack:
+    rooms:
+      - secure: soCJy2X/f/yU8qQaewN5bTAxaZi7jKUe0TtGkRVlbNXzpiX+XsocWqCPwjkwimI01mZ3n36Q/TlP6V6h4H0AzA8CN1sp0tRfIXxZgV1m4Kye1IKefFXUwXb52pFtHicu+dWdUBvJzTe1PUimt7eg1ZMOLcq8lUSVnNNFVXj5JR6DGFKss0JbtMP/nfTYxlyUvvDsKkWgBd9G+D6JrChpLrLccV8ZA4lByhMRjWxJW7f+o4gtF/FVZkGv/Pv16M5FIqWVnf9WYWnxErw0Ji3piuC+BF76nBhShQ4eCn78GOw0BvdpW4WJH859Xks31ARuX0dE1COreNS+Jgwd2TW3A/9FnsQYP3pzhaSw1qnqDhYj6+Hw2feX2/QNxrLKTKkYap30M9rHfIYI/PCVIIhbz7RVx5Dn/2ABz7YfNRYKh6CqqEq7vyNp7vTw8KrmubvTbru+9/4JPKYzuNUk1w3tJKlzTg18hUBcwewt7JhyKbJljje1atKUYupGzGeTDHubuDG/IP0BnzvKFfEoBKUZ/1jmIHkXqCcJU2qAqAltiO0oDLO8w4kDg5hYEz4FdOHYADPKJT4+pqdZafgn7xlOWVkVpbRCqHJbXCqqRwPrGw2cNeQ0+trs2W3UQRKnSOU7ZF4W6UvAizHpBW0jj7Wu8fm/B9yvDv081Fu1+girhjs=
+      - secure: R9I38fqG1n1dXSd97e7eKrNt8XtWPpcF7J1cZ8cc+vB3+LcHjruMTVfRZHPWsBHMlWxvgrl7zD3t+38cIW2hJ7YrWjo4Izl60k8OM6HteFwHfDGsLM6eZNUaTZFORbeTSJCo6jryAI7qsu5xjU2uUi08nJTmuXU9jxsC+7mRzh1EL680TaPtCfoniVqI+3xRWt1ApVs8u61yU44x83KlBcSHdg9F/7X3o/I9vG+CiKxm+RWi0i6g1RebLzAEnYYMTGEctTaQCmyt4Y8+I9K/WBVKEQyT6o1z2Ac00qmbsk0sbSuEt9q30nJwlqGR1/WTn4FvDxGC1BE82rOmyppFjV0giXlJGINQre6LuGnMkeW8Cmg2P4vsHVwmxDR8B4G2cwdSgiho758wtP3ABVVA10GgnoatxeUAAC1rc6QAcQ9HdYObKmGzpRjp+6AWp1YghSCjszdRUvwtfWIZ9fmvTZBhB2qDJxAsyjw0DU+hxIfGs1v6TV6hcN4Vh9C34fKvP19tn7BS5vbZTPorq67uTxDj9EOfLOzuZNKbzRLqNQu+ZXniiV7P5sqT+mEryGJ04rrEC7/KuuWg0zPhevitY1oZNo4fjSSiSN2m42c+9cOtw0eZVACQFwI2vlU5pdRhPkfU6QqKPNIIfjsp+uWehN5sRPvL+GKh5siiQzhvyJ4=
+    on_success: change
+    on_failure: always
