@@ -11,15 +11,16 @@ language: python
 python:
 - '2.7'
 before_install:
-- git config --global user.email "r.browne@f5.com"
-- git config --global user.name "richbrowne"
+- git config --global user.email "OpenStack_TravisCI@f5.com"
+- git config --global user.name "Travis F5 Openstack"
 install:
 - sudo pip install hacking pytest pytest-cov .
 - sudo pip install -r requirements.txt
 - sudo pip install -r requirements.docs.txt
 script:
 - flake8 ./f5lbaasdriver
-- f5-openstack-lbaasv2-driver-dist/scripts/package_driver.sh ${OS_TYPE} ${OS_VERSION} ${DIST_REPO}
+- f5-openstack-lbaasv2-driver-dist/scripts/package_driver.sh ${OS_TYPE} ${OS_VERSION}
+  ${DIST_REPO}
 notifications:
   slack:
     rooms:
@@ -27,4 +28,12 @@ notifications:
     - secure: R9I38fqG1n1dXSd97e7eKrNt8XtWPpcF7J1cZ8cc+vB3+LcHjruMTVfRZHPWsBHMlWxvgrl7zD3t+38cIW2hJ7YrWjo4Izl60k8OM6HteFwHfDGsLM6eZNUaTZFORbeTSJCo6jryAI7qsu5xjU2uUi08nJTmuXU9jxsC+7mRzh1EL680TaPtCfoniVqI+3xRWt1ApVs8u61yU44x83KlBcSHdg9F/7X3o/I9vG+CiKxm+RWi0i6g1RebLzAEnYYMTGEctTaQCmyt4Y8+I9K/WBVKEQyT6o1z2Ac00qmbsk0sbSuEt9q30nJwlqGR1/WTn4FvDxGC1BE82rOmyppFjV0giXlJGINQre6LuGnMkeW8Cmg2P4vsHVwmxDR8B4G2cwdSgiho758wtP3ABVVA10GgnoatxeUAAC1rc6QAcQ9HdYObKmGzpRjp+6AWp1YghSCjszdRUvwtfWIZ9fmvTZBhB2qDJxAsyjw0DU+hxIfGs1v6TV6hcN4Vh9C34fKvP19tn7BS5vbZTPorq67uTxDj9EOfLOzuZNKbzRLqNQu+ZXniiV7P5sqT+mEryGJ04rrEC7/KuuWg0zPhevitY1oZNo4fjSSiSN2m42c+9cOtw0eZVACQFwI2vlU5pdRhPkfU6QqKPNIIfjsp+uWehN5sRPvL+GKh5siiQzhvyJ4=
     on_success: change
     on_failure: always
-
+deploy:
+  provider: releases
+  api_key:
+    secure: A+vS5PMieSSIYSHi6hJARNO6bto+n0IVMlYBiEEEe8InrYXtGC8kdJ5Xi9WkIoDsrzihybttG9bu0neGRMM9Ev/3NiQBuEXKmPHcJYMM8f2Yx/fA1hrx8Jv686nwteUh2czFEdQpnAkA5St82MqYI2oac1NwRoImj5mDh5kmuYQPYYoLVT+gHKnFwSp9lJHgQ1ntV+nUgkmybAhetFoMiEsz8hd4Pd/MK4rOIaiurl3R3PnnX/PPzZf4ptqXX56Em9tKKFfmivBvIDSI0He+//+Wci8vUq/zbzh7sS120W+hSgSC0f7NqNSAZC8nxvhyyoACq6iHRCDFB7L7MmG5o9yUD2bU/TvYOEJH9Gmpz7JM7y/Ip/dwhNJMHMA87+SfxrZa6exgWunrl4IGluBzmGmsohE5xf+iAgv5fMWEsLUD5Pou7wLZrDYyJ1OOy3dSXqplHv/RTndCApVS7nGmNnQWKjyEUT1ePqNUV+klDML2CfMj3KHa/YdDllgE+TVBB2pU4pKm5h0EmN9AcWjEn4nTy4/rsEYgjeyAsqNQx9b5KobYEA8O0MlqSngNvUD+Q4Q2e8QR6Lj/ClAKq1sDI09Of8rCdaqo3nnftlW/PZ5rJsxXDLcf799ydgix7LKC48lsJjQVydiIWIX0cpqQbetyo6GH5iZj/LZCIgxJOmA=
+  file: f5-openstack-lbaav2-driver.rpm
+  on:
+    repo: F5Networks/f5-openstack-lbaasv2-driver
+    branch: feature.rpmbuild
+    tags: true
