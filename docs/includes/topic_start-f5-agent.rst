@@ -2,25 +2,25 @@
 
 .. _topic-start-the-agent:
 
-Start the F5® OpenStack Agent
-=============================
+Start the F5 OpenStack Agent
+============================
 
-Once you have configured the F5® agent as appropriate for your environment, use the command(s) appropriate for your OS to start the agent.
+Once you have configured the F5 agent as appropriate for your environment, use the command(s) appropriate for your OS to start the agent.
 
-Debian/Ubuntu
--------------
+.. topic:: CentOS
 
-.. code-block:: text
+    .. code-block:: text
 
-    $ sudo service f5-oslbaasv2-agent start
+        $ sudo systemctl enable f5-openstack-agent
+        $ sudo systemctl start f5-openstack-agent
+
+.. topic:: Ubuntu
 
 
-RedHat/CentOS
--------------
+    .. code-block:: text
 
-.. code-block:: text
+        $ sudo service f5-oslbaasv2-agent start
 
-    $ sudo systemctl enable f5-openstack-agent
-    $ sudo systemctl start f5-openstack-agent
+
 
 
