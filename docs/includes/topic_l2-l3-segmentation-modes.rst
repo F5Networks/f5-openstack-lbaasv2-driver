@@ -1,7 +1,9 @@
 :orphan: true
 
-L2 Adjacent Mode
-================
+.. _l2-l3-segmentation-modes:
+
+L2/L3 Segmentation Modes
+========================
 
 Overview
 --------

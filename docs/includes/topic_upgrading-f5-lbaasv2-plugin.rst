@@ -47,7 +47,7 @@ Red Hat/CentOS
 Install the new version of the F5 agent
 ---------------------------------------
 
-Follow the :ref:`agent <agent:home>` installation instructions to install the version to which you'd like to upgrade.
+Follow the :ref:`agent <agent:home>` and installation instructions to install the version to which you'd like to upgrade.
 
 Restore the F5 agent configuration file
 ---------------------------------------

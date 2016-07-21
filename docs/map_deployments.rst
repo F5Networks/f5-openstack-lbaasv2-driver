@@ -1,12 +1,12 @@
 .. _common-deployments:
 
-F5 LBaaSv2 Deployments
-======================
+F5 OpenStack LBaaSv2 Deployments
+################################
 
-The following common BIG-IP configurations can be managed in OpenStack with F5 LBaaS.
+This section features common BIG-IP® deployments that can be managed in OpenStack with F5® LBaaS.
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     includes/topic_clustering
     includes/topic_multi-tenancy
