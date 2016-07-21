@@ -34,7 +34,7 @@ Prerequisites
 
 - Administrator access to both BIG-IP devices and OpenStack cloud.
 
-- F5 :ref:`agent <agent:home>` and :ref:`service provider driver <install-f5-lbaasv2-driver>` installed on the Neutron controller and all other hosts from which you want to provision LBaaS services.
+- F5 :ref:`agent <agent:home>` and :ref:`service provider driver <Install the F5 LBaaSv2 Driver>` installed on the Neutron controller and all other hosts from which you want to provision LBaaS services.
 
 
 Caveats
@@ -72,7 +72,7 @@ Configuration
     #
     #
 
-3. Add the IP address for each BIG-IP device, the admin username, and the admin password to the :ref:`Device Driver - iControl® Driver Setting <Device Driver Settings / iControl® Driver Settings>` section of the config file. Values must be comma-separated.
+3. Add the IP address for each BIG-IP device, the admin username, and the admin password to the :ref:`Device Driver - iControl® Driver Setting <Device Driver Settings / iControl Driver Settings>` section of the config file. Values must be comma-separated.
 
 .. code-block:: text
     :emphasize-lines: 10
