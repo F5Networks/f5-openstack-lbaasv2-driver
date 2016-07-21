@@ -1,13 +1,6 @@
 Troubleshooting
 ---------------
 
-.. tip::
-
-    If you can't find objects on your BIG-IP that you created using F5 LBaaSv2, check your partition. By default, all objects are created in a partition that is named with the OpenStack tenant ID and the preface 'Project\_'.
-
-    Example: ``Project_9572afc14db14c8a806d8c8219446e7b``
-
-
 Set Logging Level to DEBUG
 ``````````````````````````
 
@@ -36,8 +29,8 @@ Extensive logging will then appear in the ``neutron-server`` and ``f5-oslbaasv1-
         DEBUG = T
 
 
-F5 Agent is not running
-```````````````````````
+F5® Agent is not running
+````````````````````````
 
 If ``f5-openstack-agent`` or ``f5-oslbaasv2-agent`` doesn't appear in the Horizon agent list, or when you run ``neutron agent-list``, the agent is not running.
 
@@ -93,8 +86,8 @@ Here are a few things you can try:
         +---------------------------+--------------------------------------+
 
 
-F5 Agent is not provisioning LBaaS tasks correctly
-``````````````````````````````````````````````````
+F5® Agent is not provisioning LBaaS tasks correctly
+```````````````````````````````````````````````````
 
 1. Make sure you don't have more than one agent running on the same host.
 

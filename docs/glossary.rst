@@ -42,7 +42,6 @@ Glossary
         Both `BIG-IP`_ devices in a :term:`pair` are in an active state, processing traffic for different virtual servers or SNATs. If one device :term:`fails over`, the remaining device processes traffic from the failed device in addition to its own traffic.
 
     active-standby
-    active-standby pair
         Only one of the two `BIG-IP`_ devices is in an active state -- that is, processing traffic -- at any given time. If the active device :term:`fails over`, the second device enters active mode and processes traffic that was originally targeted for the primary device.
 
     failover
