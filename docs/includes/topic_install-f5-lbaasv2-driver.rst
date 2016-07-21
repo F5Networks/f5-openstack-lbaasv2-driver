@@ -1,17 +1,14 @@
 :orphan: true
 
-.. _install-f5-lbaasv2-driver:
-
 Install the F5 LBaaSv2 Driver
 -----------------------------
 
-.. include:: topic_tip-sudo-pip-git.rst
-    :start-line: 2
+.. rubric:: To install the ``f5-openstack-lbaasv2-driver`` package for v |release|:
 
-.. topic:: To install the ``f5-openstack-lbaasv2-driver`` package for the v |release| release:
+.. code-block:: text
 
-    .. code-block:: text
+    $ sudo pip install git+https://github.com/F5Networks/f5-openstack-lbaasv2-driver@<release_tag>
 
-        $ sudo pip install git+https://github.com/F5Networks/f5-openstack-lbaasv2-driver@v9.0.1
+.. tip:: Release tags always use the format "vx.x.x"
 
 
