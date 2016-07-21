@@ -57,8 +57,11 @@ Configuration
 
     $ sudo emacs /etc/neutron/services/f5/f5-openstack-agent.ini
 
+2. Enable the F5 Barbican certificate manager.
 
-2. Provide the Keystone authentication data for your environment.
+    - ``cert_manager = f5_openstack_agent.lbaasv2.drivers.bigip.barbican_cert.BarbicanCertManager``
+
+3. Provide the Keystone authentication data for your environment.
 
     - ``auth_version``: Keystone version (``v2`` or ``v3``)
     - ``os_auth_url``: Keystone authentication URL
@@ -76,7 +79,7 @@ Configuration
         :emphasize-lines: 8-14, 17-25
 
         #
-        cert_manager = f5_openstack_agent.lbaasv2.drivers.bigip.barbican_cert.BarbicanCertManager \\ DO NOT CHANGE
+        cert_manager = f5_openstack_agent.lbaasv2.drivers.bigip.barbican_cert.BarbicanCertManager
         #
         # Two authentication modes are supported for BarbicanCertManager:
         #   keystone_v2, and keystone_v3
@@ -102,7 +105,7 @@ Configuration
         os_project_domain_name = default
         #
 
-3. Set the BIG-IP parent SSL profile.
+4. Set the BIG-IP parent SSL profile.
 
     - ``f5_parent_ssl_profile``: The parent SSL profile on the BIG-IP® from which the agent SSL profile should inherit settings
 
