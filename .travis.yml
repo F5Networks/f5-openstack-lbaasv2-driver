@@ -39,5 +39,4 @@ deploy:
   overwrite: true
   on:
     repo: F5Networks/f5-openstack-lbaasv2-driver
-    branch: feature.rpmbuild
     tags: true
