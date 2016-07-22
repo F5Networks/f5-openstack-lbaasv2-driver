@@ -61,25 +61,26 @@ Command                                    Action
 ``neutron lbaas-pool-create``              | 1. new pool created in the tenant partition
                                            |    - assigned to the virtual server (or, listener) specified in the command
 --------------------------------------     ---------------------------------------------------------------------------------
-``neutron lbaas-member-create``            | - coming soon
-
+``neutron lbaas-member-create``            | 1. new member created in specified pool using IP address and port supplied in
+                                           | command
+                                           |    - if the member is the first created for the specified pool, the pool
+                                           |    status will change on the BIG-IP
+                                           | 2. new node created using IP address supplied in command
 --------------------------------------     ---------------------------------------------------------------------------------
-``neutron lbaas-healthmonitor-create``     | - coming soon
-
+``neutron lbaas-healthmonitor-create``     | 1. new health monitor created for specified pool
+                                           |    - if the health monitor is the first created for the specified pool, the
+                                           |    pool status will change on the BIG-IP
 ======================================     =================================================================================
 
 
 
-https listener
- - custom profile created; inherits settings from the [client-? or server-?] SSL profile
+Further Reading
+---------------
+.. seealso::
 
+    * `OpenStack Neutron CLI Reference <http://docs.openstack.org/cli-reference/neutron.html>`_
+    * `BIG-IP Local Traffic Management - Basics <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-basics-12-1-0.html?sr=55917227>`_
 
-.. Further Reading
-    ---------------
-    .. seealso::
-        * x
-        * y
-        * z
 
 
 .. rubric:: Footnotes:
