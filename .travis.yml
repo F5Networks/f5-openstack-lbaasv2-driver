@@ -43,7 +43,7 @@ deploy:
   - provider: pypi
     user: $PYPI_USER
     password: $PYPI_PASSWORD
-    server: https://pypy.python.org/pypi
+    server: https://pypi.python.org/pypi
     on:
       all_branches: true
       tags: true
