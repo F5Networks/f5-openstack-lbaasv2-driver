@@ -150,7 +150,7 @@ Device Tunneling (VTEP) selfips
 
 - ``f5_vtep_folder``: This is the name of the BIG-IP folder or partition in which the `VTEP`_ (VxLAN tunnel endpoint) resides; the default partition is 'Common'.
 
-- ``f5_vtep_selfip_name``: The name of the self IP assigned to the VTEP.
+- ``f5_vtep_selfip_name``: The name of the self IP assigned to the VTEP. The self IP should be configured on the BIG-IP **before** you configure the F5 agent.
 
 .. topic:: Example
 
@@ -165,8 +165,8 @@ Device Tunneling (VTEP) selfips
         # If no gre or vxlan tunneling is required, these settings should be
         # commented out or set to None.
         #
-        f5_vtep_folder = None
-        f5_vtep_selfip_name = None
+        f5_vtep_folder = Common
+        f5_vtep_selfip_name = vtep
         #
 
 
@@ -323,14 +323,13 @@ Namespaces and Routing
 SNAT Mode and SNAT Address Counts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- ``f5_snat_mode``: Value must be True or False; indicates whether or not `SNATs`_ should be used.
+.. tip:: SNATs ensure that server responses always return through the BIG-IP; they also allow you to hide the source addresses of server-initiated requests from external devices. Use of SNATs is recommended to ensure traffic is routed through the BIG-IP properly.
 
-.. tip:: SNATs should be used when you need to ensure that server responses always return through the BIG-IP® system, or when you want to hide the source addresses of server-initiated requests from external devices.
+- ``f5_snat_mode``: Value must be True or False; indicates whether or not `SNATs`_ should be used.
 
 - ``f5_snat_addresses_per_subnet``: Value must be an integer; indicates the number of `self IP`_ addresses the BIG-IP should put in a SNAT pool for each subnet associated with a self IP.
 
 - ``f5_common_external_networks``: Value must be True or False; when set to True, traffic on all Neutron networks for which the router type is ``external`` will be routed according to the global routing table.
-
 
 .. topic:: Example
 
