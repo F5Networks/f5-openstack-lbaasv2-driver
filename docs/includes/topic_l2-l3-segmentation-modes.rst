@@ -150,7 +150,7 @@ Device Tunneling (VTEP) selfips
 
 - ``f5_vtep_folder``: This is the name of the BIG-IP folder or partition in which the `VTEP`_ (VxLAN tunnel endpoint) resides; the default partition is 'Common'.
 
-- ``f5_vtep_selfip_name``: The name of the self IP assigned to the VTEP. The self IP should be configured on the BIG-IP **before** you configure the F5 agent.
+- ``f5_vtep_selfip_name``: The name of the self IP assigned to the VTEP. The self IP must be configured on the BIG-IP **before** you configure the F5 agent.
 
 .. topic:: Example
 
