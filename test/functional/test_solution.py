@@ -19,9 +19,9 @@ import pytest
 import time
 import sys
 
+import f5_os_test
 from f5.bigip import BigIP
 from pprint import pprint as pp
-from neutronclient.v2_0 import client
 from f5_os_test.polling_clients import NeutronClientPollingManager
 from f5_os_test.polling_clients import MaximumNumberOfAttemptsExceeded
 
@@ -44,11 +44,13 @@ class ExecTestEnv(object):
         self.symbols['server_public_mgmt_ip'] = symbols_data.server_ip
         self.symbols['openstack_auth_url']    = symbols_data.auth_url
         self.symbols['lbaas_version']         = symbols_data.lbaas_version
-        self.symbols['debug']                 = True
+        self.symbols['debug']                 = False
         self.symbols['bigip_username']        = symbols_data.bigip_username
         self.symbols['bigip_password']        = symbols_data.bigip_password
         self.symbols['provider']              = ('f5' if symbols_data.lbaas_version < 2 \
                                                   else symbols_data.provider)
+        self.symbols['partition_prefix']      = ('uuid' if symbols_data.lbaas_version < 2 \
+                                                     else symbols_data.partition_prefix)
         self.symbols['admin_name']            = symbols_data.admin_name
         self.symbols['admin_username']        = symbols_data.admin_username
         self.symbols['admin_password']        = symbols_data.admin_password
@@ -60,6 +62,7 @@ class ExecTestEnv(object):
         self.symbols['guest_password']        = symbols_data.guest_password
         self.symbols['server_http_port']      = symbols_data.server_http_port
         self.symbols['server_client_ip']      = symbols_data.server_client_ip
+        self.symbols['nc_interval']           = symbols_data.nc_interval
 
 
 def nclientmanager(symbols):
@@ -67,11 +70,10 @@ def nclientmanager(symbols):
         'username': symbols['tenant_username'],
         'password': symbols['tenant_password'],
         'tenant_name': symbols['tenant_name'],
-        'auth_url': symbols['openstack_auth_url']
+        'auth_url': symbols['openstack_auth_url'],
+        'interval': symbols['nc_interval']
     }
 
-    neutronclient = client.Client(**nclient_config)
-    #return NeutronClientPollingManager(neutronclient)
     return NeutronClientPollingManager(**nclient_config)
 
 
@@ -86,6 +88,7 @@ class LBaaSv1(object):
         self.max_attempts = 60
 
     def create_pool(self):
+        pool_name = f5_os_test.random_name('test_pool_', 6)
         pool_conf = {}
         for sn in self.ncm.list_subnets()['subnets']:
             if sn['name'] == self.symbols['client_subnet']:
@@ -94,7 +97,7 @@ class LBaaSv1(object):
                                       'protocol':   'HTTP',
                                       'subnet_id':  sn['id'],
                                       'provider':   self.symbols['provider'],
-                                      'name':       'test_pool_01'}}
+                                      'name':       pool_name}}
 
         return self.ncm.create_pool(pool_conf)['pool']
 
@@ -126,7 +129,8 @@ class LBaaSv1(object):
                 raise MaximumNumberOfAttemptsExceeded
 
     def create_vip(self, pool_id, subnet_id):
-        vip_conf = {'vip': {'name': 'test_vip_01',
+        vip_name = f5_os_test.random_name('test_vip_', 6)
+        vip_conf = {'vip': {'name': vip_name,
                             'pool_id': pool_id,
                             'subnet_id': subnet_id,
                             'protocol': 'HTTP',
@@ -159,24 +163,30 @@ class LBaaSv1(object):
         # for passing traffic between client and server
         proxy = Proxy()
         proxy.pool = self.create_pool()
+        time.sleep(1)
         proxy.vip = self.create_vip(proxy.pool['id'], proxy.pool['subnet_id'])
+        time.sleep(1)
         proxy.members.append(self.create_member(proxy.pool['id']))
+        time.sleep(1)
         proxy.healthmonitors.append(self.create_healthmonitor())
+        time.sleep(1)
         hmconf = proxy.healthmonitors[0]
         hmconf = {'health_monitor': {'id': hmconf['id'],
                                      'tenant_id': hmconf['tenant_id']}}
-        self.ncm.client.associate_health_monitor(proxy.pool['id'], hmconf)
+        self.ncm.associate_health_monitor(proxy.pool['id'], hmconf)
         self.proxies.append(proxy)
         return proxy
 
     def delete_proxy(self, proxy):
         # destroy a proxy and all associated objects
         for healthmonitor in proxy.healthmonitors:
-            self.ncm.client.disassociate_health_monitor(proxy.pool['id'],
-                                                        proxy.healthmonitors[0]['id'])
+            self.ncm.disassociate_health_monitor(proxy.pool['id'],
+                                                 proxy.healthmonitors[0]['id'])
+            time.sleep(1)
             self.ncm.delete_health_monitor(healthmonitor['id'])
         for member in proxy.members:
             self.ncm.delete_member(member['id'])
+        time.sleep(1)
         self.ncm.delete_vip(proxy.vip['id'])
         self.wait_for_object_state('vip_id', None,
                                    self.ncm.show_pool, 'pool', proxy.pool['id'])
@@ -185,18 +195,23 @@ class LBaaSv1(object):
         # for the pool to be deleted, otherwise it is stuck in pending.
 
     def clear_proxies(self):
+        if self.symbols['debug']:
+            self.debug()
         for vip in self.ncm.list_vips()['vips']:
             self.ncm.delete_vip(vip['id'])
-        for member in self.ncm.list_members()['members']:
-            self.ncm.delete_member(member['id'])
+        time.sleep(1)
         for pool in self.ncm.list_pools()['pools']:
-            pp(pool)
             for health_monitor in \
                     self.ncm.list_health_monitors()['health_monitors']:
-                self.ncm.client.disassociate_health_monitor(pool['id'],
-                                                            health_monitor['id'])
-                time.sleep(5)
+                self.ncm.disassociate_health_monitor(pool['id'],
+                                                     health_monitor['id'])
+                time.sleep(1)
                 self.ncm.delete_health_monitor(health_monitor['id'])
+                time.sleep(1)
+        for member in self.ncm.list_members()['members']:
+            self.ncm.delete_member(member['id'])
+        time.sleep(1)
+        for pool in self.ncm.list_pools()['pools']:
             self.wait_for_object_state('vip_id', None,
                                        self.ncm.show_pool, 'pool', pool['id'])
             self.ncm.delete_pool(pool['id'])
@@ -224,6 +239,7 @@ class LBaaSv2(object):
         self.proxies = []
 
     def create_loadbalancer(self):
+        lb_name = f5_os_test.random_name('test_lb_', 6)
         lb_conf = {}
         for sn in self.ncm.list_subnets()['subnets']:
             if sn['name'] == self.symbols['client_subnet']:
@@ -234,7 +250,7 @@ class LBaaSv2(object):
                         #'protocol':      'HTTP',
                         'tenant_id':     sn['tenant_id'],
                         'provider':      self.symbols['provider'],
-                        'name':          'testlb_01'}}
+                        'name':          lb_name}}
         return self.ncm.create_loadbalancer(lb_conf)['loadbalancer']
 
     def delete_loadbalancer(self, lb):
@@ -261,7 +277,6 @@ class LBaaSv2(object):
         while value != current_value:
             sys.stdout.flush()
             current_state = method(*args)[key]
-            pp(current_state)
             current_value = current_state[field]
             time.sleep(self.polling_interval)
             attempts = attempts + 1
@@ -269,17 +284,19 @@ class LBaaSv2(object):
                 raise MaximumNumberOfAttemptsExceeded
 
     def create_listener(self, lb_id):
+        listener_name = f5_os_test.random_name('test_listener_', 6)
         listener_config =\
-        {'listener': {'name': 'test_listener',
+        {'listener': {'name': listener_name,
                       'loadbalancer_id': lb_id,
                       'protocol': 'HTTP',
                       'protocol_port': 80}}
         return self.ncm.create_listener(listener_config)['listener']
 
     def create_lbaas_pool(self, l_id):
+        pool_name = f5_os_test.random_name('test_pool_', 6)
         pool_config = {
             'pool': {
-                'name': 'test_pool_anur23rgg',
+                'name': pool_name,
                 'lb_algorithm': 'ROUND_ROBIN',
                 'listener_id': l_id,
                 'protocol': 'HTTP'}}
@@ -288,7 +305,7 @@ class LBaaSv2(object):
     def create_lbaas_member(self, p_id):
         subnet_id = None
         for sn in self.ncm.list_subnets()['subnets']:
-            if 'server-v4' in sn['name']:
+            if 'client-v4' in sn['name']:
                 subnet_id = sn['id']
                 break
 
@@ -345,9 +362,14 @@ class LBaaSv2(object):
         self.ncm.delete_loadbalancer(proxy.loadbalancer['id'])
 
     def clear_proxies(self):
+        if self.symbols['debug']:
+            self.debug()
         self.ncm.delete_all_lbaas_healthmonitors()
+        time.sleep(1)
         self.ncm.delete_all_lbaas_pools()
+        time.sleep(1)
         self.ncm.delete_all_listeners()
+        time.sleep(1)
         self.ncm.delete_all_loadbalancers()
         if self.symbols['debug']:
             self.debug()
@@ -371,14 +393,15 @@ def tst_setup(request, symbols):
     print 'test setup'
     testenv = ExecTestEnv()
 
+    def tst_cleanup():
+        print 'test cleanup'
+        testenv.lbm.clear_proxies()
+        exec_command(testenv.server_ssh, 'pkill -f SimpleHTTPServer')
+
     def tst_teardown():
         print 'test teardown'
-        # pool delete sometimes get stuck in pending due to one or more of the
-        # following objects existing on BIG-IP:
-        # selfip, snat, route-domain, vxlan tunnel, gre tunnel
-        testenv.lbm.clear_proxies()
-        if testenv.webserver_started:
-            exec_command(testenv.server_ssh, 'pkill -f SimpleHTTPServer')
+        if not testenv.lbm.symbols['debug']:
+            tst_cleanup()
         testenv.client_ssh.close()
         testenv.server_ssh.close()
 
@@ -402,8 +425,8 @@ def tst_setup(request, symbols):
     testenv.lbm = (LBaaSv1(testenv.symbols) if
                    testenv.symbols['lbaas_version'] == 1 else
                    LBaaSv2(testenv.symbols))
-    testenv.lbm.clear_proxies()
-    #request.addfinalizer(tst_teardown)
+    tst_cleanup()
+    request.addfinalizer(tst_teardown)
     return testenv
 
 
@@ -450,7 +473,7 @@ def test_solution(tst_setup):
         # HACK workaround until openstack supports the status field
         folders = te.bigip.sys.folders.get_collection()
         for f in folders:
-            if f.name.startswith('Project_'):
+            if f.name.startswith(te.symbols['partition_prefix']):
                 break
         params = {'params': {'$filter': 'partition eq %s' % f.name}}
         pool = te.bigip.ltm.pools.pool.load(name=proxy.pool['name'],
@@ -466,7 +489,7 @@ def test_solution(tst_setup):
         while member.state != 'up':
             time.sleep(1)
             attempts = attempts + 1
-            if attempts >= 15:
+            if attempts >= 20:
                 raise MaximumNumberOfAttemptsExceeded
             member.refresh()
     print 'COMPLETE'

@@ -3,6 +3,7 @@ from functools import partial
 from numbers import Number
 from pprint import pprint as pp
 
+import f5_os_test
 from f5_os_test.polling_clients import NeutronClientPollingManager
 from neutronclient.common.exceptions import BadRequest
 
@@ -87,13 +88,14 @@ def pytest_generate_tests(metafunc):
 
 
 class UpdateScenarioBase(object):
+    lb_name = f5_os_test.random_name('test_lb_', 6)
     ncpm = NeutronClientPollingManager(**nclient_config)
     subnets = ncpm.list_subnets()['subnets']
     for sn in subnets:
         if 'client-v4' in sn['name']:
             lbconf = {'vip_subnet_id': sn['id'],
                       'tenant_id':     sn['tenant_id'],
-                      'name':          'testlb_01'}
+                      'name':          lb_name}
     # loadbalancer setup
     activelb =\
         ncpm.create_loadbalancer({'loadbalancer': lbconf})
@@ -101,8 +103,9 @@ class UpdateScenarioBase(object):
     loadbalancer_updater = UpdateScanner(active_loadbalancer_config)
     lb_param_vector = loadbalancer_updater.param_vector
     # listener setup
+    listener_name = f5_os_test.random_name('test_listener_', 6)
     listener_config = {'listener':
-                       {'name': 'test_listener',
+                       {'name': listener_name,
                         'loadbalancer_id': activelb['loadbalancer']['id'],
                         'protocol': 'HTTP',
                         'protocol_port': 80}}
@@ -111,8 +114,9 @@ class UpdateScenarioBase(object):
     listener_updater = UpdateScanner(active_listener_config)
     listener_param_vector = listener_updater.param_vector
     # pool setup
+    pool_name = f5_os_test.random_name('test_pool_', 6)
     pool_config = {'pool': {
-                   'name': 'test_pool_awieuver',
+                   'name': pool_name,
                    'lb_algorithm': 'ROUND_ROBIN',
                    'listener_id': active_listener['listener']['id'],
                    'protocol': 'HTTP'}}
