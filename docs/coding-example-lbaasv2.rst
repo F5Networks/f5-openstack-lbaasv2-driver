@@ -1,9 +1,9 @@
 .. _f5-openstack-lbaasv2-coding-example:
 
-F5® OpenStack LBaaSv2 Coding Example
-====================================
+F5 OpenStack LBaaSv2 Coding Example
+===================================
 
-We've provided some code examples below to help you get started with the F5® OpenStack LBaaSv2 plugin. This series demonstrates how to configure basic load balancing via the Neutron CLI. To access the full Neutron LBaaS command set, please see the `OpenStack CLI Documentation <http://docs.openstack.org/cli-reference/neutron.html>`_. LBaaSv2 commands all begin with ``lbaas``.
+We've provided some code examples below to help you get started with the F5® OpenStack LBaaSv2 agent and driver. This series demonstrates how to configure basic load balancing via the Neutron CLI. To access the full Neutron LBaaS command set, please see the `OpenStack CLI Documentation <http://docs.openstack.org/cli-reference/neutron.html>`_. LBaaSv2 commands all begin with ``lbaas``.
 
 
 Create a load balancer
@@ -53,7 +53,7 @@ Use the command below to create a health monitor for the pool specifying the del
 Create a tls load balancer
 ``````````````````````````
 
-The example command below shows how to create a listener that uses the ``TERMINATED_HTTPS`` protocol.
+The example command below shows how to create a listener that uses the ``TERMINATED_HTTPS`` protocol. You'll need to specify the protocol (``TERMINATED_HTTPS``); port; and the location of the `Barbican container <http://docs.openstack.org/developer/barbican/api/quickstart/containers.html>`_ where the certificate is stored.
 
 .. code-block:: shell
 
@@ -66,5 +66,5 @@ The example command below shows how to create a listener that uses the ``TERMINA
 
     See the `OpenStack LBaaS documentation <https://wiki.openstack.org/wiki/Network/LBaaS/docs/how-to-create-tls-loadbalancer>`_ for further information and configuration instructions for the OpenStack pieces.
 
-    The necessary F5® agent configurations are described in :ref:`Certificate Manager`.
+    The necessary F5® agent configurations are described in :ref:`Certificate Manager / SSL Offloading`.
 

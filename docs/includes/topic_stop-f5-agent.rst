@@ -1,18 +1,21 @@
-Stop the F5® OpenStack agent
-----------------------------
+:orphan: true
 
-If you need to stop the F5® agent, run the command appropriate for your OS.
+Stop the F5 OpenStack agent
+===========================
 
-Debian/Ubuntu
-`````````````
+If you need to stop the F5 agent, run the command appropriate for your OS.
 
-.. code-block:: shell
+.. topic:: CentOS
 
-    $ sudo service f5-oslbaasv2-agent stop
+    .. code-block:: shell
 
-RedHat/CentOS
-`````````````
+        $ sudo systemctl stop f5-openstack-agent.service
 
-.. code-block:: shell
 
-    $ sudo systemctl stop f5-openstack-agent.service
+.. topic:: Ubuntu
+
+    .. code-block:: shell
+
+        $ sudo service f5-oslbaasv2-agent stop
+
+

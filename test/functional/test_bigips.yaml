@@ -1,0 +1,32 @@
+clusterbigips:
+# add one or more Bigips to this list
+  bigip1:
+      netloc: <bigip floating ip address>
+      username: <bigip username>
+      password: <bigip password>
+
+
+lbaas_version:    2
+auth_url:         http://<auth ip address>:5000/v2.0
+heatclient_url:   http://<auth ip address>:8004/v1/<tenant ID>
+glanceclient_url: http://<auth ip address>:9292
+client_ip:        <client floating ip address>
+server_ip:        <server floating ip address>
+tenant_name:      testlab
+tenant_username:  testlab
+tenant_password:  changeme
+admin_name:       admin
+admin_username:   admin
+admin_password:   changeme
+bigip_username:   admin
+bigip_password:   admin
+guest_username:   centos
+guest_password:   changeme
+server_http_port: 8080
+server_client_ip: 10.2.2.3
+provider:         f5networks
+partition_prefix: Project
+os_tentant_name:
+os_tenant_id:
+os_username:
+os_password:

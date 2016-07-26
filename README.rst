@@ -24,22 +24,19 @@ f5-openstack-lbaasv2-driver
 Introduction
 ------------
 
-The F5® OpenStack LBaaSv2 service provider driver (also called the 'F5® LBaaSv2 driver') makes it possible to provision F5® BIG-IP® local traffic management (LTM®) services in an OpenStack cloud.
+The F5® OpenStack LBaaSv2 service provider driver (also called the 'F5 LBaaSv2 driver') makes it possible to provision F5 BIG-IP® Local Traffic Manager® (LTM®) services in an OpenStack cloud.
 
-The F5® LBaaSv2 driver works in conjunction with the F5® OpenStack agent, which uses the :ref:`f5-sdk <f5sdk:home>` to translate Neutron API calls into BIG-IP® REST API calls.
+The F5 LBaaSv2 driver works in conjunction with the F5® OpenStack agent, which uses the `f5-sdk <http://f5-sdk.readthedocs.io/en/latest/>`_ to translate Neutron API calls into BIG-IP REST API calls.
 
 Compatibility
 -------------
 
-The F5® LBaaSv2 driver is compatible with OpenStack releases from Liberty forward. If
-you are using an earlier release, you'll need the `F5® OpenStack LBaaSv1 plugin <http://f5-openstack-lbaasv1.readthedocs.io>`_.
-
-For more information, please see the F5® OpenStack `Releases, Versioning, and Support Matrix <http://f5-openstack-docs.readthedocs.org/en/latest/releases_and_versioning.html>`_.
+See the `F5 OpenStack Releases, Versioning, and Support Matrix <http://f5-openstack-docs.readthedocs.org/en/latest/releases_and_versioning.html>`_.
 
 Documentation
 -------------
 
-Please refer to the F5® OpenStack LBaaSv2 Driver `project documentation <http://f5-openstack-lbaasv2.readthedocs.org/en/>`_ for installation and configuration instructions.
+Please refer to the F5 OpenStack LBaaSv2 `project documentation <http://f5-openstack-lbaasv2-driver.readthedocs.io>`_ for installation and configuration instructions.
 
 Filing Issues
 -------------
@@ -83,7 +80,7 @@ limitations under the License.
 Contributor License Agreement
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Individuals or business entities who contribute to this project must
-have completed and submitted the `F5® Contributor License
+have completed and submitted the `F5 Contributor License
 Agreement <http://f5-openstack-docs.readthedocs.org/en/latest/cla_landing.html>`_
 to Openstack_CLA@f5.com prior to their code submission being included
 in this project.
@@ -93,7 +90,7 @@ in this project.
     :target: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver
 
 .. |Docs Build Status| image:: https://readthedocs.org/projects/f5-openstack-lbaasv2/badge/?version=latest
-    :target: http://f5-openstack-lbaasv2.readthedocs.org/en/latest/?badge=latest
+    :target: http://f5-openstack-lbaasv2.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
 .. |slack badge| image:: https://f5-openstack-slack.herokuapp.com/badge.svg
