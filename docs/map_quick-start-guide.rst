@@ -30,9 +30,26 @@ The table below contains a summary of the recommended F5 LBaaSv2 :ref:`configura
 * Tagged VLANs (without tunnels) :download:`f5-openstack-agent.vlan.ini <_static/f5-openstack-agent.vlan.ini>`
 
 
-
 .. include:: includes/topic_configure-neutron-lbaasv2.rst
     :start-line: 4
+
+.. important::
+
+    The Neutron configurations required may differ depending on your OS. Please see our partners' documentation for more information.
+
+    - `Hewlett Packard Enterprise <http://docs.hpcloud.com/#3.x/helion/networking/lbaas_admin.html>`_
+    - `Mirantis <https://www.mirantis.com/partners/f5-networks/>`_
+    - `RedHat <https://access.redhat.com/ecosystem/software/1446683>`_
+    
+
+.. include:: includes/topic_start-f5-agent.rst
+    :start-line: 4
+
+Next Steps
+==========
+
+- See the :ref:`Coding Example <f5-openstack-lbaasv2-coding-example>` for the commands to use to configure basic load balancing via the Neutron CLI.
+- See :ref:`F5 LBaaSv2 to BIG-IP Configuration Mapping` to discover what the F5 agent configures on the BIG-IP.
 
 
 .. _license: https://f5.com/products/how-to-buy/simplified-licensing
