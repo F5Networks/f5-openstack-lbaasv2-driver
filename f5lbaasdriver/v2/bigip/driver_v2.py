@@ -335,7 +335,7 @@ class PoolManager(object):
         driver = self.driver
         try:
             if pool.attached_to_loadbalancer():
-                loadbalancer = pool.listener.loadbalancer
+                loadbalancer = pool.loadbalancer
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
@@ -364,7 +364,7 @@ class PoolManager(object):
         driver = self.driver
         try:
             if pool.attached_to_loadbalancer():
-                loadbalancer = pool.listener.loadbalancer
+                loadbalancer = pool.loadbalancer
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
@@ -392,7 +392,7 @@ class PoolManager(object):
         driver = self.driver
         try:
             if pool.attached_to_loadbalancer():
-                loadbalancer = pool.listener.loadbalancer
+                loadbalancer = pool.loadbalancer
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
@@ -427,7 +427,7 @@ class MemberManager(object):
         driver = self.driver
         try:
             if member.attached_to_loadbalancer():
-                loadbalancer = member.pool.listener.loadbalancer
+                loadbalancer = member.pool.loadbalancer
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
@@ -456,7 +456,7 @@ class MemberManager(object):
         try:
             driver = self.driver
             if member.attached_to_loadbalancer():
-                loadbalancer = member.pool.listener.loadbalancer
+                loadbalancer = member.pool.loadbalancer
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
@@ -484,7 +484,7 @@ class MemberManager(object):
         driver = self.driver
         try:
             if member.attached_to_loadbalancer():
-                loadbalancer = member.pool.listener.loadbalancer
+                loadbalancer = member.pool.loadbalancer
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
@@ -519,7 +519,7 @@ class HealthMonitorManager(object):
         driver = self.driver
         try:
             if health_monitor.attached_to_loadbalancer():
-                loadbalancer = health_monitor.pool.listener.loadbalancer
+                loadbalancer = health_monitor.pool.loadbalancer
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
@@ -548,7 +548,7 @@ class HealthMonitorManager(object):
         driver = self.driver
         try:
             if health_monitor.attached_to_loadbalancer():
-                loadbalancer = health_monitor.pool.listener.loadbalancer
+                loadbalancer = health_monitor.pool.loadbalancer
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
@@ -576,7 +576,7 @@ class HealthMonitorManager(object):
         driver = self.driver
         try:
             if health_monitor.attached_to_loadbalancer():
-                loadbalancer = health_monitor.pool.listener.loadbalancer
+                loadbalancer = health_monitor.pool.loadbalancer
                 agent = driver.scheduler.schedule(
                     driver.plugin,
                     context,
