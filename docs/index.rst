@@ -35,7 +35,7 @@ Contents
 .. include:: includes/topic_lbaasv2-plugin-overview.rst
     :start-line: 2
 
-.. |Build Status| image:: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=liberty
+.. |Build Status| image:: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=master
     :target: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver
     :alt: Build Status
 .. |Docs Build Status| image:: http://readthedocs.org/projects/f5-openstack-lbaasv2-driver/badge/?version=latest

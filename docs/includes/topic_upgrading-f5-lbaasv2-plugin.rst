@@ -18,9 +18,19 @@ Make a copy of the F5 agent configuration file
 
 The existing configuration file in */etc/neutron/services/f5/* will be overwritten when you install the new package.
 
-    .. code-block:: text
+.. code-block:: text
 
-        $ cp /etc/neutron/services/f5/f5-openstack-agent.ini ~/
+    $ cp /etc/neutron/services/f5/f5-openstack-agent.ini ~/
+
+Rename the F5 agent log file
+----------------------------
+
+Your new F5 agent will not start if it finds an existing agent log file. Either rename the existing log file, or move it to a new location.
+
+.. code-block:: text
+
+    $ mv /var/log/neutron/f5-openstack-agent.log ~/
+
 
 Stop and remove the current version of the F5 agent
 ---------------------------------------------------
@@ -47,7 +57,7 @@ Red Hat/CentOS
 Install the new version of the F5 agent
 ---------------------------------------
 
-Follow the :ref:`agent <agent:home>` installation instructions to install the version to which you'd like to upgrade.
+Follow the :ref:`agent installation <agent:home>` instructions to install the new version to which you'd like to upgrade.
 
 Restore the F5 agent configuration file
 ---------------------------------------
