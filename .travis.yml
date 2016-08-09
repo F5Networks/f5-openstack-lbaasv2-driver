@@ -18,7 +18,7 @@ script:
 - flake8 ./f5lbaasdriver
 - f5-openstack-lbaasv2-driver-dist/scripts/package.sh "redhat" "7"
 - f5-openstack-lbaasv2-driver-dist/scripts/package.sh "ubuntu" "14.04"
-- sudo chown -R travis:travis ${DIST_REPO}/rpms/build
+- sudo chown -R travis:travis ${DIST_REPO}/rpms
 - sudo chown -R travis:travis ${DIST_REPO}/deb_dist/*.deb
 notifications:
   slack:
