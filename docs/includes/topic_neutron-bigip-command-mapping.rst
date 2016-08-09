@@ -22,70 +22,83 @@ The table below shows what happens on the BIG-IP when various commands are issue
 ======================================     =================================================================================
 Command                                    Action
 ======================================     =================================================================================
-``systemctl start f5-openstack agent``     | 1. agent reads vtep self IP defined in config file
-                                           | 2. BIG-IP advertises that vtep's IP address
-                                           | 3. the selfip IP address is advertised to Neutron as the agent's
-                                           | ``tunneling_ip``
-                                           | 4. new port for the vtep added to the OVS switch
-                                           | 5. tunnel profiles created on BIG-IP for all tunnel types
-                                           | (not just for the ``advertised tunnel type`` setting in the config file) [#]_
+``systemctl start f5-openstack agent``     | 1. Agent reads the vtep `self IP`_ defined in the agent config file.
+                                           | 2. BIG-IP advertises the vtep's IP address.
+                                           | 3. The self IP address is advertised to Neutron as the agent's
+                                           | ``tunneling_ip``.
+                                           | 4. A new port for the vtep is added to the OVS switch.
+                                           | 5. Profiles for all tunnel types are created on the BIG-IP. [#]_
 --------------------------------------     ---------------------------------------------------------------------------------
-``neutron lbaas-loadbalancer-create``      | 1. new partition created using the prefix [#]_ and tenant ID [#]_
-                                           | 2. fdb records added for all peers in network
-                                           | 3. new route domain created
-                                           | 4. new self-ip created on specified subnet where the BIG-IP can receive traffic
-                                           | 5. new tunnel created with vtep as local address (using vxlan profile created
-                                           | when agent started) [#]_
-                                           | 6. snat pool list / snat translation list created on BIG-IP (number of snat
-                                           | addresses created is defined in agent config file) [#]_
-                                           | 7. neutron port created for each snat address
-                                           |    - if snat mode is turned off / snat addresses is set to ``0``, the BIG-IP
-                                           |    acts as a gateway so that return traffic from members is routed through it
-                                           |    - if snat mode is turned on / snat addresses is set to ``0``, auto snat
-                                           |    mode is used
+``neutron lbaas-loadbalancer-create``      | 1. A new partition is created using the prefix [#]_ and tenant ID [#]_.
+                                           | 2. New fdb records are added for all peers in the network.
+                                           | 3. A new route domain is created.
+                                           | 4. A new self IP where the BIG-IP can receive traffic is created on the
+                                           | specified subnet.
+                                           | 5. A new tunnel is created, using the vtep as the local address (uses the
+                                           | vxlan profile created when the agent was first started). [#]_
+                                           | 6. A SNAT pool list / SNAT translation list is created on the BIG-IP.
+                                           |    - The number of SNAT addresses that will be created is defined in the agent
+                                           |    config file. [#]_
+                                           | 7. A neutron port is created for each SNAT address.
+                                           |    - If SNAT mode is turned off and SNAT addresses is set to ``0``, the BIG-IP
+                                           |    will act as a gateway so return traffic from members is always routed
+                                           |    through it.
+                                           |    - If SNAT mode is turned on & SNAT addresses is set to ``0``, `SNAT automap`_
+                                           |    will be used.
 --------------------------------------     ---------------------------------------------------------------------------------
-``neutron lbaas-listener-create``          | 1. new virtual server created in the tenant partition
-                                           |    - attempts to use Fast L4 by default
-                                           |    - if persistence is configured, Standard is used
-                                           |    - uses IP address assigned to loadbalancer by Neutron
-                                           |    - uses route domain created for partition when loadbalancer was created
-                                           |    - restricts traffic to the tunnel assigned to the loadbalancer
+``neutron lbaas-listener-create``          | 1. A new virtual server is created in the tenant partition on the BIG-IP.
+                                           |    - Attempts to use Fast L4 by default.
+                                           |    - If persistence is configured, Standard is used.
+                                           |    - Uses the IP address assigned to the loadbalancer by Neutron.
+                                           |    - Uses the route domain that was created for the new partition when the
+                                           |    loadbalancer was created.
+                                           |    - Traffic is restricted to the tunnel assigned to the loadbalancer.
                                            |
-                                           | If the ``--protocol`` is ``TERMINATED_HTTPS``: [#]_
-                                           |    - certificate/key container fetched from Barbican using the URI defined by
-                                           |    ``default_tls_container_ref`` option
-                                           |    - key and certificate imported to BIG-IP
-                                           |    - custom SSL profile created using ``clientssl`` as the parent profile
-                                           |    - SSL profile add to the virtual server
+                                           | If the listener ``--protocol`` is ``TERMINATED_HTTPS``: [#]_
+                                           |    - The certificate/key container is fetched from Barbican using the URI
+                                           |    defined by the ``default_tls_container_ref`` config option.
+                                           |    - The key and certificate are imported to the BIG-IP.
+                                           |    - A custom SSL profile is created using ``clientssl`` as the parent profile.
+                                           |    - The SSL profile is added to the virtual server.
 --------------------------------------     ---------------------------------------------------------------------------------
-``neutron lbaas-pool-create``              | 1. new pool created in the tenant partition
-                                           |    - assigned to the virtual server (or, listener) specified in the command
+``neutron lbaas-pool-create``              | 1. A new pool is created in the tenant partition on the BIG-IP.
+                                           |    - It is assigned to the virtual server (or, listener) specified in the
+                                           |    command.
 --------------------------------------     ---------------------------------------------------------------------------------
-``neutron lbaas-member-create``            | - coming soon
-
+``neutron lbaas-member-create``            | 1. A new member is created in the specified pool using the IP address and port
+                                           |    supplied in the command.
+                                           |    - If the member is the first created for the specified pool, the pool
+                                           |    status will change on the BIG-IP.
+                                           |    - If the member is the first created with the supplied IP address, a new
+                                           |    node is also created.
 --------------------------------------     ---------------------------------------------------------------------------------
-``neutron lbaas-healthmonitor-create``     | - coming soon
-
+``neutron lbaas-healthmonitor-create``     | 1. A new health monitor is created on the BIG-IP for the specified pool.
+                                           |    - If the health monitor is the first created for the specified pool, the
+                                           |    pool status will change on the BIG-IP.
+                                           |    - Health monitors directly affect the status and availability of pools and
+                                           |    members on the BIG-IP. Any additions or changes may result in a status
+                                           |    change for the specified pool.
 ======================================     =================================================================================
 
 
 
-https listener
- - custom profile created; inherits settings from the [client-? or server-?] SSL profile
+Further Reading
+---------------
+.. seealso::
 
+    * `OpenStack Neutron CLI Reference <http://docs.openstack.org/cli-reference/neutron.html>`_
+    * `BIG-IP Local Traffic Management - Basics <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-basics-12-1-0.html?sr=55917227>`_
 
-.. Further Reading
-    ---------------
-    .. seealso::
-        * x
-        * y
-        * z
 
 
 .. rubric:: Footnotes:
-.. [#] :ref:`L2 Segmentation Mode Settings` --> ``advertised_tunnel_types``
-.. [#] :ref:`Environment Settings` --> ``environment_prefix`` The default prefix is "Project".
+.. [#] This is done for all tunnel types, not just those configured as the ``advertised_tunnel_types`` in the :ref:`L2 Segmentation Mode Settings`.
+.. [#] Configured in :ref:`Environment Settings` --> ``environment_prefix``. The default prefix is "Project".
 .. [#] Run ``openstack project list`` to get a list of configured tenant names and IDs.
-.. [#] If using :ref:`global routed mode`, all traffic is directed to the self IP (no tunnel created)
-.. [#] :ref:`L3 Segmentation Mode Settings` --> ``f5_snat_addresses_per_subnet``
-.. [#] see :ref:`Certificate Manager / SSL Offloading`
+.. [#] If using :ref:`global routed mode`, all traffic is directed to the self IP (no tunnel is created).
+.. [#] Configured in :ref:`L3 Segmentation Mode Settings` --> ``f5_snat_addresses_per_subnet``.
+.. [#] See :ref:`Certificate Manager / SSL Offloading`.
+
+
+.. _self IP: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/tmos-routing-administration-12-0-0/6.html#conceptid
+.. _SNAT automap: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/tmos-routing-administration-12-0-0/8.html#unique_375712497
