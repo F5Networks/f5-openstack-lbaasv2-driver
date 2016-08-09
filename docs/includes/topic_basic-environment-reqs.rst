@@ -41,15 +41,17 @@ BIG-IP Requirements
 
 .. important::
 
-    You must have the appropriate `license`_ for the BIG-IP features you wish to use.
+    - You must have the appropriate `license`_ for the BIG-IP® features you wish to use.
+
+    - All numbers shown in the table below are per BIG-IP device.
 
 
-.. table:: BIG-IP Requirements [#]_
+.. table:: BIG-IP Requirements
 
     +----------------------------+--------+------------+----------------+-------------+-----------------+
     | Deployment [#]_            | NICs   | VLANs [#]_ | Tunnels [#]_   | VTEPs [#]_  | License         |
     +============================+========+============+================+=============+=================+
-    | Standalone overcloud       | 2      | 2          | n/a            |  n/a        | any             |
+    | Standalone overcloud       | 2      | 2          | n/a            | n/a         | any             |
     +----------------------------+--------+------------+----------------+-------------+-----------------+
     | Standalone undercloud      | 2      | 2          | 1              | 1           | better or best  |
     +----------------------------+--------+------------+----------------+-------------+-----------------+
@@ -72,9 +74,7 @@ BIG-IP Requirements
 
 .. rubric:: Footnotes
 
-.. [#] If you're setting up a POC environment, one node can be used for all three. See the `RDO Packstack Quickstart`_ guide for instructions.
 .. [#] The `LBaaSv2 dashboard panels`_ are available in OpenStack Mitaka and later releases.
-.. [#] All numbers given are per device.
 .. [#] Click on a term to view its definition: :term:`overcloud`; :term:`undercloud`; :term:`standalone`; :term:`pair`; :term:`scalen`; :term:`cluster`
 .. [#] Two VLANS = data & management. Three VLANS = data, management, and HA. See `Configuring the basic BIG-IP network`_ for more information.
 .. [#] Tunnels can be either VxLAN or GRE.
