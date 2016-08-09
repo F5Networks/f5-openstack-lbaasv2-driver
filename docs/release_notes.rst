@@ -3,15 +3,24 @@
 Release Notes v |version|
 #########################
 
-.. rubric:: Summary
-This release introduces support for OpenStack |openstack|.
+Summary
+-------
 
-.. rubric:: Release Highlights
-This is the initial release for OpenStack |openstack|.
+This release provides an implementation of the F5® service provider driver to support the use of F5 Networks® BIG-IP® systems with OpenStack Neutron LBaaSv2.
 
-See the `changelog <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/compare/v8.0.4...v9.0.1>`_ for the full list of changes in this release.
+Release Highlights
+------------------
 
-.. rubric:: Caveats
+This release introduces the following:
+
+- Installation via rpm
+- Installation via dpkg
+- Bug fixes
+
+See the `changelog <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/compare/v9.0.1...v9.0.2>`_ for the full list of changes in this release.
+
+Caveats
+-------
 
 The following are not supported in this release:
 
@@ -22,7 +31,8 @@ The following are not supported in this release:
 * Unattached pools
 * Loadbalancer statistics (e.g., ``neutron lbaas-loadbalancer-stats``)
 
-.. rubric:: Open Issues
+Open Issues
+-----------
 
 See the project `issues page <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/issues>`_ for a full list of open issues in this release.
 

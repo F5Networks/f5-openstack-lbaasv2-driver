@@ -82,16 +82,16 @@ BIG-IP Requirements
 
 
 
-.. _Installation Guide for Red Hat Enterprise Linux 7 and CentOS 7: http://docs.openstack.org/liberty/install-guide-rdo/environment.html
-.. _Installation Guide for Ubuntu 14.04 (LTS): http://docs.openstack.org/liberty/install-guide-ubuntu/environment.html
-.. _OpenStack Installation Guide for openSUSE and SUSE Linux Enterprise: http://docs.openstack.org/liberty/install-guide-obs/environment.html
-.. _Nova: http://www.openstack.org/software/releases/liberty/components/nova
-.. _Neutron: http://www.openstack.org/software/releases/liberty/components/neutron
-.. _Keystone: http://www.openstack.org/software/releases/liberty/components/keystone
-.. _Glance: http://www.openstack.org/software/releases/liberty/components/glance
-.. _Horizon: http://www.openstack.org/software/releases/liberty/components/horizon
-.. _Heat: http://www.openstack.org/software/releases/liberty/components/heat
-.. _Barbican: http://www.openstack.org/software/releases/liberty/components/barbican
+.. _Installation Guide for Red Hat Enterprise Linux 7 and CentOS 7: http://docs.openstack.org/mitaka/install-guide-rdo/environment.html
+.. _Installation Guide for Ubuntu 14.04 (LTS): http://docs.openstack.org/mitaka/install-guide-ubuntu/environment.html
+.. _OpenStack Installation Guide for openSUSE and SUSE Linux Enterprise: http://docs.openstack.org/mitaka/install-guide-obs/environment.html
+.. _Nova: http://www.openstack.org/software/releases/mitaka/components/nova
+.. _Neutron: http://www.openstack.org/software/releases/mitaka/components/neutron
+.. _Keystone: http://www.openstack.org/software/releases/mitaka/components/keystone
+.. _Glance: http://www.openstack.org/software/releases/mitaka/components/glance
+.. _Horizon: http://www.openstack.org/software/releases/mitaka/components/horizon
+.. _Heat: http://www.openstack.org/software/releases/mitaka/components/heat
+.. _Barbican: http://www.openstack.org/software/releases/mitaka/components/barbican
 .. _license: https://f5.com/products/how-to-buy/simplified-licensing
 .. _BIG-IP LTM Release Notes: https://support.f5.com/kb/en-us/search.res.html?q=+inmeta:archived%3DArchived%2520documents%2520excluded+inmeta:product%3DBIG%252DIP%2520LTM+inmeta:kb_doc_type%3DRelease%2520Note+inmeta:archived%3DArchived%2520documents%2520excluded+inmeta:BIG%252DIP%2520LTM%3D12%252E1%252E0&dnavs=inmeta:product%3DBIG%252DIP%2520LTM+inmeta:kb_doc_type%3DRelease%2520Note+inmeta:archived%3DArchived%2520documents%2520excluded+inmeta:BIG%252DIP%2520LTM%3D12%252E1%252E0&filter=p&num=
 .. _RDO Packstack Quickstart: https://www.rdoproject.org/install/quickstart/
