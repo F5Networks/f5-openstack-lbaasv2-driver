@@ -1,13 +1,14 @@
 #!/bin/bash -ex
 
 SRC_DIR=$1
-DIST_DIR=$2
+PKG_NAME="f5-openstack-lbaasv2-driver"
+DIST_DIR="${PKG_NAME}-dist"
 OS_VERSION=7
 
 DEST_DIR="${SRC_DIR}/${DIST_DIR}"
 
 echo "Building RPM packages...${DIST_DIR}"
-buildroot=$(mktemp -d /tmp/f5-openstack-lbaasv2-driver.XXXX)
+buildroot=$(mktemp -d /tmp/${PKG_NAME}.XXXX)
 
 cp -R $SRC_DIR/* ${buildroot}
 
