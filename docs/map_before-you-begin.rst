@@ -80,7 +80,8 @@ Install the F5 LBaaSv2 Driver
 
 
 
-..  todo: add footnote: See :ref:`Environment Recommendations`
+.. seealso:: :ref:`Basic Environment Requirements for F5 LBaaSv2`
+
 
 .. _license: https://f5.com/products/how-to-buy/simplified-licensing
 .. _OpenStack Networking Concepts: http://docs.openstack.org/liberty/networking-guide/
