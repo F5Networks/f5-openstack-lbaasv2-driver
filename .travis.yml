@@ -30,10 +30,10 @@ before_deploy:
 deploy:
   - provider: releases
     api_key:
-      secure: A+vS5PMieSSIYSHi6hJARNO6bto+n0IVMlYBiEEEe8InrYXtGC8kdJ5Xi9WkIoDsrzihybttG9bu0neGRMM9Ev/3NiQBuEXKmPHcJYMM8f2Yx/fA1hrx8Jv686nwteUh2czFEdQpnAkA5St82MqYI2oac1NwRoImj5mDh5kmuYQPYYoLVT+gHKnFwSp9lJHgQ1ntV+nUgkmybAhetFoMiEsz8hd4Pd/MK4rOIaiurl3R3PnnX/PPzZf4ptqXX56Em9tKKFfmivBvIDSI0He+//+Wci8vUq/zbzh7sS120W+hSgSC0f7NqNSAZC8nxvhyyoACq6iHRCDFB7L7MmG5o9yUD2bU/TvYOEJH9Gmpz7JM7y/Ip/dwhNJMHMA87+SfxrZa6exgWunrl4IGluBzmGmsohE5xf+iAgv5fMWEsLUD5Pou7wLZrDYyJ1OOy3dSXqplHv/RTndCApVS7nGmNnQWKjyEUT1ePqNUV+klDML2CfMj3KHa/YdDllgE+TVBB2pU4pKm5h0EmN9AcWjEn4nTy4/rsEYgjeyAsqNQx9b5KobYEA8O0MlqSngNvUD+Q4Q2e8QR6Lj/ClAKq1sDI09Of8rCdaqo3nnftlW/PZ5rJsxXDLcf799ydgix7LKC48lsJjQVydiIWIX0cpqQbetyo6GH5iZj/LZCIgxJOmA=
+      secure: tFUvbzPVEpk0Tfqq4EWcvFnVJG5N4Zk1/OTZslnGXNz/M915HAucXFTkygqWkOHeEgTn/TETGAavQg8lTaOV7/But9sX6/BfXB4UH0yW0Nv6wOM7O0K3BU6CkeHnkDZAuM/j8yDwWu8RrMsA5CrJXHrgRgEltN+yNrCsXlly0FYIkEZrYX/lrhUbAPsb6Y71MGRSW6XyhaoYh4CvNRgx2KE8Ctk5BOCIpysSkVTZ9lnORHZruML149FCqY0+9gYUwN1Uy6Ym8+uPDsGwpyGWPdOPEbBES8KMwBAM+IzUN3wO53ypy8bqxBLhUhKbGiiUQ4BISNJ9vjZmDLAdxcFEgpM/lPOyjEOEKBWDgCgSIzCRkoLa8PxPcTVRW8NSgQIaSq2qumGKEDUruzubg4PAt9PkeW4z69FfH/qhr+Alhhoq2bAAGb2fDPyYzXPIfq3AY+IV33WVN/b1Ww0DiRKAPpXlvOoVpyrCSYmfDBNEtpPpHWfldXLZLCjaZUuXvuKN23J9OYMmludkEEbIsRjhpHLN3E/quzw1vVVXLhQPLBkJc4/v0ONX3G751/PeHCWX5/IDhCRuBeaA8eZ6Jq/o1PgzzqcenXrCCAxeMY1HhcVMwHCorBzYB1FQe6VI5jR/+oPhU0GQe3EttebeNIb6PjlZEYYS0j2VM6vz5foS/z0=
     file:
       - ${DIST_REPO}/rpms/f5-openstack-lbaasv2-driver-${PKG_VERSION}-1.el7.noarch.rpm
-      - ${DIST_REPO}/deb_dist/python-f5-openstack-agent_${PKG_VERSION}-1_1404_all.deb
+      - ${DIST_REPO}/deb_dist/python-f5-openstack-lbaasv2-driver_${PKG_VERSION}-1_1404_all.deb
     skip_cleanup: true
     overwrite: true
     on:
