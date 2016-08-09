@@ -26,7 +26,7 @@ In order to use F5® LBaaSv2 services, you will need the following:
 Install the F5 Service Provider Package
 ---------------------------------------
 
-.. warning:: If the F5 service provider package isn't isntalled on your Neutron controller, F5 LBaaSv2 will not work.
+.. warning:: If the F5 service provider package isn't installed on your Neutron controller, F5 LBaaSv2 will not work.
 
 .. rubric:: Download the F5 LBaaSv2 service provider package and add it to the python path for ``neutron_lbaas``.
 
@@ -59,7 +59,11 @@ Install the F5 Agent
 
     .. code-block:: text
 
-        $ sudo pip install git+https://github.com/F5Networks/f5-openstack-agent@<release_tag>
+        $ sudo pip install git+https://github.com/F5Networks/f5-openstack-agent@v8.0.6
+
+    .. tip::
+
+        See the :ref:`F5 Agent documentation <agent:home>` for rpm and dpkg installation instructions.
 
 
 Install the F5 LBaaSv2 Driver
@@ -67,17 +71,6 @@ Install the F5 LBaaSv2 Driver
 
 .. include:: includes/topic_install-f5-lbaasv2-driver.rst
     :start-line: 5
-
-
-.. tip::
-
-    You can install packages from HEAD on a specific branches by adding ``@<branch_name>`` to the end of the install command instead of the release tag.
-
-    .. rubric:: Example:
-    .. code-block:: text
-
-        $ sudo pip install git+https://github.com/F5Networks/f5-openstack-lbaasv2-driver@liberty
-
 
 
 .. seealso:: :ref:`Basic Environment Requirements for F5 LBaaSv2`
