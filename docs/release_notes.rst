@@ -17,7 +17,7 @@ This release introduces the following:
 - Installation via dpkg
 - Bug fixes
 
-See the `changelog <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/compare/v8.0.5...v8.0.6>`_ for the full list of changes in this release.
+See the `changelog <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/compare/v8.0.5...v8.0.7>`_ for the full list of changes in this release.
 
 Caveats
 -------
