@@ -20,6 +20,9 @@ script:
 - f5-openstack-lbaasv2-driver-dist/scripts/package.sh "ubuntu" "14.04"
 - sudo chown -R travis:travis ${DIST_REPO}/rpms
 - sudo chown -R travis:travis ${DIST_REPO}/deb_dist/*.deb
+after_success:
+  - f5-openstack-lbaasv2-driver-dist/scripts/test_install.sh "redhat" "7"
+  - f5-openstack-lbaasv2-driver-dist/scripts/test_install.sh "ubuntu" "14.04"
 notifications:
   slack:
     rooms:
