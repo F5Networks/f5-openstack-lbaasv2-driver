@@ -16,17 +16,23 @@
 import decorator
 import paramiko
 import pytest
-import time
 import sys
+import time
 
-import f5_os_test
 from f5.bigip import BigIP
-from pprint import pprint as pp
-from f5_os_test.polling_clients import NeutronClientPollingManager
+import f5_os_test
 from f5_os_test.polling_clients import MaximumNumberOfAttemptsExceeded
+from f5_os_test.polling_clients import NeutronClientPollingManager
+from pprint import pprint as pp
 
 # Note: symbols_data provided through commandline json file.
 from pytest import symbols as symbols_data
+
+import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
 
 def log_test_call(func):
     def wrapper(func, *args, **kwargs):
@@ -44,20 +50,24 @@ class ExecTestEnv(object):
         self.symbols['server_public_mgmt_ip'] = symbols_data.server_ip
         self.symbols['openstack_auth_url']    = symbols_data.auth_url
         self.symbols['lbaas_version']         = symbols_data.lbaas_version
-        self.symbols['debug']                 = False
+        self.symbols['debug']                 = symbols_data.debug
         self.symbols['bigip_username']        = symbols_data.bigip_username
         self.symbols['bigip_password']        = symbols_data.bigip_password
-        self.symbols['provider']              = ('f5' if symbols_data.lbaas_version < 2 \
-                                                  else symbols_data.provider)
-        self.symbols['partition_prefix']      = ('uuid' if symbols_data.lbaas_version < 2 \
-                                                     else symbols_data.partition_prefix)
+        self.symbols['provider']              = ('f5' if
+                                                 symbols_data.lbaas_version < 2
+                                                 else symbols_data.provider)
+        self.symbols['partition_prefix']      = ('uuid' if
+                                                 symbols_data.lbaas_version < 2
+                                                 else
+                                                 symbols_data.partition_prefix)
         self.symbols['admin_name']            = symbols_data.admin_name
         self.symbols['admin_username']        = symbols_data.admin_username
         self.symbols['admin_password']        = symbols_data.admin_password
         self.symbols['tenant_name']           = symbols_data.tenant_name
         self.symbols['tenant_username']       = symbols_data.tenant_username
         self.symbols['tenant_password']       = symbols_data.tenant_password
-        self.symbols['client_subnet']         = symbols_data.tenant_name + '-client-v4-subnet'
+        self.symbols['client_subnet']         = (symbols_data.tenant_name +
+                                                 '-client-v4-subnet')
         self.symbols['guest_username']        = symbols_data.guest_username
         self.symbols['guest_password']        = symbols_data.guest_password
         self.symbols['server_http_port']      = symbols_data.server_http_port
@@ -102,18 +112,18 @@ class LBaaSv1(object):
         return self.ncm.create_pool(pool_conf)['pool']
 
     def wait_for_object_state(self, field, value, method, key, *args):
-        '''
-        This method provides an abstract way to poll any arbitrary object, such
-        as pool, member, vip, etc.
+        """This method provides an abstract way to poll any arbitrary object,
+         such as pool, member, vip, etc.
 
-        :param field: the attribute in the object that you want to monitor
-        :param value: the final value that you want to see
-        :param method: the show method that returns the object containing state
-        :param key: the key to a aub-dict in the show method output that
+            :param field: the attribute in the object that you want to monitor
+            :param value: the final value that you want to see
+            :param method: the show method that returns the object containing
+                    state
+            :param key: the key to a aub-dict in the show method output that
                     contains the state
-        :param args: necessary args that must be passed to the show method
-        :return:  N/A, raise if 'value' is not seen within 60 seconds
-        '''
+            :param args: necessary args that must be passed to the show method
+            :return:  N/A, raise if 'value' is not seen within 60 seconds
+            """
 
         time.sleep(self.polling_interval)
         current_state = method(*args)[key]
@@ -188,8 +198,8 @@ class LBaaSv1(object):
             self.ncm.delete_member(member['id'])
         time.sleep(1)
         self.ncm.delete_vip(proxy.vip['id'])
-        self.wait_for_object_state('vip_id', None,
-                                   self.ncm.show_pool, 'pool', proxy.pool['id'])
+        self.wait_for_object_state('vip_id', None, self.ncm.show_pool, 'pool',
+                                   proxy.pool['id'])
         self.ncm.delete_pool(proxy.pool['id'])
         # workaround for bug? need to explicitly delete selfip and route domain
         # for the pool to be deleted, otherwise it is stuck in pending.
@@ -219,13 +229,13 @@ class LBaaSv1(object):
             self.debug()
 
     def debug(self):
-        print '----- pools -----'
+        print('----- pools -----')
         pp(self.ncm.list_pools())
-        print '----- vips -----'
+        print('----- vips -----')
         pp(self.ncm.list_vips())
-        print '----- members -----'
+        print('----- members -----')
         pp(self.ncm.list_members())
-        print '----- health monitors -----'
+        print('----- health monitors -----')
         pp(self.ncm.list_health_monitors())
 
 
@@ -246,8 +256,8 @@ class LBaaSv2(object):
                 lb_conf = {
                     'loadbalancer': {
                         'vip_subnet_id': sn['id'],
-                        #'lb_method':     'ROUND_ROBIN',
-                        #'protocol':      'HTTP',
+                        # 'lb_method':     'ROUND_ROBIN',
+                        # 'protocol':      'HTTP',
                         'tenant_id':     sn['tenant_id'],
                         'provider':      self.symbols['provider'],
                         'name':          lb_name}}
@@ -257,8 +267,7 @@ class LBaaSv2(object):
         self.ncm.delete_loadbalancer(lb['id'])
 
     def wait_for_object_state(self, field, value, method, key, *args):
-        '''
-        This method provides an abstract way to poll any arbitrary object, such
+        '''This method provides an abstract way to poll any arbitrary object, such
         as pool, member, vip, etc.
 
         :param field: the attribute in the object that you want to monitor
@@ -285,11 +294,13 @@ class LBaaSv2(object):
 
     def create_listener(self, lb_id):
         listener_name = f5_os_test.random_name('test_listener_', 6)
-        listener_config =\
-        {'listener': {'name': listener_name,
-                      'loadbalancer_id': lb_id,
-                      'protocol': 'HTTP',
-                      'protocol_port': 80}}
+        listener_config = {
+            'listener': {'name': listener_name,
+                         'loadbalancer_id': lb_id,
+                         'protocol': 'HTTP',
+                         'protocol_port': 80
+                         }
+        }
         return self.ncm.create_listener(listener_config)['listener']
 
     def create_lbaas_pool(self, l_id):
@@ -341,11 +352,15 @@ class LBaaSv2(object):
         # for passing traffic between client and server
         proxy = Proxy()
         proxy.loadbalancer = self.create_loadbalancer()
+        time.sleep(1)
         proxy.listener = self.create_listener(proxy.loadbalancer['id'])
+        time.sleep(1)
         proxy.pool = self.create_lbaas_pool(proxy.listener['id'])
+        time.sleep(1)
         proxy.members.append(self.create_lbaas_member(proxy.pool['id']))
         # lbaasv2 bug: lbaas_show_member does not return status attribute to
         # know when member comes online.
+        time.sleep(1)
         proxy.healthmonitors.append(
             self.create_lbaas_healthmonitor(proxy.pool['id']))
         self.proxies.append(proxy)
@@ -375,31 +390,32 @@ class LBaaSv2(object):
             self.debug()
 
     def debug(self):
-        print '----- loadbalancers -----'
+        print('----- loadbalancers -----')
         pp(self.ncm.list_loadbalancers())
-        print '----- listeners -----'
+        print('----- listeners -----')
         pp(self.ncm.list_listeners())
-        print '----- pools -----'
+        print('----- pools -----')
         pp(self.ncm.list_lbaas_pools())
-        print '----- members -----'
+        print('----- members -----')
         for p in self.ncm.list_lbaas_pools()['pools']:
             pp(self.ncm.list_lbaas_members(p['id']))
-        print '----- health monitors -----'
+        print('----- health monitors -----')
         pp(self.ncm.list_lbaas_healthmonitors())
 
 
 @pytest.fixture
 def tst_setup(request, symbols):
-    print 'test setup'
+    print('test setup')
     testenv = ExecTestEnv()
 
     def tst_cleanup():
-        print 'test cleanup'
+        print('test cleanup')
         testenv.lbm.clear_proxies()
-        exec_command(testenv.server_ssh, 'pkill -f SimpleHTTPServer')
+        exec_command(testenv.server_ssh, 'pkill -f SimpleHTTPServer',
+                     ignore_error=True)
 
     def tst_teardown():
-        print 'test teardown'
+        print('test teardown')
         if not testenv.lbm.symbols['debug']:
             tst_cleanup()
         testenv.client_ssh.close()
@@ -430,18 +446,19 @@ def tst_setup(request, symbols):
     return testenv
 
 
-def exec_command(ssh, command):
+def exec_command(ssh, command, ignore_error=False):
     stdin, stdout, stderr = ssh.exec_command(command)
     stdin.close()
     status = stdout.channel.recv_exit_status()
     output = stdout.read()
-    if status:
-        print '----- sterr -----'
-        print stderr
-        pp(stderr.channel.__dict__)
-        error = stderr.read()
-        print error
-    assert status == 0
+    if not ignore_error:
+        if status:
+            print('----- sterr -----')
+            print(stderr)
+            pp(stderr.channel.__dict__)
+            error = stderr.read()
+            print(error)
+        assert status == 0
     return output.strip()
 
 
@@ -458,7 +475,7 @@ def test_solution(tst_setup):
     te.webserver_started = True
 
     # wait for health monitor to show server as up
-    print 'waiting for member to become active...',
+    print('waiting for member to become active...',)
     if te.symbols['lbaas_version'] == 1:
         te.lbm.wait_for_object_state('status', 'ACTIVE',
                                      te.lbm.ncm.show_member, 'member',
@@ -466,9 +483,10 @@ def test_solution(tst_setup):
     else:
         # lbaasv2 bug: lbaas_show_member does not return status attribute to
         # know when member comes online.
-        #te.lbm.wait_for_object_state('status', 'ACTIVE',
-        #                             te.lbm.ncm.show_lbaas_member, 'member',
-        #                             proxy.members[0]['id'], proxy.pool['id'])
+        # te.lbm.wait_for_object_state('status', 'ACTIVE',
+        #                              te.lbm.ncm.show_lbaas_member, 'member',
+        #                              proxy.members[0]['id'],
+        #                              proxy.pool['id'])
 
         # HACK workaround until openstack supports the status field
         folders = te.bigip.sys.folders.get_collection()
@@ -492,10 +510,10 @@ def test_solution(tst_setup):
             if attempts >= 20:
                 raise MaximumNumberOfAttemptsExceeded
             member.refresh()
-    print 'COMPLETE'
+    print('COMPLETE')
 
     # send requests from client
-    print 'sending request from client....',
+    print('sending request from client....',)
     if te.symbols['lbaas_version'] == 1:
         url = 'http://%s:%s' % (proxy.vip['address'],
                                 proxy.vip['protocol_port'])
@@ -504,4 +522,4 @@ def test_solution(tst_setup):
                                 proxy.listener['protocol_port'])
     output = exec_command(te.client_ssh, '$HOME/get.py %s' % url)
     assert output == '200'
-    print 'SUCCESS'
+    print('SUCCESS')
