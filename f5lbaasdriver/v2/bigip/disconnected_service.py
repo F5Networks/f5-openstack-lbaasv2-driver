@@ -39,25 +39,26 @@ class DisconnectedService(object):
                 result[record.network_id].append(db._make_segment_dict(record))
             return result
 
-    def get_segmentation_id(self, context, agent_configuration, network):
-        segmentation_id = 0
+    def get_network_segment(self, context, agent_configuration, network):
+        data = None
         network_segment_physical_network = \
             agent_configuration.get('network_segment_physical_network', None)
         if network_segment_physical_network:
-            # look up segment id provided by ml2_network_segments table
+            # look up segment details in the ml2_network_segments table
             segments = db.get_network_segments(context.session, network['id'])
-            data = None
             for segment in segments:
                 if (network_segment_physical_network ==
                         segment['physical_network']):
                     data = segment
                     break
-            if data:
-                segmentation_id = data['segmentation_id']
-            else:
+            if not data:
                 LOG.error('network_id %s does not match physical_network %s' %
                           (network['id'], network_segment_physical_network))
         else:
-            if 'provider:segmentation_id' in network:
-                segmentation_id = network['provider:segmentation_id']
-        return segmentation_id
+            # neutron is expected to provide this data immediately
+            data = {
+                'segmentation_id': network['provider:segmentation_id']
+            }
+            if 'provider:network_type' in network:
+                data['network_type'] = network['provider:network_type']
+        return data

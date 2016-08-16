@@ -87,14 +87,17 @@ class LBaaSv2ServiceBuilder(object):
                 context,
                 network_id
             )
-            # Override the segmentation ID for this network if we are running
-            # in disconnected service mode
+            # Override the segmentation ID and network type for this network
+            # if we are running in disconnected service mode
             agent_config = self.deserialize_agent_configurations(
                 agent['configurations'])
-            network['provider:segmentation_id'] = \
-                self.disconnected_service.get_segmentation_id(context,
-                                                              agent_config,
-                                                              network)
+            segment_data = self.disconnected_service.get_network_segment(
+                context, agent_config, network)
+            if segment_data:
+                network['provider:segmentation_id'] = getattr(
+                    segment_data, 'segmentation_id', None)
+                network['provider:network_type'] = getattr(
+                    segment_data, 'network_type', None)
             network_map[network_id] = network
 
             # Check if the tenant can create a loadbalancer on the network.
