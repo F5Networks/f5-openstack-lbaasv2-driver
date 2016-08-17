@@ -222,10 +222,19 @@ class LBaaSv2PluginCallbacksRPC(object):
             return loadbalancers
 
     @log_helpers.log_method_call
-    def update_service_stats(self, context, service_id=None,
-                             stats=None, host=None):
+    def update_loadbalancer_stats(self, context, loadbalancer_id=None,
+                             stats=None):
         """Update service stats."""
-        pass
+        with context.session.begin(subtransactions=True):
+            try:
+                self.driver.plugin.db.update_loadbalancer_stats(
+                    context,
+                    loadbalancer_id,
+                    stats
+                )
+            except Exception as e:
+                LOG.error('Exception: update_loadbalancer_stats: %s',
+                          e.message)
 
     @log_helpers.log_method_call
     def update_loadbalancer_status(self, context,
