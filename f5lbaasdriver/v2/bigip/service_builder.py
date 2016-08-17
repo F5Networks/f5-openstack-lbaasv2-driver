@@ -94,10 +94,11 @@ class LBaaSv2ServiceBuilder(object):
             segment_data = self.disconnected_service.get_network_segment(
                 context, agent_config, network)
             if segment_data:
-                network['provider:segmentation_id'] = getattr(
-                    segment_data, 'segmentation_id', None)
-                network['provider:network_type'] = getattr(
-                    segment_data, 'network_type', None)
+                network['provider:segmentation_id'] = \
+                    segment_data.get('segmentation_id', None)
+                if 'provider:network_type' in network:
+                    network['provider:network_type'] = \
+                        segment_data.get('network_type', None)
             network_map[network_id] = network
 
             # Check if the tenant can create a loadbalancer on the network.
