@@ -116,7 +116,7 @@ class LoadBalancerManager(object):
             )
             service = driver.service_builder.build(context,
                                                    loadbalancer,
-                                                   agent=agent)
+                                                   agent)
             # Update the port for the VIP to show ownership by this driver
             port_data = {
                 'admin_state_up': True,
@@ -166,7 +166,9 @@ class LoadBalancerManager(object):
                 loadbalancer.id,
                 driver.env
             )
-            service = driver.service_builder.build(context, loadbalancer)
+            service = driver.service_builder.build(context,
+                                                   loadbalancer,
+                                                   agent)
             driver.agent_rpc.update_loadbalancer(
                 context,
                 old_loadbalancer.to_api_dict(),
@@ -196,7 +198,9 @@ class LoadBalancerManager(object):
                 loadbalancer.id,
                 driver.env
             )
-            service = driver.service_builder.build(context, loadbalancer)
+            service = driver.service_builder.build(context,
+                                                   loadbalancer,
+                                                   agent)
             driver.agent_rpc.delete_loadbalancer(
                 context,
                 loadbalancer.to_api_dict(),
@@ -245,7 +249,7 @@ class ListenerManager(object):
                 )
                 service = driver.service_builder.build(context,
                                                        loadbalancer,
-                                                       agent=agent)
+                                                       agent)
                 driver.agent_rpc.create_listener(
                     context,
                     listener.to_dict(loadbalancer=False, default_pool=False),
@@ -272,7 +276,9 @@ class ListenerManager(object):
                     loadbalancer.id,
                     driver.env
                 )
-                service = driver.service_builder.build(context, loadbalancer)
+                service = driver.service_builder.build(context,
+                                                       loadbalancer,
+                                                       agent)
                 driver.agent_rpc.update_listener(
                     context,
                     old_listener.to_dict(loadbalancer=False,
@@ -301,7 +307,9 @@ class ListenerManager(object):
                     loadbalancer.id,
                     driver.env
                 )
-                service = driver.service_builder.build(context, loadbalancer)
+                service = driver.service_builder.build(context,
+                                                       loadbalancer,
+                                                       agent)
                 driver.agent_rpc.delete_listener(
                     context,
                     listener.to_dict(loadbalancer=False, default_pool=False),
@@ -344,7 +352,7 @@ class PoolManager(object):
                 )
                 service = driver.service_builder.build(context,
                                                        loadbalancer,
-                                                       agent=agent)
+                                                       agent)
                 driver.agent_rpc.create_pool(
                     context,
                     self._get_pool_dict(pool),
@@ -371,7 +379,9 @@ class PoolManager(object):
                     loadbalancer.id,
                     driver.env
                 )
-                service = driver.service_builder.build(context, loadbalancer)
+                service = driver.service_builder.build(context,
+                                                       loadbalancer,
+                                                       agent)
                 driver.agent_rpc.update_pool(
                     context,
                     self._get_pool_dict(old_pool),
@@ -399,7 +409,9 @@ class PoolManager(object):
                     loadbalancer.id,
                     driver.env
                 )
-                service = driver.service_builder.build(context, loadbalancer)
+                service = driver.service_builder.build(context,
+                                                       loadbalancer,
+                                                       agent)
                 driver.agent_rpc.delete_pool(
                     context,
                     self._get_pool_dict(pool),
@@ -436,7 +448,7 @@ class MemberManager(object):
                 )
                 service = driver.service_builder.build(context,
                                                        loadbalancer,
-                                                       agent=agent)
+                                                       agent)
                 driver.agent_rpc.create_member(
                     context,
                     member.to_dict(pool=False),
@@ -463,7 +475,9 @@ class MemberManager(object):
                     loadbalancer.id,
                     driver.env
                 )
-                service = driver.service_builder.build(context, loadbalancer)
+                service = driver.service_builder.build(context,
+                                                       loadbalancer,
+                                                       agent)
                 driver.agent_rpc.update_member(
                     context,
                     old_member.to_dict(pool=False),
@@ -491,7 +505,9 @@ class MemberManager(object):
                     loadbalancer.id,
                     driver.env
                 )
-                service = driver.service_builder.build(context, loadbalancer)
+                service = driver.service_builder.build(context,
+                                                       loadbalancer,
+                                                       agent)
                 driver.agent_rpc.delete_member(
                     context,
                     member.to_dict(pool=False),
@@ -528,7 +544,7 @@ class HealthMonitorManager(object):
                 )
                 service = driver.service_builder.build(context,
                                                        loadbalancer,
-                                                       agent=agent)
+                                                       agent)
                 driver.agent_rpc.create_health_monitor(
                     context,
                     health_monitor.to_dict(pool=False),
@@ -555,7 +571,9 @@ class HealthMonitorManager(object):
                     loadbalancer.id,
                     driver.env
                 )
-                service = driver.service_builder.build(context, loadbalancer)
+                service = driver.service_builder.build(context,
+                                                       loadbalancer,
+                                                       agent)
                 driver.agent_rpc.update_health_monitor(
                     context,
                     old_health_monitor.to_dict(pool=False),
@@ -583,7 +601,9 @@ class HealthMonitorManager(object):
                     loadbalancer.id,
                     driver.env
                 )
-                service = driver.service_builder.build(context, loadbalancer)
+                service = driver.service_builder.build(context,
+                                                       loadbalancer,
+                                                       agent)
                 driver.agent_rpc.delete_health_monitor(
                     context,
                     health_monitor.to_dict(pool=False),
