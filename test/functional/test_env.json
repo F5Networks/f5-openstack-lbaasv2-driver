@@ -26,5 +26,6 @@
   "os_username":      "barbican",
   "os_password":      "orange",
   "os_auth_version":  "v3",
+  "debug":            false,
   "nc_interval":      1
 }
