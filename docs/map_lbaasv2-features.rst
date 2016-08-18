@@ -16,6 +16,7 @@ Supported Features
     Multi-Tenancy <includes/topic_multi-tenancy>
     includes/topic_global-routed-mode
     includes/topic_cert-manager
+    includes/topic_hierarchical-port-binding
 
 
 

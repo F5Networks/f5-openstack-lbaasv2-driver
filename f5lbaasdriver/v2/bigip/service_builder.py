@@ -21,6 +21,7 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 
 from f5lbaasdriver.v2.bigip import constants_v2
+from f5lbaasdriver.v2.bigip.disconnected_service import DisconnectedService
 from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 
 LOG = logging.getLogger(__name__)
@@ -47,8 +48,9 @@ class LBaaSv2ServiceBuilder(object):
         self.subnet_cache = {}
         self.last_cache_update = datetime.datetime.fromtimestamp(0)
         self.plugin = self.driver.plugin
+        self.disconnected_service = DisconnectedService()
 
-    def build(self, context, loadbalancer, agent=None):
+    def build(self, context, loadbalancer, agent):
         """Get full service definition from loadbalancer ID."""
         # Invalidate cache if it is too old
         if ((datetime.datetime.now() - self.last_cache_update).seconds >
@@ -85,6 +87,18 @@ class LBaaSv2ServiceBuilder(object):
                 context,
                 network_id
             )
+            # Override the segmentation ID and network type for this network
+            # if we are running in disconnected service mode
+            agent_config = self.deserialize_agent_configurations(
+                agent['configurations'])
+            segment_data = self.disconnected_service.get_network_segment(
+                context, agent_config, network)
+            if segment_data:
+                network['provider:segmentation_id'] = \
+                    segment_data.get('segmentation_id', None)
+                if 'provider:network_type' in network:
+                    network['provider:network_type'] = \
+                        segment_data.get('network_type', None)
             network_map[network_id] = network
 
             # Check if the tenant can create a loadbalancer on the network.
