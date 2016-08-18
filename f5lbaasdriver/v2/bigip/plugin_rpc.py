@@ -200,8 +200,10 @@ class LBaaSv2PluginCallbacksRPC(object):
         return loadbalancers
 
     @log_helpers.log_method_call
-    def update_loadbalancer_stats(self, context, loadbalancer_id=None,
-                             stats=None):
+    def update_loadbalancer_stats(self,
+                                  context,
+                                  loadbalancer_id=None,
+                                  stats=None):
         """Update service stats."""
         with context.session.begin(subtransactions=True):
             try:
