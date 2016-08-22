@@ -59,7 +59,7 @@ Install the F5 Agent
 
     .. code-block:: text
 
-        $ sudo pip install git+https://github.com/F5Networks/f5-openstack-agent@v9.0.2
+        $ sudo pip install git+https://github.com/F5Networks/f5-openstack-agent@v9.0.3
 
     .. tip::
 
