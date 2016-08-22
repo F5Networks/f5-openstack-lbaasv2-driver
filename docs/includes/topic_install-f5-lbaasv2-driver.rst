@@ -10,7 +10,7 @@ Quick Start
 
 .. code-block:: text
 
-    $ sudo pip install git+https://github.com/F5Networks/f5-openstack-lbaasv2-driver@v9.0.2
+    $ sudo pip install git+https://github.com/F5Networks/f5-openstack-lbaasv2-driver@v9.0.3
 
 
 .. tip::
@@ -37,13 +37,13 @@ The ``f5-openstack-lbaasv2-driver`` package can be installed using ``dpkg``.
 
 .. code-block:: bash
 
-    $ curl –L –O https://github.com/F5Networks/f5-common-python/releases/download/v9.0.2/python-f5-openstack-agent_9.0.2-1_1404_all.deb
+    $ curl –L –O https://github.com/F5Networks/f5-common-python/releases/download/v9.0.3/python-f5-openstack-agent_9.0.3-1_1404_all.deb
 
 2. Install the package on the Neutron controller:
 
 .. code-block:: bash
 
-    $ sudo dpkg –i python-f5-openstack-driver_9.0.2-1_1404_all.deb
+    $ sudo dpkg –i python-f5-openstack-driver_9.0.3-1_1404_all.deb
 
 RPM Package
 ```````````
@@ -54,13 +54,13 @@ The ``f5-openstack-lbaasv2-driver`` package can be installed using ``rpm``.
 
 .. code-block:: bash
 
-    $ curl –L –O https://github.com/F5Networks/f5-openstack-lbaasv2-driver/releases/download/v9.0.2/f5-openstack-lbaasv2-driver-9.0.2-1.el7.noarch.rpm
+    $ curl –L –O https://github.com/F5Networks/f5-openstack-lbaasv2-driver/releases/download/v9.0.3/f5-openstack-lbaasv2-driver-9.0.3-1.el7.noarch.rpm
 
 2. Install the package on the Neutron controller:
 
 .. code-block:: bash
 
-    $ sudo rpm –ivh f5-openstack-lbaasv2-driver-9.0.2-1.el7.noarch.rpm
+    $ sudo rpm –ivh f5-openstack-lbaasv2-driver-9.0.3-1.el7.noarch.rpm
 
 .. tip:: Release tags always use the format "vx.x.x"
 
