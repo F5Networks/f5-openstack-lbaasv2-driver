@@ -105,6 +105,12 @@ class LBaaSv2ServiceBuilder(object):
             if (agent and not self._valid_tenant_ids(network,
                                                      loadbalancer.tenant_id,
                                                      agent)):
+                LOG.error("Creating a loadbalancer %s for tenant %s on a"
+                          "  non-shared network %s owned by %s." % (
+                              loadbalancer.id,
+                              loadbalancer.tenant_id,
+                              network['id'],
+                              network['tenant_id']))
                 raise f5_exc.F5MismatchedTenants()
 
             # Get the network VTEPs if the network provider type is
