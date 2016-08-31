@@ -69,7 +69,8 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                         env,
                         gn
                     )
-                    LOG.debug("Primary lbaas agent is dead, senv_agents: %s", env_agents)
+                    LOG.debug("Primary lbaas agent is dead, env_agents: %s",
+                              env_agents)
                     if env_agents:
                         # return the first active agent in the
                         # group to process this task
