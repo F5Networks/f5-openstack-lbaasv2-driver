@@ -50,6 +50,7 @@ Next Steps
 
 - See the :ref:`Coding Example <f5-openstack-lbaasv2-coding-example>` for the commands to use to configure basic load balancing via the Neutron CLI.
 - See :ref:`F5 LBaaSv2 to BIG-IP Configuration Mapping` to discover what the F5 agent configures on the BIG-IP.
+- See :ref:`Agent Redundancy and Scale-out` to learn about running multiple F5 agents in your OpenStack cloud.
 
 
 .. _license: https://f5.com/products/how-to-buy/simplified-licensing
