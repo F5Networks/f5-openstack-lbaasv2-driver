@@ -60,7 +60,11 @@ def add_diff_env_to_controller(differentiated_environment):
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description='''This utility is designed to run on the neutron
+        controller.  To remotely configure your controller with this utility
+        use the f5lbaasdriver.utils.add_environment.add_diff_env_to_controller
+        function.''')
     parser.add_argument("environment",
                         help="The name of the enviroment to generate.")
     args = parser.parse_args()
