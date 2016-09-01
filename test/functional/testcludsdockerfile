@@ -1,0 +1,9 @@
+From pydevenv:latest
+
+RUN pip install -e git+https://github.com/openstack/neutron#egg=neutron
+RUN pip install -e git+https://github.com/openstack/neutron-lbaas.git#\
+egg=neutron_lbaas
+COPY ./pytest-symbols/ /root/devenv/pytest-symbols/
+RUN pip install /root/devenv/pytest-symbols
+COPY ./oslo.config/ /root/devenv/oslo.config
+RUN pip install /root/devenv/oslo.config
