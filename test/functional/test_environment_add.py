@@ -17,7 +17,8 @@ import random
 import requests
 import string
 
-from f5lbaasdriver.utils.add_environment import add_diff_env_to_controller
+from f5lbaasdriver.utils.remote_add_environment import \
+    add_diff_env_to_controller
 
 requests.packages.urllib3.disable_warnings()
 

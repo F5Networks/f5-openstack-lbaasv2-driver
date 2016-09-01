@@ -17,66 +17,7 @@
 '''See environment_library for details.'''
 import argparse
 
-try:
-    from fabric.api import env
-    from fabric.api import execute
-    from fabric.api import hosts
-    from fabric.api import run
-    import pytest
-except ImportError:
-    pass
-
-
 from f5lbaasdriver.utils.environment_library import generate_driver
-
-
-def add_diff_env_to_controller(differentiated_environment):
-    '''Add a differentiated environment remotely, and bounce services.
-
-    This function is used in:
-
-     *  test/functional/test_environment_add.py
-
-    probably the quickest way to adapt is to examine that example.
-    Given an appropriate host_string and password this function:
-
-    (0) halts services on a neutron controller
-    (1) reconfigures the relevant files to add an "environment"
-        service_provider
-    (2) restarts the services (CRITICAL NOTE: the relevant credentials are
-    hardcoded via the 'source keystonerc_testlab' line.  NOT what you want
-    unless you're testing inside f5.)
-    '''
-    env.host_string = ''.join(
-        [pytest.symbols.tenant_name,
-         '@',
-         pytest.symbols.controller_ip,
-         ':22'])
-
-    @hosts(env.host_string)
-    def setup_env_oncontroller(diff_env):
-        env.password = pytest.symbols.tenant_password
-        execute(lambda: run('sudo ls -la'))
-
-        # Stop existing agent
-        execute(lambda: run('sudo systemctl stop f5-openstack-agent'))
-        # Stop neutron server / f5_plugin
-        execute(lambda: run('sudo systemctl stop neutron-server'))
-        # Edit agent configuration to use new environment
-        sedtempl = '''sed -i "s/^\(environment_prefix = \)\(.*\)$/\\1%s/"''' +\
-                   ''' /etc/neutron/services/f5/f5-openstack-agent.ini'''
-        sedstring = 'sudo ' + sedtempl % diff_env
-        execute(lambda: run(sedstring))
-        # Add diff env to neutron_lbaas.conf and installed Python package
-        add_string = 'sudo add_f5agent_environment %s' % diff_env
-        execute(lambda: run(add_string))
-        # Start neutron-server / f5_plugin
-        execute(lambda: run('sudo systemctl start neutron-server'))
-        # Start existing agent
-        execute(lambda: run('source keystonerc_testlab && '
-                            'sudo systemctl start f5-openstack-agent'))
-
-    setup_env_oncontroller(differentiated_environment)
 
 
 def main():
