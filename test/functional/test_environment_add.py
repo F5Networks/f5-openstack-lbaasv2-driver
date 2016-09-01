@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from fabric.api import hosts, run, env, execute
-from pprint import pprint as pp
 import pytest
 import random
 import requests
 import string
+
+from f5lbaasdriver.utils.add_environment import add_diff_env_to_controller
 
 requests.packages.urllib3.disable_warnings()
 
@@ -29,37 +29,6 @@ def _generate_env():
                 int(random.uniform(0, len(string.ascii_lowercase)))]
             for _ in range(12)]
         )
-
-
-def add_diff_env_to_controller(differentiated_environment):
-    env.host_string = ''.join([pytest.symbols.tenant_name,
-                           '@',
-                           pytest.symbols.controller_ip,
-                           ':22'])
-
-    @hosts(env.host_string)
-    def setup_env_oncontroller(diff_env):
-        env.password = pytest.symbols.tenant_password
-        execute(lambda: run('sudo ls -la'))
-
-        # Stop existing agent
-        execute(lambda: run('sudo systemctl stop f5-openstack-agent'))
-        # Stop neutron server / f5_plugin
-        execute(lambda: run('sudo systemctl stop neutron-server'))
-        # Edit agent configuration to use new environment
-        sedtempl = '''sed -i "s/^\(environment_prefix = \)\(.*\)$/\1%s/"''' +\
-                   ''' /etc/neutron/services/f5/f5-openstack-agent.ini'''
-        sedstring = 'sudo ' + sedtempl % diff_env
-        execute(lambda: run(sedstring))
-        # Add diff env to neutron_lbaas.conf and installed Python package 
-        add_string = 'sudo add_f5agent_environment %s' % diff_env
-        execute(lambda: run(add_string))
-        # Start neutron-server / f5_plugin
-        execute(lambda: run('sudo systemctl start neutron-server'))
-        # Start existing agent
-        execute(lambda: run('source keystonerc_testlab && sudo systemctl start f5-openstack-agent'))
-
-    setup_env_oncontroller(differentiated_environment)
 
 
 @pytest.fixture
