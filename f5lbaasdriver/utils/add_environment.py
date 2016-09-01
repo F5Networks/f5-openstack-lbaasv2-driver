@@ -27,6 +27,22 @@ from f5lbaasdriver.utils.environment_library import generate_driver
 
 
 def add_diff_env_to_controller(differentiated_environment):
+    '''Add a differentiated environment remotely, and bounce services.
+
+    This function is used in:
+
+     *  test/functional/test_environment_add.py
+
+    probably the quickest way to adapt is to examine that example.
+    Given an appropriate host_string and password this function:
+
+    (0) halts services on a neutron controller
+    (1) reconfigures the relevant files to add an "environment"
+        service_provider
+    (2) restarts the services (CRITICAL NOTE: the relevant credentials are
+    hardcoded via the 'source keystonerc_testlab' line.  NOT what you want
+    unless you're testing inside f5.)
+    '''
     env.host_string = ''.join(
         [pytest.symbols.tenant_name,
          '@',
