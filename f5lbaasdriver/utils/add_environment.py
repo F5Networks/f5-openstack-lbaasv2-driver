@@ -17,11 +17,15 @@
 '''See environment_library for details.'''
 import argparse
 
-from fabric.api import env
-from fabric.api import execute
-from fabric.api import hosts
-from fabric.api import run
-import pytest
+try:
+    from fabric.api import env
+    from fabric.api import execute
+    from fabric.api import hosts
+    from fabric.api import run
+    import pytest
+except ImportError:
+    pass
+
 
 from f5lbaasdriver.utils.environment_library import generate_driver
 
