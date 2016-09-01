@@ -6,19 +6,13 @@ Agent Redundancy and Scale-out
 Overview
 --------
 
-The F5® LBaaSv2 driver runs within the Neutron controller. When the Neutron LBaaS plugin loads the driver, it creates a global messaging queue to be used for all callbacks and status update requests from F5 LBaaSv2 agents.
-
 .. important::
 
     We refer to 'hosts' a lot in this document. A 'host' could be a Neutron controller, a server, a Docker container, etc.; the important takeaway is that in order to run multiple agents in one environment, **each agent must have a unique** ``hostname``.
 
+The F5® LBaaSv2 driver runs within the Neutron controller. When the Neutron LBaaS plugin loads the driver, it creates a global messaging queue to be used for all callbacks and status update requests from F5 LBaaSv2 agents.
 
-Use Case
---------
-
-You can run multiple F5 agents **on different hosts** in your OpenStack cloud to provide agent redundancy and scale-out. Managing the same BIG-IP device or cluster from different hosts ensures that if one host goes down, the F5 LBaaSv2 processes remain alive and functional. It also allows you to spread the request load for the environment across multiple agents.
-
-All F5 LBaaSv2 drivers consult the same messaging queues to pass requests to their respective agents; the message queue corresponds to the ``environment_prefix`` configured in the F5 agent ``.ini`` file. Requests are passed from the global messaging queue to F5 LBaaSv2 drivers in a round-robin fashion, then passed on to an F5 agent as described below.
+All F5 LBaaSv2 drivers consult the same messaging queues to pass requests to their respective agents; the message queues correspond to the ``environment_prefix`` configured in the F5 agent ``.ini`` file. Requests are passed from the global messaging queue to F5 LBaaSv2 drivers in a round-robin fashion, then passed on to an F5 agent as described below.
 
 Agent-Tenant Affinity
 `````````````````````
@@ -49,6 +43,12 @@ How it works:
         $ neutron lbaas-loadbalancer-list-on-agent <agent-id>
 
 
+Use Case
+--------
+
+You can run multiple F5 agents **on different hosts** in your OpenStack cloud to provide agent redundancy and scale-out. Managing the same BIG-IP device or cluster from different hosts ensures that if one host goes down, the F5 LBaaSv2 processes remain alive and functional. It also allows you to spread the request load for the environment across multiple agents.
+
+
 Prerequisites
 -------------
 
@@ -59,9 +59,10 @@ Prerequisites
 
 Caveats
 -------
+
 - All hosts running F5 LBaaSv2 must use the same Neutron database.
 - You **can not** run multiple agents on the same host if they are expected to manage the same BIG-IP device or cluster.
-- See :ref:`Differentiated Service Environments` for information about running more than one F5 agent/driver on the same host.
+.. See :ref:`Differentiated Service Environments` for information about running more than one F5 agent/driver on the same host.
 
 
 Configuration
@@ -75,13 +76,13 @@ Configuration
 
 #. :ref:`Install the F5 Agent` and :ref:`service provider driver <Install the F5 LBaaSv2 Driver>` on each host.
 
-#. :ref:`Configure the F5 agent <Configure the F5 OpenStack Agent> on each host.
+#. :ref:`Configure the F5 agent <Configure the F5 OpenStack Agent>` on each host.
 
     .. tip::
 
         This can be as simple as configuring the file on one host and copying it over to the others.
 
-#. :ref:`Start the agent <Starting the F5 agent>`.
+#. :ref:`Start the agent <Starting the F5 agent>` on each host.
 
 
 Further Reading
@@ -90,6 +91,6 @@ Further Reading
 .. seealso::
 
     * :ref:`Configure the F5 OpenStack Agent`
-    * :ref:`Differentiated Service Environments`
     * :ref:`Manage BIG-IP Clusters with F5 LBaaSv2`
     * :ref:`Manage Multi-Tenant BIG-IP Devices with F5 LBaaSv2`
+    ..  Differentiated Service Environments`
