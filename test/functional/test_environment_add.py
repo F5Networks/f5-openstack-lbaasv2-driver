@@ -22,6 +22,9 @@ from f5lbaasdriver.utils.add_environment import add_diff_env_to_controller
 requests.packages.urllib3.disable_warnings()
 
 
+import logging
+
+logging.getLogger().setLevel(logging.INFO)
 def _generate_env():
     return\
         ''.join([

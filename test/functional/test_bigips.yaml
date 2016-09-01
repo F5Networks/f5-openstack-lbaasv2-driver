@@ -1,19 +1,19 @@
 clusterbigips:
 # add one or more Bigips to this list
   bigip1:
-      netloc: <bigip IP>
+      netloc: 10.190.7.101
       username: admin
       password: admin
 
 
-bigip_ip:         <bigip IP>
+bigip_ip:         10.190.7.101
 bigip_username:   admin
 bigip_password:   admin
 lbaas_version:    2
-controller_ip:    <oscontroller IP>
-auth_url:         http://<oscontroller IP>:5000/v2.0
-heatclient_url:   http://<oscontroller IP>:8004/v1/<tenant ID>
-glanceclient_url: http://<oscontroller IP>:9292
+controller_ip:    10.190.4.137
+auth_url:         http://10.190.4.137:5000/v2.0
+heatclient_url:   http://10.190.4.137:8004/v1/<tenant ID>
+glanceclient_url: http://10.190.4.137:9292
 client_ip:        <client floating ip address>
 server_ip:        <server floating ip address>
 tenant_name:      testlab
