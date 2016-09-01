@@ -1,6 +1,6 @@
 :orphan: true
 
-Managing Multi-Tenant BIG-IP Devices with F5 LBaaS
+Manage Multi-Tenant BIG-IP Devices with F5 LBaaSv2
 ==================================================
 
 Overview

@@ -1,6 +1,6 @@
 :orphan: true
 
-Managing BIG-IP Clusters with F5 LBaaS
+Manage BIG-IP Clusters with F5 LBaaSv2
 ======================================
 
 Overview
