@@ -106,10 +106,8 @@ def backup_lbaas_config_file():
 def add_env_confopt_value(env_serviceprovider_line):
     '''Add a new service_provider opt = val to the service_provider section.
 
-    This function parses an existing conf file, and adds to the new values to
-    the appropriate dictionary in the resulting conf object.  The oslo_config
-    ConfigParser doesn't appear to have native support for _writing_ config
-    files so that's handled in this utility in the write config file function.
+    This function parses an existing conf file and adds the new values to
+    the appropriate dictionary in the resulting conf object.
     '''
     conf = ConfigParser(NEUTRON_LBAASCONFPATH, {})
     conf.parse()
@@ -119,7 +117,10 @@ def add_env_confopt_value(env_serviceprovider_line):
 
 
 def write_config_file(config_to_write):
-    '''Take a oslo.cfg config object to write a ini-style conf file.'''
+    '''Take an oslo.cfg config object to write an ini-style conf file.
+
+    This function handles _writing_ the config file because the oslo_config ConfigParser doesn't appear to support this natively.
+    '''
 
     with open(NEUTRON_LBAASCONFPATH, 'w') as cfh:
         for section, options in config_to_write.sections.items():
@@ -130,12 +131,16 @@ def write_config_file(config_to_write):
 
 
 def insert_env_into_neutron_lbaas_conf(env_serviceprovider_line):
-    '''A high level function that handles reconfiguration.
+    '''A high-level function that handles the Neutron
+    lbaas.conf reconfiguration.
 
-    This file takes a new environment config string and produces a new config
-    file with that string added to the service_providers section as a new
-    service_provider value. The functions calls backup_lbaas_config_file()
-    before mutatiing the config file.
+    This function produces a new neutron_lbaas.conf file. It appends the new
+    environment string to the F5Networks service_provider value and creates
+    a new entry for the environment in the service_providers section of the
+    config file.
+
+    The function calls backup_lbaas_config_file() before mutating the config
+    file.
     '''
 
     backup_lbaas_config_file()
@@ -148,13 +153,14 @@ def generate_driver(environment):
 
     The product is a Python module named for the environment in the appropriate
     namespace, with a class of the same (environment name) that subclasses
-    F5LBaaSV2Driver.   The class name and path matches the name and path
+    F5LBaaSV2Driver. The class name and path match the name and path
     written by the other functions in this utility.
-    The form of the module can be understaod by reading the ENVMODULETEMPLATE
-    variable.  This is the highest level function in the utility, after
-    manipulating the Python namespace it then hands off the "environment"
-    string the insert_env_into_neutron_lbaas_conf function to handle mutation
-    of the config file "neutron_lbaas.conf".
+
+    The form of the module can be understood by reading the ENVMODULETEMPLATE
+    variable. This is the highest-level function in the utility. After
+    manipulating the Python namespace, it then hands off the "environment"
+    string to the insert_env_into_neutron_lbaas_conf function to handle
+    mutation of the Neutron LBaaS config file ("neutron_lbaas.conf").
     '''
     modname = "v2_" + environment
     modfilename = modname + '.py'
