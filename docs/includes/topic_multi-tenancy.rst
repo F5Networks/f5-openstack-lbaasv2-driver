@@ -50,7 +50,7 @@ Configuration
 
 .. code-block:: text
 
-    $ sudo emacs /etc/neutron/services/f5/f5-openstack-agent.ini
+    $ sudo vi /etc/neutron/services/f5/f5-openstack-agent.ini
 
 2. Configure the :ref:`L2 Segmentation Mode Settings` as appropriate for your environment.
 

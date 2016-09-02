@@ -7,3 +7,4 @@ docs/_build/*
 docs/_htmlbuild/*
 *.pyc
 cluds_test/*
+docs/errors.txt

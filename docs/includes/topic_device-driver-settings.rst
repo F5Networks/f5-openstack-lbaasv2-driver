@@ -17,7 +17,7 @@ Use Case
 
 If you want to use the F5 agent to manage BIG-IP from within your OpenStack cloud, you **must** provide the correct information in this section of the agent config file. The F5 agent can manage a :term:`standalone` device or a :term:`device service cluster`.
 
-.. seealso:: :ref:`Managing BIG-IP Clusters with F5 LBaaS`
+.. seealso:: :ref:`Manage BIG-IP Clusters with F5 LBaaSv2`
 
 
 Prerequisites
@@ -48,7 +48,7 @@ Configuration
 
 .. code-block:: text
 
-    $ sudo emacs /etc/neutron/services/f5/f5-openstack-agent.ini
+    $ sudo vi /etc/neutron/services/f5/f5-openstack-agent.ini
 
 2. Enter the iControl endpoint(s), username, and password for your BIG-IP(s).
 

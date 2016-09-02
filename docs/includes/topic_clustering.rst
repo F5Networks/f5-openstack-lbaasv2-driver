@@ -51,7 +51,7 @@ Configuration
 
 .. code-block:: text
 
-    $ sudo emacs /etc/neutron/services/f5/f5-openstack-agent.ini
+    $ sudo vi /etc/neutron/services/f5/f5-openstack-agent.ini
 
 
 2. Set the :ref:`HA mode` to :term:`pair` or :term:`scalen`.

@@ -73,7 +73,7 @@ All settings can be configured by editing the :ref:`Agent Configuration File`:
 
 .. code-block:: text
 
-    $ sudo emacs /etc/neutron/services/f5/f5-openstack-agent.ini
+    $ sudo vi /etc/neutron/services/f5/f5-openstack-agent.ini
 
 .. seealso::
 

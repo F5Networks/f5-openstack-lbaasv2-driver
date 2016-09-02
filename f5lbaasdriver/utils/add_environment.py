@@ -23,10 +23,13 @@ from f5lbaasdriver.utils.environment_library import generate_driver
 def main():
     parser = argparse.ArgumentParser(
         description='''This utility is designed to run on the Neutron
-        controller. Use the ``f5lbaasdriver.utils.add_environment.add_diff_env_to_controller``
-        function to remotely configure your controller with this utility.''')
+        controller. Use the
+        ``f5lbaasdriver.utils.add_environment.add_diff_env_to_controller``
+        function to remotely configure your controller with this utility.
+
+        ''')
     parser.add_argument("environment",
-                        help="The name of the enviroment to generate.")
+                        help="The name of the environment to generate.")
     args = parser.parse_args()
     generate_driver(args.environment)
 

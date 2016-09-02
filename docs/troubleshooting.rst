@@ -19,7 +19,7 @@ Extensive logging will then appear in the ``neutron-server`` and ``f5-oslbaasv1-
 
     .. code-block:: text
 
-        $ vi /etc/neutron/services/f5/f5-openstack-agent.ini
+        $ sudo vi /etc/neutron/services/f5/f5-openstack-agent.ini
 
         #
         [DEFAULT]
@@ -32,7 +32,7 @@ Extensive logging will then appear in the ``neutron-server`` and ``f5-oslbaasv1-
 
     .. code-block:: text
 
-        $ vi /etc/neutron/neutron.conf
+        $ sudo vi /etc/neutron/neutron.conf
         DEBUG = T
 
 
