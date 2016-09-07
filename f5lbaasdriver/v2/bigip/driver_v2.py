@@ -205,7 +205,8 @@ class LoadBalancerManager(object):
             )
 
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
-                lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
+                lbaas_agentschedulerv2.NoActiveLbaasAgent,
+                f5_exc.F5MismatchedTenants) as e:
             LOG.error("Exception: loadbalancer delete: %s" % e.message)
             driver.plugin.db.delete_loadbalancer(context, loadbalancer.id)
         except Exception as e:
