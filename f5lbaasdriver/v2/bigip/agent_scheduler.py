@@ -69,10 +69,13 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                         env,
                         gn
                     )
+                    LOG.debug("Primary lbaas agent is dead, env_agents: %s",
+                              env_agents)
                     if env_agents:
                         # return the first active agent in the
                         # group to process this task
                         lbaas_agent = {'agent': env_agents[0]}
+
             return lbaas_agent
 
     def get_active_agents_in_env(self, context, plugin, env, group=None):
@@ -101,13 +104,13 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
         return return_agents
 
     def get_agents_in_env(self, context, plugin, env, group=None):
-        """Get an active agent in the specified environment."""
+        """Get all agents in the specified environment."""
         return_agents = []
 
         with context.session.begin(subtransactions=True):
             candidates = []
             try:
-                candidates = plugin.db.get_lbaas_agents(context, active=True)
+                candidates = plugin.db.get_lbaas_agents(context)
             except Exception:
                 LOG.error("Caught Exception: get_lbaas_agents")
 
@@ -162,8 +165,9 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                 plugin,
                 context,
                 loadbalancer.id,
-                env=None
+                env
             )
+
             if lbaas_agent:
                 lbaas_agent = lbaas_agent['agent']
                 LOG.debug(' Assigning task to agent %s.'
@@ -179,6 +183,8 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                 plugin,
                 env
             )
+
+            LOG.debug("candidate agents: %s", candidates)
             if len(candidates) == 0:
                 LOG.warn('No f5 lbaas agents are active for env %s' % env)
                 raise lbaas_agentschedulerv2.NoActiveLbaasAgent(
@@ -202,6 +208,7 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                 if gn not in agents_by_group.keys():
                     agents_by_group[gn] = []
                 agents_by_group[gn].append(candidate)
+
                 # populate each group's capacity
                 group_capacity = self.get_capacity(ac)
                 if gn not in capacity_by_group.keys():

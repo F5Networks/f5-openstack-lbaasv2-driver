@@ -120,7 +120,7 @@ class LBaaSv2PluginCallbacksRPC(object):
             return service
 
     @log_helpers.log_method_call
-    def get_all_loadbalancers(self, context, env=None, group=0, host=None):
+    def get_all_loadbalancers(self, context, env, group=None, host=None):
         """Get all loadbalancers for this group in this env."""
         loadbalancers = []
         plugin = self.driver.plugin
@@ -145,11 +145,13 @@ class LBaaSv2PluginCallbacksRPC(object):
                             'tenant_id': lb.tenant_id
                         }
                     )
-
-        return loadbalancers
+        if host:
+            return [lb for lb in loadbalancers if lb['agent_host'] == host]
+        else:
+            return loadbalancers
 
     @log_helpers.log_method_call
-    def get_active_loadbalancers(self, context, env=None, group=0, host=None):
+    def get_active_loadbalancers(self, context, env, group=None, host=None):
         """Get all loadbalancers for this group in this env."""
         loadbalancers = []
         plugin = self.driver.plugin
@@ -167,18 +169,23 @@ class LBaaSv2PluginCallbacksRPC(object):
                     agent.id
                 )
                 for lb in agent_lbs:
-                    loadbalancers.append(
-                        {
-                            'agent_host': agent['host'],
-                            'lb_id': lb.id,
-                            'tenant_id': lb.tenant_id
-                        }
-                    )
+                    if lb.provisioning_status == plugin_constants.ACTIVE:
 
-        return loadbalancers
+                        loadbalancers.append(
+                            {
+                                'agent_host': agent['host'],
+                                'lb_id': lb.id,
+                                'tenant_id': lb.tenant_id
+                            }
+                        )
+
+        if host:
+            return [lb for lb in loadbalancers if lb['agent_host'] == host]
+        else:
+            return loadbalancers
 
     @log_helpers.log_method_call
-    def get_pending_loadbalancers(self, context, env=None, group=0, host=None):
+    def get_pending_loadbalancers(self, context, env, group=None, host=None):
         """Get all loadbalancers for this group in this env."""
         loadbalancers = []
         plugin = self.driver.plugin
@@ -189,15 +196,16 @@ class LBaaSv2PluginCallbacksRPC(object):
                 self.driver.plugin,
                 env,
                 group)
-            LOG.debug("Found Agents: %s" % agents)
+
             for agent in agents:
                 agent_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
                     context,
                     agent.id
                 )
-                LOG.debug("Have Loadbalancers: %s" % agent_lbs)
                 for lb in agent_lbs:
-                    if lb.provisioning_status != plugin_constants.ACTIVE:
+                    if (lb.provisioning_status != plugin_constants.ACTIVE and
+                            lb.provisioning_status != plugin_constants.ERROR):
+
                         loadbalancers.append(
                             {
                                 'agent_host': agent['host'],
@@ -206,7 +214,10 @@ class LBaaSv2PluginCallbacksRPC(object):
                             }
                         )
 
-        return loadbalancers
+        if host:
+            return [lb for lb in loadbalancers if lb['agent_host'] == host]
+        else:
+            return loadbalancers
 
     @log_helpers.log_method_call
     def update_service_stats(self, context, service_id=None,

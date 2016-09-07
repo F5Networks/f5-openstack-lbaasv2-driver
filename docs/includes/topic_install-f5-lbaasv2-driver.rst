@@ -12,7 +12,6 @@ Quick Start
 
     $ sudo pip install git+https://github.com/F5Networks/f5-openstack-lbaasv2-driver@v9.0.3
 
-
 .. tip::
 
     You can install packages from HEAD on a specific branches by adding ``@<branch_name>`` to the end of the install command instead of the release tag.
@@ -63,5 +62,3 @@ The ``f5-openstack-lbaasv2-driver`` package can be installed using ``rpm``.
     $ sudo rpm –ivh f5-openstack-lbaasv2-driver-9.0.3-1.el7.noarch.rpm
 
 .. tip:: Release tags always use the format "vx.x.x"
-
-
