@@ -1,6 +1,6 @@
 :orphan: true
 
-Managing BIG-IP Clusters with F5 LBaaS
+Manage BIG-IP Clusters with F5 LBaaSv2
 ======================================
 
 Overview
@@ -12,17 +12,17 @@ The F5 agent applies LBaaS configuration changes to each BIG-IP :term:`device` i
 
 Clustering provides a greater degree of redundancy than a standalone device offers. It helps to avoid service interruptions that could otherwise occur if a device should go down. F5 LBaaSv2 can manage BIG-IP `Sync-Failover device groups`_ when set to use either the :term:`pair` or the :term:`scalen` :ref:`High Availability mode <HA mode>`.
 
-.. topic:: Example: BIG-IP ``scalen`` cluster
-
     .. figure:: ../media/f5-lbaas-scalen-cluster.png
         :alt: BIG-IP scalen cluster
         :width: 500
+
+        BIG-IP scalen cluster
 
 
 Prerequisites
 -------------
 
-- Basic understanding of `BIG-IP® device service clustering <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-device-service-clustering-admin-12-0-0.html>`_.
+- Basic understanding of `BIG-IP device service clustering <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-device-service-clustering-admin-12-0-0.html>`_.
 
 - Licensed, operational BIG-IP :term:`device service cluster`.
 
@@ -47,43 +47,43 @@ Caveats
 Configuration
 -------------
 
-1. Edit the :ref:`Agent Configuration File`:
+#. Edit the :ref:`Agent Configuration File`:
 
-.. code-block:: text
+    .. code-block:: text
 
-    $ sudo vi /etc/neutron/services/f5/f5-openstack-agent.ini
+        $ sudo vi /etc/neutron/services/f5/f5-openstack-agent.ini
 
 
-2. Set the :ref:`HA mode` to :term:`pair` or :term:`scalen`.
+#. Set the :ref:`HA mode` to :term:`pair` or :term:`scalen`.
 
-.. code-block:: text
-    :emphasize-lines: 10
+    .. code-block:: text
+        :emphasize-lines: 10
 
-    # HA mode
-    #
-    # Device can be required to be:
-    #
-    # standalone - single device no HA
-    # pair - active-standby two device HA
-    # scalen - active device cluster
-    #
-    #
-    f5_ha_type = pair
-    #
-    #
+        # HA mode
+        #
+        # Device can be required to be:
+        #
+        # standalone - single device no HA
+        # pair - active-standby two device HA
+        # scalen - active device cluster
+        #
+        #
+        f5_ha_type = pair
+        #
+        #
 
-3. Add the IP address for each BIG-IP device, the admin username, and the admin password to the :ref:`Device Driver - iControl® Driver Setting <Device Driver Settings / iControl Driver Settings>` section of the config file. Values must be comma-separated.
+#. Add the IP address for each BIG-IP device, the admin username, and the admin password to the :ref:`Device Driver - iControl® Driver Setting <Device Driver Settings / iControl Driver Settings>` section of the config file. Values must be comma-separated.
 
-.. code-block:: text
-    :emphasize-lines: 10
+    .. code-block:: text
+        :emphasize-lines: 10
 
-    #
-    icontrol_hostname = 10.190.7.232,10.190.4.193
-    #
-    icontrol_username = admin
-    #
-    icontrol_password = admin
-    #
+        #
+        icontrol_hostname = 10.190.7.232,10.190.4.193
+        #
+        icontrol_username = admin
+        #
+        icontrol_password = admin
+        #
 
 
 Further Reading

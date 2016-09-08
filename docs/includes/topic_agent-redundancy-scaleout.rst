@@ -28,7 +28,7 @@ How it works:
 
     * The selected agent is then bound to the loadbalancer and handles all future LBaaS requests associated with it.
 
-#. If the agent bound to the loadbalancer is inactive, the scheduler looks for other active agents with tenant affinity and assigns the task to the first one it finds. The loadbalancer remains bound to the original agent, with the expectation that the agent will eventually come back online.
+#. If the agent bound to the loadbalancer is inactive, the scheduler looks for other active agents in the same group as the 'dead' agent and assigns the task to the first one it finds. The loadbalancer remains bound to the original agent, with the expectation that the agent will eventually come back online.
 
 .. warning::
 

@@ -16,7 +16,8 @@ Supported Features
     includes/topic_global-routed-mode
     includes/topic_cert-manager
     includes/topic_hierarchical-port-binding
-
+    includes/topic_agent-redundancy-scaleout
+    includes/topic_differentiated-services
 
 
 

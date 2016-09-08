@@ -12,7 +12,7 @@ The F5® agent uses the L2/L3 segmentation mode settings to determine the L2/L3 
 
     These settings must be configured correctly for the F5 agent to manage your BIG-IP(s). Knowledge of networking concepts and BIG-IP configuration is required.
 
-.. rubric:: L2 segmentation mode settings include:
+L2 segmentation mode settings:
 
 * Mapping VLANs to BIG-IP device interfaces (with or without tagging)
 * Mapping VLAN tags to specific BIG-IP ports
@@ -20,7 +20,7 @@ The F5® agent uses the L2/L3 segmentation mode settings to determine the L2/L3 
 * Tunnel types
 
 
-.. rubric:: L3 segmentation mode settings include:
+L3 segmentation mode settings:
 
 * :ref:`Global routed mode` / Route domains
 * SNAT Mode and SNAT Address Counts
@@ -34,11 +34,11 @@ Typically, the F5 agent is used to manage one (1) or more BIG-IP devices deploye
 
 The default mode of operation for the F5 agent is **L2 adjacent mode** (``f5_global_routed_mode = False``).
 
-.. topic:: Example: L2-adjacent BIG-IP cluster
+.. figure:: ../media/f5-lbaas-l2-3-adjacent-mode.png
+    :alt: L2-adjacent BIG-IP cluster
+    :width: 350
 
-    .. figure:: ../media/f5-lbaas-l2-3-adjacent-mode.png
-        :alt: L2 adjacent mode
-        :width: 350
+    L2-adjacent BIG-IP cluster
 
 .. important:: Knowledge of the external network configuration, and that of the BIG-IP device(s), is required to configure these settings.
 
@@ -63,13 +63,13 @@ Prerequisites
 Caveats
 -------
 
-- Many L3 segmentation mode settings are dependent on how others are configured. It's important to read the text in the :ref:`agent configuration file` carefully before changing these settings to ensure they don't conflict.
+- Many L3 segmentation mode parameters depend on other configuration parameters. It's important to read the text in the :ref:`agent configuration file` carefully before changing these settings to ensure they don't conflict.
 
 
 Configuration
 -------------
 
-All settings can be configured by editing the :ref:`Agent Configuration File`:
+Edit the :ref:`Agent Configuration File` to configure the F5 agent.
 
 .. code-block:: text
 
@@ -82,17 +82,17 @@ All settings can be configured by editing the :ref:`Agent Configuration File`:
     * :download:`Sample Agent Configuration file for VXLAN <../_static/f5-openstack-agent.vxlan.ini>`
 
 
-L2 Segmentation Mode Settings
-`````````````````````````````
+L2 Segmentation Mode
+````````````````````
 
 Device VLAN to interface and tag mapping
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - ``f5_external_physical_mappings``: Maps VLANs to BIG-IP interfaces. Must use the following format:
 
-.. code-block:: text
+    .. code-block:: text
 
-    physical_network:interface_name:tagged
+        physical_network:interface_name:tagged
 
 \
     * ``physical_network``: The external physical network; corresponds to the Neutron ``provider:physical_network`` attribute.
@@ -101,7 +101,7 @@ Device VLAN to interface and tag mapping
 
     * ``tagged``: Value must be True or False; indicates whether or not VLAN tagging should be enforced by the BIG-IP.
 
-.. topic:: Example
+    **Example**
 
     .. code-block:: text
         :emphasize-lines: 31
@@ -142,7 +142,7 @@ Device VLAN to interface and tag mapping
 VLAN device and interface to port mappings
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- ``vlan_binding_driver``: Binds tagged VLANs to specific BIG-IP ports; it should be configured using a valid subclass of the iControl® :class:`VLANBindingBase` class. [#]_ To use this feature, uncomment the line in the :ref:`agent configuration file`.
+- ``vlan_binding_driver``: Binds tagged VLANs to specific BIG-IP ports; it should be configured using a valid subclass of the iControl® :class:`VLANBindingBase` class. [#]_ **To use this feature, uncomment the line in the :ref:`agent configuration file`.**
 
 
 Device Tunneling (VTEP) selfips
@@ -152,7 +152,7 @@ Device Tunneling (VTEP) selfips
 
 - ``f5_vtep_selfip_name``: The name of the self IP assigned to the VTEP. The self IP must be configured on the BIG-IP **before** you configure the F5 agent.
 
-.. topic:: Example
+    **Example**
 
     .. code-block:: text
         :emphasize-lines: 9, 10
@@ -175,8 +175,7 @@ Tunnel Types
 
 - ``advertised_tunnel_types``: The type of tunnel(s) being used to connect the BIG-IP device(s) to controller/compute node(s) in OpenStack; can be GRE or VxLAN. Values should be comma-separated if more than one tunnel type is being used. If you are not using tunnels, leave this setting blank.
 
-
-.. topic:: Example
+    **Example**
 
     .. code-block:: text
         :emphasize-lines: 14
@@ -213,7 +212,7 @@ Static ARP population for members on tunnel networks
 
 - ``l2_population``: Value must be True or False; indicates whether or not BIG-IP uses L2 population service to update fbd tunnel entries.
 
-.. topic:: Example
+    **Example**
 
     .. code-block:: text
         :emphasize-lines: 9, 18
@@ -251,7 +250,7 @@ Namespaces and Routing
 
 - ``use_namespaces``: Value must be True or False; indicates whether or not traffic should be routed according to tenant routing tables. Setting this value to True allows subnet IP addresses to overlap.
 
-.. topic:: Example
+    **Example**
 
     .. code-block:: text
         :emphasize-lines: 8
@@ -268,7 +267,7 @@ Namespaces and Routing
 
 - ``max_namespaces_per_tenant``: Value must be an integer; indicates the maximum number of route domains allowed per tenant. This allows a tenant to have overlapping IP subnets.
 
-.. topic:: Example
+    **Example**
 
     .. code-block:: text
         :emphasize-lines: 27
@@ -304,7 +303,7 @@ Namespaces and Routing
 
 - ``f5_route_domain_strictness``: Value must be True or False; indicates whether VIPS and members in different tenants can communicate with each other. In other words, setting this value to true forces tenant routing tables to be preferred over the global routing table.
 
-.. topic:: Example
+    **Example**
 
     .. code-block:: text
         :emphasize-lines: 8
@@ -331,7 +330,7 @@ SNAT Mode and SNAT Address Counts
 
 - ``f5_common_external_networks``: Value must be True or False; when set to True, traffic on all Neutron networks for which the router type is ``external`` will be routed according to the global routing table.
 
-.. topic:: Example
+    **Example**
 
     .. code-block:: text
         :emphasize-lines: 19, 36, 42
@@ -386,7 +385,7 @@ Common Networks
 
 - ``common_network_ids``: This should be a 'name-value' pair; multiple values can be comma-separated. The first entry is the Neutron network ID; the second is the network name (as configured on the BIG-IP).
 
-.. topic:: Example
+    **Example**
 
     .. code-block:: text
         :emphasize-lines: 21, 26
@@ -428,7 +427,7 @@ The L3 Binding driver is **required** for BIG-IP VE(s) deployed within your Open
 
 - ``l3_binding_driver``: uncomment this line in the :ref:`agent configuration file` if you're using an :term:`overcloud` VE.
 
-.. topic:: Example
+    **Example**
 
     .. code-block:: text
         :emphasize-lines: 2
