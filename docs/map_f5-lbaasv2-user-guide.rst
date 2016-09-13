@@ -11,9 +11,10 @@ This guide provides instructions for installing and using the F5® OpenStack LBa
 .. toctree::
     :maxdepth: 2
 
-    map_before-you-begin.rst
+    map_before-you-begin
     map_configure-f5-agent
-    includes/topic_configure-neutron-lbaasv2.rst
+    includes/topic_configure-neutron-lbaasv2
+    map_deployments
 
 
 

@@ -238,8 +238,8 @@ Static ARP population for members on tunnel networks
         #
 
 
-L3 Segmentation Mode Settings
-`````````````````````````````
+L3 Segmentation Mode
+````````````````````
 
 .. note::
 

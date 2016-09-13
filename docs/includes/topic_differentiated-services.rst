@@ -47,40 +47,23 @@ Configuration
 Create a Service Provider Driver
 ````````````````````````````````
 
-You can use the :ref:`F5 environment generator` to automatically generate, and configure Neutron to use, a new service provider driver for a custom environment.
-
-#. On each Neutron controller which will host your custom environment, run the following command:
+You can use the :ref:`F5 environment generator` to automatically generate, and configure Neutron to use, a new service provider driver for a custom environment. On each Neutron controller which will host your custom environment, run the following command:
 
     .. code-block:: shell
 
-        $ python -m f5lbaasdriver.utils.add_environment.py <provider_name> <environment_prefix>
+        $ sudo add_f5agent_environment <env_name>
 
-#. Remove the comment (`#`) from the beginning of the new ``service_provider`` line to activate the driver.
-
-.. topic:: Example: Create a custom environment called 'DEV1'.
-
-    #. The python command:
-
-        .. code-block:: shell
-
-            $ python -m f5lbaasdriver.utils.add_environment.py DEV1 DEV1
-
-    #. The corresponding ``service_provider`` entry added to :file:`/etc/neutron/neutron_lbaas.conf`.
-
-        .. code-block:: text
-
-            # service_provider = LOADBALANCERV2:DEV1:neutron_lbaas.drivers.f5.driver_v2_Dev1.F5LBaaSV2Driver:default
 
 Configure the F5 Agent
 ``````````````````````
 
-#. :ref:`Edit the agent configuration file`
+#. :ref:`Edit the agent configuration file`.
 
 #. Change the ``environment_prefix`` parameter to match the name of your custom environment.
 
 #. :ref:`Restart Neutron`.
 
-#. :ref:`Start the F5 agent`.
+#. If the F5 agent is not already running, :ref:`start the F5 agent`.
 
 
 

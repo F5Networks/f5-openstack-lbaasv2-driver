@@ -7,14 +7,6 @@ f5lbaasdriver.utils
     f5lbaasdriver.utils
 
 
-add_environment module
-----------------------
-
-.. automodule:: f5lbaasdriver.utils.add_environment
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 environment_library module
 --------------------------
 

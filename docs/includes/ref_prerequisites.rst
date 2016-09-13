@@ -62,3 +62,6 @@
 
 - Existing `BIG-IP SSL profile <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-ssl-administration-12-0-0/5.html#unique_527799714>`_ (*optional*).
 
+- All hosts running F5 LBaaSv2 must have the Neutron and Neutron LBaaS packages installed.
+
+- All hosts running F5 LBaaSv2 must use the same Neutron database.

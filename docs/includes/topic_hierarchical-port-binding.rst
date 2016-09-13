@@ -60,7 +60,7 @@ Configuration
     $ sudo vi /etc/neutron/services/f5/f5-openstack-agent.ini
 
 
-2. Configure the heirarchical port binding settings (found in the :ref:`L2 Segmentation Modes` section of the agent config file).
+2. Configure the heirarchical port binding settings (found in the :ref:`L2 Segmentation Mode` section of the agent config file).
 
 .. table:: Hierarchical Port Binding settings
 
@@ -110,7 +110,7 @@ Configuration
         f5_network_segment_gross_timeout = 300
 
 
-3. Configure the related :ref:`L2 Segmentation Mode <L2 Segmentation Mode Settings>` and/or :ref:`L3 Segmentation Mode <L3 Segmentation Mode Settings>` settings as appropriate for your environment.
+3. Configure the related :ref:`L2 Segmentation Mode` and/or :ref:`L3 Segmentation Mode` settings as appropriate for your environment.
 
 
 

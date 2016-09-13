@@ -111,7 +111,7 @@ F5 agent is not provisioning LBaaS tasks correctly
         \\ list the loadbalancers on the agent.
 
         $ neutron lbaas-loadbalancer-show <loadbalancer_id>
-        \\ show the details for a specific loadbalancer
+        \\ show the details for a specific load balancer
 
 
 2. Make sure you're not running LBaaSv1 and LBaaSv2 at the same time.
