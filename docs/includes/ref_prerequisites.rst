@@ -9,6 +9,10 @@
 
 - Licensed, operational BIG-IP :term:`device` or :term:`device cluster`.
 
+- Licensed, operational BIG-IP vCMP host chassis with support for vCMP :term:`vCMP host`
+
+- Licensed, operational BIG-IP vCMP guest running on a vCMP Host :term:`vCMP guest`
+
 - Operational OpenStack cloud (|openstack| release).
 
 - Administrator access to both BIG-IP device(s) and OpenStack cloud.
