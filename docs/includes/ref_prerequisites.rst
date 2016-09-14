@@ -11,19 +11,21 @@
 
 - Licensed, operational BIG-IP :term:`device` and/or :term:`device group`.
 
-- Licensed, operational BIG-IP vCMP host chassis with support for vCMP :term:`vCMP host`
+- Licensed, operational BIG-IP :term:`vCMP host` chassis with support for vCMP
 
-- Licensed, operational BIG-IP vCMP guest running on a vCMP Host :term:`vCMP guest`
+- Licensed, operational BIG-IP :term:`vCMP guest` running on a vCMP Host
 
 - Operational OpenStack cloud (|openstack| release).
 
 - Administrator access to both the BIG-IP device(s) and the OpenStack cloud.
 
+- Administrative access to the vCMP host(s) and guest(s) you will manage with F5 LBaaSv2.
+
 - Login credentials for user with administrative permissions on BIG-IP device(s).
 
 - F5 :ref:`LBaaSv2 driver <Install the F5 LBaaSv2 Driver>` and :ref:`agent <agent:home>` installed on each server from which BIG-IP LTM services are required.
 
-- F5 :ref:`agent <agent:home>` and :ref:`service provider driver <Install the F5 LBaaSv2 Driver>` installed on the Neutron controller and all other hosts from which you want to provision LBaaS services.
+- F5 :ref:`agent <agent:home>` and :ref:`service provider driver <Install the F5 LBaaSv2 Driver>` installed on the Neutron controller.
 
 - F5 ref:`agent <Install the F5 Agent>` and :ref:`LBaaSv2 driver <Install the F5 LBaaSv2 Driver>` installed on all hosts from which BIG-IP services will be provisioned.
 
@@ -35,6 +37,10 @@
 - Basic understanding of `BIG-IP Local Traffic Management <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-basics-12-0-0.html>`_
 
 - Basic understanding of `BIG-IP device service clustering <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-device-service-clustering-admin-12-0-0.html>`_.
+
+- Knowledge of `BIG-IP vCMP <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/vcmp-administration-appliances-12-1-1/1.html>`_ configuration and administration.
+
+
 
 - Knowledge of `OpenStack Networking <http://docs.openstack.org/liberty/networking-guide/>`_ concepts.
 
