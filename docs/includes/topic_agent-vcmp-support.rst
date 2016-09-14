@@ -81,7 +81,12 @@ Configuration
         #
         icontrol_hostname = 10.190.7.232
 
-4. Set the advertised_tunnel_types setting to identify use of vlan:
+4. Set the advertised_tunnel_types setting to identify use of vlan or flat:
+
+.. important::
+
+    If the advertised_tunnel_types setting in the Agent Configuration File is left empty, as shown below, the provider:network_type in the ML2 plugin should be set as FLAT or VLAN for vCMP support.
+
 
 .. topic:: Example
 
