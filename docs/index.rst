@@ -15,25 +15,35 @@ Contents
 ========
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     Quick Start Guide <map_quick-start-guide>
     User Guide <map_f5-lbaasv2-user-guide>
     Basic Environment Requirements <includes/topic_basic-environment-reqs>
     F5 LBaaSv2 to BIG-IP Mapping <includes/topic_neutron-bigip-command-mapping>
+    Supported Features <map_lbaasv2-features>
     Sample Configuration Files <includes/ref_agent-config-file>
     Coding Example <coding-example-lbaasv2>
     Release Notes <release_notes>
-    Supported Features <map_lbaasv2-features>
     Upgrading <includes/topic_upgrading-f5-lbaasv2-plugin>
     Glossary <glossary>
     troubleshooting
+
 
 .. include:: includes/ref_lbaasv2-version-compatibility.rst
     :start-line: 2
 
 .. include:: includes/topic_lbaasv2-plugin-overview.rst
     :start-line: 2
+
+API Documentation
+=================
+
+* :ref:`f5lbaasdriver`
+
+    * :ref:`f5lbaasdriver.utils`
+    * :ref:`f5lbaasdriver.v2`
+
 
 .. |Build Status| image:: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=liberty
     :target: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver

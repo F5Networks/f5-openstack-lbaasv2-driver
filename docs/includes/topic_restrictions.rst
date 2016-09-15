@@ -21,7 +21,7 @@ The following features are unsupported in |release|; they will be introduced in 
         +----------------+----------------------------------------------------+
         | Object         | Unsupported                                        |
         +================+====================================================+
-        | Loadbalancer   || Statistics                                        |
+        | loadbalancer   || Statistics                                        |
         |                || (e.g., ``neutron lbaas-loadbalancer-stats``)      |
         +----------------+----------------------------------------------------+
 

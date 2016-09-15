@@ -49,10 +49,10 @@ Command                                    Action
 ``neutron lbaas-listener-create``          | 1. A new virtual server is created in the tenant partition on the BIG-IP.
                                            |    - Attempts to use Fast L4 by default.
                                            |    - If persistence is configured, Standard is used.
-                                           |    - Uses the IP address assigned to the loadbalancer by Neutron.
+                                           |    - Uses the IP address assigned to the load balancer by Neutron.
                                            |    - Uses the route domain that was created for the new partition when the
-                                           |    loadbalancer was created.
-                                           |    - Traffic is restricted to the tunnel assigned to the loadbalancer.
+                                           |    load balancer was created.
+                                           |    - Traffic is restricted to the tunnel assigned to the load balancer.
                                            |
                                            | If the listener ``--protocol`` is ``TERMINATED_HTTPS``: [#]_
                                            |    - The certificate/key container is fetched from Barbican using the URI
@@ -93,7 +93,7 @@ Further Reading
 
 .. rubric:: Footnotes:
 .. [#] This is done for all tunnel types, not just those configured as the ``advertised_tunnel_types`` in the :ref:`L2 Segmentation Mode Settings`.
-.. [#] Configured in :ref:`Environment Settings` --> ``environment_prefix``. The default prefix is "Project".
+.. [#] Configured in ``Environment Settings --> environment_prefix``. The default prefix is ``Project``.
 .. [#] Run ``openstack project list`` to get a list of configured tenant names and IDs.
 .. [#] If using :ref:`global routed mode`, all traffic is directed to the self IP (no tunnel is created).
 .. [#] Configured in :ref:`L3 Segmentation Mode Settings` --> ``f5_snat_addresses_per_subnet``.
