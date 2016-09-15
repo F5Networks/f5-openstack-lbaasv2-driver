@@ -13,7 +13,9 @@ Release Highlights
 
 This release introduces the following:
 
-- Hierarchical port binding.
+- Agent redundancy and capacity-based scale out
+- Differentiated Service Environments
+- BIG-IP® vCMP® compatibility
 - Bug fixes
 
 See the `changelog <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/compare/v8.0.7...v8.0.8>`_ for the full list of changes in this release.
@@ -23,9 +25,7 @@ Caveats
 
 The following are not supported in this release:
 
-* BIG-IP vCMP
 * Agent High Availability (HA)
-* Differentiated environments
 * L7 routing
 * Unattached pools
 * load balancer statistics (e.g., ``neutron lbaas-loadbalancer-stats``)

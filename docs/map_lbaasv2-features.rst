@@ -18,6 +18,7 @@ Supported Features
     includes/topic_hierarchical-port-binding
     includes/topic_agent-redundancy-scaleout
     includes/topic_differentiated-services
+    includes/topic_f5lbaas-vcmp
 
 
 
