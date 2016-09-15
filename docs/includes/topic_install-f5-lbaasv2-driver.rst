@@ -37,13 +37,13 @@ The ``f5-openstack-lbaasv2-driver`` package can be installed using ``dpkg``.
 
 .. code-block:: bash
 
-    $ curl –L –O https://github.com/F5Networks/f5-common-python/releases/download/v9.0.3/python-f5-openstack-agent_9.0.3-1_1404_all.deb
+    $ curl –L –O https://github.com/F5Networks/f5-openstack-lbaasv2-driver/releases/download/v9.0.3/python-f5-openstack-lbaasv2-driver_9.0.3-1_1404_all.deb
 
 2. Install the package on the Neutron controller:
 
 .. code-block:: bash
 
-    $ sudo dpkg –i python-f5-openstack-driver_9.0.3-1_1404_all.deb
+    $ sudo dpkg –i python-f5-openstack-lbaasv2-driver_9.0.3-1_1404_all.deb
 
 RPM Package
 ```````````
