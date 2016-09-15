@@ -33,7 +33,7 @@ Prerequisites
 
 - Administrator access to both BIG-IP device(s) and OpenStack cloud.
 
-- F5 :ref:`agent <agent:home>` and :ref:`service provider driver <install-f5-lbaasv2-driver>` installed on the Neutron controller and all other hosts for which you want to provision LBaaS services.
+- F5 ref:`agent <Install the F5 Agent>` and :ref:`LBaaSv2 driver <Install the F5 LBaaSv2 Driver>` installed on all hosts from which BIG-IP services will be provisioned.
 
 - Knowledge of `OpenStack Networking <http://docs.openstack.org/liberty/networking-guide/>`_ concepts.
 
@@ -57,10 +57,10 @@ Configuration
 
 .. code-block:: text
 
-    $ sudo emacs /etc/neutron/services/f5/f5-openstack-agent.ini
+    $ sudo vi /etc/neutron/services/f5/f5-openstack-agent.ini
 
 
-2. Configure the heirarchical port binding settings in the :ref:`L2/L3 Segmentation Modes` section of the config file.
+2. Configure the heirarchical port binding settings (found in the :ref:`L2 Segmentation Mode` section of the agent config file).
 
 .. table:: Hierarchical Port Binding settings
 
@@ -110,7 +110,7 @@ Configuration
         f5_network_segment_gross_timeout = 300
 
 
-3. Configure the related :ref:`L2/L3 Segmentation Modes` settings as appropriate for your environment.
+3. Configure the related :ref:`L2 Segmentation Mode` and/or :ref:`L3 Segmentation Mode` settings as appropriate for your environment.
 
 
 
@@ -120,7 +120,7 @@ Further Reading
 .. seealso::
 
     .. [#] `Neutron Hierarchical Port Binding: What is it? And why you should deploy it <https://www.openstack.org/summit/vancouver-2015/summit-videos/presentation/neutron-hierarchical-port-binding-what-is-it-and-why-you-should-deploy-it>`_ - Presentation from the 2015 OpenStack Summit
-    .. [#] See :ref:`Agent High Availability`
+    .. [#] See :ref:`Agent Redundancy and Scale Out`
     .. [#] See :ref:`Differentiated Service Environments` and :ref:`Multi-tenancy`
 
 

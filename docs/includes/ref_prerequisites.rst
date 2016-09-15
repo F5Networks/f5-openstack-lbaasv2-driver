@@ -7,7 +7,9 @@
 
 - Licensed, operational BIG-IP :term:`device service cluster`.
 
-- Licensed, operational BIG-IP :term:`device` or :term:`device cluster`.
+- Licensed, operational BIG-IP :term:`device` or :term:`device service cluster`.
+
+- Licensed, operational BIG-IP :term:`device` and/or :term:`device group`.
 
 - Licensed, operational BIG-IP vCMP host chassis with support for vCMP :term:`vCMP host`
 
@@ -15,7 +17,7 @@
 
 - Operational OpenStack cloud (|openstack| release).
 
-- Administrator access to both BIG-IP device(s) and OpenStack cloud.
+- Administrator access to both the BIG-IP device(s) and the OpenStack cloud.
 
 - Login credentials for user with administrative permissions on BIG-IP device(s).
 
@@ -23,14 +25,16 @@
 
 - F5 :ref:`agent <agent:home>` and :ref:`service provider driver <Install the F5 LBaaSv2 Driver>` installed on the Neutron controller and all other hosts from which you want to provision LBaaS services.
 
+- F5 ref:`agent <Install the F5 Agent>` and :ref:`LBaaSv2 driver <Install the F5 LBaaSv2 Driver>` installed on all hosts from which BIG-IP services will be provisioned.
+
 - Basic understanding of OpenStack networking concepts. See the `OpenStack docs <http://docs.openstack.org/liberty/>`_ for more information.
 
 
-- Basic understanding of `BIG-IP® system configuration <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-system-initial-configuration-12-0-0/2.html#conceptid>`_.
+- Basic understanding of `BIG-IP system configuration <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-system-initial-configuration-12-0-0/2.html#conceptid>`_.
 
-- Basic understanding of `BIG-IP® Local Traffic Management <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-basics-12-0-0.html>`_
+- Basic understanding of `BIG-IP Local Traffic Management <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-basics-12-0-0.html>`_
 
-- Basic understanding of `BIG-IP® device service clustering <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-device-service-clustering-admin-12-0-0.html>`_.
+- Basic understanding of `BIG-IP device service clustering <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-device-service-clustering-admin-12-0-0.html>`_.
 
 - Knowledge of `OpenStack Networking <http://docs.openstack.org/liberty/networking-guide/>`_ concepts.
 
@@ -60,5 +64,8 @@
 
 - `OpenStack Barbican <OpenStack Barbican: https://wiki.openstack.org/wiki/Barbican>`_ certificate manager configured and operational.
 
-- Existing `BIG-IP® SSL profile <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-ssl-administration-12-0-0/5.html#unique_527799714>`_ (*optional*).
+- Existing `BIG-IP SSL profile <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-ssl-administration-12-0-0/5.html#unique_527799714>`_ (*optional*).
 
+- All hosts running F5 LBaaSv2 must have the Neutron and Neutron LBaaS packages installed.
+
+- All hosts running F5 LBaaSv2 must use the same Neutron database.

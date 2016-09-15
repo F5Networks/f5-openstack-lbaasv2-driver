@@ -1,6 +1,6 @@
 :orphan: true
 
-Managing Multi-Tenant BIG-IP Devices with F5 LBaaS
+Manage Multi-Tenant BIG-IP Devices with F5 LBaaSv2
 ==================================================
 
 Overview
@@ -8,12 +8,11 @@ Overview
 
 BIG-IP® devices allow users to create and customize partitions for which specific features that meet a tenant's needs can be enabled. This type of configuration, called multi-tenancy, allows a greater degree of flexibility in allocating network resources to multiple individual projects. [#]_
 
-
-.. topic:: Example: Multi-tenant BIG-IP and F5 LBaaS
-
     .. figure:: ../media/f5-lbaas-multi-tenancy.png
         :alt: Multi-tenant BIG-IP and F5 LBaaS
         :width: 500
+
+        Multi-tenant BIG-IP and F5 LBaaS
 
 
 Prerequisites
@@ -39,7 +38,7 @@ When using BIG-IP Virtual Edition (VE) with the Linux bridge or Open vSwitch Neu
 
 1) :ref:`Global Routed Mode`: BIG-IP VE is connected only to provider networks; all pool member L3 addresses must be routable using cloud infrastructure routers.
 
-2) :ref:`L2 Segmentation Modes <L2 Segmentation Mode Settings>` using GRE or VxLAN tunnels: BIG-IP VE has a data connection to a provider network which can route IP packets to the ``local_ip`` VTEP addresses of the compute and network nodes through a cloud infrastructure router.
+2) :ref:`L2 Segmentation Modes <L2 Segmentation Mode>` using GRE or VxLAN tunnels: BIG-IP VE has a data connection to a provider network which can route IP packets to the ``local_ip`` VTEP addresses of the compute and network nodes through a cloud infrastructure router.
 
 .. As of the Mitaka release the Linux bridge and Open vSwitch core plugins do not support the use of VLANs for tenant networks with multi-tenant Nova guest instances.
 
@@ -50,34 +49,19 @@ Configuration
 
 .. code-block:: text
 
-    $ sudo emacs /etc/neutron/services/f5/f5-openstack-agent.ini
+    $ sudo vi /etc/neutron/services/f5/f5-openstack-agent.ini
 
-2. Configure the :ref:`L2 Segmentation Mode Settings` as appropriate for your environment.
+2. Configure the :ref:`L2 Segmentation Mode` settings as appropriate for your environment.
 
     * :ref:`Device VLAN to interface and tag mapping`
 
-    .. include:: topic_l2-l3-segmentation-modes.rst
-        :start-line: 101
-        :end-line: 137
-
     * :ref:`VLAN device and interface to port mappings`
 
-
     * :ref:`Device Tunneling (VTEP) selfips` (if using VxLAN or GRE tunnels)
-    .. include:: topic_l2-l3-segmentation-modes.rst
-        :start-line: 152
-        :end-line: 167
 
     * :ref:`Tunnel Types`
-    .. include:: topic_l2-l3-segmentation-modes.rst
-        :start-line: 176
-        :end-line: 203
 
     * :ref:`Static ARP population for members on tunnel networks`
-    .. include:: topic_l2-l3-segmentation-modes.rst
-        :start-line: 213
-        :end-line: 236
-
 
 
 .. important::

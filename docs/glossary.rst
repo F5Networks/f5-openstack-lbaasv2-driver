@@ -26,10 +26,11 @@ Glossary
     device cluster
     device service cluster
     device service clusters
-    device service group
     DSC
-    DSG
-        Two (2) or more `BIG-IP`_ devices configured to use :term:`high availability` features, providing synchronization and failover of BIG-IP configuration data among multiple BIG-IP devices on a network. A clustered BIG-IP device can synchronize some or all of its configuration data among several BIG-IP devices; fail over to one of many available devices; mirror connections to a peer device to prevent interruption in service during failover.
+        Device Service Clustering provides synchronization and failover of `BIG-IP`_ configuration data among multiple `BIG-IP`_ devices on a network. You can configure a `BIG-IP`_ device on a network to synchronize some or all of its configuration data among several BIG-IP devices; fail over to one of many available devices; and/or mirror connections to a peer device to prevent interruption in service during failover.
+
+    device group
+        A device group is a component of a device service cluster. It consists of a collection of `BIG-IP`_ devices that trust each other and can synchronize, and sometimes fail over, their configuration data.
 
     high availability
     highly available

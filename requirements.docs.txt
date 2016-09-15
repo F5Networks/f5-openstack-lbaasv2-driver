@@ -1,3 +1,6 @@
-Sphinx>=1.4.1
+Sphinx>=1.4.5
 six>=1.10.0
 sphinx-rtd-theme
+-e git+https://github.com/openstack/neutron#egg=neutron
+-e git+https://github.com/openstack/neutron-lbaas.git#egg=neutron_lbaas
+pytest

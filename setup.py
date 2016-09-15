@@ -13,10 +13,10 @@
 #   limitations under the License.
 
 import f5lbaasdriver
-import os
 
 from setuptools import find_packages
 from setuptools import setup
+
 
 def readme():
     with open('README.rst') as f:
@@ -27,6 +27,9 @@ setup(name='f5-openstack-lbaasv2-driver',
       description='F5 Networks Driver for OpenStack LBaaSv2 service',
       long_description=readme(),
       version=f5lbaasdriver.__version__,
+      entry_points={
+          'console_scripts': ['add_f5agent_environment='
+                              'f5lbaasdriver.utils.add_environment:main']},
       author='f5-openstack-lbaasv2-driver',
       author_email='f5-openstack-lbaasv2-driver@f5.com',
       url='https://github.com/F5Networks/f5-openstack-lbaasv2-driver',
