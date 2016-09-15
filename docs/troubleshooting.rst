@@ -19,7 +19,7 @@ Extensive logging will then appear in the ``neutron-server`` and ``f5-oslbaasv1-
 
     .. code-block:: text
 
-        $ vi /etc/neutron/services/f5/f5-openstack-agent.ini
+        $ sudo vi /etc/neutron/services/f5/f5-openstack-agent.ini
 
         #
         [DEFAULT]
@@ -32,7 +32,7 @@ Extensive logging will then appear in the ``neutron-server`` and ``f5-oslbaasv1-
 
     .. code-block:: text
 
-        $ vi /etc/neutron/neutron.conf
+        $ sudo vi /etc/neutron/neutron.conf
         DEBUG = T
 
 
@@ -111,7 +111,7 @@ F5 agent is not provisioning LBaaS tasks correctly
         \\ list the loadbalancers on the agent.
 
         $ neutron lbaas-loadbalancer-show <loadbalancer_id>
-        \\ show the details for a specific loadbalancer
+        \\ show the details for a specific load balancer
 
 
 2. Make sure you're not running LBaaSv1 and LBaaSv2 at the same time.
