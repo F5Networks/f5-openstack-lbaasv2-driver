@@ -28,7 +28,7 @@ The following are not supported in this release:
 * Differentiated environments
 * L7 routing
 * Unattached pools
-* Loadbalancer statistics (e.g., ``neutron lbaas-loadbalancer-stats``)
+* load balancer statistics (e.g., ``neutron lbaas-loadbalancer-stats``)
 
 Open Issues
 -----------

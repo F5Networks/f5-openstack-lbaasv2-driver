@@ -48,7 +48,7 @@ The table below contains a summary of the recommended F5 LBaaSv2 :ref:`configura
 Next Steps
 ==========
 
-- See the :ref:`Coding Example <f5-openstack-lbaasv2-coding-example>` for the commands to use to configure basic load balancing via the Neutron CLI.
+- See the :ref:`Coding Example` for the commands to use to configure basic load balancing via the Neutron CLI.
 - See :ref:`F5 LBaaSv2 to BIG-IP Configuration Mapping` to discover what the F5 agent configures on the BIG-IP.
 
 

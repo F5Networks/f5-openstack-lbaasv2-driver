@@ -1,7 +1,7 @@
 :orphan: true
 
-Editing the Agent Configuration File
-------------------------------------
+Edit the Agent Configuration File
+---------------------------------
 
 Use your text editor of choice to edit the :ref:`agent configuration file` as appropriate for your environment.
 

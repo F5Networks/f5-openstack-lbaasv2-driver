@@ -26,10 +26,11 @@ Glossary
     device cluster
     device service cluster
     device service clusters
-    device service group
     DSC
-    DSG
-        Two (2) or more `BIG-IP`_ devices configured to use :term:`high availability` features, providing synchronization and failover of BIG-IP configuration data among multiple BIG-IP devices on a network. A clustered BIG-IP device can synchronize some or all of its configuration data among several BIG-IP devices; fail over to one of many available devices; mirror connections to a peer device to prevent interruption in service during failover.
+        Device Service Clustering provides synchronization and failover of `BIG-IP`_ configuration data among multiple `BIG-IP`_ devices on a network. You can configure a `BIG-IP`_ device on a network to synchronize some or all of its configuration data among several BIG-IP devices; fail over to one of many available devices; and/or mirror connections to a peer device to prevent interruption in service during failover.
+
+    device group
+        A device group is a component of a device service cluster. It consists of a collection of `BIG-IP`_ devices that trust each other and can synchronize, and sometimes fail over, their configuration data.
 
     high availability
     highly available
@@ -70,8 +71,12 @@ Glossary
     multi-arm mode
     multiple-arm mode
         Multi-arm mode is a network topology wherein servers/clients connect to the BIG-IP via different interfaces; two or more VLANs can be used to handle management and data traffic.
-
-
+    vcmp
+        Virtual Clustered Multiprocessing (vCMP) is a feature of the BIG-IP system that allows you to run multiple instances of the BIG-IP software on a single hardware platform. vCMP allocates a specific share of the hardware resources to each BIG-IP instance, or vCMP guest. Each guest that you create behaves as a separate BIG-IP device, having its own CPU, memory, and disk space. Each guest also has its own configuration file, log files, and kernel instance.
+    vCMP host
+        The vCMP host is the system-wide hypervisor that makes it possible for you to create and view BIG-IP instances, known as guests. Through the vCMP host, you can also perform tasks such as creating trunks and VLANs, and managing guest properties. For each guest, the vCMP host allocates system resources, such as CPU and memory, according to the particular resource needs of the guest.
+    vCMP guest
+        A vCMP guest is an instance of the BIG-IP software that you create on the vCMP system for the purpose of provisioning one or more BIG-IP modules to process application traffic. A guest consists of a TMOS instance, plus one or more BIG-IP modules. Each guest has its own share of hardware resources that the vCMP host allocates to the guest, as well as its own management IP addresses, self IP addresses, virtual servers, and so on. In this way, each guest effectively functions as its own multi-blade VIPRION cluster, configured to receive and process application traffic with no knowledge of other guests on the system. Furthermore, each guest can use TMOS features such as route domains and administrative partitions to create its own multi-tenant configuration. Each guest requires its own guest administrator to provision, configure, and manage BIG-IP modules within the guest. The maximum number of guests that a fully-populated chassis can support varies by chassis and blade platform. 
 
 
 

@@ -12,7 +12,18 @@ The following F5® features are unsupported in |release|; they will be introduce
 * Differentiated environments [#]_
 
 
-The following OpenStack |openstack| `features <http://docs.openstack.org/releasenotes/neutron-lbaas/unreleased.html#new-features>`_ are unsupported in |release|:
+.. note::
+
+    The features supported in |release| are a subset of the `Neutron LBaaSv2 API <https://wiki.openstack.org/wiki/Neutron/LBaaS/API_2.0>`_ delivered in the OpenStack |openstack| release. The following restriction(s) apply:
+
+    .. table::
+
+        +----------------+----------------------------------------------------+
+        | Object         | Unsupported                                        |
+        +================+====================================================+
+        | loadbalancer   || Statistics                                        |
+        |                || (e.g., ``neutron lbaas-loadbalancer-stats``)      |
+        +----------------+----------------------------------------------------+
 
 * L7 Routing
 * Unattached pools [#]_
