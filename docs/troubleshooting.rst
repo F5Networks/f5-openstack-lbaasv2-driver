@@ -33,7 +33,10 @@ Extensive logging will then appear in the ``neutron-server`` and ``f5-oslbaasv1-
     .. code-block:: text
 
         $ sudo vi /etc/neutron/neutron.conf
-        DEBUG = T
+        [DEFAULT]
+        ...
+        # Print debugging output (set logging level to DEBUG instead of default WARNING level).
+        debug = True
 
 
 F5 agent is not running
