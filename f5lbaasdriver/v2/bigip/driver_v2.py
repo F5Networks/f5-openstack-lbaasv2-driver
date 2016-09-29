@@ -642,7 +642,7 @@ class L7PolicyManager(object):
     @log_helpers.log_method_call
     def create(self, context, policy):
         """Create an L7 policy."""
-        driver = self.driver
+        # driver = self.driver
         try:
             pass
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
