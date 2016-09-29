@@ -42,9 +42,9 @@ setup(name='f5-openstack-lbaasv2-driver',
 
       packages=find_packages(),
       entry_points={
-          'tempest.test_plugins': {
+          'tempest.test_plugins': [
               'f5-lbaasv2-driver-tempest-plugin = f5lbaasdriver.test.tempest.plugin:F5LBaaSv2DriverTempestPlugin'
-          }
+          ],
       },
       classifiers=['Development Status :: 5 - Production/Stable',
                    'License :: OSI Approved :: Apache Software License',
