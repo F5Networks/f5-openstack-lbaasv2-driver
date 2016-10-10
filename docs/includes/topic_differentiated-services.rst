@@ -31,7 +31,7 @@ Prerequisites
 
 - Licensed, operational BIG-IP :term:`device` or :term:`device service cluster`.
 - Operational OpenStack cloud (|openstack| release).
-- F5 ref:`agent <Install the F5 Agent>` and :ref:`LBaaSv2 driver <Install the F5 LBaaSv2 Driver>` installed on all hosts from which BIG-IP services will be provisioned.
+- F5 :ref:`agent <Install the F5 Agent>` and :ref:`LBaaSv2 driver <Install the F5 LBaaSv2 Driver>` installed on all hosts from which BIG-IP services will be provisioned.
 - Basic understanding of `BIG-IP system configuration <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-system-initial-configuration-12-0-0/2.html#conceptid>`_.
 - Basic understanding of `BIG-IP Local Traffic Management <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-basics-12-0-0.html>`_
 
@@ -75,6 +75,3 @@ Further Reading
     * :ref:`Configure the F5 OpenStack Agent`
     * :ref:`Configure Neutron for LBaaSv2`
     * :ref:`F5 Environment Generator`
-
-
-
