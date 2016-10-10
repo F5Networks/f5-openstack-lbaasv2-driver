@@ -18,7 +18,7 @@ This release introduces the following:
 - BIG-IP® vCMP® compatibility
 - Bug fixes
 
-See the `changelog <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/compare/v8.0.7...v8.0.8>`_ for the full list of changes in this release.
+See the `changelog <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/compare/v8.0.8...v8.1.0>`_ for the full list of changes in this release.
 
 Caveats
 -------
