@@ -25,9 +25,6 @@ Caveats
 
 The following are not supported in this release:
 
-* Agent High Availability (HA)
-* L7 routing
-* Unattached pools
 * load balancer statistics (e.g., ``neutron lbaas-loadbalancer-stats``)
 
 Open Issues
