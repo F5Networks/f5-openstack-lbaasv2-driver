@@ -19,14 +19,13 @@ This release introduces the following:
 - BIG-IP® vCMP® compatibility
 - Bug fixes
 
-See the `changelog <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/compare/v9.0.2...v9.0.3>`_ for the full list of changes in this release.
+See the `changelog <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/compare/v9.0.3...v9.1.0>`_ for the full list of changes in this release.
 
 Caveats
 -------
 
 The following are not supported in this release:
 
-* Agent High Availability (HA)
 * L7 routing
 * Unattached pools
 * load balancer statistics (e.g., ``neutron lbaas-loadbalancer-stats``)
