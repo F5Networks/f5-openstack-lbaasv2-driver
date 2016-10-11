@@ -14,7 +14,7 @@ u"""F5 Networks® LBaaSv2 Exceptions."""
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from neutron.common import exceptions as q_exc
+from neutron_lib import exceptions as q_exc
 
 
 class F5LBaaSv2DriverException(q_exc.NeutronException):
@@ -27,3 +27,10 @@ class F5MismatchedTenants(F5LBaaSv2DriverException):
     """The loadbalancer tenant is not the same as the network tenant."""
 
     message = "Tenant Id of network and loadbalancer mismatched"
+
+
+class F5DeleteListenerWithAttachedPool(F5LBaaSv2DriverException):
+    """The listener cannot become unbound from the pool."""
+
+    message = "Cannot delete listener with an attached pool. " \
+              "Delete pool first."

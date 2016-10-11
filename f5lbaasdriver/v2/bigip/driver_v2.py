@@ -79,6 +79,8 @@ class F5DriverV2(object):
         self.pool = PoolManager(self)
         self.member = MemberManager(self)
         self.healthmonitor = HealthMonitorManager(self)
+        self.l7policy = L7PolicyManager(self)
+        self.l7rule = L7RuleManager(self)
 
         # what scheduler to use for pool selection
         self.scheduler = importutils.import_object(
@@ -299,6 +301,17 @@ class ListenerManager(object):
     def delete(self, context, listener):
         """Delete a listener."""
         driver = self.driver
+
+        # Cannot currently delete the listener or the pool will
+        # be orphaned.
+        if listener.default_pool_id:
+            driver.plugin.db.update_status(
+                context,
+                models.Listeners,
+                listener.id,
+                provisioning_status=plugin_constants.ACTIVE)
+            raise f5_exc.F5DeleteListenerWithAttachedPool()
+
         try:
             if listener.attached_to_loadbalancer():
                 loadbalancer = listener.loadbalancer
@@ -616,4 +629,95 @@ class HealthMonitorManager(object):
 
         except Exception as e:
             LOG.error("Exception: health monitor: %s" % e.message)
+            raise e
+
+
+class L7PolicyManager(object):
+    """L7PolicyManager class handles Neutron LBaaS L7 Policy CRUD."""
+
+    def __init__(self, driver):
+        """Initialize the L7 Policy Manager."""
+        self.driver = driver
+
+    @log_helpers.log_method_call
+    def create(self, context, policy):
+        """Create an L7 policy."""
+        # driver = self.driver
+        try:
+            pass
+        except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
+                lbaas_agentschedulerv2.NoActiveLbaasAgent,
+                f5_exc.F5MismatchedTenants) as e:
+            LOG.error("Exception: policy create: %s" % e.message)
+        except Exception as e:
+            LOG.error("Exception: policy create: %s" % e.message)
+            raise e
+
+    @log_helpers.log_method_call
+    def update(self, context, old_policy, policy):
+        """Update a policy."""
+        driver = self.driver
+        try:
+            driver.plugin.db.update_status(
+                context,
+                models.L7Policy,
+                policy.id,
+                provisioning_status=plugin_constants.ACTIVE)
+        except Exception as e:
+            LOG.error("Exception: policy update: %s" % e.message)
+            raise e
+
+    @log_helpers.log_method_call
+    def delete(self, context, policy):
+        """Delete a policy."""
+        driver = self.driver
+        try:
+            if policy.attached_to_loadbalancer():
+                self.driver.plugin.db.delete_l7policy(context, policy.id)
+                driver.plugin.db.update_status(
+                    context,
+                    models.LoadBalancer,
+                    policy.listener.loadbalancer.id,
+                    provisioning_status=plugin_constants.ACTIVE)
+        except Exception as e:
+            LOG.error("Exception: policy delete: %s" % e.message)
+            raise e
+
+
+class L7RuleManager(object):
+    """L7RuleManager class handles Neutron LBaaS L7 Rule CRUD."""
+
+    def __init__(self, driver):
+        """Initialize the L7 Rule Manager."""
+        self.driver = driver
+
+    @log_helpers.log_method_call
+    def create(self, context, rule):
+        """Create an L7 rule."""
+        try:
+            pass
+        except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
+                lbaas_agentschedulerv2.NoActiveLbaasAgent,
+                f5_exc.F5MismatchedTenants) as e:
+            LOG.error("Exception: rule create: %s" % e.message)
+        except Exception as e:
+            LOG.error("Exception: rule create: %s" % e.message)
+            raise e
+
+    @log_helpers.log_method_call
+    def update(self, context, old_rule, rule):
+        """Update a rule."""
+        try:
+            pass
+        except Exception as e:
+            LOG.error("Exception: rule update: %s" % e.message)
+            raise e
+
+    @log_helpers.log_method_call
+    def delete(self, context, rule):
+        """Delete a rule."""
+        try:
+            pass
+        except Exception as e:
+            LOG.error("Exception: rule delete: %s" % e.message)
             raise e
