@@ -17,24 +17,29 @@ import pytest
 
 from f5lbaasdriver.v2.bigip.service_builder import LBaaSv2ServiceBuilder
 
+
 @pytest.fixture
 def listeners():
     return [{'id': 'e6ce8fd6-907f-11e6-ae22-56b6b6499611'},
             {'id': '218b4f6f-1243-494e-96a6-aba55759da69'}]
+
 
 @pytest.fixture
 def l7policies():
     return [{'id': '2ea7511d-a911-484b-bf1a-8abc7b249d66'},
             {'id': 'f5f4e752-e54e-45b8-a093-4c7587391855'}]
 
+
 @pytest.fixture
 def l7rules():
     return [{'id': '850bb3cb-731d-4215-b345-0787a02a5be5'},
             {'id': '45bb4ac2-df90-4ea6-a2fb-1ff50477a9d5'}]
 
+
 @pytest.fixture
 def service_builder():
     return LBaaSv2ServiceBuilder(mock.MagicMock())
+
 
 def test_get_l7policies(listeners, l7policies):
     """Test that get_l7policies returns valid list of dict"""
@@ -54,6 +59,7 @@ def test_get_l7policies(listeners, l7policies):
     assert len(policies) > 0
     assert policies[0] is l7policies[0]
 
+
 def test_get_l7policies_filter(listeners):
     """Test that get_l7policies() is called with filter of listener IDs"""
     context = mock.MagicMock()
@@ -68,6 +74,7 @@ def test_get_l7policies_filter(listeners):
     # assert that the expected filter was used
     service_builder.driver.plugin.db.get_l7policies.assert_called_with(
         context, filters=filters)
+
 
 def test_get_l7policies_no_listeners():
     """Test that an empty listener list input returns an empty policy list."""
@@ -99,6 +106,7 @@ def test_get_l7policy_rules(l7policies, l7rules):
     assert len(rules) > 0
     assert rules[0] is l7rules[0]
 
+
 def test_get_l7policy_rules_filter(l7policies):
     """Test that get_l7policy_rules() is called with filter of l7policy IDs"""
     context = mock.MagicMock()
@@ -113,6 +121,7 @@ def test_get_l7policy_rules_filter(l7policies):
     # assert that the expected filter was used
     service_builder.driver.plugin.db.get_l7policy_rules.assert_called_with(
         context, filters=filters)
+
 
 def test_get_l7policy_rules_no_policies():
     """Test that an empty policies input list returns an empty rule list."""
