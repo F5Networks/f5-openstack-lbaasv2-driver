@@ -184,6 +184,11 @@ class LBaaSv2ServiceBuilder(object):
             service['subnets'] = subnet_map
             service['networks'] = network_map
 
+            service['l7policies'] = self._get_l7policies(
+                context, service['listeners'])
+            service['l7policy_rules'] = self._get_l7policy_rules(
+                context, service['l7policies'])
+
         return service
 
     @log_helpers.log_method_call
@@ -403,3 +408,31 @@ class LBaaSv2ServiceBuilder(object):
             context,
             filters=filters
         )
+
+    @log_helpers.log_method_call
+    def _get_l7policies(self, context, listeners):
+        """Get l7 policies filtered by listeners."""
+        l7policies = []
+        if listeners:
+            listener_ids = [l['id'] for l in listeners]
+            policies = self.plugin.db.get_l7policies(
+                context, filters={'listener_id': listener_ids})
+
+            for policy in policies:
+                l7policies.append(policy.to_dict())
+
+        return l7policies
+
+    @log_helpers.log_method_call
+    def _get_l7policy_rules(self, context, l7policies):
+        """Get l7 policy rules filtered by l7 policies."""
+        l7policy_rules = []
+        if l7policies:
+            policy_ids = [p['id'] for p in l7policies]
+            rules = self.plugin.db.get_l7policy_rules(
+                context, filters={'l7_policy_id': policy_ids})
+
+            for rule in rules:
+                l7policy_rules.append(rule.to_dict())
+
+        return l7policy_rules
