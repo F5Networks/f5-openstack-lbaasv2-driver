@@ -114,6 +114,10 @@ class BaseTestCase(base.BaseNetworkTest):
                             health_monitor.get('id'))
                     cls._wait_for_load_balancer_status(lb_id)
                 for l7policy in listener.get('l7policies'):
+                    for rule in l7policy.get('rules'):
+                        cls._try_delete_resource(
+                            cls.l7rule_client.delete_l7rule,
+                            rule.get('id'))
                     cls._try_delete_resource(
                         cls.l7policy_client.delete_l7policy,
                         l7policy.get('id'))
@@ -354,6 +358,28 @@ class BaseTestCase(base.BaseNetworkTest):
             cls._wait_for_load_balancer_status(
                 cls.load_balancer.get('id'))
         return l7policy
+
+    @classmethod
+    def _create_l7rule(cls, wait=True, **l7policy_kwargs):
+        l7rule = cls.l7rule_client.create_l7policy(**l7policy_kwargs)
+        if wait:
+            cls._wait_for_load_balancer_status(cls.load_balancer.get('id'))
+        return l7rule
+
+    @classmethod
+    def _delete_l7rule(cls, l7rule_id, wait=True):
+        cls.l7rule_client.delete_l7rule(l7rule_id)
+        if wait:
+            cls._wait_for_load_balancer_status(cls.load_balancer.get('id'))
+
+    @classmethod
+    def _update_l7rule(cls, l7rule_id, wait=True, **l7rule_kwargs):
+        l7rule = cls.l7rule_client.update_l7rule(
+            l7rule_id, **l7rule_kwargs)
+        if wait:
+            cls._wait_for_load_balancer_status(
+                cls.load_balancer.get('id'))
+        return l7rule
 
     @classmethod
     def _check_status_tree(cls, load_balancer_id, listener_ids=None,
