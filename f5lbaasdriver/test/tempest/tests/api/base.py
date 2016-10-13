@@ -114,13 +114,13 @@ class BaseTestCase(base.BaseNetworkTest):
                             health_monitor.get('id'))
                     cls._wait_for_load_balancer_status(lb_id)
                 for l7policy in listener.get('l7policies'):
-                    cls._try_delete_resource(
-                        cls.l7policy_client.delete_l7policy,
-                        l7policy.get('id'))
                     for rule in l7policy.get('rules'):
                         cls._try_delete_resource(
                             cls.l7rule_client.delete_l7rule,
                             rule.get('id'))
+                    cls._try_delete_resource(
+                        cls.l7policy_client.delete_l7policy,
+                        l7policy.get('id'))
                 cls._try_delete_resource(cls.listeners_client.delete_listener,
                                          listener.get('id'))
                 cls._wait_for_load_balancer_status(lb_id)
