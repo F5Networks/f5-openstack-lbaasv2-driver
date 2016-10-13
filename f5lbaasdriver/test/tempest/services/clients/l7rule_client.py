@@ -22,19 +22,19 @@ from tempest.lib.common import rest_client
 class L7RuleClientJSON(rest_client.RestClient):
     """Tests L7 Rules API."""
 
-    def list_l7rules(self, params=None):
+    def list_l7rules(self, policy_id, params=None):
         """List all L7 rules."""
-        url = 'v2.0/lbaas/l7rules.json'
+        url = 'v2.0/lbaas/l7policies/{0}/rules.json'.format(policy_id)
         if params:
             url = "{0}?{1}".format(url, parse.urlencode(params))
         resp, body = self.get(url)
         body = jsonutils.loads(body)
         self.expected_success(200, resp.status)
-        return rest_client.ResponseBodyList(resp, body['l7rules'])
+        return rest_client.ResponseBodyList(resp, body['rules'])
 
-    def get_l7rule(self, rule_id, params=None):
+    def get_l7rule(self, policy_id, rule_id, params=None):
         """Get L7 rule."""
-        url = 'v2.0/lbaas/l7rules/{0}'.format(rule_id)
+        url = 'v2.0/lbaas/l7policies/{0}/rules/{1}'.format(policy_id, rule_id)
         if params:
             url = '{0}?{1}'.format(url, parse.urlencode(params))
         resp, body = self.get(url)
@@ -42,26 +42,28 @@ class L7RuleClientJSON(rest_client.RestClient):
         self.expected_success(200, resp.status)
         return rest_client.ResponseBody(resp, body["l7rule"])
 
-    def create_l7rule(self, **kwargs):
+    def create_l7rule(self, policy_id, **kwargs):
         """Create L7 rule."""
-        url = 'v2.0/lbaas/l7rules.json'
-        post_body = jsonutils.dumps({"l7rule": kwargs})
+        url = 'v2.0/lbaas/l7policies/{0}/rules.json'.format(policy_id)
+        post_body = jsonutils.dumps({"rule": kwargs})
         resp, body = self.post(url, post_body)
         body = jsonutils.loads(body)
         self.expected_success(201, resp.status)
-        return rest_client.ResponseBody(resp, body["l7rule"])
+        return rest_client.ResponseBody(resp, body["rule"])
 
-    def update_l7rule(self, rule_id, **kwargs):
+    def update_l7rule(self, policy_id, rule_id, **kwargs):
         """Update L7 rule."""
-        url = 'v2.0/lbaas/l7rules/{0}'.format(rule_id)
-        put_body = jsonutils.dumps({"l7rule": kwargs})
+        url = 'v2.0/lbaas/l7policies/{0}/rules/{1}'.format(policy_id,
+                                                           rule_id)
+        put_body = jsonutils.dumps({"rule": kwargs})
         resp, body = self.put(url, put_body)
         body = jsonutils.loads(body)
         self.expected_success(200, resp.status)
-        return rest_client.ResponseBody(resp, body["l7rule"])
+        return rest_client.ResponseBody(resp, body["rule"])
 
-    def delete_l7rule(self, rule_id):
+    def delete_l7rule(self, policy_id, rule_id):
         """Delete L7 rule."""
-        url = 'v2.0/lbaas/l7rules/{0}'.format(rule_id)
+        url = 'v2.0/lbaas/l7policies/{0}/rules/{1}.json'.format(policy_id,
+                                                                rule_id)
         resp, body = self.delete(url)
         self.expected_success(204, resp.status)
