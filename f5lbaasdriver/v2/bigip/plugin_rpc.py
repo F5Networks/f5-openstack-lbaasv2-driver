@@ -423,8 +423,8 @@ class LBaaSv2PluginCallbacksRPC(object):
     def update_l7rule_status(
             self,
             context,
-            l7rule_id,
-            l7policy_id,
+            l7rule_id=None,
+            l7policy_id=None,
             provisioning_status=plugin_constants.ERROR):
         """Agent confirmation hook to update l7 policy status."""
         with context.session.begin(subtransactions=True):
