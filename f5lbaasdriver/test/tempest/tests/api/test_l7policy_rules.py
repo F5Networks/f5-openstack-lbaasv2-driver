@@ -1,5 +1,5 @@
 # coding=utf-8
-u"""F5 Networks® LBaaSv2 L7 policy tempest tests."""
+u"""F5 Networks® LBaaSv2 L7 policy rules tempest tests."""
 # Copyright 2016 F5 Networks Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,20 +26,16 @@ from f5lbaasdriver.test.tempest.tests.api import base
 CONF = config.CONF
 
 
-class L7PolicyTestJSON(base.BaseTestCase):
+class L7PolicyRulesTestJSON(base.BaseTestCase):
     """L7 Policy tempest tests.
 
     Tests the following operations in the Neutron-LBaaS API using the
     REST client with default credentials:
-
-    1) Creating a L7 policy with REJECT action.
-    2) Creating a L7 policy with a REDIRECT_URL action.
-    3) Creating a L7 policy with a REDIRECT_POOL action.
     """
 
     @classmethod
     def resource_setup(cls):
-        super(L7PolicyTestJSON, cls).resource_setup()
+        super(L7PolicyRulesTestJSON, cls).resource_setup()
         if not test.is_extension_enabled('lbaasv2', 'network'):
             msg = "lbaas extension not enabled."
             raise cls.skipException(msg)
@@ -69,8 +65,12 @@ class L7PolicyTestJSON(base.BaseTestCase):
         cls.pool_id = cls.pool['id']
 
         # Create basic args for policy creation
-        cls.create_l7policy_kwargs = {'listener_id': cls.listener_id,
-                                      'admin_state_up': "true"}
+        create_l7policy_rule_kwargs = {'listener_id': cls.listener_id,
+                                       'action': 'REJECT',
+                                       'admin_state_up': 'true'}
+        new_policy = cls._create_l7policy(
+            **create_l7policy_rule_kwargs)
+        cls.policy_id = new_policy['id']
 
         # Get a client to emulate the agent's behavior.
         cls.client = cls.plugin_rpc.get_client()
@@ -78,21 +78,26 @@ class L7PolicyTestJSON(base.BaseTestCase):
 
     @classmethod
     def resource_cleanup(cls):
-        super(L7PolicyTestJSON, cls).resource_cleanup()
+        super(L7PolicyRulesTestJSON, cls).resource_cleanup()
 
-    def check_policies(self):
-        # Check service object has policies we expect
+    def check_rules(self):
+        # Check service object has rules we expect
         res = self.client.call(self.context, "get_service_by_loadbalancer_id",
                                loadbalancer_id=self.load_balancer_id)
-        assert 'l7policies' in res.keys()
-        assert len(res['l7policies']) == 1
-        policy = res['l7policies'][0]
-        assert policy['listener_id'] == self.listener_id
+        assert 'l7policy_rules' in res.keys()
+        print(res['l7policy_rules'])
+        assert len(res['l7policy_rules']) == 1
+        rule = res['l7policy_rules'][0]
+        assert rule['policy_id'] == self.policy_id
 
-    def check_agent_calls(self, policy_id):
+    def set_agent_calls(self, rule_id):
         # These actions should be performed by the agent.
+        self.client.call(self.context, "update_l7rule_status",
+                         l7rule_id=rule_id,
+                         l7policy_id=self.policy_id,
+                         provisioning_status=plugin_const.ACTIVE)
         self.client.call(self.context, "update_l7policy_status",
-                         l7policy_id=policy_id,
+                         l7policy_id=self.policy_id,
                          provisioning_status=plugin_const.ACTIVE)
         self.client.call(self.context, "update_loadbalancer_status",
                          loadbalancer_id=self.load_balancer_id,
@@ -100,48 +105,11 @@ class L7PolicyTestJSON(base.BaseTestCase):
                          operating_status=lb_const.ONLINE)
 
     @test.attr(type='smoke')
-    def test_create_l7_reject_policy(self):
+    def test_create_l7_starts_with_rule(self):
         """Test the creationg of a L7 reject policy."""
-        create_l7policy_kwargs = self.create_l7policy_kwargs
-        create_l7policy_kwargs['action'] = "REJECT"
-
-        new_policy = self._create_l7policy(
-            **create_l7policy_kwargs)
-        self.addCleanup(self._delete_l7policy, new_policy['id'])
-        assert(new_policy['action'] == "REJECT")
-
-        self.check_policies()
-        self.check_agent_calls(new_policy['id'])
-
-    @test.attr(type='smoke')
-    def test_create_l7_redirect_to_url_policy(self):
-        """Test the creationg of a L7 URL redirect policy."""
-        redirect_url = "http://www.mysite.com/my-widget-app"
-        create_l7policy_kwargs = self.create_l7policy_kwargs
-        create_l7policy_kwargs['action'] = "REDIRECT_TO_URL"
-        create_l7policy_kwargs['redirect_url'] = redirect_url
-
-        new_policy = self._create_l7policy(
-            **create_l7policy_kwargs)
-        self.addCleanup(self._delete_l7policy, new_policy['id'])
-        assert(new_policy['action'] == "REDIRECT_TO_URL")
-        assert(new_policy['redirect_url'] == redirect_url)
-
-        self.check_policies()
-        self.check_agent_calls(new_policy['id'])
-
-    @test.attr(type='smoke')
-    def test_create_l7_redirect_to_pool_policy(self):
-        """Test the creationg of a L7 pool redirect policy."""
-        create_l7policy_kwargs = self.create_l7policy_kwargs
-        create_l7policy_kwargs['action'] = "REDIRECT_TO_POOL"
-        create_l7policy_kwargs['redirect_pool_id'] = self.pool_id
-
-        new_policy = self._create_l7policy(
-            **create_l7policy_kwargs)
-        self.addCleanup(self._delete_l7policy, new_policy['id'])
-        assert(new_policy['action'] == "REDIRECT_TO_POOL")
-        assert(new_policy['redirect_pool_id'] == self.pool_id)
-
-        self.check_policies()
-        self.check_agent_calls(new_policy['id'])
+        l7rule = self._create_l7rule(
+            self.policy_id,
+            type='PATH', compare_type='STARTS_WITH', value='/api')
+        self.set_agent_calls(l7rule['id'])
+        self.addCleanup(self._delete_l7rule, self.policy_id, l7rule['id'])
+        self.check_rules()

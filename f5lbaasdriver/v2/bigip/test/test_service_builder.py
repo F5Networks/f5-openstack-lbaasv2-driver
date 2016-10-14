@@ -15,25 +15,58 @@
 import mock
 import pytest
 
+from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 from f5lbaasdriver.v2.bigip.service_builder import LBaaSv2ServiceBuilder
+
+
+class FakeDict(dict):
+    def __init__(self, *args, **kwargs):
+        super(FakeDict, self).__init__(*args, **kwargs)
+
+    def to_api_dict(self):
+        return self
 
 
 @pytest.fixture
 def listeners():
-    return [{'id': 'e6ce8fd6-907f-11e6-ae22-56b6b6499611'},
-            {'id': '218b4f6f-1243-494e-96a6-aba55759da69'}]
+    return [FakeDict(id='e6ce8fd6-907f-11e6-ae22-56b6b6499611'),
+            FakeDict(id='218b4f6f-1243-494e-96a6-aba55759da69')]
 
 
 @pytest.fixture
 def l7policies():
-    return [{'id': '2ea7511d-a911-484b-bf1a-8abc7b249d66'},
-            {'id': 'f5f4e752-e54e-45b8-a093-4c7587391855'}]
+    return [FakeDict(id='2ea7511d-a911-484b-bf1a-8abc7b249d66',
+                     listeners=[
+                         FakeDict(id='e6ce8fd6-907f-11e6-ae22-56b6b6499611')]),
+            FakeDict(id='f5f4e752-e54e-45b8-a093-4c7587391855',
+                     listeners=[
+                         FakeDict(id='218b4f6f-1243-494e-96a6-aba55759da69')])]
+
+
+@pytest.fixture
+def two_listener_l7policies():
+    return [FakeDict(id='2ea7511d-a911-484b-bf1a-8abc7b249d66',
+                     listeners=[
+                         FakeDict(id='e6ce8fd6-907f-11e6-ae22-56b6b6499611'),
+                         FakeDict(id='218b4f6f-1243-494e-96a6-aba55759da69')])]
 
 
 @pytest.fixture
 def l7rules():
-    return [{'id': '850bb3cb-731d-4215-b345-0787a02a5be5'},
-            {'id': '45bb4ac2-df90-4ea6-a2fb-1ff50477a9d5'}]
+    return [FakeDict(id='850bb3cb-731d-4215-b345-0787a02a5be5',
+                     policies=[
+                         FakeDict(id='2ea7511d-a911-484b-bf1a-8abc7b249d66')]),
+            FakeDict(id='45bb4ac2-df90-4ea6-a2fb-1ff50477a9d5',
+                     policies=[
+                         FakeDict(id='f5f4e752-e54e-45b8-a093-4c7587391855')])]
+
+
+@pytest.fixture
+def two_policy_l7rules():
+    return [FakeDict(id='850bb3cb-731d-4215-b345-0787a02a5be5',
+                     policies=[
+                         FakeDict(id='2ea7511d-a911-484b-bf1a-8abc7b249d66'),
+                         FakeDict(id='f5f4e752-e54e-45b8-a093-4c7587391855')])]
 
 
 @pytest.fixture
@@ -46,13 +79,9 @@ def test_get_l7policies(listeners, l7policies):
     context = mock.MagicMock()
     driver = mock.MagicMock()
 
-    # mock an L7 policy object with a to_dict() method
-    mock_policy = mock.MagicMock()
-    mock_policy.to_dict.return_value = l7policies[0]
-
     service_builder = LBaaSv2ServiceBuilder(driver)
     service_builder.driver.plugin.db.get_l7policies = mock.MagicMock(
-        return_value=[mock_policy])
+        return_value=l7policies)
 
     policies = service_builder._get_l7policies(context, listeners)
 
@@ -93,13 +122,9 @@ def test_get_l7policy_rules(l7policies, l7rules):
     context = mock.MagicMock()
     driver = mock.MagicMock()
 
-    # mock an L7 rule object with a to_dict() method
-    mock_rule = mock.MagicMock()
-    mock_rule.to_dict.return_value = l7rules[0]
-
     service_builder = LBaaSv2ServiceBuilder(driver)
     service_builder.driver.plugin.db.get_l7policy_rules = mock.MagicMock(
-        return_value=[mock_rule])
+        return_value=l7rules)
 
     rules = service_builder._get_l7policy_rules(context, l7policies)
 
@@ -112,15 +137,12 @@ def test_get_l7policy_rules_filter(l7policies):
     context = mock.MagicMock()
     driver = mock.MagicMock()
 
-    # construct an equivalent filter to what service_builder should use
-    filters = {'l7_policy_id': [l7['id'] for l7 in l7policies]}
-
     service_builder = LBaaSv2ServiceBuilder(driver)
     service_builder._get_l7policy_rules(context, l7policies)
 
-    # assert that the expected filter was used
-    service_builder.driver.plugin.db.get_l7policy_rules.assert_called_with(
-        context, filters=filters)
+    assert service_builder.driver.plugin.db.get_l7policy_rules.call_args_list \
+        == [mock.call(context, l7policies[0]['id']),
+            mock.call(context, l7policies[1]['id'])]
 
 
 def test_get_l7policy_rules_no_policies():
@@ -133,3 +155,35 @@ def test_get_l7policy_rules_no_policies():
     rules = service_builder._get_l7policy_rules(context, l7policies)
 
     assert not rules
+
+
+def test_get_l7policies_more_than_one_listener_error(
+        listeners, two_listener_l7policies):
+    """Exception is raised when > 1 listener for a policy."""
+    context = mock.MagicMock()
+    driver = mock.MagicMock()
+
+    service_builder = LBaaSv2ServiceBuilder(driver)
+    service_builder.driver.plugin.db.get_l7policies = mock.MagicMock(
+        return_value=two_listener_l7policies)
+
+    with pytest.raises(f5_exc.PolicyHasMoreThanOneListener) as ex:
+        service_builder._get_l7policies(context, listeners)
+    assert 'A policy should have only one listener, but found 2 for policy ' \
+        '2ea7511d-a911-484b-bf1a-8abc7b249d66' in ex.value.message
+
+
+def test_get_l7policy_rules_more_than_one_policy(
+        l7policies, two_policy_l7rules):
+    """Exception is raised when > 1 policy for a rule."""
+    context = mock.MagicMock()
+    driver = mock.MagicMock()
+
+    service_builder = LBaaSv2ServiceBuilder(driver)
+    service_builder.driver.plugin.db.get_l7policy_rules = mock.MagicMock(
+        return_value=two_policy_l7rules)
+
+    with pytest.raises(f5_exc.RuleHasMoreThanOnePolicy) as ex:
+        service_builder._get_l7policy_rules(context, l7policies)
+    assert 'A rule should have only one policy, but found 2 for rule ' \
+        '850bb3cb-731d-4215-b345-0787a02a5be5' in ex.value.message
