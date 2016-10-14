@@ -417,9 +417,19 @@ class LBaaSv2ServiceBuilder(object):
             listener_ids = [l['id'] for l in listeners]
             policies = self.plugin.db.get_l7policies(
                 context, filters={'listener_id': listener_ids})
+            l7policies.extend(p.to_api_dict() for p in policies)
 
-            for policy in policies:
-                l7policies.append(policy.to_dict())
+        for index, pol in enumerate(l7policies):
+            try:
+                assert len(pol['listeners']) == 1
+            except AssertionError:
+                msg = 'A policy should have only one listener, but found ' \
+                    '{0} for policy {1}'.format(
+                        len(pol['listeners']), pol['id'])
+                raise f5_exc.PolicyHasMoreThanOneListener(msg)
+            else:
+                listener = pol.pop('listeners')[0]
+                l7policies[index]['listener_id'] = listener['id']
 
         return l7policies
 
@@ -429,10 +439,20 @@ class LBaaSv2ServiceBuilder(object):
         l7policy_rules = []
         if l7policies:
             policy_ids = [p['id'] for p in l7policies]
-            rules = self.plugin.db.get_l7policy_rules(
-                context, filters={'l7_policy_id': policy_ids})
+            for pol_id in policy_ids:
+                rules = self.plugin.db.get_l7policy_rules(context, pol_id)
+                l7policy_rules.extend(rule.to_api_dict() for rule in rules)
 
-            for rule in rules:
-                l7policy_rules.append(rule.to_dict())
+        for index, rule in enumerate(l7policy_rules):
+            try:
+                assert len(rule['policies']) == 1
+            except AssertionError:
+                msg = 'A rule should have only one policy, but found ' \
+                    '{0} for rule {1}'.format(
+                        len(rule['policies']), rule['id'])
+                raise f5_exc.RuleHasMoreThanOnePolicy(msg)
+            else:
+                pol = rule['policies'][0]
+                l7policy_rules[index]['policy_id'] = pol['id']
 
         return l7policy_rules

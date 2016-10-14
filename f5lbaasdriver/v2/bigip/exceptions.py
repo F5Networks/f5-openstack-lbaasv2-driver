@@ -22,6 +22,10 @@ class F5LBaaSv2DriverException(q_exc.NeutronException):
 
     message = "F5LBaaSv2DriverException"
 
+    def __init__(self, message=None):
+        if message:
+            self.message = message
+
 
 class F5MismatchedTenants(F5LBaaSv2DriverException):
     """The loadbalancer tenant is not the same as the network tenant."""
@@ -34,3 +38,15 @@ class F5DeleteListenerWithAttachedPool(F5LBaaSv2DriverException):
 
     message = "Cannot delete listener with an attached pool. " \
               "Delete pool first."
+
+
+class PolicyHasMoreThanOneListener(F5LBaaSv2DriverException):
+    """A policy should have only one listener."""
+
+    def __str__(self):
+        return self.message
+
+
+class RuleHasMoreThanOnePolicy(F5LBaaSv2DriverException):
+    """A rule should have only one policy."""
+    pass

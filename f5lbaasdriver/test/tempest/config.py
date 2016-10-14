@@ -35,7 +35,7 @@ f5_lbaasv2_driver_opts = [
     ),
     cfg.StrOpt(
         'transport_url',
-        default="rabbit://stackrabbit:nova@10.1.0.147:5672/",
+        default="rabbit://guest:guest@10.190.4.156:5672/",
         help='The transport_url to use for messaging, see neutron.conf'
     ),
 ]

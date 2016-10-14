@@ -23,6 +23,8 @@ from tempest.lib import exceptions
 from f5lbaasdriver.test.tempest.services.clients import \
     l7policy_client
 from f5lbaasdriver.test.tempest.services.clients import \
+    l7rule_client
+from f5lbaasdriver.test.tempest.services.clients import \
     plugin_rpc_client
 from neutron_lbaas.tests.tempest.v2.clients import \
     health_monitors_client
@@ -83,6 +85,8 @@ class BaseTestCase(base.BaseNetworkTest):
             health_monitors_client.HealthMonitorsClientJSON(*client_args))
         cls.l7policy_client = (
             l7policy_client.L7PolicyClientJSON(*client_args))
+        cls.l7rule_client = (
+            l7rule_client.L7RuleClientJSON(*client_args))
         cls.plugin_rpc = (
             plugin_rpc_client.F5PluginRPCClient()
         )
@@ -117,7 +121,7 @@ class BaseTestCase(base.BaseNetworkTest):
                     for rule in l7policy.get('rules'):
                         cls._try_delete_resource(
                             cls.l7rule_client.delete_l7rule,
-                            rule.get('id'))
+                            l7policy.get('id'), rule.get('id'))
                     cls._try_delete_resource(
                         cls.l7policy_client.delete_l7policy,
                         l7policy.get('id'))
@@ -360,15 +364,15 @@ class BaseTestCase(base.BaseNetworkTest):
         return l7policy
 
     @classmethod
-    def _create_l7rule(cls, wait=True, **l7policy_kwargs):
-        l7rule = cls.l7rule_client.create_l7policy(**l7policy_kwargs)
+    def _create_l7rule(cls, policy_id, wait=True, **l7rule_kwargs):
+        l7rule = cls.l7rule_client.create_l7rule(policy_id, **l7rule_kwargs)
         if wait:
             cls._wait_for_load_balancer_status(cls.load_balancer.get('id'))
         return l7rule
 
     @classmethod
-    def _delete_l7rule(cls, l7rule_id, wait=True):
-        cls.l7rule_client.delete_l7rule(l7rule_id)
+    def _delete_l7rule(cls, policy_id, l7rule_id, wait=True):
+        cls.l7rule_client.delete_l7rule(policy_id, l7rule_id)
         if wait:
             cls._wait_for_load_balancer_status(cls.load_balancer.get('id'))
 
