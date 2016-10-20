@@ -1,0 +1,21 @@
+#!/bin/bash
+ 
+if [ -f ~/.ssh/id_rsa_testlab ]; then
+  KEYS="-v $HOME/.ssh/id_rsa_testlab:/root/ssh_keys/id_rsa_testlab"
+fi
+
+
+set -x
+docker run --rm -it \
+  -v $PWD:/root/f5-openstack-lbaasv2-driver/ \
+  $KEYS \
+  -e OS_AUTH_URL=${OS_AUTH_URL} \
+  -e ICONTROL_HOSTNAME=${ICONTROL_HOSTNAME} \
+  -e OS_AUTH_URL_V3=${OS_AUTH_URL_V3} \
+  -e OS_TENANT_ID=${OS_TENANT_ID} \
+  -e OS_TENANT_NAME=${OS_TENANT_NAME} \
+  -e OS_PROJECT_NAME=${OS_PROJECT_NAME} \
+  -e OS_USERNAME=${OS_USERNAME} \
+  -e OS_PASSWORD=${OS_PASSWORD} \
+  -e OS_REGION_NAME=${OS_REGION_NAME} \
+    docker-registry.pdbld.f5net.com/breaux/lbaasv2_driver_tempest_tests "$@"
