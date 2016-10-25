@@ -14,64 +14,96 @@
 
 import mock
 import pytest
+from uuid import uuid4
 
 from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 from f5lbaasdriver.v2.bigip.service_builder import LBaaSv2ServiceBuilder
 
 
 class FakeDict(dict):
+    """Can be used as Neutron model object or as service builder dict"""
     def __init__(self, *args, **kwargs):
         super(FakeDict, self).__init__(*args, **kwargs)
+        if 'id' not in kwargs:
+            self['id'] = _uuid()
+
+    def __getattr__(self, item):
+        """Needed for using as a model object"""
+        return self[item]
 
     def to_api_dict(self):
         return self
 
 
+def _uuid():
+    """Create a random UUID string for model object IDs"""
+    return str(uuid4())
+
+
 @pytest.fixture
 def listeners():
-    return [FakeDict(id='e6ce8fd6-907f-11e6-ae22-56b6b6499611'),
-            FakeDict(id='218b4f6f-1243-494e-96a6-aba55759da69')]
+    return [FakeDict(default_pool=FakeDict()),
+            FakeDict(default_pool=FakeDict())]
 
 
 @pytest.fixture
 def l7policies():
-    return [FakeDict(id='2ea7511d-a911-484b-bf1a-8abc7b249d66',
-                     listeners=[
-                         FakeDict(id='e6ce8fd6-907f-11e6-ae22-56b6b6499611')]),
-            FakeDict(id='f5f4e752-e54e-45b8-a093-4c7587391855',
-                     listeners=[
-                         FakeDict(id='218b4f6f-1243-494e-96a6-aba55759da69')])]
+    policies = []
+    ids = [_uuid(), _uuid()]
+    for i, id in enumerate(ids):
+        policy = FakeDict(listener_id=id,
+                          listeners=[FakeDict(id=id)])
+        assert policy.listener_id == policy.listeners[0].id == id
+        policies.append(policy)
+
+    return policies
 
 
 @pytest.fixture
 def two_listener_l7policies():
-    return [FakeDict(id='2ea7511d-a911-484b-bf1a-8abc7b249d66',
-                     listeners=[
-                         FakeDict(id='e6ce8fd6-907f-11e6-ae22-56b6b6499611'),
-                         FakeDict(id='218b4f6f-1243-494e-96a6-aba55759da69')])]
+    return [FakeDict(listeners=[FakeDict(), FakeDict()])]
 
 
 @pytest.fixture
 def l7rules():
-    return [FakeDict(id='850bb3cb-731d-4215-b345-0787a02a5be5',
-                     policies=[
-                         FakeDict(id='2ea7511d-a911-484b-bf1a-8abc7b249d66')]),
-            FakeDict(id='45bb4ac2-df90-4ea6-a2fb-1ff50477a9d5',
-                     policies=[
-                         FakeDict(id='f5f4e752-e54e-45b8-a093-4c7587391855')])]
+    return [FakeDict(policies=[FakeDict()]),
+            FakeDict(policies=[FakeDict()])]
 
 
 @pytest.fixture
 def two_policy_l7rules():
-    return [FakeDict(id='850bb3cb-731d-4215-b345-0787a02a5be5',
-                     policies=[
-                         FakeDict(id='2ea7511d-a911-484b-bf1a-8abc7b249d66'),
-                         FakeDict(id='f5f4e752-e54e-45b8-a093-4c7587391855')])]
+    return [FakeDict(policies=[FakeDict(), FakeDict()])]
 
 
 @pytest.fixture
-def service_builder():
-    return LBaaSv2ServiceBuilder(mock.MagicMock())
+def loadbalancer():
+    return FakeDict()
+
+
+@pytest.fixture
+def monitors():
+    return [FakeDict(),
+            FakeDict()]
+
+
+@pytest.fixture
+def pools(monitors):
+    pools = []
+    for monitor in monitors:
+        pool = FakeDict(healthmonitor_id=monitor['id'])
+        monitor['pool_id'] = pool['id']
+        pools.append(pool)
+
+    return pools
+
+
+@pytest.fixture
+def members():
+    return [FakeDict(subnet_id=_uuid())]
+
+
+def subnet():
+    return FakeDict(network_id=_uuid())
 
 
 def test_get_l7policies(listeners, l7policies):
@@ -80,9 +112,8 @@ def test_get_l7policies(listeners, l7policies):
     driver = mock.MagicMock()
 
     service_builder = LBaaSv2ServiceBuilder(driver)
-    service_builder.driver.plugin.db.get_l7policies = mock.MagicMock(
-        return_value=l7policies)
-
+    service_builder.driver.plugin.db.get_l7policies = \
+        mock.MagicMock(return_value=l7policies)
     policies = service_builder._get_l7policies(context, listeners)
 
     assert len(policies) > 0
@@ -129,7 +160,7 @@ def test_get_l7policy_rules(l7policies, l7rules):
     rules = service_builder._get_l7policy_rules(context, l7policies)
 
     assert len(rules) > 0
-    assert rules[0] is l7rules[0]
+    assert rules[0] is l7rules[0].to_api_dict()
 
 
 def test_get_l7policy_rules_filter(l7policies):
@@ -169,8 +200,8 @@ def test_get_l7policies_more_than_one_listener_error(
 
     with pytest.raises(f5_exc.PolicyHasMoreThanOneListener) as ex:
         service_builder._get_l7policies(context, listeners)
-    assert 'A policy should have only one listener, but found 2 for policy ' \
-        '2ea7511d-a911-484b-bf1a-8abc7b249d66' in ex.value.message
+    assert 'A policy should have only one listener, but found 2 for policy ' +\
+        two_listener_l7policies[0].id in ex.value.message
 
 
 def test_get_l7policy_rules_more_than_one_policy(
@@ -185,5 +216,53 @@ def test_get_l7policy_rules_more_than_one_policy(
 
     with pytest.raises(f5_exc.RuleHasMoreThanOnePolicy) as ex:
         service_builder._get_l7policy_rules(context, l7policies)
-    assert 'A rule should have only one policy, but found 2 for rule ' \
-        '850bb3cb-731d-4215-b345-0787a02a5be5' in ex.value.message
+    assert 'A rule should have only one policy, but found 2 for rule ' + \
+           two_policy_l7rules[0].id in ex.value.message
+
+
+def test_get_listeners(loadbalancer, listeners):
+    context = mock.MagicMock()
+    driver = mock.MagicMock()
+
+    service_builder = LBaaSv2ServiceBuilder(driver)
+    service_builder.driver.plugin.db.get_listeners = mock.MagicMock(
+        return_value=listeners)
+    test_listeners = service_builder._get_listeners(context, loadbalancer)
+
+    assert len(test_listeners) == len(listeners)
+    assert test_listeners[0] == listeners[0].to_api_dict()
+    assert test_listeners[1] == listeners[1].to_api_dict()
+
+
+def test_get_pools(loadbalancer, pools, monitors):
+    context = mock.MagicMock()
+    driver = mock.MagicMock()
+
+    service_builder = LBaaSv2ServiceBuilder(driver)
+    service_builder.driver.plugin.db.get_pools_and_healthmonitors = \
+        mock.MagicMock(return_value=(pools, monitors))
+
+    test_pools, test_monitors = \
+        service_builder._get_pools_and_healthmonitors(
+            context, loadbalancer)
+
+    for pool, test_pool, monitor in zip(pools, test_pools, monitors):
+        assert test_pool is pool
+        assert test_pool['healthmonitor_id'] == monitor['id']
+
+
+def test_get_members(pools, members):
+    context = mock.MagicMock()
+    driver = mock.MagicMock()
+    subnet_map = mock.MagicMock()
+    network_map = mock.MagicMock()
+
+    service_builder = LBaaSv2ServiceBuilder(driver)
+    service_builder.driver.plugin.db._get_members = \
+        mock.MagicMock(return_value=members)
+
+    test_members = service_builder._get_members(context, pools,
+                                                subnet_map, network_map)
+
+    for test_member, member in zip(test_members, members):
+        assert test_member is member
