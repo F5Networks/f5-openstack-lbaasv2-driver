@@ -1,6 +1,6 @@
 # coding=utf-8
 u"""Service Module for F5® LBaaSv2."""
-# Copyright 2014 F5 Networks Inc.
+# Copyright 2014-2016 F5 Networks Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -125,61 +125,13 @@ class LBaaSv2ServiceBuilder(object):
                     )
 
             # Get listeners and pools.
-            service['listeners'] = []
-            service['pools'] = []
-            listeners = self.plugin.db.get_listeners(
-                context,
-                filters={'loadbalancer_id': [loadbalancer.id]}
-            )
-            for listener in listeners:
-                listener_dict = listener.to_dict(
-                    loadbalancer=False,
-                    default_pool=False
-                )
-                if listener.default_pool:
-                    listener_dict['default_pool_id'] = listener.default_pool.id
+            service['listeners'] = self._get_listeners(context, loadbalancer)
 
-                service['listeners'].append(listener_dict)
+            service['pools'], service['healthmonitors'] = \
+                self._get_pools_and_healthmonitors(context, loadbalancer)
 
-                if listener.default_pool:
-                    pool = self.plugin.db.get_pool(
-                        context,
-                        listener.default_pool.id)
-                    pool_dict = pool.to_api_dict()
-                    pool_dict['provisioning_status'] = pool.provisioning_status
-                    pool_dict['operating_status'] = pool.operating_status
-                    service['pools'].append(pool_dict)
-
-            # Pools have multiple members and one healthmonitor.  Iterate
-            # over the list of pools, and popuate the service with members
-            # and healthmonitors.
-            service['members'] = []
-            service['healthmonitors'] = []
-            for pool in service['pools']:
-                pool_id = pool['id']
-                members = self.plugin.db.get_pool_members(
-                    context,
-                    filters={'pool_id': [pool_id]}
-                )
-                for member in members:
-                    # Get extended member attributes, network, and subnet.
-                    (member_dict, subnet, network) = (
-                        self._get_extended_member(context, member)
-                    )
-                    subnet_map[subnet['id']] = subnet
-                    network_map[network['id']] = network
-                    service['members'].append(member_dict)
-
-                healthmonitor_id = pool['healthmonitor_id']
-                if healthmonitor_id:
-                    healthmonitor = self.plugin.db.get_healthmonitor(
-                        context,
-                        healthmonitor_id)
-                    if healthmonitor:
-                        healthmonitor_dict = healthmonitor.to_dict(pool=False)
-                        healthmonitor_dict['pool_id'] = pool_id
-                        service['healthmonitors'].append(
-                            healthmonitor_dict)
+            service['members'] = self._get_members(
+                context, service['pools'], subnet_map, network_map)
 
             service['subnets'] = subnet_map
             service['networks'] = network_map
@@ -456,3 +408,92 @@ class LBaaSv2ServiceBuilder(object):
                 l7policy_rules[index]['policy_id'] = pol['id']
 
         return l7policy_rules
+
+    @log_helpers.log_method_call
+    def _get_listeners(self, context, loadbalancer):
+        listeners = []
+        db_listeners = self.plugin.db.get_listeners(
+            context,
+            filters={'loadbalancer_id': [loadbalancer.id]}
+        )
+
+        for listener in db_listeners:
+            listener_dict = listener.to_api_dict()
+            if listener.default_pool:
+                listener_dict['default_pool_id'] = listener.default_pool.id
+
+            listeners.append(listener_dict)
+
+        return listeners
+
+    @log_helpers.log_method_call
+    def _get_pools_and_healthmonitors(self, context, loadbalancer):
+        """Return list of pools and list of healthmonitors as dicts."""
+        healthmonitors = []
+        pools = []
+
+        if loadbalancer and loadbalancer.id:
+            db_pools = self.plugin.db.get_pools(
+                context,
+                filters={'loadbalancer_id': [loadbalancer.id]}
+            )
+
+            for pool in db_pools:
+                pools.append(self._pool_to_dict(pool))
+                pool_id = pool.id
+                healthmonitor_id = pool.healthmonitor_id
+                if healthmonitor_id:
+                    healthmonitor = self.plugin.db.get_healthmonitor(
+                        context,
+                        healthmonitor_id)
+                    if healthmonitor:
+                        healthmonitor_dict = healthmonitor.to_api_dict()
+                        healthmonitor_dict['pool_id'] = pool_id
+                        healthmonitors.append(healthmonitor_dict)
+
+        return pools, healthmonitors
+
+    @log_helpers.log_method_call
+    def _get_members(self, context, pools, subnet_map, network_map):
+        pool_members = []
+        if pools:
+            members = self.plugin.db.get_pool_members(
+                context,
+                filters={'pool_id': [p['id'] for p in pools]}
+            )
+
+            for member in members:
+                # Get extended member attributes, network, and subnet.
+                member_dict, subnet, network = (
+                    self._get_extended_member(context, member)
+                )
+
+                subnet_map[subnet['id']] = subnet
+                network_map[network['id']] = network
+                pool_members.append(member_dict)
+
+        return pool_members
+
+    @log_helpers.log_method_call
+    def _pool_to_dict(self, pool):
+        """Convert Pool data model to dict.
+
+        Provides an alternative to_api_dict() in order to get additional
+        object IDs without exploding object references.
+        """
+
+        pool_dict = pool.to_dict(healthmonitor=False,
+                                 listener=False,
+                                 listeners=False,
+                                 loadbalancer=False,
+                                 members=False)
+
+        pool_dict['members'] = [{'id': member.id} for member in pool.members]
+        pool_dict['listeners'] = [{'id': listener.id}
+                                  for listener in pool.listeners]
+        if pool.listener:
+            pool_dict['listener_id'] = pool.listener.id
+        else:
+            pool_dict['listener_id'] = None
+
+        return pool_dict
