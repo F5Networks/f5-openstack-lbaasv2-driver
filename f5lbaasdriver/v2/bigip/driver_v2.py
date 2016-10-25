@@ -98,39 +98,68 @@ class F5DriverV2(object):
             {q_const.AGENT_TYPE_LOADBALANCER: self.agent_rpc})
 
 
-class LoadBalancerManager(object):
-    """LoadBalancerManager class handles Neutron LBaaS CRUD."""
-
+class EntityManager(object):
+    '''Parent for all managers defined in this module.'''
     def __init__(self, driver):
-        """Initialize Loadbalancer manager."""
         self.driver = driver
+
+
+class ManagerMixin(object):
+
+    def _setup_crud(self, context, entity):
+        '''Setup CRUD operations for managers to make calls to agent.
+
+        :param context: auth context for performing crud operation
+        :param entity: neutron lbaas entity -- target of the CRUD operation
+        :returns: tuple -- (agent object, service dict)
+        :raises: F5NoAttachedLoadbalancerException
+        '''
+
+        if entity.attached_to_loadbalancer():
+            lb = entity.loadbalancer
+            return self._schedule_agent_create_service(context, lb)
+        raise F5NoAttachedLoadbalancerException()
+
+    def _schedule_agent_create_service(self, context, loadbalancer):
+        '''Schedule agent and build service--used for most managers.
+
+        :param context: auth context for performing crud operation
+        :param loadbalancer: loadbalancer object -- lb for entity
+        :returns: tuple -- (agent object, service dict)
+        '''
+
+        agent = self.driver.scheduler.schedule(
+            self.driver.plugin,
+            context,
+            loadbalancer.id,
+            self.driver.env
+        )
+        service = self.driver.service_builder.build(
+            context, loadbalancer, agent)
+        return agent['host'], service
+
+
+class LoadBalancerManager(EntityManager):
+    """LoadBalancerManager class handles Neutron LBaaS CRUD."""
 
     @log_helpers.log_method_call
     def create(self, context, loadbalancer):
         """Create a loadbalancer."""
         driver = self.driver
         try:
-            agent = driver.scheduler.schedule(
-                driver.plugin,
-                context,
-                loadbalancer.id,
-                driver.env
-            )
-            service = driver.service_builder.build(context,
-                                                   loadbalancer,
-                                                   agent)
+            agent_host, service = self._schedule_agent_create_service(
+                context, loadbalancer)
+
             # Update the port for the VIP to show ownership by this driver
             port_data = {
                 'admin_state_up': True,
                 'device_id': str(
-                    uuid.uuid5(
-                        uuid.NAMESPACE_DNS, str(agent['host'])
-                    )
+                    uuid.uuid5(uuid.NAMESPACE_DNS, str(agent_host))
                 ),
                 'device_owner': 'network:f5lbaasv2',
                 'status': q_const.PORT_STATUS_ACTIVE
             }
-            port_data[portbindings.HOST_ID] = agent['host']
+            port_data[portbindings.HOST_ID] = agent_host
             driver.plugin.db._core_plugin.update_port(
                 context,
                 loadbalancer.vip_port_id,
@@ -141,7 +170,7 @@ class LoadBalancerManager(object):
                 context,
                 loadbalancer.to_api_dict(),
                 service,
-                agent['host']
+                agent_host
             )
 
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
@@ -162,21 +191,15 @@ class LoadBalancerManager(object):
         """Update a loadbalancer."""
         driver = self.driver
         try:
-            agent = driver.scheduler.schedule(
-                driver.plugin,
-                context,
-                loadbalancer.id,
-                driver.env
-            )
-            service = driver.service_builder.build(context,
-                                                   loadbalancer,
-                                                   agent)
+            agent_host, service = self._schedule_agent_create_service(
+                context, loadbalancer)
+
             driver.agent_rpc.update_loadbalancer(
                 context,
                 old_loadbalancer.to_api_dict(),
                 loadbalancer.to_api_dict(),
                 service,
-                agent['host']
+                agent_host
             )
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
                 lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
@@ -194,20 +217,14 @@ class LoadBalancerManager(object):
         """Delete a loadbalancer."""
         driver = self.driver
         try:
-            agent = driver.scheduler.schedule(
-                driver.plugin,
-                context,
-                loadbalancer.id,
-                driver.env
-            )
-            service = driver.service_builder.build(context,
-                                                   loadbalancer,
-                                                   agent)
+            agent_host, service = self._schedule_agent_create_service(
+                context, loadbalancer)
+
             driver.agent_rpc.delete_loadbalancer(
                 context,
                 loadbalancer.to_api_dict(),
                 service,
-                agent['host']
+                agent_host
             )
 
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
@@ -230,38 +247,21 @@ class LoadBalancerManager(object):
         pass
 
 
-class ListenerManager(object):
+class ListenerManager(EntityManager):
     """ListenerManager class handles Neutron LBaaS listener CRUD."""
-
-    def __init__(self, driver):
-        """Initialize a ListenerManager object."""
-        self.driver = driver
 
     @log_helpers.log_method_call
     def create(self, context, listener):
         """Create a listener."""
         driver = self.driver
         try:
-            if listener.attached_to_loadbalancer():
-                loadbalancer = listener.loadbalancer
-                agent = driver.scheduler.schedule(
-                    driver.plugin,
-                    context,
-                    loadbalancer.id,
-                    driver.env
-                )
-                service = driver.service_builder.build(context,
-                                                       loadbalancer,
-                                                       agent)
-                driver.agent_rpc.create_listener(
-                    context,
-                    listener.to_dict(loadbalancer=False, default_pool=False),
-                    service,
-                    agent['host']
-                )
-            else:
-                raise F5NoAttachedLoadbalancerException()
-
+            agent_host, service = self._setup_crud(context, listener)
+            driver.agent_rpc.create_listener(
+                context,
+                listener.to_dict(loadbalancer=False, default_pool=False),
+                service,
+                agent_host
+            )
         except Exception as e:
             LOG.error("Exception: listener create: %s" % e.message)
             raise e
@@ -271,28 +271,15 @@ class ListenerManager(object):
         """Update a listener."""
         driver = self.driver
         try:
-            if listener.attached_to_loadbalancer():
-                loadbalancer = listener.loadbalancer
-                agent = driver.scheduler.schedule(
-                    driver.plugin,
-                    context,
-                    loadbalancer.id,
-                    driver.env
-                )
-                service = driver.service_builder.build(context,
-                                                       loadbalancer,
-                                                       agent)
-                driver.agent_rpc.update_listener(
-                    context,
-                    old_listener.to_dict(loadbalancer=False,
-                                         default_pool=False),
-                    listener.to_dict(loadbalancer=False, default_pool=False),
-                    service,
-                    agent['host']
-                )
-            else:
-                raise F5NoAttachedLoadbalancerException()
-
+            agent_host, service = self._setup_crud(context, listener)
+            driver.agent_rpc.update_listener(
+                context,
+                old_listener.to_dict(loadbalancer=False,
+                                     default_pool=False),
+                listener.to_dict(loadbalancer=False, default_pool=False),
+                service,
+                agent_host
+            )
         except Exception as e:
             LOG.error("Exception: listener update: %s" % e.message)
             raise e
@@ -301,16 +288,6 @@ class ListenerManager(object):
     def delete(self, context, listener):
         """Delete a listener."""
         driver = self.driver
-
-        # Cannot currently delete the listener or the pool will
-        # be orphaned.
-        if listener.default_pool_id:
-            driver.plugin.db.update_status(
-                context,
-                models.Listeners,
-                listener.id,
-                provisioning_status=plugin_constants.ACTIVE)
-            raise f5_exc.F5DeleteListenerWithAttachedPool()
 
         try:
             if listener.attached_to_loadbalancer():
@@ -338,12 +315,8 @@ class ListenerManager(object):
             raise e
 
 
-class PoolManager(object):
+class PoolManager(EntityManager):
     """PoolManager class handles Neutron LBaaS pool CRUD."""
-
-    def __init__(self, driver):
-        """Initialize a PoolManager object."""
-        self.driver = driver
 
     def _get_pool_dict(self, pool):
         pool_dict = pool.to_api_dict()
@@ -440,12 +413,8 @@ class PoolManager(object):
             raise e
 
 
-class MemberManager(object):
+class MemberManager(EntityManager):
     """MemberManager class handles Neutron LBaaS pool member CRUD."""
-
-    def __init__(self, driver):
-        """Initialize a MemberManager object."""
-        self.driver = driver
 
     @log_helpers.log_method_call
     def create(self, context, member):
@@ -536,12 +505,8 @@ class MemberManager(object):
             raise e
 
 
-class HealthMonitorManager(object):
+class HealthMonitorManager(EntityManager):
     """HealthMonitorManager class handles Neutron LBaaS monitor CRUD."""
-
-    def __init__(self, driver):
-        """Initialize a HealthMonitorManager object."""
-        self.driver = driver
 
     @log_helpers.log_method_call
     def create(self, context, health_monitor):
@@ -632,19 +597,16 @@ class HealthMonitorManager(object):
             raise e
 
 
-class L7PolicyManager(object):
+class L7PolicyManager(ManagerMixin, EntityManager):
     """L7PolicyManager class handles Neutron LBaaS L7 Policy CRUD."""
-
-    def __init__(self, driver):
-        """Initialize the L7 Policy Manager."""
-        self.driver = driver
 
     @log_helpers.log_method_call
     def create(self, context, policy):
         """Create an L7 policy."""
-        # driver = self.driver
+
         try:
-            pass
+            agent_host, service = self._setup_crud(context, policy)
+            self.driver.agent_rpc.create_l7policy(context, service, agent_host)
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
                 lbaas_agentschedulerv2.NoActiveLbaasAgent,
                 f5_exc.F5MismatchedTenants) as e:
@@ -656,13 +618,10 @@ class L7PolicyManager(object):
     @log_helpers.log_method_call
     def update(self, context, old_policy, policy):
         """Update a policy."""
-        driver = self.driver
+
         try:
-            driver.plugin.db.update_status(
-                context,
-                models.L7Policy,
-                policy.id,
-                provisioning_status=plugin_constants.ACTIVE)
+            agent_host, service = self._setup_crud(context, policy)
+            self.driver.agent_rpc.update_l7policy(context, service, agent_host)
         except Exception as e:
             LOG.error("Exception: policy update: %s" % e.message)
             raise e
@@ -670,32 +629,25 @@ class L7PolicyManager(object):
     @log_helpers.log_method_call
     def delete(self, context, policy):
         """Delete a policy."""
-        driver = self.driver
+
         try:
-            if policy.attached_to_loadbalancer():
-                self.driver.plugin.db.delete_l7policy(context, policy.id)
-                driver.plugin.db.update_status(
-                    context,
-                    models.LoadBalancer,
-                    policy.listener.loadbalancer.id,
-                    provisioning_status=plugin_constants.ACTIVE)
+            agent_host, service = self._setup_crud(context, policy)
+            self.driver.agent_prc.delete_l7policy(context, service, agent_host)
         except Exception as e:
             LOG.error("Exception: policy delete: %s" % e.message)
             raise e
 
 
-class L7RuleManager(object):
+class L7RuleManager(ManagerMixin, EntityManager):
     """L7RuleManager class handles Neutron LBaaS L7 Rule CRUD."""
-
-    def __init__(self, driver):
-        """Initialize the L7 Rule Manager."""
-        self.driver = driver
 
     @log_helpers.log_method_call
     def create(self, context, rule):
         """Create an L7 rule."""
+
         try:
-            pass
+            agent_host, service = self._setup_crud(context, rule)
+            self.driver.agent_rpc.create_l7rule(context, service, agent_host)
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
                 lbaas_agentschedulerv2.NoActiveLbaasAgent,
                 f5_exc.F5MismatchedTenants) as e:
@@ -708,7 +660,8 @@ class L7RuleManager(object):
     def update(self, context, old_rule, rule):
         """Update a rule."""
         try:
-            pass
+            agent_host, service = self._setup_crud(context, rule)
+            self.driver.agent_rpc.update_l7rule(context, service, agent_host)
         except Exception as e:
             LOG.error("Exception: rule update: %s" % e.message)
             raise e
@@ -717,7 +670,8 @@ class L7RuleManager(object):
     def delete(self, context, rule):
         """Delete a rule."""
         try:
-            pass
+            agent_host, service = self._setup_crud(context, rule)
+            self.driver.agent_prc.delete_l7rule(context, service, agent_host)
         except Exception as e:
             LOG.error("Exception: rule delete: %s" % e.message)
             raise e
