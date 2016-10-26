@@ -2,7 +2,7 @@
 tempest_tests-install tempest_tests-run \
 tempest_tests-teardown
 
-PROJECT := f5-openstack-agent
+PROJECT := f5-openstack-lbaasv2-driver
 repo := https://github.com/F5Networks/$(PROJECT).git
 
 # name/location config for BAHAMAS
@@ -43,6 +43,9 @@ tempest_tests-setup:
 	" $(TESTSESSION)"
     
 tempest_tests-install:
+	git clone git@github.com:F5Networks/f5-openstack-test.git
+	cd f5-openstack-test/f5_os_test/testrunner_containers &&\
+    python ./docker_manager.py tempest $(PROJECT) $(BRANCH)
 
 tempest_tests-run:
 
