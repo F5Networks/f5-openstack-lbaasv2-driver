@@ -45,7 +45,7 @@ tempest_tests-setup:
 tempest_tests-install:
 	git clone git@github.com:F5Networks/f5-openstack-test.git
 	cd f5-openstack-test/f5_os_test/testrunner_containers &&\
-    python ./docker_manager.py tempest $(PROJECT) $(BRANCH)
+	python ./docker_manager.py tempest $(PROJECT) $(BRANCH)
 
 tempest_tests-run:
 
