@@ -42,18 +42,9 @@ tempest_tests-setup:
 	" $(BRANCH)"\
 	" $(TESTSESSION)"
     
-
 tempest_tests-install:
-	@echo "installing system tests ..."
-	scp -rp -F $(ssh_conf) testenv_symbols/ bastion:~/
-	scp -F $(ssh_conf) ./scripts/install_systests.sh bastion:~/
-	ssh -AF $(ssh_conf) bastion "~/install_systests.sh $(repo) $(BRANCH)"
 
 tempest_tests-run:
-	@echo "running disconnected tests ..."
-	scp -F $(ssh_conf) ./scripts/run_neutronlesstests.sh bastion:~/
-	ssh -tF $(ssh_conf) bastion \
-		"~/run_neutronlesstests.sh $(tempest_session)" || true
 
 tempest_tests-teardown:
 	@echo "downloading functional test results ..."
