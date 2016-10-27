@@ -32,6 +32,9 @@ class F5MismatchedTenants(F5LBaaSv2DriverException):
 
     message = "Tenant Id of network and loadbalancer mismatched"
 
+    def __str__(self):
+        return self.message
+
 
 class F5DeleteListenerWithAttachedPool(F5LBaaSv2DriverException):
     """The listener cannot become unbound from the pool."""
