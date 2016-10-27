@@ -217,7 +217,7 @@ def test_listenermgr_create(happy_path_driver):
     fake_lstnr = FakeObj()
     lstnr_mgr.create(mock_ctx, fake_lstnr)
     assert mock_driver.agent_rpc.create_listener.call_args == \
-        mock.call(mock_ctx, {}, 'test_agent')
+        mock.call(mock_ctx, fake_lstnr, {}, 'test_agent')
 
 
 def test_listener_update(happy_path_driver):
@@ -256,7 +256,7 @@ def test_listenermgr_delete(happy_path_driver):
     fake_lstnr = FakeObj()
     lstnr_mgr.delete(mock_ctx, fake_lstnr)
     assert mock_driver.agent_rpc.delete_listener.call_args == \
-        mock.call(mock_ctx, {}, 'test_agent')
+        mock.call(mock_ctx, fake_lstnr, {}, 'test_agent')
 
 
 def test_poolmgr_create(happy_path_driver):
@@ -265,7 +265,7 @@ def test_poolmgr_create(happy_path_driver):
     fake_pool = FakeObj()
     pool_mgr.create(mock_ctx, fake_pool)
     assert mock_driver.agent_rpc.create_pool.call_args == \
-        mock.call(mock_ctx, {}, 'test_agent')
+        mock.call(mock_ctx, fake_pool, {}, 'test_agent')
 
 
 def test_pool_update(happy_path_driver):
@@ -308,7 +308,7 @@ def test_poolmgr_delete(happy_path_driver):
     fake_pool = FakeObj()
     pool_mgr.delete(mock_ctx, fake_pool)
     assert mock_driver.agent_rpc.delete_pool.call_args == \
-        mock.call(mock_ctx, {}, 'test_agent')
+        mock.call(mock_ctx, fake_pool, {}, 'test_agent')
 
 
 def test_membermgr_create(happy_path_driver):
@@ -317,7 +317,7 @@ def test_membermgr_create(happy_path_driver):
     fake_member = FakeObj()
     member_mgr.create(mock_ctx, fake_member)
     assert mock_driver.agent_rpc.create_member.call_args == \
-        mock.call(mock_ctx, {}, 'test_agent')
+        mock.call(mock_ctx, fake_member, {}, 'test_agent')
 
 
 def test_member_update(happy_path_driver):
@@ -356,7 +356,7 @@ def test_membermgr_delete(happy_path_driver):
     fake_member = FakeObj()
     member_mgr.delete(mock_ctx, fake_member)
     assert mock_driver.agent_rpc.delete_member.call_args == \
-        mock.call(mock_ctx, {}, 'test_agent')
+        mock.call(mock_ctx, fake_member, {}, 'test_agent')
 
 
 def test_health_monitormgr_create(happy_path_driver):
@@ -365,7 +365,7 @@ def test_health_monitormgr_create(happy_path_driver):
     fake_health_monitor = FakeObj()
     health_monitor_mgr.create(mock_ctx, fake_health_monitor)
     assert mock_driver.agent_rpc.create_health_monitor.call_args == \
-        mock.call(mock_ctx, {}, 'test_agent')
+        mock.call(mock_ctx, fake_health_monitor, {}, 'test_agent')
 
 
 def test_health_monitor_update(happy_path_driver):
@@ -406,7 +406,7 @@ def test_health_monitormgr_delete(happy_path_driver):
     fake_health_monitor = FakeObj()
     health_monitor_mgr.delete(mock_ctx, fake_health_monitor)
     assert mock_driver.agent_rpc.delete_health_monitor.call_args == \
-        mock.call(mock_ctx, {}, 'test_agent')
+        mock.call(mock_ctx, fake_health_monitor, {}, 'test_agent')
 
 
 def test_l7policymgr_create(happy_path_driver):
@@ -415,7 +415,7 @@ def test_l7policymgr_create(happy_path_driver):
     fake_l7policy = FakeObj()
     l7policy_mgr.create(mock_ctx, fake_l7policy)
     assert mock_driver.agent_rpc.create_l7policy.call_args == \
-        mock.call(mock_ctx, {}, 'test_agent')
+        mock.call(mock_ctx, fake_l7policy, {}, 'test_agent')
 
 
 def test_l7policymgr_update(happy_path_driver):
@@ -424,7 +424,7 @@ def test_l7policymgr_update(happy_path_driver):
     fake_l7policy = FakeObj()
     l7policy_mgr.update(mock_ctx, fake_l7policy)
     assert mock_driver.agent_rpc.update_l7policy.call_args == \
-        mock.call(mock_ctx, {}, 'test_agent')
+        mock.call(mock_ctx, fake_l7policy, {}, 'test_agent')
 
 
 def test_l7policymgr_delete(happy_path_driver):
@@ -433,7 +433,7 @@ def test_l7policymgr_delete(happy_path_driver):
     fake_l7policy = FakeObj()
     l7policy_mgr.delete(mock_ctx, fake_l7policy)
     assert mock_driver.agent_rpc.delete_l7policy.call_args == \
-        mock.call(mock_ctx, {}, 'test_agent')
+        mock.call(mock_ctx, fake_l7policy, {}, 'test_agent')
 
 
 def test_l7rulemgr_create(happy_path_driver):
@@ -442,7 +442,7 @@ def test_l7rulemgr_create(happy_path_driver):
     fake_l7rule = FakeObj()
     l7rule_mgr.create(mock_ctx, fake_l7rule)
     assert mock_driver.agent_rpc.create_l7rule.call_args == \
-        mock.call(mock_ctx, {}, 'test_agent')
+        mock.call(mock_ctx, fake_l7rule, {}, 'test_agent')
 
 
 def test_l7rulemgr_update(happy_path_driver):
@@ -451,7 +451,7 @@ def test_l7rulemgr_update(happy_path_driver):
     fake_l7rule = FakeObj()
     l7rule_mgr.update(mock_ctx, fake_l7rule)
     assert mock_driver.agent_rpc.update_l7rule.call_args == \
-        mock.call(mock_ctx, {}, 'test_agent')
+        mock.call(mock_ctx, fake_l7rule, {}, 'test_agent')
 
 
 def test_l7rulemgr_delete(happy_path_driver):
@@ -460,7 +460,7 @@ def test_l7rulemgr_delete(happy_path_driver):
     fake_l7rule = FakeObj()
     l7rule_mgr.delete(mock_ctx, fake_l7rule)
     assert mock_driver.agent_rpc.delete_l7rule.call_args == \
-        mock.call(mock_ctx, {}, 'test_agent')
+        mock.call(mock_ctx, fake_l7rule, {}, 'test_agent')
 
 
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
