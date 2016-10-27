@@ -369,7 +369,7 @@ class LBaaSv2ServiceBuilder(object):
             listener_ids = [l['id'] for l in listeners]
             policies = self.plugin.db.get_l7policies(
                 context, filters={'listener_id': listener_ids})
-            l7policies.extend(p.to_api_dict() for p in policies)
+            l7policies.extend(self._l7policy_to_dict(p) for p in policies)
 
         for index, pol in enumerate(l7policies):
             try:
@@ -393,7 +393,8 @@ class LBaaSv2ServiceBuilder(object):
             policy_ids = [p['id'] for p in l7policies]
             for pol_id in policy_ids:
                 rules = self.plugin.db.get_l7policy_rules(context, pol_id)
-                l7policy_rules.extend(rule.to_api_dict() for rule in rules)
+                l7policy_rules.extend(
+                    self._l7rule_to_dict(rule) for rule in rules)
 
         for index, rule in enumerate(l7policy_rules):
             try:
@@ -418,7 +419,13 @@ class LBaaSv2ServiceBuilder(object):
         )
 
         for listener in db_listeners:
-            listener_dict = listener.to_api_dict()
+            listener_dict = listener.to_dict(
+                loadbalancer=False,
+                default_pool=False,
+                l7_policies=False
+            )
+            listener_dict['l7_policies'] = \
+                [{'id': l7_policy.id} for l7_policy in listener.l7_policies]
             if listener.default_pool:
                 listener_dict['default_pool_id'] = listener.default_pool.id
 
@@ -447,7 +454,7 @@ class LBaaSv2ServiceBuilder(object):
                         context,
                         healthmonitor_id)
                     if healthmonitor:
-                        healthmonitor_dict = healthmonitor.to_api_dict()
+                        healthmonitor_dict = healthmonitor.to_dict(pool=False)
                         healthmonitor_dict['pool_id'] = pool_id
                         healthmonitors.append(healthmonitor_dict)
 
@@ -486,14 +493,39 @@ class LBaaSv2ServiceBuilder(object):
                                  listener=False,
                                  listeners=False,
                                  loadbalancer=False,
-                                 members=False)
+                                 l7_policies=False,
+                                 members=False,
+                                 session_persistence=False)
 
         pool_dict['members'] = [{'id': member.id} for member in pool.members]
         pool_dict['listeners'] = [{'id': listener.id}
                                   for listener in pool.listeners]
+        pool_dict['l7_policies'] = [{'id': l7_policy.id}
+                                    for l7_policy in pool.l7_policies]
+        if pool.session_persistence:
+            pool_dict['session_persistence'] = (
+                pool.session_persistence.to_api_dict())
         if pool.listener:
             pool_dict['listener_id'] = pool.listener.id
         else:
             pool_dict['listener_id'] = None
 
         return pool_dict
+
+    def _l7policy_to_dict(self, l7policy):
+        """Convert l7Policy to dict.
+
+        Adds provisioning_status to dict from to_api_dict()
+        """
+        l7policy_dict = l7policy.to_api_dict()
+        l7policy_dict['provisioning_status'] = l7policy.provisioning_status
+        return l7policy_dict
+
+    def _l7rule_to_dict(self, l7rule):
+        """Convert l7Policy rule to dict.
+
+        Adds provisioning_status to dict from to_api_dict()
+        """
+        l7rule_dict = l7rule.to_api_dict()
+        l7rule_dict['provisioning_status'] = l7rule.provisioning_status
+        return l7rule_dict
