@@ -28,25 +28,66 @@ class FakeLB(object):
         self.vip_port_id = 'test_vip_port_id'
 
     def to_api_dict(self):
-        return self
+        return self.__dict__
 
 
-class FakeObj(object):
-    def __init__(self, id='test_lstnr_id', attached_to_lb=True):
+class FakeBaseObj(object):
+    def __init__(self, id='test_obj_id', attached_to_lb=True):
         self.id = id
-        self.loadbalancer = FakeLB()
-        self.provisioning_status = 'good'
-        self.operating_status = 'really_good'
         self.attached_to_lb = attached_to_lb
 
     def attached_to_loadbalancer(self):
         return self.attached_to_lb
 
-    def to_dict(self, loadbalancer=False, default_pool=False, pool=False):
-        return self
+    def to_dict(self, **kwargs):
+        return self.__dict__
+
+
+class FakeListener(FakeBaseObj):
+    def __init__(self, id='test_obj_id', attached_to_lb=True):
+        super(FakeListener, self).__init__(
+            id=id, attached_to_lb=attached_to_lb)
+        self.id = id
+        self.loadbalancer = FakeLB()
+
+
+class FakePool(FakeBaseObj):
+    def __init__(self, id='test_pool_id', attached_to_lb=True):
+        super(FakePool, self).__init__(id=id, attached_to_lb=attached_to_lb)
+        self.provisioning_status = 'good'
+        self.operating_status = 'really_good'
+        self.loadbalancer = FakeLB()
 
     def to_api_dict(self):
-        return {}
+        return self.__dict__
+
+
+class FakeMember(FakeBaseObj):
+    def __init__(self, id='test_obj_id', attached_to_lb=True):
+        super(FakeMember, self).__init__(id=id, attached_to_lb=attached_to_lb)
+        self.id = id
+        self.pool = FakePool()
+
+
+class FakeHM(FakeBaseObj):
+    def __init__(self, id='test_obj_id', attached_to_lb=True):
+        super(FakeHM, self).__init__(id=id, attached_to_lb=attached_to_lb)
+        self.id = id
+        self.pool = FakePool()
+
+
+class FakePolicy(FakeBaseObj):
+    def __init__(self, id='test_obj_id', attached_to_lb=True):
+        super(FakePolicy, self).__init__(id=id, attached_to_lb=attached_to_lb)
+        self.id = id
+        self.listener = FakeListener()
+
+
+class FakeRule(FakeBaseObj):
+    def __init__(self, id='test_obj_id', attached_to_lb=True):
+        super(FakeRule, self).__init__(id=id, attached_to_lb=attached_to_lb)
+        self.id = id
+        self.l7policy = FakePolicy()
 
 
 @pytest.fixture
@@ -77,7 +118,7 @@ def test_lbmgr_create():
     fake_lb = FakeLB()
     lb_mgr.create(mock_ctx, fake_lb)
     assert mock_driver.agent_rpc.create_loadbalancer.call_args == \
-        mock.call(mock_ctx, {}, 'test_agent')
+        mock.call(mock_ctx, fake_lb.to_api_dict(), {}, 'test_agent')
 
 
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
@@ -118,7 +159,9 @@ def test_lbmgr_update():
     new_lb = FakeLB(id='new_lb')
     lb_mgr.update(mock_ctx, old_lb, new_lb)
     assert mock_driver.agent_rpc.update_loadbalancer.call_args == \
-        mock.call(mock_ctx, old_lb, new_lb, {}, 'test_agent')
+        mock.call(
+            mock_ctx, old_lb.to_api_dict(),
+            new_lb.to_api_dict(), {}, 'test_agent')
 
 
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
@@ -177,7 +220,7 @@ def test_lbmgr_delete(happy_path_driver):
     fake_lb = FakeLB()
     lb_mgr.delete(mock_ctx, fake_lb)
     assert mock_driver.agent_rpc.delete_loadbalancer.call_args == \
-        mock.call(mock_ctx, {}, 'test_agent')
+        mock.call(mock_ctx, fake_lb.to_api_dict(), {}, 'test_agent')
 
 
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
@@ -214,17 +257,17 @@ def test_lbmgr_delete_exception(mock_log):
 def test_listenermgr_create(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     lstnr_mgr = dv2.ListenerManager(mock_driver)
-    fake_lstnr = FakeObj()
+    fake_lstnr = FakeListener()
     lstnr_mgr.create(mock_ctx, fake_lstnr)
     assert mock_driver.agent_rpc.create_listener.call_args == \
-        mock.call(mock_ctx, fake_lstnr, {}, 'test_agent')
+        mock.call(mock_ctx, fake_lstnr.to_dict(), {}, 'test_agent')
 
 
 def test_listener_update(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     lstnr_mgr = dv2.ListenerManager(mock_driver)
-    fake_old_lstnr = FakeObj(id='old_listener')
-    fake_new_lstnr = FakeObj(id='new_listener')
+    fake_old_lstnr = FakeListener(id='old_listener')
+    fake_new_lstnr = FakeListener(id='new_listener')
     lstnr_mgr.update(mock_ctx, fake_old_lstnr, fake_new_lstnr)
     assert mock_driver.agent_rpc.update_listener.call_args == \
         mock.call(
@@ -240,8 +283,8 @@ def test_listener_update_exception(mock_log, happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     mock_driver.agent_rpc.update_listener.side_effect = Exception('test')
     lstnr_mgr = dv2.ListenerManager(mock_driver)
-    fake_old_lstnr = FakeObj(id='old_listener')
-    fake_new_lstnr = FakeObj(id='new_listener')
+    fake_old_lstnr = FakeListener(id='old_listener')
+    fake_new_lstnr = FakeListener(id='new_listener')
     with pytest.raises(Exception) as ex:
         lstnr_mgr.update(mock_ctx, fake_old_lstnr, fake_new_lstnr)
     assert 'test' == ex.value.message
@@ -253,36 +296,32 @@ def test_listener_update_exception(mock_log, happy_path_driver):
 def test_listenermgr_delete(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     lstnr_mgr = dv2.ListenerManager(mock_driver)
-    fake_lstnr = FakeObj()
+    fake_lstnr = FakeListener()
     lstnr_mgr.delete(mock_ctx, fake_lstnr)
     assert mock_driver.agent_rpc.delete_listener.call_args == \
-        mock.call(mock_ctx, fake_lstnr, {}, 'test_agent')
+        mock.call(mock_ctx, fake_lstnr.to_dict(), {}, 'test_agent')
 
 
 def test_poolmgr_create(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     pool_mgr = dv2.PoolManager(mock_driver)
-    fake_pool = FakeObj()
+    fake_pool = FakePool()
     pool_mgr.create(mock_ctx, fake_pool)
     assert mock_driver.agent_rpc.create_pool.call_args == \
-        mock.call(mock_ctx, fake_pool, {}, 'test_agent')
+        mock.call(mock_ctx, fake_pool.to_dict(), {}, 'test_agent')
 
 
-def test_pool_update(happy_path_driver):
+def test_poolmgr_update(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     pool_mgr = dv2.PoolManager(mock_driver)
-    fake_old_pool = FakeObj(id='old_pool')
-    fake_new_pool = FakeObj(id='new_pool')
+    fake_old_pool = FakePool(id='old_pool')
+    fake_new_pool = FakePool(id='new_pool')
     pool_mgr.update(mock_ctx, fake_old_pool, fake_new_pool)
-    pool_dict = {
-        'operating_status': 'really_good',
-        'provisioning_status': 'good'
-    }
     assert mock_driver.agent_rpc.update_pool.call_args == \
         mock.call(
             mock_ctx,
-            pool_dict,
-            pool_dict,
+            fake_old_pool.to_dict(),
+            fake_new_pool.to_dict(),
             {},
             'test_agent')
 
@@ -292,8 +331,8 @@ def test_pool_update_exception(mock_log, happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     mock_driver.agent_rpc.update_pool.side_effect = Exception('test')
     pool_mgr = dv2.PoolManager(mock_driver)
-    fake_old_pool = FakeObj(id='old_pool')
-    fake_new_pool = FakeObj(id='new_pool')
+    fake_old_pool = FakePool(id='old_pool')
+    fake_new_pool = FakePool(id='new_pool')
     with pytest.raises(Exception) as ex:
         pool_mgr.update(mock_ctx, fake_old_pool, fake_new_pool)
     assert 'test' == ex.value.message
@@ -305,32 +344,32 @@ def test_pool_update_exception(mock_log, happy_path_driver):
 def test_poolmgr_delete(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     pool_mgr = dv2.PoolManager(mock_driver)
-    fake_pool = FakeObj()
+    fake_pool = FakePool()
     pool_mgr.delete(mock_ctx, fake_pool)
     assert mock_driver.agent_rpc.delete_pool.call_args == \
-        mock.call(mock_ctx, fake_pool, {}, 'test_agent')
+        mock.call(mock_ctx, fake_pool.to_dict(), {}, 'test_agent')
 
 
 def test_membermgr_create(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     member_mgr = dv2.MemberManager(mock_driver)
-    fake_member = FakeObj()
+    fake_member = FakeMember()
     member_mgr.create(mock_ctx, fake_member)
     assert mock_driver.agent_rpc.create_member.call_args == \
-        mock.call(mock_ctx, fake_member, {}, 'test_agent')
+        mock.call(mock_ctx, fake_member.to_dict(), {}, 'test_agent')
 
 
 def test_member_update(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     member_mgr = dv2.MemberManager(mock_driver)
-    fake_old_member = FakeObj(id='old_member')
-    fake_new_member = FakeObj(id='new_member')
+    fake_old_member = FakeMember(id='old_member')
+    fake_new_member = FakeMember(id='new_member')
     member_mgr.update(mock_ctx, fake_old_member, fake_new_member)
     assert mock_driver.agent_rpc.update_member.call_args == \
         mock.call(
             mock_ctx,
-            fake_old_member,
-            fake_new_member,
+            fake_old_member.to_dict(),
+            fake_new_member.to_dict(),
             {},
             'test_agent')
 
@@ -340,8 +379,8 @@ def test_member_update_exception(mock_log, happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     mock_driver.agent_rpc.update_member.side_effect = Exception('test')
     member_mgr = dv2.MemberManager(mock_driver)
-    fake_old_member = FakeObj(id='old_member')
-    fake_new_member = FakeObj(id='new_member')
+    fake_old_member = FakeMember(id='old_member')
+    fake_new_member = FakeMember(id='new_member')
     with pytest.raises(Exception) as ex:
         member_mgr.update(mock_ctx, fake_old_member, fake_new_member)
     assert 'test' == ex.value.message
@@ -353,33 +392,33 @@ def test_member_update_exception(mock_log, happy_path_driver):
 def test_membermgr_delete(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     member_mgr = dv2.MemberManager(mock_driver)
-    fake_member = FakeObj()
+    fake_member = FakeMember()
     member_mgr.delete(mock_ctx, fake_member)
     assert mock_driver.agent_rpc.delete_member.call_args == \
-        mock.call(mock_ctx, fake_member, {}, 'test_agent')
+        mock.call(mock_ctx, fake_member.to_dict(), {}, 'test_agent')
 
 
 def test_health_monitormgr_create(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     health_monitor_mgr = dv2.HealthMonitorManager(mock_driver)
-    fake_health_monitor = FakeObj()
+    fake_health_monitor = FakeHM()
     health_monitor_mgr.create(mock_ctx, fake_health_monitor)
     assert mock_driver.agent_rpc.create_health_monitor.call_args == \
-        mock.call(mock_ctx, fake_health_monitor, {}, 'test_agent')
+        mock.call(mock_ctx, fake_health_monitor.to_dict(), {}, 'test_agent')
 
 
 def test_health_monitor_update(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     health_monitor_mgr = dv2.HealthMonitorManager(mock_driver)
-    fake_old_health_monitor = FakeObj(id='old_health_monitor')
-    fake_new_health_monitor = FakeObj(id='new_health_monitor')
+    fake_old_health_monitor = FakeHM(id='old_health_monitor')
+    fake_new_health_monitor = FakeHM(id='new_health_monitor')
     health_monitor_mgr.update(
         mock_ctx, fake_old_health_monitor, fake_new_health_monitor)
     assert mock_driver.agent_rpc.update_health_monitor.call_args == \
         mock.call(
             mock_ctx,
-            fake_old_health_monitor,
-            fake_new_health_monitor,
+            fake_old_health_monitor.to_dict(),
+            fake_new_health_monitor.to_dict(),
             {},
             'test_agent')
 
@@ -389,11 +428,12 @@ def test_health_monitor_update_exception(mock_log, happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     mock_driver.agent_rpc.update_health_monitor.side_effect = Exception('test')
     health_monitor_mgr = dv2.HealthMonitorManager(mock_driver)
-    fake_old_health_monitor = FakeObj(id='old_health_monitor')
-    fake_new_health_monitor = FakeObj(id='new_health_monitor')
+    fake_old_health_monitor = FakeHM(id='old_health_monitor')
+    fake_new_health_monitor = FakeHM(id='new_health_monitor')
     with pytest.raises(Exception) as ex:
         health_monitor_mgr.update(
-            mock_ctx, fake_old_health_monitor, fake_new_health_monitor)
+            mock_ctx, fake_old_health_monitor,
+            fake_new_health_monitor)
     assert 'test' == ex.value.message
     assert mock_log.error.call_args == mock.call(
         'Exception: health monitor update: test'
@@ -403,64 +443,64 @@ def test_health_monitor_update_exception(mock_log, happy_path_driver):
 def test_health_monitormgr_delete(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     health_monitor_mgr = dv2.HealthMonitorManager(mock_driver)
-    fake_health_monitor = FakeObj()
+    fake_health_monitor = FakeHM()
     health_monitor_mgr.delete(mock_ctx, fake_health_monitor)
     assert mock_driver.agent_rpc.delete_health_monitor.call_args == \
-        mock.call(mock_ctx, fake_health_monitor, {}, 'test_agent')
+        mock.call(mock_ctx, fake_health_monitor.to_dict(), {}, 'test_agent')
 
 
 def test_l7policymgr_create(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     l7policy_mgr = dv2.L7PolicyManager(mock_driver)
-    fake_l7policy = FakeObj()
+    fake_l7policy = FakePolicy()
     l7policy_mgr.create(mock_ctx, fake_l7policy)
     assert mock_driver.agent_rpc.create_l7policy.call_args == \
-        mock.call(mock_ctx, fake_l7policy, {}, 'test_agent')
+        mock.call(mock_ctx, fake_l7policy.to_dict(), {}, 'test_agent')
 
 
 def test_l7policymgr_update(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     l7policy_mgr = dv2.L7PolicyManager(mock_driver)
-    fake_l7policy = FakeObj()
+    fake_l7policy = FakePolicy()
     l7policy_mgr.update(mock_ctx, fake_l7policy)
     assert mock_driver.agent_rpc.update_l7policy.call_args == \
-        mock.call(mock_ctx, fake_l7policy, {}, 'test_agent')
+        mock.call(mock_ctx, fake_l7policy.to_dict(), {}, 'test_agent')
 
 
 def test_l7policymgr_delete(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     l7policy_mgr = dv2.L7PolicyManager(mock_driver)
-    fake_l7policy = FakeObj()
+    fake_l7policy = FakePolicy()
     l7policy_mgr.delete(mock_ctx, fake_l7policy)
     assert mock_driver.agent_rpc.delete_l7policy.call_args == \
-        mock.call(mock_ctx, fake_l7policy, {}, 'test_agent')
+        mock.call(mock_ctx, fake_l7policy.to_dict(), {}, 'test_agent')
 
 
 def test_l7rulemgr_create(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     l7rule_mgr = dv2.L7RuleManager(mock_driver)
-    fake_l7rule = FakeObj()
+    fake_l7rule = FakeRule()
     l7rule_mgr.create(mock_ctx, fake_l7rule)
     assert mock_driver.agent_rpc.create_l7rule.call_args == \
-        mock.call(mock_ctx, fake_l7rule, {}, 'test_agent')
+        mock.call(mock_ctx, fake_l7rule.to_dict(), {}, 'test_agent')
 
 
 def test_l7rulemgr_update(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     l7rule_mgr = dv2.L7RuleManager(mock_driver)
-    fake_l7rule = FakeObj()
+    fake_l7rule = FakeRule()
     l7rule_mgr.update(mock_ctx, fake_l7rule)
     assert mock_driver.agent_rpc.update_l7rule.call_args == \
-        mock.call(mock_ctx, fake_l7rule, {}, 'test_agent')
+        mock.call(mock_ctx, fake_l7rule.to_dict(), {}, 'test_agent')
 
 
 def test_l7rulemgr_delete(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     l7rule_mgr = dv2.L7RuleManager(mock_driver)
-    fake_l7rule = FakeObj()
+    fake_l7rule = FakeRule()
     l7rule_mgr.delete(mock_ctx, fake_l7rule)
     assert mock_driver.agent_rpc.delete_l7rule.call_args == \
-        mock.call(mock_ctx, fake_l7rule, {}, 'test_agent')
+        mock.call(mock_ctx, fake_l7rule.to_dict(), {}, 'test_agent')
 
 
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
@@ -473,7 +513,7 @@ def test_mgr__call_rpc_no_eligible_agent_exception(
         side_effect=lbaas_agentschedulerv2.NoEligibleLbaasAgent(
             loadbalancer_id='test_lb')
     )
-    fake_pol = FakeObj(id='test_lb')
+    fake_pol = FakePolicy(id='test_lb')
     pol_mgr.delete(mock_ctx, fake_pol)
     assert mock_log.error.call_args == mock.call(
         'Exception: delete_l7policy: No eligible agent found for '
@@ -489,7 +529,7 @@ def test_mgr__call_rpc_mismatch_tenant_exception(
     rule_mgr._setup_crud = mock.MagicMock(
         name='mock_setup_crud', side_effect=f5_exc.F5MismatchedTenants
     )
-    fake_rule = FakeObj(id='test_lb')
+    fake_rule = FakeRule(id='test_lb')
     rule_mgr.create(mock_ctx, fake_rule)
     assert mock_log.error.call_args == mock.call(
         'Exception: create_l7rule: Tenant Id of network and loadbalancer '
@@ -505,7 +545,7 @@ def test_mgr__call_rpc_exception(
     pol_mgr._setup_crud = mock.MagicMock(
         name='mock_setup_crud', side_effect=Exception('test')
     )
-    fake_pol = FakeObj(id='test_lb')
+    fake_pol = FakePolicy(id='test_lb')
     with pytest.raises(Exception) as ex:
         pol_mgr.delete(mock_ctx, fake_pol)
     assert 'test' == ex.value.message
@@ -517,7 +557,7 @@ def test_mgr__call_rpc_exception(
 def test_membermgr_delete_no_lb_attached(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     member_mgr = dv2.MemberManager(mock_driver)
-    fake_member = FakeObj(attached_to_lb=False)
+    fake_member = FakeMember(attached_to_lb=False)
     with pytest.raises(dv2.F5NoAttachedLoadbalancerException) as ex:
         member_mgr.delete(mock_ctx, fake_member)
     assert 'Entity has no associated loadbalancer' == ex.value.message
