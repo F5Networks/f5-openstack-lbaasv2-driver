@@ -106,10 +106,8 @@ class EntityManager(object):
 
     def __init__(self, driver):
         self.driver = driver
-
-
-class ManagerMixin(object):
-    '''Add common functionality to manager classes.'''
+        self.api_dict = None
+        self.loadbalancer = None
 
     def _call_rpc(self, context, entity, rpc_method):
         '''Perform operations common to create and delete for managers.'''
@@ -117,7 +115,7 @@ class ManagerMixin(object):
         try:
             agent_host, service = self._setup_crud(context, entity)
             rpc_callable = getattr(self.driver.agent_rpc, rpc_method)
-            rpc_callable(context, entity, service, agent_host)
+            rpc_callable(context, self.api_dict, service, agent_host)
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
                 lbaas_agentschedulerv2.NoActiveLbaasAgent,
                 f5_exc.F5MismatchedTenants) as e:
@@ -135,40 +133,38 @@ class ManagerMixin(object):
         :raises: F5NoAttachedLoadbalancerException
         '''
 
-        if entity.attached_to_loadbalancer():
-            lb = entity.loadbalancer
-            return self._schedule_agent_create_service(context, lb)
+        if entity.attached_to_loadbalancer() and self.loadbalancer:
+            return self._schedule_agent_create_service(context)
         raise F5NoAttachedLoadbalancerException()
 
-    def _schedule_agent_create_service(self, context, loadbalancer):
+    def _schedule_agent_create_service(self, context):
         '''Schedule agent and build service--used for most managers.
 
         :param context: auth context for performing crud operation
-        :param loadbalancer: loadbalancer object -- lb for entity
         :returns: tuple -- (agent object, service dict)
         '''
 
         agent = self.driver.scheduler.schedule(
             self.driver.plugin,
             context,
-            loadbalancer.id,
+            self.loadbalancer.id,
             self.driver.env
         )
         service = self.driver.service_builder.build(
-            context, loadbalancer, agent)
+            context, self.loadbalancer, agent)
         return agent['host'], service
 
 
-class LoadBalancerManager(ManagerMixin, EntityManager):
+class LoadBalancerManager(EntityManager):
     """LoadBalancerManager class handles Neutron LBaaS CRUD."""
 
     @log_helpers.log_method_call
     def create(self, context, loadbalancer):
         """Create a loadbalancer."""
         driver = self.driver
+        self.loadbalancer = loadbalancer
         try:
-            agent_host, service = self._schedule_agent_create_service(
-                context, loadbalancer)
+            agent_host, service = self._schedule_agent_create_service(context)
 
             # Update the port for the VIP to show ownership by this driver
             port_data = {
@@ -186,7 +182,8 @@ class LoadBalancerManager(ManagerMixin, EntityManager):
                 {'port': port_data}
             )
 
-            driver.agent_rpc.create_loadbalancer(context, service, agent_host)
+            driver.agent_rpc.create_loadbalancer(
+                context, loadbalancer.to_api_dict(), service, agent_host)
 
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
                 lbaas_agentschedulerv2.NoActiveLbaasAgent,
@@ -205,9 +202,9 @@ class LoadBalancerManager(ManagerMixin, EntityManager):
     def update(self, context, old_loadbalancer, loadbalancer):
         """Update a loadbalancer."""
         driver = self.driver
+        self.loadbalancer = loadbalancer
         try:
-            agent_host, service = self._schedule_agent_create_service(
-                context, loadbalancer)
+            agent_host, service = self._schedule_agent_create_service(context)
 
             driver.agent_rpc.update_loadbalancer(
                 context,
@@ -231,11 +228,12 @@ class LoadBalancerManager(ManagerMixin, EntityManager):
     def delete(self, context, loadbalancer):
         """Delete a loadbalancer."""
         driver = self.driver
+        self.loadbalancer = loadbalancer
         try:
-            agent_host, service = self._schedule_agent_create_service(
-                context, loadbalancer)
+            agent_host, service = self._schedule_agent_create_service(context)
 
-            driver.agent_rpc.delete_loadbalancer(context, service, agent_host)
+            driver.agent_rpc.delete_loadbalancer(
+                context, loadbalancer.to_api_dict(), service, agent_host)
 
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
                 lbaas_agentschedulerv2.NoActiveLbaasAgent,
@@ -257,19 +255,24 @@ class LoadBalancerManager(ManagerMixin, EntityManager):
         pass
 
 
-class ListenerManager(ManagerMixin, EntityManager):
+class ListenerManager(EntityManager):
     """ListenerManager class handles Neutron LBaaS listener CRUD."""
 
     @log_helpers.log_method_call
     def create(self, context, listener):
         """Create a listener."""
 
+        self.loadbalancer = listener.loadbalancer
+        self.api_dict = listener.to_dict(
+            loadbalancer=False, default_pool=False)
         self._call_rpc(context, listener, 'create_listener')
 
     @log_helpers.log_method_call
     def update(self, context, old_listener, listener):
         """Update a listener."""
+
         driver = self.driver
+        self.loadbalancer = listener.loadbalancer
         try:
             agent_host, service = self._setup_crud(context, listener)
             driver.agent_rpc.update_listener(
@@ -288,10 +291,13 @@ class ListenerManager(ManagerMixin, EntityManager):
     def delete(self, context, listener):
         """Delete a listener."""
 
+        self.loadbalancer = listener.loadbalancer
+        self.api_dict = listener.to_dict(
+            loadbalancer=False, default_pool=False)
         self._call_rpc(context, listener, 'delete_listener')
 
 
-class PoolManager(ManagerMixin, EntityManager):
+class PoolManager(EntityManager):
     """PoolManager class handles Neutron LBaaS pool CRUD."""
 
     def _get_pool_dict(self, pool):
@@ -304,12 +310,16 @@ class PoolManager(ManagerMixin, EntityManager):
     def create(self, context, pool):
         """Create a pool."""
 
+        self.loadbalancer = pool.loadbalancer
+        self.api_dict = self._get_pool_dict(pool)
         self._call_rpc(context, pool, 'create_pool')
 
     @log_helpers.log_method_call
     def update(self, context, old_pool, pool):
         """Update a pool."""
+
         driver = self.driver
+        self.loadbalancer = pool.loadbalancer
         try:
             agent_host, service = self._setup_crud(context, pool)
             driver.agent_rpc.update_pool(
@@ -327,23 +337,29 @@ class PoolManager(ManagerMixin, EntityManager):
     def delete(self, context, pool):
         """Delete a pool."""
 
+        self.loadbalancer = pool.loadbalancer
+        self.api_dict = self._get_pool_dict(pool)
         self._call_rpc(context, pool, 'delete_pool')
 
 
-class MemberManager(ManagerMixin, EntityManager):
+class MemberManager(EntityManager):
     """MemberManager class handles Neutron LBaaS pool member CRUD."""
 
     @log_helpers.log_method_call
     def create(self, context, member):
         """Create a member."""
 
+        self.loadbalancer = member.pool.loadbalancer
+        self.api_dict = member.to_dict(pool=False)
         self._call_rpc(context, member, 'create_member')
 
     @log_helpers.log_method_call
     def update(self, context, old_member, member):
         """Update a member."""
+
+        driver = self.driver
+        self.loadbalancer = member.pool.loadbalancer
         try:
-            driver = self.driver
             agent_host, service = self._setup_crud(context, member)
             driver.agent_rpc.update_member(
                 context,
@@ -360,22 +376,28 @@ class MemberManager(ManagerMixin, EntityManager):
     def delete(self, context, member):
         """Delete a member."""
 
+        self.loadbalancer = member.pool.loadbalancer
+        self.api_dict = member.to_dict(pool=False)
         self._call_rpc(context, member, 'delete_member')
 
 
-class HealthMonitorManager(ManagerMixin, EntityManager):
+class HealthMonitorManager(EntityManager):
     """HealthMonitorManager class handles Neutron LBaaS monitor CRUD."""
 
     @log_helpers.log_method_call
     def create(self, context, health_monitor):
         """Create a health monitor."""
 
+        self.loadbalancer = health_monitor.pool.loadbalancer
+        self.api_dict = health_monitor.to_dict(pool=False)
         self._call_rpc(context, health_monitor, 'create_health_monitor')
 
     @log_helpers.log_method_call
     def update(self, context, old_health_monitor, health_monitor):
         """Update a health monitor."""
+
         driver = self.driver
+        self.loadbalancer = health_monitor.pool.loadbalancer
         try:
             agent_host, service = self._setup_crud(context, health_monitor)
             driver.agent_rpc.update_health_monitor(
@@ -393,48 +415,62 @@ class HealthMonitorManager(ManagerMixin, EntityManager):
     def delete(self, context, health_monitor):
         """Delete a health monitor."""
 
+        self.loadbalancer = health_monitor.pool.loadbalancer
+        self.api_dict = health_monitor.to_dict(pool=False)
         self._call_rpc(context, health_monitor, 'delete_health_monitor')
 
 
-class L7PolicyManager(ManagerMixin, EntityManager):
+class L7PolicyManager(EntityManager):
     """L7PolicyManager class handles Neutron LBaaS L7 Policy CRUD."""
 
     @log_helpers.log_method_call
     def create(self, context, policy):
         """Create an L7 policy."""
 
+        self.loadbalancer = policy.listener.loadbalancer
+        self.api_dict = policy.to_dict(listener=False)
         self._call_rpc(context, policy, 'create_l7policy')
 
     @log_helpers.log_method_call
     def update(self, context, policy):
         """Update a policy."""
 
+        self.loadbalancer = policy.listener.loadbalancer
+        self.api_dict = policy.to_dict(listener=False)
         self._call_rpc(context, policy, 'update_l7policy')
 
     @log_helpers.log_method_call
     def delete(self, context, policy):
         """Delete a policy."""
 
+        self.loadbalancer = policy.listener.loadbalancer
+        self.api_dict = policy.to_dict(listener=False)
         self._call_rpc(context, policy, 'delete_l7policy')
 
 
-class L7RuleManager(ManagerMixin, EntityManager):
+class L7RuleManager(EntityManager):
     """L7RuleManager class handles Neutron LBaaS L7 Rule CRUD."""
 
     @log_helpers.log_method_call
     def create(self, context, rule):
         """Create an L7 rule."""
 
+        self.loadbalancer = rule.l7policy.listener.loadbalancer
+        self.api_dict = rule.to_dict(policy=False)
         self._call_rpc(context, rule, 'create_l7rule')
 
     @log_helpers.log_method_call
     def update(self, context, rule):
         """Update a rule."""
 
+        self.loadbalancer = rule.l7policy.listener.loadbalancer
+        self.api_dict = rule.to_dict(policy=False)
         self._call_rpc(context, rule, 'update_l7rule')
 
     @log_helpers.log_method_call
     def delete(self, context, rule):
         """Delete a rule."""
 
+        self.loadbalancer = rule.l7policy.listener.loadbalancer
+        self.api_dict = rule.to_dict(policy=False)
         self._call_rpc(context, rule, 'delete_l7rule')
