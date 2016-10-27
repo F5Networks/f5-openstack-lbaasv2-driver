@@ -117,7 +117,7 @@ class ManagerMixin(object):
         try:
             agent_host, service = self._setup_crud(context, entity)
             rpc_callable = getattr(self.driver.agent_rpc, rpc_method)
-            rpc_callable(context, service, agent_host)
+            rpc_callable(context, entity, service, agent_host)
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
                 lbaas_agentschedulerv2.NoActiveLbaasAgent,
                 f5_exc.F5MismatchedTenants) as e:
