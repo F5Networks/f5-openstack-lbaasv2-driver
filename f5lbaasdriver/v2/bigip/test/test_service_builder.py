@@ -29,9 +29,15 @@ class FakeDict(dict):
 
     def __getattr__(self, item):
         """Needed for using as a model object"""
-        return self[item]
+        if item in self:
+            return self[item]
+        else:
+            return None
 
     def to_api_dict(self):
+        return self
+
+    def to_dict(self, **kwargs):
         return self
 
 
@@ -42,8 +48,10 @@ def _uuid():
 
 @pytest.fixture
 def listeners():
-    return [FakeDict(default_pool=FakeDict()),
-            FakeDict(default_pool=FakeDict())]
+    return [FakeDict(default_pool=FakeDict(),
+                     l7_policies=[]),
+            FakeDict(default_pool=FakeDict(),
+                     l7_policies=[])]
 
 
 @pytest.fixture
