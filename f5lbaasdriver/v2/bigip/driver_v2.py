@@ -301,7 +301,14 @@ class PoolManager(EntityManager):
     """PoolManager class handles Neutron LBaaS pool CRUD."""
 
     def _get_pool_dict(self, pool):
-        pool_dict = pool.to_api_dict()
+        pool_dict = pool.to_dict(
+            healthmonitor=False,
+            listener=False,
+            listeners=False,
+            loadbalancer=False,
+            l7_policies=False,
+            members=False,
+            session_persistence=False)
         pool_dict['provisioning_status'] = pool.provisioning_status
         pool_dict['operating_status'] = pool.operating_status
         return pool_dict
