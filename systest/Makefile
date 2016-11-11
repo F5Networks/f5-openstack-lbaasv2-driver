@@ -38,7 +38,7 @@ tempest_tests:
 
 tempest_tests-setup:
 	@echo "setting up tempest test environment ..."
-	ssh -A builder@$(BAHAMAS) "$(SCRIPTDIR)/tempest_v2driver_setup.sh"\
+	ssh -oStrictHostKeyChecking=no -A builder@$(BAHAMAS) "$(SCRIPTDIR)/tempest_v2driver_setup.sh"\
 	" $(BRANCH)"\
 	" $(TESTSESSION)"
 	echo export TLC_SESSION=builder_$(TESTSESSION) >> tlc_session
@@ -54,5 +54,5 @@ tempest_tests-run:
 	docker push `cat registry_fullname`_test_results
 
 tempest_tests-teardown:
-	. tlc_session && ssh -A builder@$(BAHAMAS)  "/tools/bin/tlc --sid \
+	. tlc_session && ssh -oStrictHostKeyChecking=no -A builder@$(BAHAMAS)  "/tools/bin/tlc --sid \
         $${TLC_SESSION} cleanup"
