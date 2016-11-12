@@ -7,7 +7,7 @@ BRANCH=$3
 SUBJECTCODE_ID=$4
 USER=$5
 
-CONTROLLER_IPADDR=`ssh -A builder@${BAHAMAS}\
+CONTROLLER_IPADDR=`ssh -oStrictHostKeyChecking=no -A builder@${BAHAMAS}\
               "/tools/bin/tlc --sid ${TESTSESSION} symbols "\
               "| grep -e'openstack_controller.*_data_direct' "\
               "| cut -d':' -f2 | tr -d '[:space:]'"`
