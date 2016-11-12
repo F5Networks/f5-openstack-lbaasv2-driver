@@ -54,5 +54,5 @@ tempest_tests-run:
 	docker push `cat registry_fullname`_test_results
 
 tempest_tests-teardown:
-	. tlc_session && ssh -oStrictHostKeyChecking=no -A builder@$(BAHAMAS)  "/tools/bin/tlc --sid \
+	. ./tlc_session && ssh -oStrictHostKeyChecking=no -A builder@$(BAHAMAS)  "/tools/bin/tlc --sid \
         $${TLC_SESSION} cleanup"
