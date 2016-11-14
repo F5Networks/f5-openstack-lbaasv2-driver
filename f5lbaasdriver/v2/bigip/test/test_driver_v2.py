@@ -461,10 +461,16 @@ def test_l7policymgr_create(happy_path_driver):
 def test_l7policymgr_update(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     l7policy_mgr = dv2.L7PolicyManager(mock_driver)
-    fake_l7policy = FakePolicy()
-    l7policy_mgr.update(mock_ctx, fake_l7policy)
+    fake_old_l7policy = FakePolicy(id='old_policy')
+    fake_new_l7policy = FakePolicy(id='new_policy')
+    l7policy_mgr.update(mock_ctx, fake_old_l7policy, fake_new_l7policy)
     assert mock_driver.agent_rpc.update_l7policy.call_args == \
-        mock.call(mock_ctx, fake_l7policy.to_dict(), {}, 'test_agent')
+        mock.call(
+            mock_ctx,
+            fake_old_l7policy.to_dict(),
+            fake_new_l7policy.to_dict(),
+            {},
+            'test_agent')
 
 
 def test_l7policymgr_delete(happy_path_driver):
@@ -488,10 +494,16 @@ def test_l7rulemgr_create(happy_path_driver):
 def test_l7rulemgr_update(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     l7rule_mgr = dv2.L7RuleManager(mock_driver)
-    fake_l7rule = FakeRule()
-    l7rule_mgr.update(mock_ctx, fake_l7rule)
+    fake_old_l7rule = FakeRule(id='old_rule')
+    fake_new_l7rule = FakeRule(id='new_rule')
+    l7rule_mgr.update(mock_ctx, fake_old_l7rule, fake_new_l7rule)
     assert mock_driver.agent_rpc.update_l7rule.call_args == \
-        mock.call(mock_ctx, fake_l7rule.to_dict(), {}, 'test_agent')
+        mock.call(
+            mock_ctx,
+            fake_old_l7rule.to_dict(),
+            fake_new_l7rule.to_dict(),
+            {},
+            'test_agent')
 
 
 def test_l7rulemgr_delete(happy_path_driver):

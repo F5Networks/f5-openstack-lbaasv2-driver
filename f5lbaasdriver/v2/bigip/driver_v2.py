@@ -22,9 +22,9 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import importutils
 
-from neutron.common import constants as q_const
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as plugin_constants
+from neutron_lib import constants as q_const
 
 from neutron_lbaas.db.loadbalancer import models
 from neutron_lbaas.extensions import lbaas_agentschedulerv2
@@ -439,12 +439,23 @@ class L7PolicyManager(EntityManager):
         self._call_rpc(context, policy, 'create_l7policy')
 
     @log_helpers.log_method_call
-    def update(self, context, policy):
+    def update(self, context, old_policy, policy):
         """Update a policy."""
 
+        driver = self.driver
         self.loadbalancer = policy.listener.loadbalancer
-        self.api_dict = policy.to_dict(listener=False)
-        self._call_rpc(context, policy, 'update_l7policy')
+        try:
+            agent_host, service = self._setup_crud(context, policy)
+            driver.agent_rpc.update_l7policy(
+                context,
+                old_policy.to_dict(listener=False),
+                policy.to_dict(listener=False),
+                service,
+                agent_host
+            )
+        except Exception as e:
+            LOG.error("Exception: l7policy update: %s" % e.message)
+            raise e
 
     @log_helpers.log_method_call
     def delete(self, context, policy):
@@ -467,12 +478,23 @@ class L7RuleManager(EntityManager):
         self._call_rpc(context, rule, 'create_l7rule')
 
     @log_helpers.log_method_call
-    def update(self, context, rule):
+    def update(self, context, old_rule, rule):
         """Update a rule."""
 
+        driver = self.driver
         self.loadbalancer = rule.l7policy.listener.loadbalancer
-        self.api_dict = rule.to_dict(policy=False)
-        self._call_rpc(context, rule, 'update_l7rule')
+        try:
+            agent_host, service = self._setup_crud(context, rule)
+            driver.agent_rpc.update_l7rule(
+                context,
+                old_rule.to_dict(policy=False),
+                rule.to_dict(policy=False),
+                service,
+                agent_host
+            )
+        except Exception as e:
+            LOG.error("Exception: l7rule update: %s" % e.message)
+            raise e
 
     @log_helpers.log_method_call
     def delete(self, context, rule):
