@@ -22,7 +22,7 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import importutils
 
-from neutron.common import constants as q_const
+from neutron_lib import constants as q_const
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as plugin_constants
 
