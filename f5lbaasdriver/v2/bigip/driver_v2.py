@@ -22,9 +22,9 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import importutils
 
-from neutron_lib import constants as q_const
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as plugin_constants
+from neutron_lib import constants as q_const
 
 from neutron_lbaas.db.loadbalancer import models
 from neutron_lbaas.extensions import lbaas_agentschedulerv2
