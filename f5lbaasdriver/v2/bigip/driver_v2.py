@@ -473,7 +473,7 @@ class L7RuleManager(EntityManager):
     def create(self, context, rule):
         """Create an L7 rule."""
 
-        self.loadbalancer = rule.l7policy.listener.loadbalancer
+        self.loadbalancer = rule.policy.listener.loadbalancer
         self.api_dict = rule.to_dict(policy=False)
         self._call_rpc(context, rule, 'create_l7rule')
 
@@ -482,7 +482,7 @@ class L7RuleManager(EntityManager):
         """Update a rule."""
 
         driver = self.driver
-        self.loadbalancer = rule.l7policy.listener.loadbalancer
+        self.loadbalancer = rule.policy.listener.loadbalancer
         try:
             agent_host, service = self._setup_crud(context, rule)
             driver.agent_rpc.update_l7rule(
@@ -500,6 +500,6 @@ class L7RuleManager(EntityManager):
     def delete(self, context, rule):
         """Delete a rule."""
 
-        self.loadbalancer = rule.l7policy.listener.loadbalancer
+        self.loadbalancer = rule.policy.listener.loadbalancer
         self.api_dict = rule.to_dict(policy=False)
         self._call_rpc(context, rule, 'delete_l7rule')
