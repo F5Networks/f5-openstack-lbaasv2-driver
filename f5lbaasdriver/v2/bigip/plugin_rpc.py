@@ -393,7 +393,8 @@ class LBaaSv2PluginCallbacksRPC(object):
             self,
             context,
             l7policy_id=None,
-            provisioning_status=plugin_constants.ERROR):
+            provisioning_status=plugin_constants.ERROR,
+            operating_status=None):
         """Agent confirmation hook to update l7 policy status."""
         with context.session.begin(subtransactions=True):
             try:
@@ -408,7 +409,8 @@ class LBaaSv2PluginCallbacksRPC(object):
                     context,
                     models.L7Policy,
                     l7policy_id,
-                    provisioning_status
+                    provisioning_status,
+                    operating_status
                 )
             except Exception as e:
                 LOG.error('Exception: update_l7policy_status: %s',
@@ -416,6 +418,7 @@ class LBaaSv2PluginCallbacksRPC(object):
 
     @log_helpers.log_method_call
     def l7policy_destroyed(self, context, l7policy_id=None):
+        LOG.debug("l7policy_destroyed")
         """Agent confirmation hook that l7 policy has been destroyed."""
         self.driver.plugin.db.delete_l7policy(context, l7policy_id)
 
@@ -425,7 +428,8 @@ class LBaaSv2PluginCallbacksRPC(object):
             context,
             l7rule_id=None,
             l7policy_id=None,
-            provisioning_status=plugin_constants.ERROR):
+            provisioning_status=plugin_constants.ERROR,
+            operating_status=None):
         """Agent confirmation hook to update l7 policy status."""
         with context.session.begin(subtransactions=True):
             try:
@@ -441,10 +445,11 @@ class LBaaSv2PluginCallbacksRPC(object):
                     context,
                     models.L7Rule,
                     l7rule_id,
-                    provisioning_status
+                    provisioning_status,
+                    operating_status
                 )
             except Exception as e:
-                LOG.error('Exception: update_l7policy_status: %s',
+                LOG.error('Exception: update_l7rule_status: %s',
                           e.message)
 
     @log_helpers.log_method_call
