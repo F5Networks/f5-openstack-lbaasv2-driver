@@ -62,7 +62,6 @@ class F5BaseTestCase(base.BaseTestCase):
 
     def tearDown(self):
         self._delete_l7policy(self.l7policy.get('id'))
-        self._stop_servers()
         self._traffic_validation_after_stopping_servers()
 
     def _create_detached_pool(self):
@@ -158,5 +157,16 @@ class F5BaseTestCase(base.BaseTestCase):
 
     def _delete_l7policy(self, l7policy_id, wait=True):
         self.l7policy_client.delete_l7policy(l7policy_id)
+        if wait:
+            self._wait_for_load_balancer_status(self.load_balancer.get('id'))
+
+    def _create_l7rule(self, policy_id, wait=True, **l7rule_kwargs):
+        l7rule = self.l7rule_client.create_l7rule(policy_id, **l7rule_kwargs)
+        if wait:
+            self._wait_for_load_balancer_status(self.load_balancer.get('id'))
+        return l7rule
+
+    def _delete_l7rule(self, policy_id, l7rule_id, wait=True):
+        self.l7rule_client.delete_l7rule(policy_id, l7rule_id)
         if wait:
             self._wait_for_load_balancer_status(self.load_balancer.get('id'))
