@@ -18,6 +18,7 @@ from f5lbaasdriver.test.tempest.services.clients import l7policy_client
 from f5lbaasdriver.test.tempest.services.clients import l7rule_client
 
 from tempest import config
+from tempest.lib.exceptions import NotFound
 from tempest.scenario import network_resources as net_resources
 
 
@@ -30,8 +31,6 @@ class F5BaseTestCase(base.BaseTestCase):
     def setUp(self):
         super(F5BaseTestCase, self).setUp()
         self.members = {}
-        self.l7policies = []
-        self.l7rules = {}
         self.l7policy_client = l7policy_client.L7PolicyClientJSON(
             *self.client_args)
         self.l7rule_client = l7rule_client.L7RuleClientJSON(
@@ -125,12 +124,21 @@ class F5BaseTestCase(base.BaseTestCase):
 
     def _create_l7policy(self, wait=True, **l7policy_kwargs):
         l7policy = self.l7policy_client.create_l7policy(**l7policy_kwargs)
+        self.addCleanup(self._delete_l7policy, l7policy.get('id'))
         if wait:
             self._wait_for_load_balancer_status(self.load_balancer.get('id'))
         return l7policy
 
+    def _update_l7policy(self, l7policy_id, wait=True, **l7policy_kwargs):
+        self.l7policy_client.update_l7policy(l7policy_id, **l7policy_kwargs)
+        if wait:
+            self._wait_for_load_balancer_status(self.load_balancer.get('id'))
+
     def _delete_l7policy(self, l7policy_id, wait=True):
-        self.l7policy_client.delete_l7policy(l7policy_id)
+        try:
+            self.l7policy_client.delete_l7policy(l7policy_id)
+        except NotFound:
+            pass
         if wait:
             self._wait_for_load_balancer_status(self.load_balancer.get('id'))
 
@@ -139,6 +147,11 @@ class F5BaseTestCase(base.BaseTestCase):
         if wait:
             self._wait_for_load_balancer_status(self.load_balancer.get('id'))
         return l7rule
+
+    def _update_l7rule(self, policy_id, l7rule_id, wait=True, **l7rule_kwargs):
+        self.l7rule_client.update_l7rule(policy_id, l7rule_id, **l7rule_kwargs)
+        if wait:
+            self._wait_for_load_balancer_status(self.load_balancer.get('id'))
 
     def _delete_l7rule(self, policy_id, l7rule_id, wait=True):
         self.l7rule_client.delete_l7rule(policy_id, l7rule_id)
