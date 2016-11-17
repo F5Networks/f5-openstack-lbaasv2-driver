@@ -87,7 +87,7 @@ class FakeRule(FakeBaseObj):
     def __init__(self, id='test_obj_id', attached_to_lb=True):
         super(FakeRule, self).__init__(id=id, attached_to_lb=attached_to_lb)
         self.id = id
-        self.l7policy = FakePolicy()
+        self.policy = FakePolicy()
 
 
 @pytest.fixture
