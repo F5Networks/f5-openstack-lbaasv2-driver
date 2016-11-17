@@ -38,21 +38,24 @@ tempest_tests:
 
 tempest_tests-setup:
 	@echo "setting up tempest test environment ..."
-	ssh -oStrictHostKeyChecking=no -A builder@$(BAHAMAS) "$(SCRIPTDIR)/tempest_v2driver_setup.sh"\
+	ssh -oStrictHostKeyChecking=no -A builder@$(BAHAMAS) \
+    "$(SCRIPTDIR)/tempest_v2driver_setup.sh"\
 	" $(BRANCH)"\
 	" $(TESTSESSION)"
 	echo export TLC_SESSION=builder_$(TESTSESSION) >> tlc_session
     
 tempest_tests-install:
-	. ./tlc_session && ./scripts/tempest_v2driver_install.sh $(BAHAMAS) $${TLC_SESSION} $(BRANCH) $(SUBJECTCODE_ID) builder
+	. ./tlc_session && ./scripts/tempest_v2driver_install.sh \
+    $(BAHAMAS) $${TLC_SESSION} $(BRANCH) $(SUBJECTCODE_ID) builder
 
 tempest_tests-run:
 	docker run `cat registry_fullname` || true
 	@echo "downloading functional test results ..."
-	docker cp $$(docker ps -qn1):/home/buildbot/testrunner/test_results ./test_results
+	docker cp $$(docker ps -qn1):/home/buildbot/testrunner/test_results \
+    ./test_results
 	docker commit $$(docker ps -qn1) `cat registry_fullname`_test_results
 	docker push `cat registry_fullname`_test_results
 
 tempest_tests-teardown:
-	. ./tlc_session && ssh -oStrictHostKeyChecking=no -A builder@$(BAHAMAS)  "/tools/bin/tlc --sid \
-        $${TLC_SESSION} cleanup"
+	. ./tlc_session && ssh -oStrictHostKeyChecking=no -A builder@$(BAHAMAS) \
+    "/tools/bin/tlc --sid $${TLC_SESSION} cleanup"
