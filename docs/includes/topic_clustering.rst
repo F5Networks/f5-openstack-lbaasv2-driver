@@ -18,6 +18,34 @@ Clustering provides a greater degree of redundancy than a standalone device offe
 
         BIG-IP scalen cluster
 
+.. important::
+
+    The F5 agent expects to find a specific number of entries for the ``icontrol_hostname`` parameter based on the configured ``f5_ha_type``, as noted below.
+
+    .. list-table::
+        :header-rows: 1
+
+        * - ha type
+          - number of iControl endpoints
+        * - standalone
+          - 1
+        * - pair
+          - 2
+        * - scalen
+          - > 2
+
+F5 LBaaSv2 and BIG-IP Auto-sync
+```````````````````````````````
+
+By design, F5 LBaaSv2 applies configuration directly to each device in a cluster or pair. Because of this functionality, we do not support the use of F5 LBaaSv2 with BIG-IP device clusters that are set to use auto-sync. If, for example, you create a load balancer for a device group that is set to use auto-sync, the create command will only succeed on the first device in the group; it will fail on the others because the object will have already been created via auto-sync.
+
+For this reason, we recommend manually syncing BIG-IP device groups after making configuration changes with F5 LBaaSv2.
+
+.. caution::
+
+    If you choose to enter only one (1) iControl endpoint for your device group and rely on auto-sync, you must set the ``f5_ha_type`` to ``standalone``. Should you choose to do so, however, **you will need to manually update** the :ref:`agent configuration file` with the iControl endpoint of another device in the group should the configured device fail.
+
+    While it is possible to use auto-sync for a device group *after* creating a new load balancer, it is not recommended. This functionality has not been tested.
 
 Prerequisites
 -------------
