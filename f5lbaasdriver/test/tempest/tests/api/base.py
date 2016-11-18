@@ -34,6 +34,9 @@ from neutron_lbaas.tests.tempest.v2.clients import \
 from neutron_lbaas.tests.tempest.v2.clients import members_client
 from neutron_lbaas.tests.tempest.v2.clients import pools_client
 
+from f5lbaasdriver.test.tempest.services.clients import \
+    bigip_client
+
 CONF = config.CONF
 
 LOG = logging.getLogger(__name__)
@@ -75,6 +78,7 @@ class BaseTestCase(base.BaseNetworkTest):
         auth_provider = mgr.auth_provider
         client_args = _setup_client_args(auth_provider)
 
+        cls.bigip_client = bigip_client.BigIpClient()
         cls.load_balancers_client = (
             load_balancers_client.LoadBalancersClientJSON(*client_args))
         cls.listeners_client = (
@@ -447,6 +451,7 @@ class BaseAdminTestCase(BaseTestCase):
         auth_provider_admin = mgr.auth_provider
         client_args = _setup_client_args(auth_provider_admin)
 
+        cls.bigip_client = bigip_client.BigIpClient()
         cls.load_balancers_client = (
             load_balancers_client.LoadBalancersClientJSON(*client_args))
         cls.listeners_client = (
