@@ -93,6 +93,37 @@ class BigIpClient(object):
         return self.rule_has_condition(
             policy_name, rule_name, 'endsWith', partition)
 
+    def rule_has_contains(self, policy_name, rule_name, partition):
+        return self.rule_has_condition(
+            policy_name, rule_name, 'contains', partition)
+
+    def rule_has_equals(self, policy_name, rule_name, partition):
+        return self.rule_has_condition(
+            policy_name, rule_name, 'equals', partition)
+
+    def rule_has_host_name(self, policy_name, rule_name, partition):
+        return self.rule_has_condition(
+            policy_name, rule_name, 'httpHost', partition)
+
+    def rule_has_path(self, policy_name, rule_name, partition):
+        has_httpUri = self.rule_has_condition(
+            policy_name, rule_name, 'httpUri', partition)
+        has_path = self.rule_has_condition(
+            policy_name, rule_name, 'path', partition)
+        return has_httpUri and has_path
+
+    def rule_has_file_type(self, policy_name, rule_name, partition):
+        return self.rule_has_condition(
+            policy_name, rule_name, 'httpUri', partition)
+
+    def rule_has_header(self, policy_name, rule_name, partition):
+        return self.rule_has_condition(
+            policy_name, rule_name, 'httpHeader', partition)
+
+    def rule_has_cookie(self, policy_name, rule_name, partition):
+        return self.rule_has_condition(
+            policy_name, rule_name, 'httpCookie', partition)
+
     def virtual_server_exists(self, name, partition):
         return self.bigip.tm.ltm.virtuals.virtual.exists(
             name=name, partition=partition)
