@@ -22,6 +22,7 @@ import requests
 
 class TestL7Basic(f5_base.F5BaseTestCase):
     def setUp(self):
+        super(TestL7Basic, self).setUp()
         self.policies = []
 
     def tearDown(self):
@@ -353,7 +354,7 @@ class TestL7BasicUpdate(TestL7Basic):
         self._delete_l7policy(rej2_pol.get('id'))
         self._remove_members()
 
-    def test_policy_sol17095_deployment_operand_match(self):
+    def test_policy_deployment_operand_match(self):
         '''Deploy multiple conditions for a rule with operands that match.
 
         This test will fail on 11.6.0 before Hotfix 6 due to issue: SOL17095
