@@ -18,9 +18,8 @@ from f5lbaasdriver.test.tempest.services.clients import l7policy_client
 from f5lbaasdriver.test.tempest.services.clients import l7rule_client
 
 from tempest import config
+from tempest.lib.exceptions import NotFound
 from tempest.scenario import network_resources as net_resources
-
-import six
 
 
 config = config.CONF
@@ -31,8 +30,7 @@ class F5BaseTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(F5BaseTestCase, self).setUp()
-        self.l7policies = []
-        self.l7rules = {}
+        self.members = {}
         self.l7policy_client = l7policy_client.L7PolicyClientJSON(
             *self.client_args)
         self.l7rule_client = l7rule_client.L7RuleClientJSON(
@@ -41,28 +39,19 @@ class F5BaseTestCase(base.BaseTestCase):
         self._start_servers()
         self._create_load_balancer()
         self._create_detached_pool()
-        self._create_members(
-            {
-                self.servers['primary']: self.server_fixed_ips[
-                    self.servers['primary']]
-            },
+        self._create_member(
+            self.server_fixed_ips[self.servers['primary']],
+            'primary',
             load_balancer_id=self.load_balancer.get('id'),
             pool_id=self.pool.get('id'),
             subnet_id=self.subnet.get('id'))
-        self._create_members(
-            {
-                self.servers['secondary']: self.server_fixed_ips[
-                    self.servers['secondary']]
-            },
+        self._create_member(
+            self.server_fixed_ips[self.servers['secondary']],
+            'secondary',
             load_balancer_id=self.load_balancer.get('id'),
             pool_id=self.detached_pool.get('id'),
             subnet_id=self.subnet.get('id'))
-        # self._check_connection(self.vip_ip)
         self._wait_for_load_balancer_status(self.load_balancer.get('id'))
-
-    def tearDown(self):
-        self._delete_l7policy(self.l7policy.get('id'))
-        self._traffic_validation_after_stopping_servers()
 
     def _create_detached_pool(self):
         pool = {
@@ -116,47 +105,40 @@ class F5BaseTestCase(base.BaseTestCase):
             self.load_balancer.get('vip_port_id'),
             security_groups=[self.security_group.id])
 
-    def _create_members(self, server_list, load_balancer_id=None, pool_id=None,
-                        subnet_id=None):
+    def _create_member(self, server_ip, server_position, load_balancer_id=None,
+                       pool_id=None, subnet_id=None):
         """Create two members.
 
         In case there is only one server, create both members with the same ip
         but with different ports to listen on.
         """
 
-        for server_id, ip in six.iteritems(server_list):
-            if len(self.server_fixed_ips) == 1:
-                member1 = self.members_client.create_member(
-                    pool_id=pool_id,
-                    address=ip,
-                    protocol_port=self.port1,
-                    subnet_id=subnet_id)
-                self._wait_for_load_balancer_status(load_balancer_id)
-                member2 = self.members_client.create_member(
-                    pool_id=pool_id,
-                    address=ip,
-                    protocol_port=self.port2,
-                    subnet_id=subnet_id)
-                self._wait_for_load_balancer_status(load_balancer_id)
-                self.members.extend([member1, member2])
-            else:
-                member = self.members_client.create_member(
-                    pool_id=pool_id,
-                    address=ip,
-                    protocol_port=self.port1,
-                    subnet_id=subnet_id)
-                self._wait_for_load_balancer_status(load_balancer_id)
-                self.members.append(member)
-        self.assertTrue(self.members)
+        member = self.members_client.create_member(
+            pool_id=pool_id,
+            address=server_ip,
+            protocol_port=self.port1,
+            subnet_id=subnet_id)
+        self._wait_for_load_balancer_status(load_balancer_id)
+        self.members[server_position] = member
+        self.assertTrue(self.members[server_position])
 
     def _create_l7policy(self, wait=True, **l7policy_kwargs):
         l7policy = self.l7policy_client.create_l7policy(**l7policy_kwargs)
+        self.addCleanup(self._delete_l7policy, l7policy.get('id'))
         if wait:
             self._wait_for_load_balancer_status(self.load_balancer.get('id'))
         return l7policy
 
+    def _update_l7policy(self, l7policy_id, wait=True, **l7policy_kwargs):
+        self.l7policy_client.update_l7policy(l7policy_id, **l7policy_kwargs)
+        if wait:
+            self._wait_for_load_balancer_status(self.load_balancer.get('id'))
+
     def _delete_l7policy(self, l7policy_id, wait=True):
-        self.l7policy_client.delete_l7policy(l7policy_id)
+        try:
+            self.l7policy_client.delete_l7policy(l7policy_id)
+        except NotFound:
+            pass
         if wait:
             self._wait_for_load_balancer_status(self.load_balancer.get('id'))
 
@@ -165,6 +147,11 @@ class F5BaseTestCase(base.BaseTestCase):
         if wait:
             self._wait_for_load_balancer_status(self.load_balancer.get('id'))
         return l7rule
+
+    def _update_l7rule(self, policy_id, l7rule_id, wait=True, **l7rule_kwargs):
+        self.l7rule_client.update_l7rule(policy_id, l7rule_id, **l7rule_kwargs)
+        if wait:
+            self._wait_for_load_balancer_status(self.load_balancer.get('id'))
 
     def _delete_l7rule(self, policy_id, l7rule_id, wait=True):
         self.l7rule_client.delete_l7rule(policy_id, l7rule_id)
