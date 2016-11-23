@@ -370,7 +370,7 @@ class TestL7BasicUpdate(TestL7Basic):
         self._create_l7rule(rej1_pol.get('id'), value='i_c', **r1_args)
         with pytest.raises(Exception) as ex:
             self._run_traffic('should_fail',
-                              uri_path='http://{}/ti_bdc_i_c'.format(
+                              uri_path='http://{}/_i_ai_bdc_i_c'.format(
                                   self.vip_ip))
         assert 'Connection aborted' in str(ex)
         self._delete_l7policy(rej1_pol.get('id'))
