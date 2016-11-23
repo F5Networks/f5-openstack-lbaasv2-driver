@@ -40,7 +40,7 @@ class L7RuleClientJSON(rest_client.RestClient):
         resp, body = self.get(url)
         body = jsonutils.loads(body)
         self.expected_success(200, resp.status)
-        return rest_client.ResponseBody(resp, body["l7rule"])
+        return rest_client.ResponseBody(resp, body["rule"])
 
     def create_l7rule(self, policy_id, **kwargs):
         """Create L7 rule."""
