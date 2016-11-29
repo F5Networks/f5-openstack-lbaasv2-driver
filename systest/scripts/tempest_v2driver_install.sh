@@ -19,13 +19,13 @@ SSH_WITH_KEYSTONE=${SSH_TO_CONTROLLER}" source keystonerc_testlab && "
 ICONTROL_IPADDR=`${SSH_TO_CONTROLLER} "cat ve_mgmt_ip"`
 OS_AUTH_URL=`${SSH_WITH_KEYSTONE} "grep OS_AUTH_URL keystonerc_testlab"`
 PUBLIC_ROUTER_ID=`${SSH_WITH_KEYSTONE} "neutron router-list -F id -F name "\
-    "| grep tempest-mgmt-router | cut -d '|' -f 2  | tr -d '[:space:]' 2>/dev/null"`
+    "| grep tempest-mgmt-router | cut -d '|' -f 2  | xargs 2>/dev/null"`
 PUBLIC_NETWORK_ID=`${SSH_WITH_KEYSTONE} "neutron net-list -F id -F name "\
-    "| grep external_network | cut -d '|' -f 2  | tr -d '[:space:]' 2>/dev/null"`
+    "| grep external_network | cut -d '|' -f 2  | xargs 2>/dev/null"`
 OS_TENANT_ID=`${SSH_WITH_KEYSTONE} "keystone tenant-list "\
-    "| grep testlab | cut -d '|' -f 2  | tr -d '[:space:]' 2>/dev/null"`
+    "| grep testlab | cut -d '|' -f 2  | xargs 2>/dev/null"`
 IMAGE_REF=`${SSH_WITH_KEYSTONE} "glance image-list"\
-    "| grep cirros-0.3.4-x86_64-disk.qcow2 | cut -d '|' -f 2 | tr -d '[:space:]' 2>/dev/null"`
+    "| grep cirros-0.3.4-x86_64-disk.qcow2 | cut -d '|' -f 2 | xargs 2>/dev/null"`
 
 # post processing ('prepend export=') NOTE: OS_AUTH_URL needs no modification
 CONTROLLER_IPADDR="export CONTROLLER_IPADDR="${CONTROLLER_IPADDR}
