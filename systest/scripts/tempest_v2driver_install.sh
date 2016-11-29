@@ -16,14 +16,14 @@ SSH_TO_CONTROLLER="ssh -oStrictHostKeyChecking=no -A testlab@${CONTROLLER_IPADDR
 SSH_WITH_KEYSTONE=${SSH_TO_CONTROLLER}" source keystonerc_testlab && " 
 
 # SSH invocations
-ICONTROL_IPADDR=`${SSH_TO_CONTROLLER} "cat ve_mgmt_ip"`
+ICONTROL_IPADDR=`${SSH_TO_CONTROLLER} "cat ve_mgmt_ip | xargs"`
 OS_AUTH_URL=`${SSH_WITH_KEYSTONE} "grep OS_AUTH_URL keystonerc_testlab"`
 PUBLIC_ROUTER_ID=`${SSH_WITH_KEYSTONE} "neutron router-list -F id -F name "\
-    "| grep tempest-mgmt-router | cut -d '|' -f 2  | tr -d '[:space:]' 2>/dev/null"`
+    "| grep tempest-mgmt-router | cut -d '|' -f 2  | xargs 2>/dev/null"`
 PUBLIC_NETWORK_ID=`${SSH_WITH_KEYSTONE} "neutron net-list -F id -F name "\
-    "| grep external_network | cut -d '|' -f 2  | tr -d '[:space:]' 2>/dev/null"`
+    "| grep external_network | cut -d '|' -f 2  | xargs 2>/dev/null"`
 OS_TENANT_ID=`${SSH_WITH_KEYSTONE} "keystone tenant-list "\
-    "| grep testlab | cut -d '|' -f 2  | tr -d '[:space:]' 2>/dev/null"`
+    "| grep testlab | cut -d '|' -f 2  | xargs 2>/dev/null"`
 
 
 # post processing ('prepend export=') NOTE: OS_AUTH_URL needs no modification
@@ -43,10 +43,8 @@ echo ${PUBLIC_ROUTER_ID} >> tempest_variables
 echo ${PUBLIC_NETWORK_ID} >> tempest_variables
 echo ${OS_TENANT_ID} >> tempest_variables
 
-. ./tempest_variables &&
-
-sudo pip install --upgrade git+https://github.com/zancas/prodactivity.git@v0.1.0
-sudo publish_test_container tempest f5-openstack-lbaasv2-driver ${BRANCH} ${SUBJECTCODE_ID} ${USER}
+pip install --upgrade git+https://github.com/zancas/prodactivity.git@v0.1.0
+. ./tempest_variables && publish_test_container tempest f5-openstack-lbaasv2-driver ${BRANCH} ${SUBJECTCODE_ID} ${USER}
 REGDIR=`python -c 'import os, prodactivity;print(\\
             os.path.dirname(os.path.abspath(prodactivity.__file__)))'`
 REGFILE=${REGDIR}/testrunners/registry_fullname
