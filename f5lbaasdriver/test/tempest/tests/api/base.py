@@ -381,9 +381,10 @@ class BaseTestCase(base.BaseNetworkTest):
             cls._wait_for_load_balancer_status(cls.load_balancer.get('id'))
 
     @classmethod
-    def _update_l7rule(cls, l7rule_id, wait=True, **l7rule_kwargs):
+    def _update_l7rule(
+            cls, l7policy_id, l7rule_id, wait=True, **l7rule_kwargs):
         l7rule = cls.l7rule_client.update_l7rule(
-            l7rule_id, **l7rule_kwargs)
+            l7policy_id, l7rule_id, **l7rule_kwargs)
         if wait:
             cls._wait_for_load_balancer_status(
                 cls.load_balancer.get('id'))

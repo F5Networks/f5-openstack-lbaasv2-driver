@@ -76,7 +76,7 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
         assert self.bigip.policy_exists(policy, partition=self.partition)
 
     def check_rule(self, rule='', policy='wrapper_policy',
-                   action=None, condition=None):
+                   action=None, condition=None, value=None):
         # Validate BIG-IP has rule
         assert self.bigip.rule_exists(
             policy, rule, partition=self.partition)
@@ -87,7 +87,7 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
 
         if condition:
             assert self.bigip.rule_has_condition(
-                policy, rule, condition, partition=self.partition)
+                policy, rule, condition, value, partition=self.partition)
 
     def check_virtual_server(self):
         # Validate virtual server has policy
@@ -131,7 +131,7 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
         self.check_rule(
             'reject_1',
             action=create_l7policy_rule_kwargs['action'],
-            condition='startsWith')
+            condition='startsWith', value='/api')
         self.check_virtual_server()
 
     @test.attr(type='smoke')
@@ -157,7 +157,8 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
         self.addCleanup(self._delete_l7rule, policy1_id, rule1['id'])
 
         self.check_policy()
-        self.check_rule('reject_1')
+        self.check_rule(rule='reject_1', action='REJECT',
+                        condition='startsWith', value='/api')
         self.check_virtual_server()
 
         policy2 = self._create_l7policy(
@@ -172,7 +173,8 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
         self.addCleanup(self._delete_l7rule, policy2_id, rule2['id'])
 
         self.check_policy()
-        self.check_rule('redirect_to_url_2')
+        self.check_rule('redirect_to_url_2', action='REDIRECT_TO_URL',
+                        condition='endsWith', value='.org')
         self.check_virtual_server()
 
     @test.attr(type='smoke')
@@ -198,7 +200,8 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
         self.addCleanup(self._delete_l7rule, policy1_id, rule1['id'])
 
         self.check_policy()
-        self.check_rule('reject_1')
+        self.check_rule('reject_1', action='REJECT', condition='startsWith',
+                        value='/api')
         self.check_virtual_server()
 
         policy2 = self._create_l7policy(
@@ -211,7 +214,8 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
         self.addCleanup(self._delete_l7rule, policy2_id, rule2['id'])
 
         self.check_policy()
-        self.check_rule('redirect_to_url_2')
+        self.check_rule('redirect_to_url_2', action='REDIRECT_TO_URL',
+                        condition='endsWith', value='.jpg')
         self.check_virtual_server()
 
         update_rule_kwargs = {'position': 2}
@@ -219,8 +223,10 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
 
         # redirect should now be first
         self.check_policy()
-        self.check_rule('redirect_to_url_1')
-        self.check_rule('reject_2')
+        self.check_rule('redirect_to_url_1', action='REDIRECT_TO_URL',
+                        condition='endsWith', value='.jpg')
+        self.check_rule('reject_2', action='REJECT', condition='startsWith',
+                        value='/api')
         self.check_virtual_server()
 
     @test.attr(type='smoke')
@@ -238,7 +244,8 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
         rule_id = rule['id']
 
         self.check_policy()
-        self.check_rule('reject_1')
+        self.check_rule('reject_1', action='REJECT', condition='startsWith',
+                        value='/api')
         self.check_virtual_server()
 
         # remove both rule and policy and expect policy removed from BIG-IP
@@ -265,7 +272,8 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
         rule_id = rule['id']
 
         self.check_policy()
-        self.check_rule('reject_1')
+        self.check_rule('reject_1', action='REJECT', condition='startsWith',
+                        value='/api')
         self.check_virtual_server()
 
         # remove rule and expect policy removed from BIG-IP
@@ -291,7 +299,8 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
         rule1_id = rule1['id']
 
         self.check_policy()
-        self.check_rule('reject_1')
+        self.check_rule('reject_1', action='REJECT', condition='startsWith',
+                        value='/api')
         self.check_virtual_server()
 
         rule2 = self._create_l7rule(
@@ -299,7 +308,8 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
         rule2_id = rule2['id']
         self.addCleanup(self._delete_l7rule, policy_id, rule2_id)
         self.check_policy()
-        self.check_rule('reject_1')
+        self.check_rule('reject_1', action='REJECT', condition='endsWith',
+                        value='/api')
         self.check_virtual_server()
 
         # remove first rule leaving second and expect new policy on BIG-IP
