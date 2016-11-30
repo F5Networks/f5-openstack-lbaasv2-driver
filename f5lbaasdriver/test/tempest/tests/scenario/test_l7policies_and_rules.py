@@ -18,6 +18,7 @@ from tempest.lib.exceptions import NotFound
 
 import pytest
 import requests
+import time
 
 
 class TestL7Basic(f5_base.F5BaseTestCase):
@@ -51,16 +52,27 @@ class TestL7Basic(f5_base.F5BaseTestCase):
     def _run_traffic(
             self, expected_server, headers=None, cookies=None, uri_path=None,
             expected_status=200):
+
+        # We must allow time for changes in the control plane to propagate
+        # to the data plane. So let's retry if we fail in any way.
         print('##################')
         print('##################')
-        if not uri_path:
-            uri_path = 'http://{}'.format(self.vip_ip)
-        print('making request to {}'.format(uri_path))
-        res = requests.get(uri_path, headers=headers, cookies=cookies)
-        print('Expected_server: {}'.format(expected_server))
-        print('Return server: {}'.format(res.text))
-        assert expected_server in res.text
-        assert res.status_code == expected_status
+        for x in range(10):
+            try:
+                if not uri_path:
+                    uri_path = 'http://{}'.format(self.vip_ip)
+                print('making request to {}'.format(uri_path))
+                res = requests.get(uri_path, headers=headers, cookies=cookies)
+                print('Expected_server: {}'.format(expected_server))
+                print('Return server: {}'.format(res.text))
+                assert expected_server in res.text
+                assert res.status_code == expected_status
+            except Exception as ex:
+                if expected_server == 'fail':
+                    if 'Connection aborted' in str(ex):
+                        raise ex
+                time.sleep(1)
+                continue
 
     def _reject_args(self):
         self.reject_args = {
@@ -255,7 +267,7 @@ class TestL7BasicReject(TestL7Basic):
         self._run_traffic('server1')
         self._run_traffic('server1', headers={'X-HEADER': 'test'})
         with pytest.raises(Exception) as ex:
-            self._run_traffic('server2', headers={'X-HEADER': 'real_head'})
+            self._run_traffic('fail', headers={'X-HEADER': 'real_head'})
         assert 'Connection aborted' in str(ex)
         self._delete_l7policy(self.l7policy.get('id'))
         self._wait_for_load_balancer_status(self.load_balancer.get('id'))
@@ -275,7 +287,7 @@ class TestL7BasicReject(TestL7Basic):
             'server1', uri_path='http://{}/test.jpeg'.format(self.vip_ip))
         with pytest.raises(Exception) as ex:
             self._run_traffic(
-                'server1', uri_path='http://{}/test.jpg'.format(self.vip_ip))
+                'fail', uri_path='http://{}/test.jpg'.format(self.vip_ip))
         assert 'Connection aborted' in str(ex)
         self._delete_l7policy(self.l7policy.get('id'))
         self._wait_for_load_balancer_status(self.load_balancer.get('id'))
@@ -300,7 +312,7 @@ class TestL7BasicUpdate(TestL7Basic):
             such as header and ends_with.
         '''
 
-        # Reject policy first become reject rule on device
+        # Reject policy first becomes reject rule on device
         r1_args = {'type': 'FILE_TYPE', 'compare_type': 'EQUAL_TO'}
         r2_args = {'type': 'PATH', 'compare_type': 'CONTAINS'}
         r3_args = {'type': 'COOKIE', 'compare_type': 'ENDS_WITH', 'key': 'cky'}
@@ -320,7 +332,7 @@ class TestL7BasicUpdate(TestL7Basic):
         # Test policy1
         with pytest.raises(Exception) as ex1:
             self._run_traffic(
-                'server1', uri_path='http://{}/fi_t.jpg'.format(self.vip_ip),
+                'fail', uri_path='http://{}/fi_t.jpg'.format(self.vip_ip),
                 cookies={'cky': 'ci'})
         assert 'Connection aborted' in str(ex1)
         # Test policy2
@@ -329,7 +341,7 @@ class TestL7BasicUpdate(TestL7Basic):
         # Test policy3
         with pytest.raises(Exception) as ex2:
             self._run_traffic(
-                'server1', uri_path='http://{}/test.gif'.format(self.vip_ip),
+                'fail', uri_path='http://{}/test.gif'.format(self.vip_ip),
                 cookies={'cky': 'bookie'})
         assert 'Connection aborted' in str(ex2)
         # Test no match for any policy
@@ -369,7 +381,7 @@ class TestL7BasicUpdate(TestL7Basic):
         self._create_l7rule(rej1_pol.get('id'), value='i_b', **r1_args)
         self._create_l7rule(rej1_pol.get('id'), value='i_c', **r1_args)
         with pytest.raises(Exception) as ex:
-            self._run_traffic('should_fail',
+            self._run_traffic('fail',
                               uri_path='http://{}/_i_ai_bdc_i_c'.format(
                                   self.vip_ip))
         assert 'Connection aborted' in str(ex)
