@@ -24,8 +24,8 @@ PUBLIC_NETWORK_ID=`${SSH_WITH_KEYSTONE} "neutron net-list -F id -F name "\
     "| grep external_network | cut -d '|' -f 2  | tr -d '[:space:]' 2>/dev/null"`
 OS_TENANT_ID=`${SSH_WITH_KEYSTONE} "keystone tenant-list "\
     "| grep testlab | cut -d '|' -f 2  | tr -d '[:space:]' 2>/dev/null"`
-IMAGE_REF=`${SSH_WITH_KEYSTONE} "glance image-list"\ 
-    "| grep cirros-0.3.4-x86_64-disk.qcow2 | cut -d '|' -f 2 | tr -d '[:space:]' 2>/dev/null`
+IMAGE_REF=`${SSH_WITH_KEYSTONE} "glance image-list"\
+    "| grep cirros-0.3.4-x86_64-disk.qcow2 | cut -d '|' -f 2 | tr -d '[:space:]' 2>/dev/null"`
 
 # post processing ('prepend export=') NOTE: OS_AUTH_URL needs no modification
 CONTROLLER_IPADDR="export CONTROLLER_IPADDR="${CONTROLLER_IPADDR}
