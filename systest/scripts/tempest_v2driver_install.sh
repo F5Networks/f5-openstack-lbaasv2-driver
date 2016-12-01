@@ -46,10 +46,10 @@ echo ${PUBLIC_NETWORK_ID} >> tempest_variables
 echo ${OS_TENANT_ID} >> tempest_variables
 echo ${IMAGE_REF} >> tempest_variables
 
-sudo pip install --upgrade git+https://github.com/zancas/prodactivity.git@v0.1.1
-. ./tempest_variables && publish_test_container tempest f5-openstack-lbaasv2-driver ${BRANCH} ${SUBJECTCODE_ID} ${USER}
+sudo pip install --upgrade git+https://github.com/zancas/prodactivity.git@master
+. ./tempest_variables && sudo -E publish_test_container tempest f5-openstack-lbaasv2-driver ${BRANCH} ${SUBJECTCODE_ID} ${USER}
 REGDIR=`python -c 'import os, prodactivity;print(\\
             os.path.dirname(os.path.abspath(prodactivity.__file__)))'`
 REGFILE=${REGDIR}/testrunners/registry_fullname
 echo ${REGFILE}
-mv ${REGFILE} ./
+cp ${REGFILE} ./
