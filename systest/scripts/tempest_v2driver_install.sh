@@ -24,7 +24,8 @@ PUBLIC_NETWORK_ID=`${SSH_WITH_KEYSTONE} "neutron net-list -F id -F name "\
     "| grep external_network | cut -d '|' -f 2  | tr -d '[:space:]' 2>/dev/null"`
 OS_TENANT_ID=`${SSH_WITH_KEYSTONE} "keystone tenant-list "\
     "| grep testlab | cut -d '|' -f 2  | tr -d '[:space:]' 2>/dev/null"`
-
+IMAGE_REF=`${SSH_WITH_KEYSTONE} "glance image-list"\
+    "| grep cirros-0.3.4-x86_64-disk.qcow2 | cut -d '|' -f 2 | tr -d '[:space:]' 2>/dev/null"`
 
 # post processing ('prepend export=') NOTE: OS_AUTH_URL needs no modification
 CONTROLLER_IPADDR="export CONTROLLER_IPADDR="${CONTROLLER_IPADDR}
@@ -34,6 +35,7 @@ OS_AUTH_URL_V3="export OS_AUTH_URL_V3"${OS_AUTH_URL_V3#export OS_AUTH_URL}
 PUBLIC_ROUTER_ID="export PUBLIC_ROUTER_ID="${PUBLIC_ROUTER_ID}
 PUBLIC_NETWORK_ID="export PUBLIC_NETWORK_ID="${PUBLIC_NETWORK_ID}
 OS_TENANT_ID="export OS_TENANT_ID="${OS_TENANT_ID}
+IMAGE_REF="export IMAGE_REF="${IMAGE_REF}
 
 echo ${CONTROLLER_IPADDR} > tempest_variables
 echo ${ICONTROL_IPADDR} >> tempest_variables
@@ -42,6 +44,7 @@ echo ${OS_AUTH_URL_V3} >> tempest_variables
 echo ${PUBLIC_ROUTER_ID} >> tempest_variables
 echo ${PUBLIC_NETWORK_ID} >> tempest_variables
 echo ${OS_TENANT_ID} >> tempest_variables
+echo ${IMAGE_REF} >> tempest_variables
 
 . ./tempest_variables &&
 
