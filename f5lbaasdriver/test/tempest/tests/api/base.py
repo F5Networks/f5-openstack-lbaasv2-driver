@@ -133,7 +133,9 @@ class BaseTestCase(base.BaseNetworkTest):
                                          listener.get('id'))
                 cls._wait_for_load_balancer_status(lb_id)
             cls._try_delete_resource(cls._delete_load_balancer, lb_id)
-
+        # Loadbalancer is gone, so folder on device should be gone too
+        assert not cls.bigip_client.folder_exists(
+            'Project_' + cls.subnet['tenant_id'])
         super(BaseTestCase, cls).resource_cleanup()
 
     @classmethod

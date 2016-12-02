@@ -27,6 +27,9 @@ class BigIpClient(object):
                                     config.f5_lbaasv2_driver.icontrol_username,
                                     config.f5_lbaasv2_driver.icontrol_password)
 
+    def folder_exists(self, folder):
+        return self.bigip.tm.sys.folders.folder.exists(name=folder)
+
     def policy_exists(self, name, partition):
         return self.bigip.tm.ltm.policys.policy.exists(
             name=name, partition=partition)
