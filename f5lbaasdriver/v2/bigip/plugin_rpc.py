@@ -157,11 +157,13 @@ class LBaaSv2PluginCallbacksRPC(object):
         plugin = self.driver.plugin
 
         with context.session.begin(subtransactions=True):
-            agents = self.driver.scheduler.get_active_agents_in_env(
+            agents = self.driver.scheduler.get_agents_in_env(
                 context,
                 self.driver.plugin,
                 env,
-                group)
+                group=group,
+                active=True
+            )
 
             for agent in agents:
                 agent_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
