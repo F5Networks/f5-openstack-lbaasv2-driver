@@ -76,53 +76,61 @@ class BigIpClient(object):
             rule = policy.rules_s.rules.load(name=rule_name)
 
             return rule.conditions_s.get_collection()
+        return []
 
-    def rule_has_condition(self, policy_name, rule_name, cond_name, partition):
+    def rule_has_condition(
+            self, policy_name, rule_name, cond_name, value, partition):
         conditions = self.rule_conditions(policy_name, rule_name, partition)
         for cond in conditions:
-            if getattr(cond, cond_name, None):
+            cond_val = getattr(cond, cond_name, None)
+            assert len(cond.values) == 1
+            value_str = cond.values[0]
+            # Condition value should be set to True if condition type is
+            # httpHost or condition comparison type is startsWith etc...
+            # The values attribute should only contain one value and it
+            # should be set to some string, even if it's empty
+            if cond_val and value_str == value:
                 return True
-
         return False
 
-    def rule_has_starts_with(self, policy_name, rule_name, partition):
+    def rule_has_starts_with(self, policy_name, rule_name, value, partition):
         return self.rule_has_condition(
-            policy_name, rule_name, 'startsWith', partition)
+            policy_name, rule_name, 'startsWith', value, partition)
 
-    def rule_has_ends_with(self, policy_name, rule_name, partition):
+    def rule_has_ends_with(self, policy_name, rule_name, value, partition):
         return self.rule_has_condition(
-            policy_name, rule_name, 'endsWith', partition)
+            policy_name, rule_name, 'endsWith', value, partition)
 
-    def rule_has_contains(self, policy_name, rule_name, partition):
+    def rule_has_contains(self, policy_name, rule_name, value, partition):
         return self.rule_has_condition(
-            policy_name, rule_name, 'contains', partition)
+            policy_name, rule_name, 'contains', value, partition)
 
-    def rule_has_equals(self, policy_name, rule_name, partition):
+    def rule_has_equals(self, policy_name, rule_name, value, partition):
         return self.rule_has_condition(
-            policy_name, rule_name, 'equals', partition)
+            policy_name, rule_name, 'equals', value, partition)
 
-    def rule_has_host_name(self, policy_name, rule_name, partition):
+    def rule_has_host_name(self, policy_name, rule_name, value, partition):
         return self.rule_has_condition(
-            policy_name, rule_name, 'httpHost', partition)
+            policy_name, rule_name, 'httpHost', value, partition)
 
-    def rule_has_path(self, policy_name, rule_name, partition):
+    def rule_has_path(self, policy_name, rule_name, value, partition):
         has_httpUri = self.rule_has_condition(
-            policy_name, rule_name, 'httpUri', partition)
+            policy_name, rule_name, 'httpUri', value, partition)
         has_path = self.rule_has_condition(
-            policy_name, rule_name, 'path', partition)
+            policy_name, rule_name, 'path', value, partition)
         return has_httpUri and has_path
 
-    def rule_has_file_type(self, policy_name, rule_name, partition):
+    def rule_has_file_type(self, policy_name, rule_name, value, partition):
         return self.rule_has_condition(
-            policy_name, rule_name, 'httpUri', partition)
+            policy_name, rule_name, 'httpUri', value, partition)
 
-    def rule_has_header(self, policy_name, rule_name, partition):
+    def rule_has_header(self, policy_name, rule_name, value, partition):
         return self.rule_has_condition(
-            policy_name, rule_name, 'httpHeader', partition)
+            policy_name, rule_name, 'httpHeader', value, partition)
 
-    def rule_has_cookie(self, policy_name, rule_name, partition):
+    def rule_has_cookie(self, policy_name, rule_name, value, partition):
         return self.rule_has_condition(
-            policy_name, rule_name, 'httpCookie', partition)
+            policy_name, rule_name, 'httpCookie', value, partition)
 
     def virtual_server_exists(self, name, partition):
         return self.bigip.tm.ltm.virtuals.virtual.exists(
