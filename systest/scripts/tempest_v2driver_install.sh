@@ -46,6 +46,7 @@ echo ${PUBLIC_NETWORK_ID} >> tempest_variables
 echo ${OS_TENANT_ID} >> tempest_variables
 echo ${IMAGE_REF} >> tempest_variables
 
+docker images
 sudo pip install --upgrade git+https://github.com/zancas/prodactivity.git@master
 . ./tempest_variables && sudo -E publish_test_container tempest f5-openstack-lbaasv2-driver ${BRANCH} ${SUBJECTCODE_ID} ${USER}
 REGDIR=`python -c 'import os, prodactivity;print(\\
