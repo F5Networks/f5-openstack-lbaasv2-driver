@@ -13,6 +13,18 @@
 #### OpenStack Release
 <Fill in the OpenStack release, such as Liberty>
 
+#### Bug Severity 
+For bugs enter the bug severity level. Do not set any labels.
+
+Severity: <Fill in level: 1 through 5>
+
+Severity level definitions:
+ 1. **Severity 1 (Critical)** : Defect is causing systems to be offline and/or nonfunctional. immediate attention is required.
+ 2. **Severity 2 (High)** : Defect is causing major obstruction of system operations.
+ 3. **Severity 3 (Medium)** : Defect is causing intermittent errors in system operations.
+ 4. **Severity 4 (Low)** : Defect is causing infrequent interuptions in system operations.
+ 5. **Severity 5 (Trival)** : Defect is not causing any interuptions to system operations, but none-the-less is a bug.
+
 #### Description
 <Describe the bug in detail, steps taken prior to encountering the issue, yand a short explanation of you have deployed openstack and F5 agent>
 
