@@ -4,9 +4,9 @@ F5 LBaaSv2 L7 Content Switching
 Overview
 --------
 
-L7 content switching takes its name from layer 7 of the OSI Model, also called the application layer. [#f1]_ As the name implies, L7 content switching decisions are based on the application data, or content, of request traffic as it passes through the virtual server. Via the API, you can define actions to be taken when certain content conditions are met. See the OpenStack Neutron documentation <http://specs.openstack.org/openstack/neutron-specs/specs/mitaka/lbaas-l7-rules.html>_ for more information.
+L7 content switching takes its name from layer 7 of the OSI Model, also called the application layer. [#f1]_ As the name implies, L7 content switching decisions are based on the application data, or content, of request traffic as it passes through the virtual server. Via the API, you can define actions to be taken when certain content conditions are met. See the OpenStack Neutron `LBaaS Layer 7 rules documentation <http://specs.openstack.org/openstack/neutron-specs/specs/mitaka/lbaas-l7-rules.html>`_ for more information.
 
-.. [#f1]_ https://wiki.openstack.org/wiki/Neutron/LBaaS/l7 
+.. [#f1] https://wiki.openstack.org/wiki/Neutron/LBaaS/l7 
 
 Neutron LBaaSv2 API L7 Policies and Rules
 `````````````````````````````````````````
@@ -56,7 +56,7 @@ L7 policies are ranked by a position value and are evaluated according to their 
     …
     Else if (Pn) then An
     Else:
-        Send request to default pool
+    Send request to default pool
 
 OpenStack Policy/Rules Definition Versus BIG-IP® Policy/Rules:
 ``````````````````````````````````````````````````````````````
@@ -65,7 +65,7 @@ The Neutron L7 terminology does not directly align with the common vocabulary of
 
     +------------------+-------------------------------+
     | Neutron LBaaS L7 | BIG-IP® Local Traffic Manager |
-    ===================+===============================+
+    +==================+===============================+
     | Policy           | Policy Rules (wrapper_policy) |
     +------------------+-------------------------------+
     | Policy Action    | Rule Action                   |
@@ -74,6 +74,7 @@ The Neutron L7 terminology does not directly align with the common vocabulary of
     +------------------+-------------------------------+
     | Rule             | Rule Conditions               |
     +------------------+-------------------------------+
+
 
 The BIG-IP LTM policy has a name, description, a set of rules, and a strategy on how those rules are evaluated. In fact, L7 policies in OpenStack are more akin to a collection BIG-IP LTM policy rules that are evaluated with the ‘First match’ strategy.
 
@@ -147,7 +148,8 @@ Prerequisites
 - Administrator access to both BIG-IP device(s) and OpenStack cloud.
 - F5 :ref:`agent <agent:home>` and :ref:`service provider driver <Install the F5 LBaaSv2 Driver>` installed on the Neutron controller and all other hosts from which you want to provision LBaaS services.
 - Knowledge of `OpenStack Networking <http://docs.openstack.org/mitaka/networking-guide/>`_ concepts.
-- Knowledge of BIG-IP `system configuration`_, `local traffic management`_, & `device service clustering`_.
+- Basic understanding of `BIG-IP system configuration <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-system-initial-configuration-12-0-0/2.html#conceptid>`_.
+- Basic understanding of `BIG-IP Local Traffic Management <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-basics-12-0-0.html>`_
 
 Caveats
 -------
@@ -218,10 +220,8 @@ Configuration
 Further Reading
 ---------------
 
-.. seealso::
+.. seealso:: See the links below for further reading.
 
-.. [1] https://wiki.openstack.org/wiki/Neutron/LBaaS/l7 
-
-.. BIG-IP LTM Local Traffic Policies documentation: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-concepts-11-4-0/3.html
-
-.. http://specs.openstack.org/openstack/neutron-specs/specs/mitaka/lbaas-l7-rules.html
+    * OpenStack Neutron `LBaaS Layer 7 rules documentation <http://specs.openstack.org/openstack/neutron-specs/specs/mitaka/lbaas-l7-rules.html>`_
+    * OpenStack Neutron `LBaaSv2 l7 Wiki <https://wiki.openstack.org/wiki/Neutron/LBaaS/l7>`_
+    * `BIG-IP Local Traffic Management -- Getting Started with Policies <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/local-traffic-policies-getting-started-12-1-0.html?sr=59376207>`_
