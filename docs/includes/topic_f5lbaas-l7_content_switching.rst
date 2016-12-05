@@ -75,7 +75,7 @@ The Neutron L7 terminology does not directly align with the common vocabulary of
     | Rule             | Rule Conditions               |
     +------------------+-------------------------------+
 
-The BIG-IP LTM policy has a name, description, a set of rules, and a strategy on how those rule should be evaluated. In fact, L7 policies in OpenStack are more akin to a collection BIG-IP LTM policy rules that are evaluated with the ‘First match’ strategy.
+The BIG-IP LTM policy has a name, description, a set of rules, and a strategy on how those rules are evaluated. In fact, L7 policies in OpenStack are more akin to a collection BIG-IP LTM policy rules that are evaluated with the ‘First match’ strategy.
 
 The BIG-IP LTM rules have conditions, actions, and an ordinal and would need to be created based on the L7 policy and rule attributes.
 
