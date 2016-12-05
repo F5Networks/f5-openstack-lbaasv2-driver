@@ -5,6 +5,7 @@ git+https://github.com/F5Networks/f5-openstack-test.git
 git+https://github.com/openstack/neutron.git@stable/mitaka
 git+https://github.com/openstack/neutron-lbaas.git@8.3.0
 git+https://github.com/openstack/tempest.git@12.0.0
+git+https://github.com/F5Networks/f5-common-python.git@v2.1.0
 
 mock==1.3.0
 pytest==2.9.1
