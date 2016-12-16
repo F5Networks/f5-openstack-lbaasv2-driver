@@ -119,6 +119,24 @@ class LBaaSv2AgentRPC(object):
             topic=topic)
 
     @log_helpers.log_method_call
+    def update_loadbalancer_stats(
+            self,
+            context,
+            loadbalancer,
+            service,
+            host
+    ):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'update_loadbalancer_stats',
+                loadbalancer=loadbalancer,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
     def create_listener(self, context, listener, service, host):
         topic = '%s.%s' % (self.topic, host)
         return self.cast(
