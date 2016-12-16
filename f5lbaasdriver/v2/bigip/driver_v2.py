@@ -251,8 +251,33 @@ class LoadBalancerManager(EntityManager):
 
     @log_helpers.log_method_call
     def stats(self, context, loadbalancer):
-        """Get loadbalancer statistics."""
-        pass
+        driver = self.driver
+        try:
+            agent = driver.scheduler.schedule(
+                driver.plugin,
+                context,
+                loadbalancer.id,
+                driver.env
+            )
+            service = driver.service_builder.build(context,
+                                                   loadbalancer,
+                                                   agent)
+            driver.agent_rpc.update_loadbalancer_stats(
+                context,
+                loadbalancer.to_api_dict(),
+                service,
+                agent['host']
+            )
+        except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
+                lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
+            LOG.error("Exception: update_loadbalancer_stats: %s" % e.message)
+            driver._handle_driver_error(context,
+                                        models.LoadBalancer,
+                                        loadbalancer.id,
+                                        plugin_constants.ERROR)
+        except Exception as e:
+            LOG.error("Exception: update_loadbalancer_stats: %s" % e.message)
+            raise e
 
 
 class ListenerManager(EntityManager):

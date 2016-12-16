@@ -266,6 +266,9 @@ class LBaaSv2(object):
     def delete_loadbalancer(self, lb):
         self.ncm.delete_loadbalancer(lb['id'])
 
+    def get_loadbalancer_stats(self, lb):
+        return self.ncm.retrieve_loadbalancer_stats(lb['id'])
+
     def wait_for_object_state(self, field, value, method, key, *args):
         '''This method provides an abstract way to poll any arbitrary object, such
         as pool, member, vip, etc.
@@ -468,6 +471,9 @@ def test_solution(tst_setup):
     te.webserver_started = False
     proxy = te.lbm.create_proxy()
 
+    # get initial loadbalancer stats
+    before_stats = te.lbm.get_loadbalancer_stats(proxy.loadbalancer)
+
     # start web server
     command = ('python -m SimpleHTTPServer %s >/dev/null 2>&1 & echo $!' %
                te.symbols['server_http_port'])
@@ -522,4 +528,30 @@ def test_solution(tst_setup):
                                 proxy.listener['protocol_port'])
     output = exec_command(te.client_ssh, '$HOME/get.py %s' % url)
     assert output == '200'
+
+    print ('BEFORE STATS')
+    pp(before_stats)
+    print ('Waiting to get updated stats...')
+
+    # need to sleep before getting updated stats, as stats are only updated
+    # periodically
+    time.sleep(35)
+    after_stats = te.lbm.get_loadbalancer_stats(proxy.loadbalancer)
+
+    print ('AFTER STATS')
+    pp(after_stats)
+
+    # validate lb stats (lbaas-loadbalancer-stats)
+    assert before_stats['stats']['total_connections'] == 0
+    assert after_stats['stats']['total_connections'] == 1
+
+    assert before_stats['stats']['active_connections'] == 0
+    assert after_stats['stats']['active_connections'] == 0
+
+    assert before_stats['stats']['bytes_in'] == 0
+    assert after_stats['stats']['bytes_in'] > 500
+
+    assert before_stats['stats']['bytes_out'] == 0
+    assert after_stats['stats']['bytes_out'] > 700
+
     print('SUCCESS')
