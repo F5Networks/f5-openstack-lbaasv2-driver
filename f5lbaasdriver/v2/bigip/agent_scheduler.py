@@ -81,7 +81,7 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
             return lbaas_agent
 
     def get_agents_in_env(
-            self, context, plugin, env, group=None, active=False):
+            self, context, plugin, env, group=None, active=None):
         """Get an active agents in the specified environment."""
         return_agents = []
 

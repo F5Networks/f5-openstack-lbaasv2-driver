@@ -119,6 +119,24 @@ class LBaaSv2AgentRPC(object):
             topic=topic)
 
     @log_helpers.log_method_call
+    def update_loadbalancer_stats(
+            self,
+            context,
+            loadbalancer,
+            service,
+            host
+    ):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'update_loadbalancer_stats',
+                loadbalancer=loadbalancer,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
     def create_listener(self, context, listener, service, host):
         topic = '%s.%s' % (self.topic, host)
         return self.cast(
@@ -269,6 +287,80 @@ class LBaaSv2AgentRPC(object):
             self.make_msg(
                 'delete_health_monitor',
                 health_monitor=health_monitor,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def create_l7policy(self, context, l7policy, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'create_l7policy',
+                l7policy=l7policy,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def update_l7policy(self, context, old_l7policy, l7policy, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'update_l7policy',
+                old_l7policy=old_l7policy,
+                l7policy=l7policy,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def delete_l7policy(self, context, l7policy, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'delete_l7policy',
+                l7policy=l7policy,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def create_l7rule(self, context, l7rule, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'create_l7rule',
+                l7rule=l7rule,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def update_l7rule(self, context, old_l7rule, l7rule, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'update_l7rule',
+                old_l7rule=old_l7rule,
+                l7rule=l7rule,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def delete_l7rule(self, context, l7rule, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'delete_l7rule',
+                l7rule=l7rule,
                 service=service
             ),
             topic=topic)

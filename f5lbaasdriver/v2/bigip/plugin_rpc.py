@@ -157,11 +157,13 @@ class LBaaSv2PluginCallbacksRPC(object):
         plugin = self.driver.plugin
 
         with context.session.begin(subtransactions=True):
-            agents = self.driver.scheduler.get_active_agents_in_env(
+            agents = self.driver.scheduler.get_agents_in_env(
                 context,
                 self.driver.plugin,
                 env,
-                group)
+                group=group,
+                active=True
+            )
 
             for agent in agents:
                 agent_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
@@ -220,10 +222,21 @@ class LBaaSv2PluginCallbacksRPC(object):
             return loadbalancers
 
     @log_helpers.log_method_call
-    def update_service_stats(self, context, service_id=None,
-                             stats=None, host=None):
+    def update_loadbalancer_stats(self,
+                                  context,
+                                  loadbalancer_id=None,
+                                  stats=None):
         """Update service stats."""
-        pass
+        with context.session.begin(subtransactions=True):
+            try:
+                self.driver.plugin.db.update_loadbalancer_stats(
+                    context,
+                    loadbalancer_id,
+                    stats
+                )
+            except Exception as e:
+                LOG.error('Exception: update_loadbalancer_stats: %s',
+                          e.message)
 
     @log_helpers.log_method_call
     def update_loadbalancer_status(self, context,
@@ -385,6 +398,75 @@ class LBaaSv2PluginCallbacksRPC(object):
     def healthmonitor_destroyed(self, context, healthmonitor_id=None):
         """Agent confirmation hook that health_monitor has been destroyed."""
         self.driver.plugin.db.delete_healthmonitor(context, healthmonitor_id)
+
+    @log_helpers.log_method_call
+    def update_l7policy_status(
+            self,
+            context,
+            l7policy_id=None,
+            provisioning_status=plugin_constants.ERROR,
+            operating_status=None):
+        """Agent confirmation hook to update l7 policy status."""
+        with context.session.begin(subtransactions=True):
+            try:
+                l7policy_db = self.driver.plugin.db.get_l7policy(
+                    context,
+                    l7policy_id
+                )
+                if (l7policy_db.provisioning_status ==
+                        plugin_constants.PENDING_DELETE):
+                    provisioning_status = plugin_constants.PENDING_DELETE
+                self.driver.plugin.db.update_status(
+                    context,
+                    models.L7Policy,
+                    l7policy_id,
+                    provisioning_status,
+                    operating_status
+                )
+            except Exception as e:
+                LOG.error('Exception: update_l7policy_status: %s',
+                          e.message)
+
+    @log_helpers.log_method_call
+    def l7policy_destroyed(self, context, l7policy_id=None):
+        LOG.debug("l7policy_destroyed")
+        """Agent confirmation hook that l7 policy has been destroyed."""
+        self.driver.plugin.db.delete_l7policy(context, l7policy_id)
+
+    @log_helpers.log_method_call
+    def update_l7rule_status(
+            self,
+            context,
+            l7rule_id=None,
+            l7policy_id=None,
+            provisioning_status=plugin_constants.ERROR,
+            operating_status=None):
+        """Agent confirmation hook to update l7 policy status."""
+        with context.session.begin(subtransactions=True):
+            try:
+                l7rule_db = self.driver.plugin.db.get_l7policy_rule(
+                    context,
+                    l7rule_id,
+                    l7policy_id
+                )
+                if (l7rule_db.provisioning_status ==
+                        plugin_constants.PENDING_DELETE):
+                    provisioning_status = plugin_constants.PENDING_DELETE
+                self.driver.plugin.db.update_status(
+                    context,
+                    models.L7Rule,
+                    l7rule_id,
+                    provisioning_status,
+                    operating_status
+                )
+            except Exception as e:
+                LOG.error('Exception: update_l7rule_status: %s',
+                          e.message)
+
+    @log_helpers.log_method_call
+    def l7rule_destroyed(self, context, l7rule_id):
+        """Agent confirmation hook that l7 policy has been destroyed."""
+        self.driver.plugin.db.delete_l7policy_rule(context, l7rule_id)
 
     # Neutron core plugin core object management
 
