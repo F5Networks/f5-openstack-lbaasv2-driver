@@ -1,0 +1,8 @@
+5,6c5,6
+< dirList="bin lib"
+< archList=`ls -I ${base} | grep -v independent`
+---
+> dirList="bin lib share"
+> archList=`ls ${base} | grep -v independent`
+9a10
+>     mkdir -p ${base}/${arch}/${d}
