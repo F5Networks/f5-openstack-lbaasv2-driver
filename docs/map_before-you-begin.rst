@@ -34,7 +34,7 @@ Install the F5 Service Provider Package
 
 .. code-block:: shell
 
-    $ curl -O -L https://github.com/F5Networks/neutron-lbaas/releases/download/v8.0.1/f5.tgz
+    $ curl -O -L https://github.com/F5Networks/neutron-lbaas/releases/download/v9.1.0/f5.tgz
 
 
 2. Install the service provider package on the Neutron controller.
@@ -59,7 +59,7 @@ Install the F5 Agent
 
     .. code-block:: text
 
-        $ sudo pip install git+https://github.com/F5Networks/f5-openstack-agent@v9.1.0
+        $ sudo pip install git+https://github.com/F5Networks/f5-openstack-agent@v9.2.0.b1
 
     .. tip::
 

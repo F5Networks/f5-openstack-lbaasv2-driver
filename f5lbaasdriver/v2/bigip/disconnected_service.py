@@ -22,7 +22,7 @@ LOG = logging.getLogger(__name__)
 
 class DisconnectedService(object):
     def __init__(self):
-        pass
+        self.supported_encapsulations = ['vlan']
 
     # Retain this method for future use in case a particular ML2 implementation
     # decouples network_id from physical_network name.  The implementation in
@@ -44,11 +44,17 @@ class DisconnectedService(object):
         network_segment_physical_network = \
             agent_configuration.get('network_segment_physical_network', None)
         if network_segment_physical_network:
+            supported_encapsulations = [
+                x.lower() for x in self.supported_encapsulations +
+                agent_configuration.get('tunnel_types', [])
+            ]
             # look up segment details in the ml2_network_segments table
             segments = db.get_network_segments(context.session, network['id'])
             for segment in segments:
-                if (network_segment_physical_network ==
-                        segment['physical_network']):
+                if ((network_segment_physical_network ==
+                     segment['physical_network']) and
+                    (segment['network_type'].lower() in
+                     supported_encapsulations)):
                     data = segment
                     break
             if not data:
