@@ -15,6 +15,8 @@
 # limitations under the License.
 #
 
+set -ex
+
 # We need to clone the OpenStack devtest repo for our TLC files
 git clone ${DEVTEST_REPO} ${DEVTEST_DIR}
 

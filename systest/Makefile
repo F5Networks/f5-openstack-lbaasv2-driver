@@ -54,8 +54,8 @@ export NEUTRON_LBAAS_BRANCH := stable/mitaka
 
 # TLC path and python path requirements
 export PATH := /tools/bin:$(PATH)
-export PYTHONPATH := /tools/bin:/tools/lib:$(PYTHONPATH)
-export USER := builder
+export PYTHONPATH := /tools/lib:/tools/bin:$(PYTHONPATH)
+export USER := buildbot
 export TEST_OPENSTACK_DISTRO := liberty
 export TEST_VE_IMAGE := os_ready-BIGIP-11.6.0.0.0.401.qcow2
 export TEST_CIRROS_IMAGE := cirros-0.3.4-x86_64-disk.qcow2
@@ -98,15 +98,15 @@ tempest_tests:
 
 tempest_tests-setup:
 	@echo "setting up tempest test TLC session..."
-	cd scripts && ./tlc_session_setup.sh
+	cd scripts && ./tlc_session_setup.sh || $(MAKE) -C ../ tempest_tests-teardown
 
 tempest_tests-install:
 	@echo "installing and configuring tempest tests..."
-	cd scripts && ./tempest_setup.sh
+	cd scripts && ./tempest_setup.sh || $(MAKE) -C ../ tempest_tests-teardown
 
 tempest_tests-run:
 	@echo "running the tempest test cases..."
-	cd scripts && ./tempest_tests.sh
+	cd scripts && ./tempest_tests.sh || $(MAKE) -C ../ tempest_tests-teardown
 
 tempest_tests-teardown:
 	@echo "tearing down the TLC session..."

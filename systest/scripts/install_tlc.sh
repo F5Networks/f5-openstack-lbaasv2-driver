@@ -17,6 +17,11 @@
 
 set -ex
 
+# Copy the testlab key and make sure it has right owner/permissions
+cp /home/buildbot/.ssh/id_rsa /home/buildbot/.ssh/id_rsa_testlab
+chmod 600 /home/buildbot/.ssh/id_rsa_testlab
+chown buildbot:buildbot /home/buildbot/.ssh/id_rsa_testlab
+
 # Update the system and install required debian packages
 ln -s /bin/bash /usr/local/bin/bash
 apt-get update
@@ -44,7 +49,29 @@ mkdir ${TOOLSBASE_DIR}/independent/share
 mkdir ${TOOLSBASE_DIR}/Ubuntu-10-x86_64/share
 rm -rf ${TOOLSBASE_DIR}/independent/bin/*.pyc
 rm -rf ${TOOLSBASE_DIR}/independent/bin/tlc_pb2.py
+rm -rf ${TOOLSBASE_DIR}/independent/lib/*.pyc
+rm -rf ${TOOLSBASE_DIR}/Ubuntu-10-x86_64/bin/*.pyc
+rm -rf ${TOOLSBASE_DIR}/Ubuntu-10-x86_64/lib/*.pyc
 ln -s ${TOOLSBASE_DIR}/Ubuntu-10-x86_64 /tools
+
+# Remove all of the stale libs that are for some reason is toolsbase/bin
+libs="file_access.py
+file_reservation.py
+interactive.py
+ipaddr.py
+serialcons.py
+switch_lacp_config.py
+switch_vlan_config.py
+switches.py
+testlab_adapter.py
+tlc_util.py
+tlc_autocomplete.py
+utils.py
+"
+for lib in $libs; do
+  rm -f ${TOOLSBASE_DIR}/independent/bin/$lib
+  rm -f ${TOOLSBASE_DIR}/Ubuntu-10-x86_64/bin/$lib
+done
 
 # Install TLC packages and binaries
 git clone \
