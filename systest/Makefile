@@ -1,3 +1,18 @@
+# Copyright 2017 F5 Networks Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 .PHONY: all systest functest \
 tlc-install \
 tempest-setup \
@@ -14,29 +29,49 @@ PROJECT := f5-openstack-lbaasv2-driver
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR := $(dir $(MAKEFILE_PATH))
 
+# Repos that are used for the tests and environment
+# TLC
+export TLC_DIR := /home/buildbot/tlc
+export TLC_REPO := https://bldr-git.int.lineratesystems.com/openstack/tlc.git
+export TLC_BRANCH := buildbot
+
+# toolsbase (replicate internal directory structure for TLC install)
+export TOOLSBASE_DIR := /toolsbase
+export TOOLSBASE_REPO := https://bldr-git.int.lineratesystems.com/openstack/tlc-toolsbase.git
+
+# dev-test (contains all of our TLC files for configuration)
+export DEVTEST_DIR := /home/buildbot/dev-test
+export DEVTEST_REPO := git@bldr-git.int.lineratesystems.com:openstack/dev-test.git
+
+# tempest (OpenStack tempest test library)
+export TEMPEST_DIR := /home/buildbot/tempest
+export TEMPEST_REPO := http://git.openstack.org/openstack/tempest
+
+# neutron-lbaas (OpenStack Neutron LBaaS repo for the test cases to run)
+export NEUTRON_LBAAS_DIR := /home/buildbot/neutron-lbaas
+export NEUTRON_LBAAS_REPO := https://github.com/F5Networks/neutron-lbaas.git
+export NEUTRON_LBAAS_BRANCH := stable/mitaka
 
 # TLC path and python path requirements
 export PATH := /tools/bin:$(PATH)
 export PYTHONPATH := /tools/bin:/tools/lib:$(PYTHONPATH)
 export USER := builder
-export TEST_OPENSTACK_DISTRO := libery
+export TEST_OPENSTACK_DISTRO := liberty
 export TEST_VE_IMAGE := os_ready-BIGIP-11.6.0.0.0.401.qcow2
+export TEST_CIRROS_IMAGE := cirros-0.3.4-x86_64-disk.qcow2
 export TEST_OPENSTACK_NODE_COUNT := 2
 export TEST_OPENSTACK_DEPLOY := multinode
 export TEST_OPENSTACK_CLOUD := overcloud
-export TEST_COMMON_LIB := ${DEVTEST_DIR}/common
+export TEST_COMMON_LIB := $(DEVTEST_DIR)/common
 export GLANCE_COMPUTE_STORAGE := NFS
-export TLC_FILE := ${DEVTEST_DIR}/traffic/undercloud/ve_undercloud.tlc
+export TLC_FILE := ${DEVTEST_DIR}/traffic/$(TEST_OPENSTACK_CLOUD)/ve_$(TEST_OPENSTACK_CLOUD).tlc
 export TEST_SESSION := $(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 
 # Virtualenv & tempest requirements
 export VENVDIR := /home/buildbot/virtualenvs
-export TEMPEST_DIR := /home/buildbot/tempest
 export TEMPEST_VENV_DIR := $(VENVDIR)/tempest
 export TEMPEST_CONFIG_DIR := $(TEMPEST_VENV_DIR)/etc/tempest
 export TEMPEST_VENV_ACTIVATE := $(TEMPEST_VENV_DIR)/bin/activate
-export NEUTRON_LBAAS_DIR := /home/buildbot/neutron-lbaas
-export DEVTEST_DIR := /home/buildbot/dev-test
 
 # Results Directories
 export RESULTS_DIR := $(MAKEFILE_DIR)/test_results/$(PROJECT)
@@ -46,7 +81,7 @@ export SCENARIO_SESSION := scenario_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 export SCENARIO_RESULTS_DIR := $(RESULTS_DIR)/scenario
 
 tlc-install:
-	cd scripts && sudo -H ./install_tlc.sh
+	cd scripts && sudo -EH ./install_tlc.sh
 
 functest:
 	$(MAKE) -j -C . functest_all

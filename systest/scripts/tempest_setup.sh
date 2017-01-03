@@ -1,16 +1,31 @@
 #!/usr/bin/env bash
 
+# Copyright 2017 F5 Networks Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 set -ex
 
 # Create a virtualenv
 virtualenv ${TEMPEST_VENV_DIR}
-source ${TEMPEST_VENV_DIR}/bin/activate
+source ${TEMPEST_VENV_ACTIVATE}
 
 # Install tox
 pip install tox
 
 # Install tempest & its config files
-git clone http://git.openstack.org/openstack/tempest /home/buildbot/tempest
+git clone ${TEMPEST_REPO} ${TEMPEST_DIR}
 pip install ${TEMPEST_DIR}
 cp conf/tempest.conf ${TEMPEST_CONFIG_DIR}/tempest.conf.orig
 cp conf/accounts.yaml ${TEMPEST_CONFIG_DIR}/accounts.yaml
@@ -31,7 +46,7 @@ OS_PUBLIC_NETWORK_ID=`${ssh_cmd} "source ~/keystonerc_testlab && neutron net-lis
     | grep external_network \
     | awk '{print $1}'`
 OS_CIRROS_IMAGE_ID=`${ssh_cmd} "source ~/keystonerc_testlab && glance image-list" \
-    | grep cirros-0.3.4-x86_64-disk.qcow2 \
+    | grep ${TEST_CIRROS_IMAGE} \
     | awk '{print $2}'`
 
 cat ${TEMPEST_CONFIG_DIR}/tempest.conf.orig \
@@ -56,9 +71,9 @@ cat ${TEMPEST_CONFIG_DIR}/tempest.conf.orig \
 # TODO: Make a decision about not using the neutron-lbaas install script
 #       and just installing from requirements files on newest versions
 git clone\
-  -b stable/mitaka \
+  -b ${NEUTRON_LBAAS_BRANCH} \
   --single-branch \
-  https://github.com/F5Networks/neutron-lbaas.git \
+  ${NEUTRON_LBAAS_REPO} \
   ${NEUTRON_LBAAS_DIR}
 
 # Copy our tox.ini file to neutron so we can run py.test instead of testr
