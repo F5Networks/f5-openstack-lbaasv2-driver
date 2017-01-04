@@ -74,11 +74,9 @@ export TEMPEST_CONFIG_DIR := $(TEMPEST_VENV_DIR)/etc/tempest
 export TEMPEST_VENV_ACTIVATE := $(TEMPEST_VENV_DIR)/bin/activate
 
 # Results Directories
-export RESULTS_DIR := $(MAKEFILE_DIR)/test_results/$(PROJECT)
+export RESULTS_DIR := $(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)
 export API_SESSION := api_$(SUBJECTCODE_ID)_$(TIMESTAMP)
-export API_RESULTS_DIR := $(RESULTS_DIR)/api
 export SCENARIO_SESSION := scenario_$(SUBJECTCODE_ID)_$(TIMESTAMP)
-export SCENARIO_RESULTS_DIR := $(RESULTS_DIR)/scenario
 
 tlc-install:
 	cd scripts && sudo -EH ./install_tlc.sh
