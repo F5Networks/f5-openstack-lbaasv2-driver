@@ -56,20 +56,7 @@ cat ${TEMPEST_CONFIG_DIR}/tempest.conf.orig \
   | sed "s/{{ OS_CIRROS_IMAGE_ID }}/${OS_CIRROS_IMAGE_ID}/" \
   > ${TEMPEST_CONFIG_DIR}/tempest.conf
 
-# Install neutron at stable/mitaka because stable/liberty tests will not work
-# because they use an upper contraints file in the installation script that
-# neutron-lbaas uses for tox tests.
-# The file that causes this to happen is: neutron-lbaas/tools/tox_install.sh
-#
-# The use of the liberty version of this file restricts the crpytography
-# library to a low version which is not compatible with newer versions of
-# OpenSSL (1.0.2g+) because of an API change in OpenSSL.
-#
-# See this issue for more details:
-# https://github.com/pyca/cryptography/issues/2750
-#
-# TODO: Make a decision about not using the neutron-lbaas install script
-#       and just installing from requirements files on newest versions
+# Clone neutron-lbaas so we have the tests
 git clone\
   -b ${NEUTRON_LBAAS_BRANCH} \
   --single-branch \
