@@ -1,0 +1,4 @@
+6c6
+< SRC_DIR=$(dirname $(realpath "$0"))
+---
+> SRC_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
