@@ -28,6 +28,7 @@ Contents
     Upgrading <includes/topic_upgrading-f5-lbaasv2-plugin>
     Glossary <glossary>
     troubleshooting
+    Solution Test Plan <solution-test-plan>
 
 
 .. include:: includes/ref_lbaasv2-version-compatibility.rst
