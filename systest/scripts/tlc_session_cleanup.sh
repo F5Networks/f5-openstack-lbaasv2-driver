@@ -15,5 +15,7 @@
 # limitations under the License.
 #
 
-# Cleanup the session. Should we be killing the barbican in Mesos too?
+set -x
+
+# We only need to cleanup the session, we didn't use barbican-enabled TLC file
 tlc --session ${TEST_SESSION} --debug cleanup
