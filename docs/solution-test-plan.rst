@@ -5,12 +5,12 @@ Introduction
 ------------
 
 About this document
-^^^^^^^^^^^^^^^^^^^
+```````````````````
 
 This document outlines the process for validating an Openstack deployment utilizing F5 products to provide Neutron LBaaSv2 (load balancing) services. Use cases are defined, for testing purposes, that encompass the set of standard F5 OpenStack solution deployments.
 
 F5 OpenStack Integrated Solutions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+`````````````````````````````````
 
 F5 produces integration solutions that orchestrate BIG-IP Application Delivery Controllers (ADC) with OpenStack Networking (Neutron) services. F5 OpenStack LBaaSv2 integration provides under-the-cloud multi-tenant infrastructure L4-L7 services for Neutron tenants.
 
@@ -26,74 +26,81 @@ Prerequisites
 -------------
 
 OpenStack
-^^^^^^^^^
+`````````
 
-* Operational |openstack| OpenStack cloud deployed in accordance with minimal documented requirements:
+* Operational OpenStack |openstack| cloud deployed in accordance with minimal documented requirements:
 
-  * Deployment configuration will be varied to match test architectures described within each use case.
-  * 1 host machine for a Controller node
-  * 1 host machine for a Compute node
+  * Deployment configuration will be varied to match test architectures described within each use case;
+  * 1 host machine for a Controller node;
+  * 1 host machine for a Compute node.
 
-* Nova flavor created to `accommodate <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-ve-setup-linux-kvm-12-1-0.pdf>`_ the TMOS instance (link is for 12.1.0)
+* Nova :ref:`flavor <docs:big-ip_flavors>`.
 
 TMOS
-^^^^
+````
 
-* Supported TMOS |tmos_supported_versions|
-* For Virtual Edition
+* Supported TMOS :ref:`version <docs:F5 OpenStack Releases and Support Matrix>`.
+* For Virtual Edition:
 
-  * LTM_1SLOT KVM qcow2 image built using the supported Onboarding Heat |heat_ve_onboard_template|
-  * Instance deployed using the supported 3-NIC Heat |heat_ve_3nic_template|
+  * LTM_1SLOT KVM qcow2 image built using the supported Onboarding Heat :ref:`template <heat:F5 BIG-IP VE: Image Patch & Upload>`;
+  * Instance deployed using the supported 3-NIC Heat :ref:`template <heat:F5 BIG-IP VE: Standalone, 3-nic>`.
 
-* Operational BIG-IP :term:`device` or :term:`device service cluster` licensed with LTM and SDN Services
-* Initial configuration orchestrated to match the deployment architecture per the F5 LBaaSv2 Installation Guide
+* Operational BIG-IP :term:`device` or :term:`device service cluster` licensed with LTM and SDN Services.
+* Initial configuration orchestrated to match the deployment architecture per the F5 LBaaSv2 Installation Guide.
 
 F5 OpenStack LBaaSv2
-^^^^^^^^^^^^^^^^^^^^
+````````````````````
 
 * F5 :ref:`agent <Install the F5 Agent>` and :ref:`LBaaSv2 driver <Install the F5 LBaaSv2 Driver>` installed on all hosts from which BIG-IP services will be provisioned.
-
-  * Agent configuration will be varied to match test architectures described within each use case.
+* Agent configuration will be varied to match test architectures described within each use case.
 
 Test Plan
 ---------
 
 Community OpenStack tests (not required, but recommended) are available to exercise the following key components:
 
-* OpenStack Neutron for network topology deployment
-* OpenStack Nova for test web application deployment
-* OpenStack Neutron for LBaaSv2 service deployment
+* OpenStack Neutron for network topology deployment;
+* OpenStack Nova for test web application deployment;
+* OpenStack Neutron for LBaaSv2 service deployment:
 
-  * `Instructions <http://docs.openstack.org/developer/tempest/overview.html>`_ for executing Tempest tests
-  * Tests compatible with F5 OpenStack LBaaSv2 are located in the community |community_tempest_lbaasv2_tests| repository
+  * `Instructions <http://docs.openstack.org/developer/tempest/overview.html>`_ for executing Tempest tests;
+  * Tests compatible with F5 OpenStack LBaaSv2 are located in the community |community_tempest_lbaasv2_tests| repository.
 
 F5 OpenStack tests (required) are available to exercise the following key components:
 
-* F5 OpenStack LBaaSv2 plugin driver (|f5_lbaasv2_driver_readme|)
-* F5 OpenStack Agent (|f5_agent_readme|)
+* F5 OpenStack LBaaSv2 plugin driver (|f5_lbaasv2_driver_readme|);
+* F5 OpenStack Agent (|f5_agent_readme|).
 
 Each use case requires execution of tests over one or more standard network deployments:
 
-**Architecture 1: Global Routed Mode**
+Network Architectures
+`````````````````````
 
-Edge deployment architecture using only OpenStack networking provider networks, with F5 OpenStack agents deployed in global routed mode.
+NA1: Global Routed Mode
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Edge deployment architecture using only OpenStack networking provider networks, with F5 OpenStack agents deployed in :ref:`Global Routed Mode <global-routed-mode>`.
 
 .. figure:: ../media/f5-lbaas-test-architecture-grm.png
     :align: center
     :alt: Global Routed Mode
 
-**Architecture 2: L2 Adjacent Mode**
+NA2: L2 Adjacent Mode
+~~~~~~~~~~~~~~~~~~~~~
 
-Micro-segmentation architecture using tenant networks, with F5 agents deployed in L2 adjacent mode. Execute tests for VLAN and then VxLAN network types.
+Micro-segmentation architecture using tenant networks, with F5 agents deployed in :ref:`L2 Adjacent Mode <L2 Segmentation Mode>`. Execute tests for VLAN and then VxLAN network types.
 
 .. figure:: ../media/f5-lbaas-test-architecture-l2adj.png
     :align: center
     :alt: L2 Adjacent Mode
 
-F5 OpenStack tests supplement the community tests and exercise |f5_lbaasv2_driver_features| specific to F5.
+F5 OpenStack tests supplement the community tests and exercise :ref:`features <Supported Features>` specific to F5.
 
-Use Case 1
-^^^^^^^^^^
+Use Cases
+`````````
+
+UC1: Community LBaaSv2
+~~~~~~~~~~~~~~~~~~~~~~
 
 This use case focuses on basic integration of BIG-IP LTM to provide services through the OpenStack LBaaSv2 API. LBaaSv2 features tested include load balancers, listeners, pools, members, and monitors. LTM features tested include virtual servers, client TLS decryption, http profiles, multiple pools, cookie persistence, and monitored pool members. Pool member state and virtual server statistics are collected through OpenStack networking APIs.
 

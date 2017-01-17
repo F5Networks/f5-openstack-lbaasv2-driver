@@ -308,30 +308,19 @@ texinfo_documents = [
 # Example configuration for intersphinx: refer to the Python standard library.
 
 intersphinx_mapping = {'heat': (
-     'http://f5-openstack-heat.readthedocs.io/en/liberty', None),
+     'http://f5-openstack-heat.readthedocs.io/en/'+openstack_release.lower(), None),
      'heatplugins': (
-     'http://f5-openstack-heat-plugins.readthedocs.io/en/liberty', None),
+     'http://f5-openstack-heat-plugins.readthedocs.io/en/'+openstack_release.lower(), None),
      'lbaasv1': (
-     'http://f5-openstack-lbaasv1.readthedocs.io/en/liberty/', None),
+     'http://f5-openstack-lbaasv1.readthedocs.io/en/'+openstack_release.lower()+'/', None),
      'agent': (
-     'http://f5-openstack-agent.readthedocs.io/en/liberty/', None),
-     'f5sdk': (
-     'http://f5-sdk.readthedocs.io/en/latest/', None),
+     'http://f5-openstack-agent.readthedocs.io/en/'+openstack_release.lower()+'/', None),
      'docs': (
-     'http://f5-openstack-docs.readthedocs.io/en/liberty/', None),
+     'http://f5-openstack-docs.readthedocs.io/en/'+openstack_release.lower()+'/', None),
  }
 
 rst_epilog = '''
 .. |openstack| replace:: %(openstack_release)s
-.. |tmos_supported_versions| raw:: html
-
-   <a href="http://f5-openstack-docs.readthedocs.io/en/%(openstack_release_l)s/releases_and_versioning.html">version</a>
-.. |heat_ve_onboard_template| raw:: html
-
-   <a href="https://github.com/F5Networks/f5-openstack-heat/tree/%(openstack_release_l)s/f5_supported/ve/images">template</a>
-.. |heat_ve_3nic_template| raw:: html
-
-   <a href="https://github.com/F5Networks/f5-openstack-heat/tree/%(openstack_release_l)s/f5_supported/ve/standalone">template</a>
 .. |community_tempest_lbaasv2_tests| raw:: html
 
    <a href="https://github.com/openstack/neutron-lbaas/tree/stable/%(openstack_release_l)s">tests</a>
@@ -341,9 +330,6 @@ rst_epilog = '''
 .. |f5_agent_readme| raw:: html
 
    <a href="https://github.com/F5Networks/f5-openstack-agent/blob/%(openstack_release_l)s/README.rst">README</a>
-.. |f5_lbaasv2_driver_features| raw:: html
-
-   <a href="http://f5-openstack-lbaasv2-driver.readthedocs.io/en/%(openstack_release_l)s/map_lbaasv2-features.html">features</a>
 ''' % {
   'openstack_release': openstack_release,
   'openstack_release_l': openstack_release.lower()
