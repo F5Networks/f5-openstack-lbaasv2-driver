@@ -13,6 +13,9 @@ Release Highlights
 
 This release introduces the following:
 
+- L7 routing
+- Unattached pools
+- Load balancer statistics (e.g., ``neutron lbaas-loadbalancer-stats``)
 - Bug fixes
 
 See the `changelog <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/compare/v9.1.0...v9.2.0>`_ for the full list of changes in this release.
