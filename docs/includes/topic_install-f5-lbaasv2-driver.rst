@@ -42,11 +42,7 @@ The ``f5-openstack-lbaasv2-driver`` package can be installed using ``dpkg``.
 
 .. code-block:: bash
 
-<<<<<<< HEAD
     $ sudo dpkg –i python-f5-openstack-lbaasv2-driver_9.2.0-1_1404_all.deb
-=======
-    $ sudo dpkg –i python-f5-openstack-lbaasv2-driver_8.2.0-1_1404_all.deb
->>>>>>> upstream/liberty
 
 RPM Package
 ```````````
