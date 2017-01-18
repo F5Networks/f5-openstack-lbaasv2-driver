@@ -53,6 +53,7 @@ You can use the :ref:`F5 environment generator` to automatically generate, and c
 
         $ sudo add_f5agent_environment <env_name>
 
+The environment name is limited to 8 characters in length.
 
 Configure the F5 Agent
 ``````````````````````
