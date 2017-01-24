@@ -17,11 +17,8 @@
 
 set -ex
 
-# We need to clone the OpenStack devtest repo for our TLC files
-git clone ${DEVTEST_REPO} ${DEVTEST_DIR}
-
 # Run the setup & commands for the session
-tlc --session ${TEST_SESSION} --config ${TLC_FILE} --debug setup
-tlc --session ${TEST_SESSION} --debug cmd ready
-tlc --session ${TEST_SESSION} --debug cmd test_env
-tlc --session ${TEST_SESSION} --debug cmd lbaasv2
+/tools/bin/tlc --session ${TEST_SESSION} --config ${TLC_FILE} --debug setup
+/tools/bin/tlc --session ${TEST_SESSION} --debug cmd ready
+/tools/bin/tlc --session ${TEST_SESSION} --debug cmd test_env
+/tools/bin/tlc --session ${TEST_SESSION} --debug cmd lbaasv2
