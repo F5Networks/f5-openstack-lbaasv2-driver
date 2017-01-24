@@ -13,12 +13,13 @@
 # limitations under the License.
 #
 
-.PHONY: all systest functest \
+.PHONY: all functest \
 tlc-install \
-tempest-setup \
-tempest_tests tempest_tests-setup \
-tempest_tests-install tempest_tests-run \
-tempest_tests-teardown
+tempest_tests-install tempest_tests-teardown \
+tempest_11.5.4_overcloud tempest_11.5.4_undercloud \
+tempest_11.6.0_overcloud tempest_11.6.0_undercloud \
+tempest_11.6.1_overcloud tempest_11.6.1_undercloud \
+tempest_12.1.1_overcloud tempest_12.1.1_undercloud
 
 # - <nearest reachable tag>-<num commits since>-g<abbreviated commit id>
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
@@ -57,15 +58,12 @@ export PATH := /tools/bin:$(PATH)
 export PYTHONPATH := /tools/lib:/tools/bin:$(PYTHONPATH)
 export USER := buildbot
 export TEST_OPENSTACK_DISTRO := liberty
-export TEST_VE_IMAGE := os_ready-BIGIP-11.6.0.0.0.401.qcow2
 export TEST_CIRROS_IMAGE := cirros-0.3.4-x86_64-disk.qcow2
 export TEST_OPENSTACK_NODE_COUNT := 2
 export TEST_OPENSTACK_DEPLOY := multinode
-export TEST_OPENSTACK_CLOUD := overcloud
 export TEST_COMMON_LIB := $(DEVTEST_DIR)/common
 export GLANCE_COMPUTE_STORAGE := NFS
-export TLC_FILE := ${DEVTEST_DIR}/traffic/$(TEST_OPENSTACK_CLOUD)/ve_$(TEST_OPENSTACK_CLOUD).tlc
-export TEST_SESSION := $(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP)
+export TLC_FILE_DIR := $(DEVTEST_DIR)/traffic
 
 # Virtualenv & tempest requirements
 export VENVDIR := /home/buildbot/virtualenvs
@@ -74,38 +72,125 @@ export TEMPEST_CONFIG_DIR := $(TEMPEST_VENV_DIR)/etc/tempest
 export TEMPEST_VENV_ACTIVATE := $(TEMPEST_VENV_DIR)/bin/activate
 
 # Results Directories
-export RESULTS_DIR := $(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)
 export API_SESSION := api_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 export SCENARIO_SESSION := scenario_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 
+# Install the TLC application
 tlc-install:
 	cd scripts && sudo -EH ./install_tlc.sh
 
+# Run all tests, this is what buildbot calls: make functest
 functest:
-	$(MAKE) -j -C . functest_all
+	$(MAKE) -C . functest_all
 
-functest_all: tempest_tests 
+# These are all of the functests that we want to run as part of bbot job
+# We ignore the return value so that we run all of the tests
+functest_all: tlc-install tempest_tests-install
+	-$(MAKE) -C . tempest_11.5.4_overcloud
+	-$(MAKE) -C . tempest_11.6.0_overcloud
+	-$(MAKE) -C . tempest_11.6.1_overcloud
+	-$(MAKE) -C . tempest_12.1.1_overcloud
+	-$(MAKE) -C . tempest_11.5.4_undercloud
+	-$(MAKE) -C . tempest_11.6.0_undercloud
+	-$(MAKE) -C . tempest_11.6.1_undercloud
+	-$(MAKE) -C . tempest_12.1.1_undercloud
 
+# Not using the tempest TLC files for liberty because they install barbican
+# which causes the tests to lockup/hang
+
+# Tempest Tests for 11.5.x overcloud VE deployment
+tempest_11.5.4_overcloud:
+	export TEST_VE_IMAGE=os_ready-BIGIP-11.5.4.2.0.291.qcow2 ;\
+	export TEST_OPENSTACK_CLOUD=overcloud ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTCK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)-$@ ;\
+	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	$(MAKE) -C . tempest_tests
+
+# Tempest Tests for 11.6.x overcloud VE deployment
+tempest_11.6.0_overcloud:
+	export TEST_VE_IMAGE=os_ready-BIGIP-11.6.0.0.0.401.qcow2 ;\
+	export TEST_OPENSTACK_CLOUD=overcloud ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)-$@ ;\
+	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	$(MAKE) -C . tempest_tests
+
+tempest_11.6.1_overcloud:
+	export TEST_VE_IMAGE=os_ready-BIGIP-11.6.1.1.0.326.qcow2 ;\
+	export TEST_OPENSTACK_CLOUD=overcloud ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)-$@ ;\
+	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	$(MAKE) -C . tempest_tests
+
+# Tempest Tests for 12.1.x overcloud VE deployment
+tempest_12.1.1_overcloud:
+	export TEST_VE_IMAGE=os_ready-BIGIP-12.1.1.2.0.204.qcow2 ;\
+	export TEST_OPENSTACK_CLOUD=overcloud ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)-$@ ;\
+	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	$(MAKE) -C . tempest_tests
+
+# Tempest Tests for 11.5.x undercloud VE deployment
+tempest_11.5.4_undercloud:
+	export TEST_VE_IMAGE=os_ready-BIGIP-11.5.4.2.0.291.qcow2 ;\
+	export TEST_OPENSTACK_CLOUD=undercloud ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)-$@ ;\
+	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	$(MAKE) -C . tempest_tests
+
+# Tempest Tests for 11.6.x undercloud VE deployment
+tempest_11.6.0_overcloud:
+	export TEST_VE_IMAGE=os_ready-BIGIP-11.6.0.0.0.401.qcow2 ;\
+	export TEST_OPENSTACK_CLOUD=undercloud ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)-$@ ;\
+	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	$(MAKE) -C . tempest_tests
+
+tempest_11.6.1_undercloud:
+	export TEST_VE_IMAGE=os_ready-BIGIP-11.6.1.1.0.326.qcow2 ;\
+	export TEST_OPENSTACK_CLOUD=undercloud ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)-$@ ;\
+	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	$(MAKE) -C . tempest_tests
+
+# Tempest Tests for 12.1.x undercloud VE deployment
+tempest_12.1.1_undercloud:
+	export TEST_VE_IMAGE=os_ready-BIGIP-12.1.1.2.0.204.qcow2 ;\
+	export TEST_OPENSTACK_CLOUD=undercloud ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)-$@ ;\
+	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	$(MAKE) -C . tempest_tests
+
+# Once we have the variables setup we can run the tempest tests on our env
 tempest_tests:
-	@echo "automated functional tests..."
-	$(MAKE) -C . tlc-install
 	$(MAKE) -C . tempest_tests-setup
-	$(MAKE) -C . tempest_tests-install
+	$(MAKE) -C . tempest_tests-config
 	$(MAKE) -C . tempest_tests-run
-	$(MAKE) -C . tempest_tests-teardown
+	$(MAKE) -C . tempest_tests-cleanup
+
+tempest_tests-install:
+	@echo "installing and tempest tests..."
+	cd scripts && ./tempest_setup.sh || $(MAKE) -C ../ tempest_tests-cleanup
 
 tempest_tests-setup:
 	@echo "setting up tempest test TLC session..."
-	cd scripts && ./tlc_session_setup.sh || $(MAKE) -C ../ tempest_tests-teardown
+	cd scripts && ./tlc_session_setup.sh || $(MAKE) -C ../ tempest_tests-cleanup
 
-tempest_tests-install:
-	@echo "installing and configuring tempest tests..."
-	cd scripts && ./tempest_setup.sh || $(MAKE) -C ../ tempest_tests-teardown
+tempest_tests-config:
+	@echo "configuring tempest for the values in our TLC environment"
+	cd scripts && ./tempest_config.sh || $(MAKE) -C ../ tempest_tests-cleanup
 
 tempest_tests-run:
 	@echo "running the tempest test cases..."
-	cd scripts && ./tempest_tests.sh || $(MAKE) -C ../ tempest_tests-teardown
+	cd scripts && ./tempest_tests.sh || $(MAKE) -C ../ tempest_tests-cleanup
 
-tempest_tests-teardown:
-	@echo "tearing down the TLC session..."
+tempest_tests-cleanup:
+	@echo "cleaning up down the TLC session..."
 	-cd scripts && ./tlc_session_cleanup.sh
