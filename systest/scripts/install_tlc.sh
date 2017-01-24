@@ -23,7 +23,7 @@ chmod 600 /home/buildbot/.ssh/id_rsa_testlab
 chown buildbot:buildbot /home/buildbot/.ssh/id_rsa_testlab
 
 # Update the system and install required debian packages
-ln -s /bin/bash /usr/local/bin/bash
+ln -fs /bin/bash /usr/local/bin/bash
 apt-get update
 apt-get -y install \
     vim \
@@ -36,14 +36,13 @@ apt-get -y install \
     python-protobuf \
     protobuf-compiler \
     gosu
-apt-get clean
-rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Pip install TLC requirements
 pip install --upgrade pip
 pip install argcomplete blessings configargparse prettytable
 
 # Clone the toolsbase directory and setup the file system structure
+rm -rf ${TOOLSBASE_DIR}
 git clone ${TOOLSBASE_REPO} ${TOOLSBASE_DIR}
 mkdir ${TOOLSBASE_DIR}/independent/share
 mkdir ${TOOLSBASE_DIR}/Ubuntu-10-x86_64/share
@@ -74,6 +73,7 @@ for lib in $libs; do
 done
 
 # Install TLC packages and binaries
+rm -rf ${TLC_DIR}
 git clone \
   -b ${TLC_BRANCH} \
   --single-branch \
