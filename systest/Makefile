@@ -27,7 +27,7 @@ TIMESTAMP ?= $(shell date +"%Y%m%d-%H%M%S")
 export TIMESTAMP   # Only eval TIMESTAMP in the top make.
 PROJECT := f5-openstack-lbaasv2-driver
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
-MAKEFILE_DIR := $(dir $(MAKEFILE_PATH))
+export MAKEFILE_DIR := $(dir $(MAKEFILE_PATH))
 
 # Repos that are used for the tests and environment
 # TLC
@@ -77,6 +77,7 @@ export TEMPEST_VENV_ACTIVATE := $(TEMPEST_VENV_DIR)/bin/activate
 export RESULTS_DIR := $(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)
 export API_SESSION := api_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 export SCENARIO_SESSION := scenario_$(SUBJECTCODE_ID)_$(TIMESTAMP)
+export DRIVER_TEMPEST_SESSION := driver_tempest_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 
 tlc-install:
 	cd scripts && sudo -EH ./install_tlc.sh
