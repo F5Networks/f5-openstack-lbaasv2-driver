@@ -15,5 +15,8 @@
 # limitations under the License.
 #
 
-# Cleanup the session. Should we be killing the barbican in Mesos too?
+set -x
+
+# Teardown the barbican worker and cleanup the TLC session
+tlc --session ${TEST_SESSION} --debug cmd uninstall_barbican
 tlc --session ${TEST_SESSION} --debug cleanup

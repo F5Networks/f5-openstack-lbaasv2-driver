@@ -27,34 +27,15 @@ pip install tox
 # Install tempest & its config files
 git clone ${TEMPEST_REPO} ${TEMPEST_DIR}
 pip install ${TEMPEST_DIR}
-cp conf/tempest.conf ${TEMPEST_CONFIG_DIR}/tempest.conf.orig
-cp conf/accounts.yaml ${TEMPEST_CONFIG_DIR}/accounts.yaml
 
-# We need to deactivate the virtualenv to run TLC commands
-deactivate
+# We need to clone the OpenStack devtest repo for our TLC files
+git clone ${DEVTEST_REPO} ${DEVTEST_DIR}
 
-# Find the values for tempest.conf and substitute them
-
-OS_CONTROLLER_IP=`tlc --session ${TEST_SESSION} symbols \
-    | grep openstack_controller1ip_data_direct \
-    | awk '{print $3}'`
-
-ssh_cmd="ssh -o StrictHostKeyChecking=no testlab@${OS_CONTROLLER_IP}"
-
-OS_PUBLIC_ROUTER_ID=`${ssh_cmd} "source ~/keystonerc_testlab && neutron router-list -F id -f value"`
-OS_PUBLIC_NETWORK_ID=`${ssh_cmd} "source ~/keystonerc_testlab && neutron net-list -F name -F id -f value" \
-    | grep external_network \
-    | awk '{print $1}'`
-OS_CIRROS_IMAGE_ID=`${ssh_cmd} "source ~/keystonerc_testlab && glance image-list" \
-    | grep ${TEST_CIRROS_IMAGE} \
-    | awk '{print $2}'`
-
-cat ${TEMPEST_CONFIG_DIR}/tempest.conf.orig \
-  | sed "s/{{ OS_CONTROLLER_IP }}/${OS_CONTROLLER_IP}/" \
-  | sed "s/{{ OS_PUBLIC_ROUTER_ID }}/${OS_PUBLIC_ROUTER_ID}/" \
-  | sed "s/{{ OS_PUBLIC_NETWORK_ID }}/${OS_PUBLIC_NETWORK_ID}/" \
-  | sed "s/{{ OS_CIRROS_IMAGE_ID }}/${OS_CIRROS_IMAGE_ID}/" \
-  > ${TEMPEST_CONFIG_DIR}/tempest.conf
+# Add tempest configuration options for running tempest tests in f5lbaasv2driver
+BIGIP_IP=`ssh -i ~/.ssh/id_rsa_testlab testlab@${OS_CONTROLLER_IP} cat ve_mgmt_ip`
+echo "[f5_lbaasv2_driver]" >> ${TEMPEST_CONFIG_DIR}/tempest.conf
+echo "icontrol_hostname = ${BIGIP_IP}" >> ${TEMPEST_CONFIG_DIR}/tempest.conf
+echo "transport_url = rabbit://guest:guest@${OS_CONTROLLER_IP}:5672/" >> ${TEMPEST_CONFIG_DIR}/tempest.conf
 
 # Clone neutron-lbaas so we have the tests
 git clone\
@@ -65,4 +46,3 @@ git clone\
 
 # Copy our tox.ini file to neutron so we can run py.test instead of testr
 cp conf/neutron-lbaas.tox.ini ${NEUTRON_LBAAS_DIR}/f5.tox.ini
-

@@ -322,4 +322,20 @@ intersphinx_mapping = {'heat': (
      'http://f5-sdk.readthedocs.io/en/latest/', None),
      'docs': (
      'http://f5-openstack-docs.readthedocs.io/en/mitaka/', None),
- }
+}
+
+rst_epilog = '''
+.. |openstack| replace:: %(openstack_release)s
+.. |community_tempest_lbaasv2_tests| raw:: html
+
+   <a href="https://github.com/openstack/neutron-lbaas/tree/stable/%(openstack_release_l)s">tests</a>
+.. |f5_lbaasv2_driver_readme| raw:: html
+
+   <a href="https://github.com/F5Networks/f5-openstack-lbaasv2-driver/blob/%(openstack_release_l)s/README.rst">README</a>
+.. |f5_agent_readme| raw:: html
+
+   <a href="https://github.com/F5Networks/f5-openstack-agent/blob/%(openstack_release_l)s/README.rst">README</a>
+''' % {
+  'openstack_release': openstack_release,
+  'openstack_release_l': openstack_release.lower()
+}
