@@ -32,6 +32,9 @@ pip install ${TEMPEST_DIR}
 git clone ${DEVTEST_REPO} ${DEVTEST_DIR}
 
 # Add tempest configuration options for running tempest tests in f5lbaasv2driver
+OS_CONTROLLER_IP=`tlc --session ${TEST_SESSION} symbols \
+    | grep openstack_controller1ip_data_direct \
+    | awk '{print $3}'`
 BIGIP_IP=`ssh -i ~/.ssh/id_rsa_testlab testlab@${OS_CONTROLLER_IP} cat ve_mgmt_ip`
 echo "[f5_lbaasv2_driver]" >> ${TEMPEST_CONFIG_DIR}/tempest.conf
 echo "icontrol_hostname = ${BIGIP_IP}" >> ${TEMPEST_CONFIG_DIR}/tempest.conf
