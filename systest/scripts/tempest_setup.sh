@@ -31,15 +31,6 @@ pip install ${TEMPEST_DIR}
 # We need to clone the OpenStack devtest repo for our TLC files
 git clone ${DEVTEST_REPO} ${DEVTEST_DIR}
 
-# Add tempest configuration options for running tempest tests in f5lbaasv2driver
-OS_CONTROLLER_IP=`tlc --session ${TEST_SESSION} symbols \
-    | grep openstack_controller1ip_data_direct \
-    | awk '{print $3}'`
-BIGIP_IP=`ssh -i ~/.ssh/id_rsa_testlab testlab@${OS_CONTROLLER_IP} cat ve_mgmt_ip`
-echo "[f5_lbaasv2_driver]" >> ${TEMPEST_CONFIG_DIR}/tempest.conf
-echo "icontrol_hostname = ${BIGIP_IP}" >> ${TEMPEST_CONFIG_DIR}/tempest.conf
-echo "transport_url = rabbit://guest:guest@${OS_CONTROLLER_IP}:5672/" >> ${TEMPEST_CONFIG_DIR}/tempest.conf
-
 # Clone neutron-lbaas so we have the tests
 git clone\
   -b ${NEUTRON_LBAAS_BRANCH} \
