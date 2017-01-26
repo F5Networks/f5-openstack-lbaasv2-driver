@@ -28,7 +28,7 @@ TIMESTAMP ?= $(shell date +"%Y%m%d-%H%M%S")
 export TIMESTAMP   # Only eval TIMESTAMP in the top make.
 PROJECT := f5-openstack-lbaasv2-driver
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
-MAKEFILE_DIR := $(dir $(MAKEFILE_PATH))
+export MAKEFILE_DIR := $(dir $(MAKEFILE_PATH))
 
 # Repos that are used for the tests and environment
 # TLC
@@ -57,9 +57,9 @@ export NEUTRON_LBAAS_BRANCH := stable/mitaka
 export PATH := /tools/bin:$(PATH)
 export PYTHONPATH := /tools/lib:/tools/bin:$(PYTHONPATH)
 export USER := buildbot
-export TEST_OPENSTACK_DISTRO := liberty
+export TEST_OPENSTACK_DISTRO := $(BRANCH)
 export TEST_CIRROS_IMAGE := cirros-0.3.4-x86_64-disk.qcow2
-export TEST_OPENSTACK_NODE_COUNT := 2
+export TEST_OPENSTACK_NODE_COUNT := 3
 export TEST_OPENSTACK_DEPLOY := multinode
 export TEST_COMMON_LIB := $(DEVTEST_DIR)/common
 export GLANCE_COMPUTE_STORAGE := NFS
@@ -74,6 +74,7 @@ export TEMPEST_VENV_ACTIVATE := $(TEMPEST_VENV_DIR)/bin/activate
 # Results Directories
 export API_SESSION := api_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 export SCENARIO_SESSION := scenario_$(SUBJECTCODE_ID)_$(TIMESTAMP)
+export DRIVER_TEMPEST_SESSION := driver_tempest_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 
 # Install the TLC application
 tlc-install:
@@ -102,7 +103,7 @@ functest_all: tlc-install tempest_tests-install
 tempest_11.5.4_overcloud:
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.5.4.2.0.291.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=overcloud ;\
-	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTCK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)-$@ ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . tempest_tests
@@ -111,7 +112,7 @@ tempest_11.5.4_overcloud:
 tempest_11.6.0_overcloud:
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.6.0.0.0.401.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=overcloud ;\
-	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)-$@ ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . tempest_tests
@@ -119,7 +120,7 @@ tempest_11.6.0_overcloud:
 tempest_11.6.1_overcloud:
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.6.1.1.0.326.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=overcloud ;\
-	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)-$@ ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . tempest_tests
@@ -128,7 +129,7 @@ tempest_11.6.1_overcloud:
 tempest_12.1.1_overcloud:
 	export TEST_VE_IMAGE=os_ready-BIGIP-12.1.1.2.0.204.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=overcloud ;\
-	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)-$@ ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . tempest_tests
@@ -137,7 +138,7 @@ tempest_12.1.1_overcloud:
 tempest_11.5.4_undercloud:
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.5.4.2.0.291.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=undercloud ;\
-	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)-$@ ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . tempest_tests
@@ -146,7 +147,7 @@ tempest_11.5.4_undercloud:
 tempest_11.6.0_undercloud:
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.6.0.0.0.401.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=undercloud ;\
-	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)-$@ ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . tempest_tests
@@ -154,7 +155,7 @@ tempest_11.6.0_undercloud:
 tempest_11.6.1_undercloud:
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.6.1.1.0.326.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=undercloud ;\
-	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)-$@ ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . tempest_tests
@@ -163,7 +164,7 @@ tempest_11.6.1_undercloud:
 tempest_12.1.1_undercloud:
 	export TEST_VE_IMAGE=os_ready-BIGIP-12.1.1.2.0.204.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=undercloud ;\
-	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)-$@ ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . tempest_tests

@@ -53,5 +53,5 @@ Next Steps
 
 
 .. _license: https://f5.com/products/how-to-buy/simplified-licensing
-.. _OpenStack Networking Concepts: http://docs.openstack.org/liberty/networking-guide/
+.. _OpenStack Networking Concepts: http://docs.openstack.org/mitaka/networking-guide/
 
