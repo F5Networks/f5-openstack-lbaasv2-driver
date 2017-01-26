@@ -103,7 +103,7 @@ functest_all: tlc-install tempest_tests-install
 tempest_11.5.4_overcloud:
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.5.4.2.0.291.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=overcloud ;\
-	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTCK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$(PROJECT)_$(BRANCH)-$@ ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . tempest_tests
