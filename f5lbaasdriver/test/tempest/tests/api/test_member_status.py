@@ -1,5 +1,4 @@
-# Copyright 2015 Hewlett-Packard Development Company, L.P.
-# Copyright 2016 Rackspace Inc.
+# Copyright 2017 F5 Networks Inc.
 # All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
