@@ -176,8 +176,8 @@ tempest_tests:
 	$(MAKE) -C . tempest_tests-cleanup
 
 tempest_tests-install:
-	@echo "installing and tempest tests..."
-	cd scripts && ./tempest_setup.sh || $(MAKE) -C ../ tempest_tests-cleanup
+	@echo "installing tempest tests..."
+	cd scripts && ./tempest_install.sh || $(MAKE) -C ../ tempest_tests-cleanup
 
 tempest_tests-setup:
 	@echo "setting up tempest test TLC session..."
