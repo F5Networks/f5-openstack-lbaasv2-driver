@@ -13,9 +13,10 @@
 # limitations under the License.
 #
 
+# Inform make that targets are NOT files.
 .PHONY: all functest \
 install_tlc \
-tempest_install tempest_tests-teardown \
+install_test_infra tempest_tests-teardown \
 tempest_11.5.4_overcloud tempest_11.5.4_undercloud \
 tempest_11.6.0_overcloud tempest_11.6.0_undercloud \
 tempest_11.6.1_overcloud tempest_11.6.1_undercloud \
@@ -29,6 +30,7 @@ export TIMESTAMP   # Only eval TIMESTAMP in the top make.
 PROJECT := f5-openstack-lbaasv2-driver
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR := $(dir $(MAKEFILE_PATH))
+export TEST_DIR := $(abspath $(MAKEFILE_DIR))/../test
 
 # Repos that are used for the tests and environment
 # TLC
@@ -74,19 +76,60 @@ export TEMPEST_VENV_ACTIVATE := $(TEMPEST_VENV_DIR)/bin/activate
 # Results Directories
 export API_SESSION := api_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 export SCENARIO_SESSION := scenario_$(SUBJECTCODE_ID)_$(TIMESTAMP)
+export FROM_AGENT_SESSION := from_agent_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 
-# Install the TLC application
+# LEAF MAKE TARGETS:
+#
+# This section contains "leaf" make targets.  These targets do not call other
+# targets.  Most of the core logic of each of these targets can be found in
+# the scripts directory under the same name as the target, i.e.:
+# ./scripts/TARGET_NAME.sh
+# e.g:  ./scripts/install_test_infra.sh
+# We intend to adhere to this convention as long as it's convenient.
+# Our reasoning is that this makes it easier to read this file and understand
+# how it relates to the rest of the test infrastructure.
+# Notice that these "leaves" are generally the exit points from this file, and
+# without exception, invoke the aforementioned scripts.
+#
+
 install_tlc:
+	@echo "installing the tlc client on the worker..."
 	cd scripts && sudo -EH ./$@.sh
 
-tempest_install:
-	@echo "installing tempest tests..."
-	cd scripts && ./$@.sh || $(MAKE) -C ../ tlc_session_cleanup
+install_test_infra:
+	@echo "installing tempest openstack interfaces and neutron_lbaas tests..."
+	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_tlc_session
 
+setup_tlc_session:
+	@echo "setting up TLC session..."
+	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_tlc_session
+
+configure_test_infra:
+	@echo "injecting TLC symbol and openstack IDs into 'tempest' conf files..."
+	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_tlc_session
+
+run_neutron_lbaas:
+	@echo "running tests extracted from 'neutron_lbaas' project..."
+	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_tlc_session
+
+run_agent_transfers:
+	@echo "running tests extracted from 'f5-openstack-agent' project..."
+	cd scripts && ./$@.sh
+
+cleanup_tlc_session:
+	@echo "running tlc --session TEST_SESSION --debug cleanup..."
+	cd scripts && ./$@.sh
+
+# BRANCH MAKE TARGETS:
+#
+# These make targets invoke OTHER targets defined in this file.  They are not
+# used to invoke particular tests, rather they manage test infrastructure, and
+# conform to the standard interface expected by buildbot.
+#
 # Run all tests, this is what buildbot calls: make functest
 # These are all of the functests that we want to run as part of bbot job
 # We ignore the return value so that we run all of the tests
-functest: install_tlc tempest_install
+functest: install_tlc install_test_infra
 	-$(MAKE) -C . tempest_11.5.4_overcloud
 	-$(MAKE) -C . tempest_11.6.0_overcloud
 	-$(MAKE) -C . tempest_11.6.1_overcloud
@@ -177,26 +220,9 @@ tempest_12.1.1_undercloud:
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . run_tests
 
-# Once we have the variables setup we can run the tempest tests on our env
 run_tests:
-	$(MAKE) -C . tlc_session_setup
-	$(MAKE) -C . tempest_config
-	$(MAKE) -C . neutron_lbaas_run
-	$(MAKE) -C . tlc_session_cleanup
-
-
-tlc_session_setup:
-	@echo "setting up tempest test TLC session..."
-	cd scripts && ./$@.sh || $(MAKE) -C ../ tlc_session_cleanup
-
-tempest_config:
-	@echo "configuring tempest for the values in our TLC environment"
-	cd scripts && ./$@.sh || $(MAKE) -C ../ tlc_session_cleanup
-
-neutron_lbaas_run:
-	@echo "running the tempest test cases..."
-	cd scripts && ./$@.sh || $(MAKE) -C ../ tlc_session_cleanup
-
-tlc_session_cleanup:
-	@echo "cleaning up down the TLC session..."
-	-cd scripts && ./$@.sh
+	$(MAKE) -C . setup_tlc_session
+	$(MAKE) -C . configure_test_infra
+	$(MAKE) -C . run_neutron_lbaas
+	$(MAKE) -C . run_agent_transfers
+	$(MAKE) -C . cleanup_tlc_session
