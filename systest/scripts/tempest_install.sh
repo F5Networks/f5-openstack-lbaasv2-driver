@@ -18,6 +18,7 @@
 set -ex
 
 # Create a virtualenv
+rm -rf ${TEMPEST_VENV_DIR}
 virtualenv ${TEMPEST_VENV_DIR}
 source ${TEMPEST_VENV_ACTIVATE}
 
@@ -25,10 +26,12 @@ source ${TEMPEST_VENV_ACTIVATE}
 pip install tox
 
 # Install tempest & its config files
+rm -rf ${TEMPEST_DIR}
 git clone ${TEMPEST_REPO} ${TEMPEST_DIR}
 pip install ${TEMPEST_DIR}
 
 # We need to clone the OpenStack devtest repo for our TLC files
+rm -rf ${DEVTEST_DIR}
 git clone ${DEVTEST_REPO} ${DEVTEST_DIR}
 
 # Install neutron at stable/mitaka because stable/liberty tests will not work
@@ -45,6 +48,7 @@ git clone ${DEVTEST_REPO} ${DEVTEST_DIR}
 #
 # TODO: Make a decision about not using the neutron-lbaas install script
 #       and just installing from requirements files on newest versions
+rm -rf ${NEUTRON_LBAAS_DIR}
 git clone\
   -b ${NEUTRON_LBAAS_BRANCH} \
   --single-branch \
@@ -52,4 +56,4 @@ git clone\
   ${NEUTRON_LBAAS_DIR}
 
 # Copy our tox.ini file to neutron so we can run py.test instead of testr
-cp conf/neutron-lbaas.tox.ini ${NEUTRON_LBAAS_DIR}/f5.tox.ini
+cp -f conf/neutron-lbaas.tox.ini ${NEUTRON_LBAAS_DIR}/f5.tox.ini
