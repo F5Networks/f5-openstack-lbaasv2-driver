@@ -14,8 +14,8 @@
 #
 
 .PHONY: all functest \
-tlc-install \
-tempest_tests-install tempest_tests-teardown \
+install_tlc \
+tempest_install tempest_tests-teardown \
 tempest_11.5.4_overcloud tempest_11.5.4_undercloud \
 tempest_11.6.0_overcloud tempest_11.6.0_undercloud \
 tempest_11.6.1_overcloud tempest_11.6.1_undercloud \
@@ -76,17 +76,17 @@ export API_SESSION := api_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 export SCENARIO_SESSION := scenario_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 
 # Install the TLC application
-tlc-install:
-	cd scripts && sudo -EH ./install_tlc.sh
+install_tlc:
+	cd scripts && sudo -EH ./$@.sh
 
-tempest_tests-install:
+tempest_install:
 	@echo "installing tempest tests..."
-	cd scripts && ./tempest_install.sh || $(MAKE) -C ../ tempest_tests-cleanup
+	cd scripts && ./$@.sh || $(MAKE) -C ../ tlc_session_cleanup
 
 # Run all tests, this is what buildbot calls: make functest
 # These are all of the functests that we want to run as part of bbot job
 # We ignore the return value so that we run all of the tests
-functest: tlc-install tempest_tests-install
+functest: install_tlc tempest_install
 	-$(MAKE) -C . tempest_11.5.4_overcloud
 	-$(MAKE) -C . tempest_11.6.0_overcloud
 	-$(MAKE) -C . tempest_11.6.1_overcloud
@@ -179,26 +179,24 @@ tempest_12.1.1_undercloud:
 
 # Once we have the variables setup we can run the tempest tests on our env
 run_tests:
-	$(MAKE) -C . tempest_tests
+	$(MAKE) -C . tlc_session_setup
+	$(MAKE) -C . tempest_config
+	$(MAKE) -C . neutron_lbaas_run
+	$(MAKE) -C . tlc_session_cleanup
 
-tempest_tests:
-	$(MAKE) -C . tempest_tests-setup
-	$(MAKE) -C . tempest_tests-config
-	$(MAKE) -C . tempest_tests-run
-	$(MAKE) -C . tempest_tests-cleanup
 
-tempest_tests-setup:
+tlc_session_setup:
 	@echo "setting up tempest test TLC session..."
-	cd scripts && ./tlc_session_setup.sh || $(MAKE) -C ../ tempest_tests-cleanup
+	cd scripts && ./$@.sh || $(MAKE) -C ../ tlc_session_cleanup
 
-tempest_tests-config:
+tempest_config:
 	@echo "configuring tempest for the values in our TLC environment"
-	cd scripts && ./tempest_config.sh || $(MAKE) -C ../ tempest_tests-cleanup
+	cd scripts && ./$@.sh || $(MAKE) -C ../ tlc_session_cleanup
 
-tempest_tests-run:
+neutron_lbaas_run:
 	@echo "running the tempest test cases..."
-	cd scripts && ./tempest_tests.sh || $(MAKE) -C ../ tempest_tests-cleanup
+	cd scripts && ./$@.sh || $(MAKE) -C ../ tlc_session_cleanup
 
-tempest_tests-cleanup:
+tlc_session_cleanup:
 	@echo "cleaning up down the TLC session..."
-	-cd scripts && ./tlc_session_cleanup.sh
+	-cd scripts && ./$@.sh
