@@ -143,9 +143,8 @@ class LoadBalancerManager(object):
             )
 
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
-                lbaas_agentschedulerv2.NoActiveLbaasAgent,
-                f5_exc.F5MismatchedTenants) as e:
-            LOG.error("Exception: loadbalancer create: %s" % e.message)
+                lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
+            LOG.error("Exception: loadbalancer create: %s" % e)
             driver.plugin.db.update_status(
                 context,
                 models.LoadBalancer,
@@ -209,9 +208,8 @@ class LoadBalancerManager(object):
             )
 
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
-                lbaas_agentschedulerv2.NoActiveLbaasAgent,
-                f5_exc.F5MismatchedTenants) as e:
-            LOG.error("Exception: loadbalancer delete: %s" % e.message)
+                lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
+            LOG.error("Exception: loadbalancer delete: %s" % e)
             driver.plugin.db.delete_loadbalancer(context, loadbalancer.id)
         except Exception as e:
             LOG.error("Exception: loadbalancer delete: %s" % e.message)

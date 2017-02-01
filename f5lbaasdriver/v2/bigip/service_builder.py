@@ -22,7 +22,6 @@ from oslo_log import log as logging
 
 from f5lbaasdriver.v2.bigip import constants_v2
 from f5lbaasdriver.v2.bigip.disconnected_service import DisconnectedService
-from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 
 LOG = logging.getLogger(__name__)
 
@@ -111,7 +110,6 @@ class LBaaSv2ServiceBuilder(object):
                               loadbalancer.tenant_id,
                               network['id'],
                               network['tenant_id']))
-                raise f5_exc.F5MismatchedTenants()
 
             # Get the network VTEPs if the network provider type is
             # either gre or vxlan.
