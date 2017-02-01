@@ -79,13 +79,14 @@ export SCENARIO_SESSION := scenario_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 tlc-install:
 	cd scripts && sudo -EH ./install_tlc.sh
 
-# Run all tests, this is what buildbot calls: make functest
-functest:
-	$(MAKE) -C . functest_all
+tempest_tests-install:
+	@echo "installing tempest tests..."
+	cd scripts && ./tempest_install.sh || $(MAKE) -C ../ tempest_tests-cleanup
 
+# Run all tests, this is what buildbot calls: make functest
 # These are all of the functests that we want to run as part of bbot job
 # We ignore the return value so that we run all of the tests
-functest_all: tlc-install tempest_tests-install
+functest: tlc-install tempest_tests-install
 	-$(MAKE) -C . tempest_11.5.4_overcloud
 	-$(MAKE) -C . tempest_11.6.0_overcloud
 	-$(MAKE) -C . tempest_11.6.1_overcloud
@@ -182,10 +183,6 @@ tempest_tests:
 	$(MAKE) -C . tempest_tests-config
 	$(MAKE) -C . tempest_tests-run
 	$(MAKE) -C . tempest_tests-cleanup
-
-tempest_tests-install:
-	@echo "installing tempest tests..."
-	cd scripts && ./tempest_install.sh || $(MAKE) -C ../ tempest_tests-cleanup
 
 tempest_tests-setup:
 	@echo "setting up tempest test TLC session..."
