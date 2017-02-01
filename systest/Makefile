@@ -14,8 +14,8 @@
 #
 
 .PHONY: all functest \
-tlc-install \
-tempest_tests-install tempest_tests-teardown \
+install_tlc \
+tempest_install tempest_tests-teardown \
 tempest_11.5.4_overcloud tempest_11.5.4_undercloud \
 tempest_11.6.0_overcloud tempest_11.6.0_undercloud \
 tempest_11.6.1_overcloud tempest_11.6.1_undercloud \
@@ -76,17 +76,17 @@ export API_SESSION := api_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 export SCENARIO_SESSION := scenario_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 
 # Install the TLC application
-tlc-install:
-	cd scripts && sudo -EH ./install_tlc.sh
+install_tlc:
+	cd scripts && sudo -EH ./$@.sh
 
-tempest_tests-install:
+tempest_install:
 	@echo "installing tempest tests..."
-	cd scripts && ./tempest_install.sh || $(MAKE) -C ../ tlc_session_cleanup
+	cd scripts && ./$@.sh || $(MAKE) -C ../ tlc_session_cleanup
 
 # Run all tests, this is what buildbot calls: make functest
 # These are all of the functests that we want to run as part of bbot job
 # We ignore the return value so that we run all of the tests
-functest: tlc-install tempest_tests-install
+functest: install_tlc tempest_install
 	-$(MAKE) -C . tempest_11.5.4_overcloud
 	-$(MAKE) -C . tempest_11.6.0_overcloud
 	-$(MAKE) -C . tempest_11.6.1_overcloud
@@ -199,4 +199,4 @@ neutron_lbaas_run:
 
 tlc_session_cleanup:
 	@echo "cleaning up down the TLC session..."
-	-cd scripts && ./tlc_session_cleanup.sh
+	-cd scripts && ./$@.sh
