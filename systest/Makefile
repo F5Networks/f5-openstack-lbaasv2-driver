@@ -106,7 +106,7 @@ tempest_11.5.4_overcloud:
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
 	export GUMBALLS_PROJECT=$(PROJECT)_$(BRANCH)_$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$${GUMBALLS_PROJECT} ;\
-	export TEST_SESSION=$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . run_tests
 
 # Tempest Tests for 11.6.x overcloud VE deployment
@@ -116,7 +116,7 @@ tempest_11.6.0_overcloud:
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
 	export GUMBALLS_PROJECT=$(PROJECT)_$(BRANCH)_$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$${GUMBALLS_PROJECT} ;\
-	export TEST_SESSION=$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . run_tests
 
 tempest_11.6.1_overcloud:
@@ -125,7 +125,7 @@ tempest_11.6.1_overcloud:
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
 	export GUMBALLS_PROJECT=$(PROJECT)_$(BRANCH)_$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$${GUMBALLS_PROJECT} ;\
-	export TEST_SESSION=$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . run_tests
 
 # Tempest Tests for 12.1.x overcloud VE deployment
@@ -135,7 +135,7 @@ tempest_12.1.1_overcloud:
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
 	export GUMBALLS_PROJECT=$(PROJECT)_$(BRANCH)_$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$${GUMBALLS_PROJECT} ;\
-	export TEST_SESSION=$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . run_tests
 
 # Tempest Tests for 11.5.x undercloud VE deployment
@@ -145,7 +145,7 @@ tempest_11.5.4_undercloud:
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
 	export GUMBALLS_PROJECT=$(PROJECT)_$(BRANCH)_$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$${GUMBALLS_PROJECT} ;\
-	export TEST_SESSION=$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . run_tests
 
 # Tempest Tests for 11.6.x undercloud VE deployment
@@ -155,7 +155,7 @@ tempest_11.6.0_undercloud:
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
 	export GUMBALLS_PROJECT=$(PROJECT)_$(BRANCH)_$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$${GUMBALLS_PROJECT} ;\
-	export TEST_SESSION=$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . run_tests
 
 tempest_11.6.1_undercloud:
@@ -164,7 +164,7 @@ tempest_11.6.1_undercloud:
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
 	export GUMBALLS_PROJECT=$(PROJECT)_$(BRANCH)_$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$${GUMBALLS_PROJECT} ;\
-	export TEST_SESSION=$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . run_tests
 
 # Tempest Tests for 12.1.x undercloud VE deployment
@@ -174,7 +174,7 @@ tempest_12.1.1_undercloud:
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
 	export GUMBALLS_PROJECT=$(PROJECT)_$(BRANCH)_$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$${GUMBALLS_PROJECT} ;\
-	export TEST_SESSION=$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . run_tests
 
 # Once we have the variables setup we can run the tempest tests on our env
