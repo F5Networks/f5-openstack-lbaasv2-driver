@@ -115,12 +115,6 @@ class BaseTestCase(base.BaseNetworkTest):
                     cls._try_delete_resource(cls.pools_client.delete_pool,
                                              pool.get('id'))
                     cls._wait_for_load_balancer_status(lb_id)
-                    health_monitor = pool.get('healthmonitor')
-                    if health_monitor:
-                        cls._try_delete_resource(
-                            cls.health_monitors_client.delete_health_monitor,
-                            health_monitor.get('id'))
-                    cls._wait_for_load_balancer_status(lb_id)
                 for l7policy in listener.get('l7policies'):
                     for rule in l7policy.get('rules'):
                         cls._try_delete_resource(
