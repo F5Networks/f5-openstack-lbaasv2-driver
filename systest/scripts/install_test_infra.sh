@@ -30,10 +30,15 @@ rm -rf ${TEMPEST_DIR}
 git clone ${TEMPEST_REPO} ${TEMPEST_DIR}
 pip install ${TEMPEST_DIR}
 
+
 # We need to clone the OpenStack devtest repo for our TLC files
 rm -rf ${DEVTEST_DIR}
 git clone ${DEVTEST_REPO} ${DEVTEST_DIR}
 
+pip install git+ssh://git@bldr-git.int.lineratesystems.com/tools/pytest-autolog.git
+# This should be listed in requirement.test.txt also, but will not succeed
+# from that location without sudo
+sudo pip install git+https://github.com/F5Networks/f5-openstack-agent.git@${BRANCH}
 # Install neutron at stable/mitaka because stable/liberty tests will not work
 # because they use an upper contraints file in the installation script that
 # neutron-lbaas uses for tox tests.
