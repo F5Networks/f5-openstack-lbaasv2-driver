@@ -18,4 +18,4 @@
 set -x
 
 # We only need to cleanup the session, we didn't use barbican-enabled TLC file
-tlc --session ${TEST_SESSION} --debug cleanup && exit -1
+tlc --session ${TEST_SESSION} --debug cleanup; exit 1
