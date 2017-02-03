@@ -16,7 +16,7 @@
 # Inform make that targets are NOT files.
 .PHONY: all functest \
 install_tlc \
-install_test_infra tempest_tests-teardown \
+install_test_infra \
 tempest_11.5.4_overcloud tempest_11.5.4_undercloud \
 tempest_11.6.0_overcloud tempest_11.6.0_undercloud \
 tempest_11.6.1_overcloud tempest_11.6.1_undercloud \
