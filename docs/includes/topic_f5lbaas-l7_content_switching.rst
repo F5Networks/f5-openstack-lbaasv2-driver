@@ -182,18 +182,18 @@ Configuration
         :emphasize-lines: 2,4,6,11,13
 
         # Create a listener
-        neutron lbaas-create-listener listener1
+        neutron lbaas-listener-create --name listener1 --protocol HTTP --protocol-port 8080 --loadbalancer lb1
         # Create a pool
-        neutron lbaas-create-pool pool1
+        neutron lbaas-pool-create --name pool1 --listener listener1 --protocol HTTP --lb-algorithm ROUND_ROBIN
         # Create a policy
-        neutron --policy policy1 lbaas-create-l7policy --name "policy1" --listener "listener1" --action redirect_to_pool --pool "pool1" --position 1
+        neutron lbaas-l7policy-create --name policy1 --listener listener1 --action REDIRECT_TO_POOL --redirect-pool pool1 --position 1
         # Create a rule for this policy
         # Once the below operation has completed, a new policy will exist on the device called 'wrapper_policy'.
         # It will have a single rule called redirect_to_pool_1.
         # A single condition and a single action will exist.
-        neutron lbaas-create-l7rule rule1 --rule-type path --compare-type contains --value "i_t" --policy policy1
+        neutron lbaas-l7rule-create --type PATH --compare-type CONTAINS --value "i_t" policy1
         # Create a second rule for the above policy
-        neutron lbaas-create-l7rule rule2 --rule-type cookie --compare-type ends_with --key "cky" --value "i" --invert --policy policy1
+        neutron lbaas-l7rule-create --type COOKIE --compare-type ENDS_WITH --key "cky" --value "i" --invert-compare policy1
 
     .. code-block:: text
 
