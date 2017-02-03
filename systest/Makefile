@@ -121,7 +121,7 @@ cleanup_tlc_session:
 	cd scripts && ./$@.sh
 
 cleanup_failed_tlc:
-	@echo "running tlc --session TEST_SESSION --debug cleanup && exit -1..."
+	@echo "running tlc --session TEST_SESSION --debug cleanup && exit 1..."
 	cd scripts && ./$@.sh
 
 # BRANCH MAKE TARGETS:
