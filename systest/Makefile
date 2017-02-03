@@ -23,7 +23,7 @@ tempest_11.6.1_overcloud tempest_11.6.1_undercloud \
 tempest_12.1.1_overcloud tempest_12.1.1_undercloud
 
 # - <nearest reachable tag>-<num commits since>-g<abbreviated commit id>
-BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+export BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 SUBJECTCODE_ID := $(shell git log -n 1 --format=%h)
 TIMESTAMP ?= $(shell date +"%Y%m%d-%H%M%S")
 export TIMESTAMP   # Only eval TIMESTAMP in the top make.
