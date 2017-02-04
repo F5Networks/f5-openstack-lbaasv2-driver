@@ -74,7 +74,7 @@ export TEMPEST_VENV_ACTIVATE := $(TEMPEST_VENV_DIR)/bin/activate
 # Results Directories
 export API_SESSION := api_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 export SCENARIO_SESSION := scenario_$(SUBJECTCODE_ID)_$(TIMESTAMP)
-export DRIVER_TEMPEST_SESSION := driver_tempest_$(SUBJECTCODE_ID)_$(TIMESTAMP)
+export DRIVER_TEMPEST_SESSION := driver.tempest_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 
 # Install the TLC application
 tlc-install:
