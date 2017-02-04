@@ -98,15 +98,15 @@ install_tlc:
 
 install_test_infra:
 	@echo "installing tempest openstack interfaces and neutron_lbaas tests..."
-	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_tlc_session
+	cd scripts && ./$@.sh
 
 setup_tlc_session:
 	@echo "setting up TLC session..."
-	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_tlc_session
+	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
 
 configure_test_infra:
 	@echo "injecting TLC symbol and openstack IDs into 'tempest' conf files..."
-	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_tlc_session
+	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
 
 run_neutron_lbaas:
 	@echo "running tests extracted from 'neutron_lbaas' project..."
@@ -118,6 +118,10 @@ run_agent_transfers:
 
 cleanup_tlc_session:
 	@echo "running tlc --session TEST_SESSION --debug cleanup..."
+	cd scripts && ./$@.sh
+
+cleanup_failed_tlc:
+	@echo "running tlc --session TEST_SESSION --debug cleanup && exit 1..."
 	cd scripts && ./$@.sh
 
 # BRANCH MAKE TARGETS:
