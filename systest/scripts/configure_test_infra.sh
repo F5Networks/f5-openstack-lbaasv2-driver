@@ -18,11 +18,11 @@
 set -ex
 
 # Copy over our default tempest files
-cp conf/tempest.conf ${TEMPEST_CONFIG_DIR}/tempest.conf.orig
-cp conf/accounts.yaml ${TEMPEST_CONFIG_DIR}/accounts.yaml
+cp -f conf/tempest.conf ${TEMPEST_CONFIG_DIR}/tempest.conf.orig
+cp -f conf/accounts.yaml ${TEMPEST_CONFIG_DIR}/accounts.yaml
 
 # Find the values for tempest.conf and substitute them
-OS_CONTROLLER_IP=`tlc --session ${TEST_SESSION} symbols \
+OS_CONTROLLER_IP=`/tools/bin/tlc --sid ${TEST_SESSION} symbols \
     | grep openstack_controller1ip_data_direct \
     | awk '{print $3}'`
 
