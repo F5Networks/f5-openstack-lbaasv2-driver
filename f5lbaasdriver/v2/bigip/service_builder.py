@@ -22,6 +22,7 @@ from oslo_log import log as logging
 
 from f5lbaasdriver.v2.bigip import constants_v2
 from f5lbaasdriver.v2.bigip.disconnected_service import DisconnectedService
+from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 
 LOG = logging.getLogger(__name__)
 

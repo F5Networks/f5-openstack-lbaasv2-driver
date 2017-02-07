@@ -22,6 +22,10 @@ from neutron_lbaas.db.loadbalancer import models
 from neutron_lbaas.extensions import lbaas_agentschedulerv2
 
 
+class FakeNoEligibleAgentExc(lbaas_agentschedulerv2.NoEligibleLbaasAgent):
+    msg = 'test exception'
+
+
 class FakeLB(object):
     def __init__(self, id='test_lb_id'):
         self.id = id
@@ -136,15 +140,30 @@ def test_lbmgr_create_exception(mock_log):
 
 
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
-def test_lbmgr_create_mismatched_tenanat_exception(mock_log):
+def test_lbmgr_create_mismatched_tenant_exception(mock_log):
     mock_driver = mock.MagicMock(name='mock_driver')
     mock_driver.scheduler.schedule.side_effect = f5_exc.F5MismatchedTenants
     lb_mgr = dv2.LoadBalancerManager(mock_driver)
     mock_ctx = mock.MagicMock(name='mock_context')
-    lb_mgr.create(mock_ctx, FakeLB())
+    with pytest.raises(f5_exc.F5MismatchedTenants) as ex:
+        lb_mgr.create(mock_ctx, FakeLB())
+    assert 'Tenant Id of network and loadbalancer mismatched' in \
+        ex.value.message
     assert mock_log.error.call_args == mock.call(
         'Exception: loadbalancer create: Tenant Id of network and '
         'loadbalancer mismatched')
+    assert mock_driver.plugin.db.update_status.call_args is None
+
+
+@mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
+def test_lbmgr_create_no_eligible_agent(mock_log):
+    mock_driver = mock.MagicMock(name='mock_driver')
+    mock_driver.scheduler.schedule.side_effect = FakeNoEligibleAgentExc
+    lb_mgr = dv2.LoadBalancerManager(mock_driver)
+    mock_ctx = mock.MagicMock(name='mock_context')
+    lb_mgr.create(mock_ctx, FakeLB())
+    assert mock_log.error.call_args == mock.call(
+        'Exception: loadbalancer create: test exception')
     assert mock_driver.plugin.db.update_status.call_args == \
         mock.call(mock_ctx, models.LoadBalancer, 'test_lb_id', 'ERROR')
 
@@ -531,6 +550,7 @@ def test_mgr__call_rpc_no_eligible_agent_exception(
         'Exception: delete_l7policy: No eligible agent found for '
         'loadbalancer test_lb.'
     )
+    assert mock_driver.plugin.db.update_status.call_args is None
 
 
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
@@ -542,11 +562,15 @@ def test_mgr__call_rpc_mismatch_tenant_exception(
         name='mock_setup_crud', side_effect=f5_exc.F5MismatchedTenants
     )
     fake_rule = FakeRule(id='test_lb')
-    rule_mgr.create(mock_ctx, fake_rule)
+    with pytest.raises(f5_exc.F5MismatchedTenants) as ex:
+        rule_mgr.create(mock_ctx, fake_rule)
+    assert 'Tenant Id of network and loadbalancer mismatched' in \
+        ex.value.message
     assert mock_log.error.call_args == mock.call(
         'Exception: create_l7rule: Tenant Id of network and loadbalancer '
         'mismatched'
     )
+    assert mock_driver.plugin.db.update_status.call_args is None
 
 
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
