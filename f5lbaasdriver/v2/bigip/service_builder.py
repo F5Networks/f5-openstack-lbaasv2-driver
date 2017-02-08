@@ -111,7 +111,6 @@ class LBaaSv2ServiceBuilder(object):
                               loadbalancer.tenant_id,
                               network['id'],
                               network['tenant_id']))
-                raise f5_exc.F5MismatchedTenants()
 
             # Get the network VTEPs if the network provider type is
             # either gre or vxlan.
