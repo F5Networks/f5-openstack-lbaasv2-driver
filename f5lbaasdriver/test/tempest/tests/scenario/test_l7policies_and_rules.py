@@ -57,7 +57,8 @@ class TestL7Basic(f5_base.F5BaseTestCase):
         # to the data plane. So let's retry if we fail in any way.
         print('##################')
         print('##################')
-        for x in range(10):
+        retries = 10
+        for x in range(retries):
             try:
                 if not uri_path:
                     uri_path = 'http://{}'.format(self.vip_ip)
@@ -71,6 +72,8 @@ class TestL7Basic(f5_base.F5BaseTestCase):
                 if expected_server == 'fail':
                     if 'Connection aborted' in str(ex):
                         raise ex
+                if x == retries - 1:
+                    raise ex
                 time.sleep(1)
                 continue
 
