@@ -20,6 +20,12 @@ set -x
 # Activate our tempest virtualenv
 source ${TEMPEST_VENV_ACTIVATE}
 
+# Create .pytest.rootdir files at the root of the driver and neutron-lbaas
+# respositories to make the results suite names be rooted at the top-level
+# of the respective test repository
+touch ${MAKEFILE_DIR}/../f5lbaasdriver/test/tempest/tests/.pytest.rootdir
+touch ${NEUTRON_LBAAS_DIR}/neutron_lbaas/tests/tempest/v2/.pytest.rootdir
+
 # Navigate to the root of the repo, where the tox.ini file is found
 cd ${MAKEFILE_DIR}/../
 tox -e tempest -c tox.ini -- \

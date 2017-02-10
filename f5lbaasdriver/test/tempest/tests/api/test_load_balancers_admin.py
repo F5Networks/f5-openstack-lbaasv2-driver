@@ -70,3 +70,35 @@ class LoadBalancersTestJSON(base.BaseAdminTestCase):
                          admin_lb.get('tenant_id'))
 
         self._wait_for_load_balancer_status(load_balancer['id'])
+
+    @test.attr(type='smoke')
+    def test_create_load_balancer_without_tenant_id(self):
+        """Test create loadbalancer.
+
+        Test create load balancer with tenant id field from subnet.
+        Verify tenant_id matches when creating loadbalancer vs.
+        load balancer(admin tenant)
+        """
+        load_balancer = self.load_balancers_client.create_load_balancer(
+            vip_subnet_id=self.subnet['id'])
+        self.addCleanup(self._delete_load_balancer, load_balancer['id'])
+
+        self._wait_for_load_balancer_status(load_balancer['id'],
+                                            provisioning_status='ERROR',
+                                            operating_status='OFFLINE')
+
+        # Create listener for test
+        create_listener_kwargs = {'loadbalancer_id': load_balancer['id'],
+                                  'protocol': "HTTP",
+                                  'protocol_port': "80"}
+        listener = self._create_listener(**create_listener_kwargs)
+
+        self._wait_for_load_balancer_status(load_balancer['id'],
+                                            provisioning_status='ERROR',
+                                            operating_status='OFFLINE')
+
+        self._delete_listener(listener['id'], wait=True)
+
+        self._wait_for_load_balancer_status(load_balancer['id'],
+                                            provisioning_status='ERROR',
+                                            operating_status='OFFLINE')
