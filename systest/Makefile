@@ -76,7 +76,7 @@ export TEMPEST_VENV_ACTIVATE := $(TEMPEST_VENV_DIR)/bin/activate
 # Results Directories
 export API_SESSION := api_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 export SCENARIO_SESSION := scenario_$(SUBJECTCODE_ID)_$(TIMESTAMP)
-export FROM_AGENT_SESSION := from_agent_$(SUBJECTCODE_ID)_$(TIMESTAMP)
+export FROM_AGENT_SESSION := from.agent_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 
 # LEAF MAKE TARGETS:
 #
