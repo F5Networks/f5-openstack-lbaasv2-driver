@@ -94,35 +94,35 @@ export FROM_AGENT_SESSION := from.agent_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 
 install_tlc:
 	@echo "installing the tlc client on the worker..."
-	cd scripts && sudo -EH ./$@.sh
+	cd scripts && ./disallow_dangerous_vars.sh && sudo -EH ./$@.sh
 
 install_test_infra:
 	@echo "installing tempest openstack interfaces and neutron_lbaas tests..."
-	cd scripts && ./$@.sh
+	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh
 
 setup_tlc_session:
 	@echo "setting up TLC session..."
-	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
+	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
 
 configure_test_infra:
 	@echo "injecting TLC symbol and openstack IDs into 'tempest' conf files..."
-	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
+	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
 
 run_neutron_lbaas:
 	@echo "running tests extracted from 'neutron_lbaas' project..."
-	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_tlc_session
+	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh || $(MAKE) -C ../ cleanup_tlc_session
 
 run_agent_transfers:
 	@echo "running tests extracted from 'f5-openstack-agent' project..."
-	cd scripts && ./$@.sh
+	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh
 
 cleanup_tlc_session:
 	@echo "running tlc --session TEST_SESSION --debug cleanup..."
-	cd scripts && ./$@.sh
+	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh
 
 cleanup_failed_tlc:
 	@echo "running tlc --session TEST_SESSION --debug cleanup && exit 1..."
-	cd scripts && ./$@.sh
+	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh
 
 # BRANCH MAKE TARGETS:
 #
