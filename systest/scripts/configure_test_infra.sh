@@ -18,8 +18,8 @@
 set -ex
 
 # Copy over our default tempest files
-cp -f conf/tempest.conf ${TEMPEST_CONFIG_DIR}/tempest.conf.orig
-cp -f conf/accounts.yaml ${TEMPEST_CONFIG_DIR}/accounts.yaml
+cp -f conf/tempest.conf /home/buildbot/virtualenvs/tempest/etc/tempest/tempest.conf.orig
+cp -f conf/accounts.yaml /home/buildbot/virtualenvs/tempest/etc/tempest/accounts.yaml
 
 # Find the values for tempest.conf and substitute them
 OS_CONTROLLER_IP=`/tools/bin/tlc --sid ${TEST_SESSION} symbols \

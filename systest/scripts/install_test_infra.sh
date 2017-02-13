@@ -18,22 +18,22 @@
 set -ex
 
 # Create a virtualenv
-rm -rf ${TEMPEST_VENV_DIR}
-virtualenv ${TEMPEST_VENV_DIR}
+rm -rf /home/buildbot/virtualenvs/tempest
+virtualenv /home/buildbot/virtualenvs/tempest
 source ${TEMPEST_VENV_ACTIVATE}
 
 # Install tox
 pip install tox
 
 # Install tempest & its config files
-rm -rf ${TEMPEST_DIR}
-git clone ${TEMPEST_REPO} ${TEMPEST_DIR}
-pip install ${TEMPEST_DIR}
+rm -rf /home/buildbot/tempest
+git clone ${TEMPEST_REPO} /home/buildbot/tempest
+pip install /home/buildbot/tempest
 
 
 # We need to clone the OpenStack devtest repo for our TLC files
-rm -rf ${DEVTEST_DIR}
-git clone ${DEVTEST_REPO} ${DEVTEST_DIR}
+rm -rf /home/buildbot/dev-test
+git clone ${DEVTEST_REPO} /home/buildbot/dev-test
 
 pip install git+ssh://git@bldr-git.int.lineratesystems.com/tools/pytest-autolog.git
 # This should be listed in requirement.test.txt also, but will not succeed
@@ -53,12 +53,12 @@ sudo pip install git+https://github.com/F5Networks/f5-openstack-agent.git@${BRAN
 #
 # TODO: Make a decision about not using the neutron-lbaas install script
 #       and just installing from requirements files on newest versions
-rm -rf ${NEUTRON_LBAAS_DIR}
+rm -rf /home/buildbot/neutron-lbaas
 git clone\
   -b ${NEUTRON_LBAAS_BRANCH} \
   --single-branch \
   ${NEUTRON_LBAAS_REPO} \
-  ${NEUTRON_LBAAS_DIR}
+  /home/buildbot/neutron-lbaas
 
 # Copy our tox.ini file to neutron so we can run py.test instead of testr
-cp -f conf/neutron-lbaas.tox.ini ${NEUTRON_LBAAS_DIR}/f5.tox.ini
+cp -f conf/neutron-lbaas.tox.ini /home/buildbot/neutron-lbaas/f5.tox.ini

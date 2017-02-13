@@ -42,16 +42,16 @@ pip install --upgrade pip
 pip install argcomplete blessings configargparse prettytable
 
 # Clone the toolsbase directory and setup the file system structure
-rm -rf ${TOOLSBASE_DIR}
-git clone ${TOOLSBASE_REPO} ${TOOLSBASE_DIR}
-mkdir ${TOOLSBASE_DIR}/independent/share
-mkdir ${TOOLSBASE_DIR}/Ubuntu-10-x86_64/share
-rm -rf ${TOOLSBASE_DIR}/independent/bin/*.pyc
-rm -rf ${TOOLSBASE_DIR}/independent/bin/tlc_pb2.py
-rm -rf ${TOOLSBASE_DIR}/independent/lib/*.pyc
-rm -rf ${TOOLSBASE_DIR}/Ubuntu-10-x86_64/bin/*.pyc
-rm -rf ${TOOLSBASE_DIR}/Ubuntu-10-x86_64/lib/*.pyc
-ln -sf ${TOOLSBASE_DIR}/Ubuntu-10-x86_64 /tools
+rm -rf /toolsbase
+git clone ${TOOLSBASE_REPO} /toolsbase
+mkdir /toolsbase/independent/share
+mkdir /toolsbase/Ubuntu-10-x86_64/share
+rm -rf /toolsbase/independent/bin/*.pyc
+rm -rf /toolsbase/independent/bin/tlc_pb2.py
+rm -rf /toolsbase/independent/lib/*.pyc
+rm -rf /toolsbase/Ubuntu-10-x86_64/bin/*.pyc
+rm -rf /toolsbase/Ubuntu-10-x86_64/lib/*.pyc
+ln -sf /toolsbase/Ubuntu-10-x86_64 /tools
 
 # Remove all of the stale libs that are for some reason is toolsbase/bin
 libs="file_access.py
@@ -68,27 +68,27 @@ tlc_autocomplete.py
 utils.py
 "
 for lib in $libs; do
-  rm -f ${TOOLSBASE_DIR}/independent/bin/$lib
-  rm -f ${TOOLSBASE_DIR}/Ubuntu-10-x86_64/bin/$lib
+  rm -f /toolsbase/independent/bin/$lib
+  rm -f /toolsbase/Ubuntu-10-x86_64/bin/$lib
 done
 
 # Install TLC packages and binaries
-rm -rf ${TLC_DIR}
+rm -rf /home/buildbot/tlc
 git clone \
   -b ${TLC_BRANCH} \
   --single-branch \
   ${TLC_REPO} \
-  ${TLC_DIR}
+  /home/buildbot/tlc
 
 # Apply patches found for local changes to TLC on build server
 # Should these patches be applied in the repo for real?
 cp -f patches/* /tmp/
-patch ${TLC_DIR}/tlc/install.sh /tmp/tlc_install.sh.patch
-patch ${TOOLSBASE_DIR}/independent/create_softlinks /tmp/create_softlinks.patch
-patch ${TLC_DIR}/vmware/install.sh /tmp/vmware_install.patch
+patch /home/buildbot/tlc/tlc/install.sh /tmp/tlc_install.sh.patch
+patch /toolsbase/independent/create_softlinks /tmp/create_softlinks.patch
+patch /home/buildbot/tlc/vmware/install.sh /tmp/vmware_install.patch
 
 # Install all of the TLC sub-components
-cd ${TLC_DIR}
+cd /home/buildbot/tlc
 cd tlc && ./install.sh
 cd ../tl3 && ./install.sh
 cd ../vmware && ./install.sh
