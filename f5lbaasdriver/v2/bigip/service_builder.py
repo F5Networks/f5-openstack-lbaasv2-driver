@@ -261,6 +261,8 @@ class LBaaSv2ServiceBuilder(object):
                 host = member['port']['binding:host_id']
                 member['gre_vteps'] = self._get_endpoints(
                     context, 'gre', host)
+        if 'provider:network_type' not in network:
+            network['provider:network_type'] = 'undefined'
         if 'provider:segmentation_id' not in network:
             network['provider:segmentation_id'] = 0
 
