@@ -420,7 +420,7 @@ class MemberManager(EntityManager):
             members = service.get("members", [])
             for m in members:
                 if member.id == m['id']:
-                    member_port = m['port']
+                    member_port = m.get('port', None)
                     break
 
             if member_port:
