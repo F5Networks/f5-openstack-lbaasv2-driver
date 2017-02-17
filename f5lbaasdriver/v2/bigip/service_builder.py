@@ -16,6 +16,7 @@ u"""Service Module for F5® LBaaSv2."""
 #
 import datetime
 import json
+from netaddr import IPNetwork
 
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
@@ -214,17 +215,25 @@ class LBaaSv2ServiceBuilder(object):
         # There should be only one.
         if len(ports) == 1:
             member_dict['port'] = ports[0]
+            self._populate_member_network(context, member_dict, network)
         else:
             if not ports:
-                LOG.debug("Create port for member")
-                member_dict['port'] = \
-                    self.q_client.create_port_for_member(
-                        context, member.address,
-                        subnet_id=subnet_id)
+                cidr = IPNetwork(subnet['cidr'])
+                member_ip = IPNetwork("%s/%d" %
+                                      (member.address, cidr.prefixlen))
+                if cidr == member_ip:
+                    LOG.debug("Create port for member")
+                    member_dict['port'] = \
+                        self.q_client.create_port_for_member(
+                            context, member.address,
+                            subnet_id=subnet_id)
+                    self._populate_member_network(
+                        context, member_dict, network)
+                else:
+                    LOG.error("Member IP %s is not in subnet %s" %
+                              (member.address, subnet['cidr']))
             else:
                 LOG.error("Multiple ports found: %s" % ports)
-
-        self._populate_member_network(context, member_dict, network)
 
         return (member_dict, subnet, network)
 
@@ -301,6 +310,8 @@ class LBaaSv2ServiceBuilder(object):
                 host = member['port']['binding:host_id']
                 member['gre_vteps'] = self._get_endpoints(
                     context, 'gre', host)
+        if 'provider:network_type' not in network:
+            network['provider:network_type'] = 'undefined'
         if 'provider:segmentation_id' not in network:
             network['provider:segmentation_id'] = 0
 
