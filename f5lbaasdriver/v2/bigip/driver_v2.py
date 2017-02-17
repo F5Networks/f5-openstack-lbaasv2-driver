@@ -457,7 +457,7 @@ class L7PolicyManager(EntityManager):
         """Create an L7 policy."""
 
         self.loadbalancer = policy.listener.loadbalancer
-        self.api_dict = policy.to_dict(listener=False)
+        self.api_dict = policy.to_dict(listener=False, rules=False)
         self._call_rpc(context, policy, 'create_l7policy')
 
     @log_helpers.log_method_call
@@ -484,7 +484,7 @@ class L7PolicyManager(EntityManager):
         """Delete a policy."""
 
         self.loadbalancer = policy.listener.loadbalancer
-        self.api_dict = policy.to_dict(listener=False)
+        self.api_dict = policy.to_dict(listener=False, rules=False)
         self._call_rpc(context, policy, 'delete_l7policy')
 
 
