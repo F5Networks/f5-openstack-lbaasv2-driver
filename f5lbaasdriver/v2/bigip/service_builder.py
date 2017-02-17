@@ -16,6 +16,7 @@ u"""Service Module for F5® LBaaSv2."""
 #
 import datetime
 import json
+from netaddr import IPNetwork
 
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
@@ -23,6 +24,7 @@ from oslo_log import log as logging
 from f5lbaasdriver.v2.bigip import constants_v2
 from f5lbaasdriver.v2.bigip.disconnected_service import DisconnectedService
 from f5lbaasdriver.v2.bigip import exceptions as f5_exc
+from f5lbaasdriver.v2.bigip import neutron_client as q_client
 
 LOG = logging.getLogger(__name__)
 
@@ -49,6 +51,7 @@ class LBaaSv2ServiceBuilder(object):
         self.last_cache_update = datetime.datetime.fromtimestamp(0)
         self.plugin = self.driver.plugin
         self.disconnected_service = DisconnectedService()
+        self.q_client = q_client.F5NetworksNeutronClient(self.plugin)
 
     def build(self, context, loadbalancer, agent):
         """Get full service definition from loadbalancer ID."""
@@ -172,11 +175,22 @@ class LBaaSv2ServiceBuilder(object):
             member_dict['port'] = ports[0]
             self._populate_member_network(context, member_dict, network)
         else:
-            # FIXME(RJB: raise an exception here and let the driver handle
-            # the port that is not on the network.
-            LOG.error("Unexpected number of ports returned for member: ")
             if not ports:
-                LOG.error("No port found")
+                # Create a port, what bindings should we use.
+                cidr = IPNetwork(subnet['cidr'])
+                member_ip = IPNetwork("%s/%d" %
+                                      (member.address, cidr.prefixlen))
+                if cidr == member_ip:
+                    LOG.debug("Create port for member")
+                    member_dict['port'] = \
+                        self.q_client.create_port_for_member(
+                            context, member.address,
+                            subnet_id=subnet_id)
+                    self._populate_member_network(
+                        context, member_dict, network)
+                else:
+                    LOG.error("Member IP %s is not in subnet %s" %
+                              (member.address, subnet['cidr']))
             else:
                 LOG.error("Multiple ports found: %s" % ports)
 
@@ -235,18 +249,26 @@ class LBaaSv2ServiceBuilder(object):
         member['vxlan_vteps'] = []
         member['gre_vteps'] = []
 
-        if 'provider:network_type' in network:
-            net_type = network['provider:network_type']
-            if net_type == 'vxlan':
-                if 'binding:host_id' in member['port']:
-                    host = member['port']['binding:host_id']
-                    member['vxlan_vteps'] = self._get_endpoints(
-                        context, 'vxlan', host)
-            if net_type == 'gre':
-                if 'binding:host_id' in member['port']:
-                    host = member['port']['binding:host_id']
-                    member['gre_vteps'] = self._get_endpoints(
-                        context, 'gre', host)
+        agent_config = {}
+        segment_data = self.disconnected_service.get_network_segment(
+            context, agent_config, network)
+        if segment_data:
+            network['provider:segmentation_id'] = \
+                segment_data.get('segmentation_id', None)
+            network['provider:network_type'] = \
+                segment_data.get('network_type', None)
+
+        net_type = network.get('provider:network_type', "undefined")
+        if net_type == 'vxlan':
+            if 'binding:host_id' in member['port']:
+                host = member['port']['binding:host_id']
+                member['vxlan_vteps'] = self._get_endpoints(
+                    context, 'vxlan', host)
+        if net_type == 'gre':
+            if 'binding:host_id' in member['port']:
+                host = member['port']['binding:host_id']
+                member['gre_vteps'] = self._get_endpoints(
+                    context, 'gre', host)
         if 'provider:network_type' not in network:
             network['provider:network_type'] = 'undefined'
         if 'provider:segmentation_id' not in network:
@@ -487,7 +509,6 @@ class LBaaSv2ServiceBuilder(object):
         Provides an alternative to_api_dict() in order to get additional
         object IDs without exploding object references.
         """
-
         pool_dict = pool.to_dict(healthmonitor=False,
                                  listener=False,
                                  listeners=False,
