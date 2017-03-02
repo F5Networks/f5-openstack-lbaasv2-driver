@@ -98,9 +98,10 @@ class LBaaSv2ServiceBuilder(object):
             if segment_data:
                 network['provider:segmentation_id'] = \
                     segment_data.get('segmentation_id', None)
-                if 'provider:network_type' in network:
-                    network['provider:network_type'] = \
-                        segment_data.get('network_type', None)
+                network['provider:network_type'] = \
+                    segment_data.get('network_type', None)
+                network['provider:physical_network'] = \
+                    segment_data.get('physical_network', None)
             network_map[network_id] = network
 
             # Check if the tenant can create a loadbalancer on the network.
