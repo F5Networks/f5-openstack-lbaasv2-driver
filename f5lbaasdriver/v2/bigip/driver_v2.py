@@ -31,6 +31,7 @@ from neutron_lbaas.extensions import lbaas_agentschedulerv2
 
 from f5lbaasdriver.v2.bigip import agent_rpc
 from f5lbaasdriver.v2.bigip import exceptions as f5_exc
+from f5lbaasdriver.v2.bigip import neutron_client
 from f5lbaasdriver.v2.bigip import plugin_rpc
 
 LOG = logging.getLogger(__name__)
@@ -89,6 +90,9 @@ class F5DriverV2(object):
 
         self.agent_rpc = agent_rpc.LBaaSv2AgentRPC(self)
         self.plugin_rpc = plugin_rpc.LBaaSv2PluginCallbacksRPC(self)
+
+        self.q_client = \
+            neutron_client.F5NetworksNeutronClient(self.plugin)
 
         # add this agent RPC to the neutron agent scheduler
         # mixins agent_notifiers dictionary for it's env
@@ -519,6 +523,7 @@ class MemberManager(object):
     @log_helpers.log_method_call
     def delete(self, context, member):
         """Delete a member."""
+        member_port = None
         driver = self.driver
         try:
             if member.attached_to_loadbalancer():
@@ -538,6 +543,20 @@ class MemberManager(object):
                     service,
                     agent['host']
                 )
+
+                # Get port for member.
+                members = service.get("members", [])
+                for m in members:
+                    if member.id == m['id']:
+                        member_port = m.get('port', None)
+                        break
+
+                if member_port:
+                    if member_port['device_owner'] == 'network:f5lbaasv2':
+                        LOG.debug("Delete F5 Networks owned port")
+                        driver.q_client.delete_port(
+                            context,
+                            port_id=member_port['id'])
             else:
                 raise F5NoAttachedLoadbalancerException()
 

@@ -241,7 +241,7 @@ class LBaaSv2PluginCallbacksRPC(object):
     @log_helpers.log_method_call
     def update_loadbalancer_status(self, context,
                                    loadbalancer_id=None,
-                                   status=plugin_constants.ERROR,
+                                   status=None,
                                    operating_status=None):
         """Agent confirmation hook to update loadbalancer status."""
         with context.session.begin(subtransactions=True):
@@ -340,7 +340,7 @@ class LBaaSv2PluginCallbacksRPC(object):
             self,
             context,
             member_id=None,
-            provisioning_status=plugin_constants.ERROR,
+            provisioning_status=None,
             operating_status=None):
         """Agent confirmations hook to update member status."""
         with context.session.begin(subtransactions=True):
