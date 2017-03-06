@@ -14,6 +14,9 @@ u"""F5 Networks® LBaaSv2 L7 rules client for tempest tests."""
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+from f5.utils.testutils.registrytools import order_by_weights
+from f5.utils.testutils.registrytools import register_device
+from icontrol.exceptions import iControlUnexpectedHTTPError
 from tempest import config
 
 from f5.bigip import ManagementRoot
@@ -21,11 +24,54 @@ from f5.bigip import ManagementRoot
 config = config.CONF
 
 
+URI_ORDER = {
+    '/mgmt/tm/ltm/policy': 1,
+    '/mgmt/tm/ltm/virtual': 2,
+    '/mgmt/tm/ltm/pool': 3,
+    '/mgmt/tm/ltm/node/': 4,
+    '/mgmt/tm/ltm/monitor': 5,
+    '/mgmt/tm/ltm/virtual-address': 6,
+    '/mgmt/tm/net/self/': 7,
+    '/mgmt/tm/net/fdb': 8,
+    '/mgmt/tm/net/tunnels/tunnel/': 9,
+    '/mgmt/tm/net/tunnels/vxlan/': 10,
+    '/mgmt/tm/net/tunnels/gre': 11,
+    '/mgmt/tm/net/vlan': 12,
+    '/mgmt/tm/net/route': 13,
+    '/mgmt/tm/ltm/snatpool': 14,
+    '/mgmt/tm/ltm/snat-translation': 15,
+    '/mgmt/tm/net/route-domain': 16,
+    '/mgmt/tm/sys/folder': 17}
+
+
 class BigIpClient(object):
     def __init__(self):
         self.bigip = ManagementRoot(config.f5_lbaasv2_driver.icontrol_hostname,
                                     config.f5_lbaasv2_driver.icontrol_username,
                                     config.f5_lbaasv2_driver.icontrol_password)
+
+    def reset_device_to_pretest_snapshot(self):
+        posttest_snapshot = register_device(self.bigip)
+        test_diff = frozenset(posttest_snapshot) - \
+            frozenset(self.pretest_snapshot)
+        uris = order_by_weights(test_diff, URI_ORDER)
+        filtered = [u for u in uris for a in URI_ORDER if a in u]
+        for selfLink in filtered:
+            try:
+                if selfLink in test_diff:
+                    posttest_snapshot[selfLink].delete()
+            except iControlUnexpectedHTTPError as exc:
+                if 'fdb/tunnel' in selfLink:
+                    for t in self.bigip.tm.net.fdb.tunnels.get_collection():
+                        if t.name != 'http-tunnel' \
+                                and t.name != 'socks-tunnel':
+                            t.update(records=[])
+                    posttest_snapshot[selfLink].delete()
+                else:
+                    raise exc
+
+    def snapshot_device(self):
+        self.pretest_snapshot = register_device(self.bigip)
 
     def folder_exists(self, folder):
         return self.bigip.tm.sys.folders.folder.exists(name=folder)
