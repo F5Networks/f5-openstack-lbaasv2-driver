@@ -196,3 +196,33 @@ class BigIpClient(object):
                     return True
 
         return False
+
+    def virtual_server_has_profile(self, vs_name, profile_name, partition):
+        if self.virtual_server_exists(name=vs_name, partition=partition):
+            vs = self.bigip.tm.ltm.virtuals.virtual.load(
+                name=vs_name, partition=partition)
+
+            profiles = vs.profiles_s.get_collection()
+            for profile in profiles:
+                if profile.name == profile_name:
+                    return True
+
+        return False
+
+    def virtual_server_has_persist(self, vs_name, persist, partition):
+        if self.virtual_server_exists(name=vs_name, partition=partition):
+            vs = self.bigip.tm.ltm.virtuals.virtual.load(
+                name=vs_name, partition=partition)
+
+            return True
+
+        return False
+
+    def virtual_server_has_value(self, vs_name, attr, value, partition):
+        if self.virtual_server_exists(name=vs_name, partition=partition):
+            vs = self.bigip.tm.ltm.virtuals.virtual.load(
+                name=vs_name, partition=partition)
+
+            return getattr(vs, attr, None) == value
+
+        return False
