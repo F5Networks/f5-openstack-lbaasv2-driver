@@ -28,7 +28,7 @@ touch ${NEUTRON_LBAAS_DIR}/neutron_lbaas/tests/tempest/v2/.pytest.rootdir
 
 # Navigate to the root of the repo, where the tox.ini file is found
 cd ${MAKEFILE_DIR}/../
-tox -e tempest -c tox.ini -- \
+tox --sitepackages -e tempest -c tox.ini -- \
   -lvv --tb=line \
   --autolog-outputdir ${RESULTS_DIR} \
   --autolog-session ${DRIVER_TEMPEST_SESSION}

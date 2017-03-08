@@ -27,7 +27,7 @@ export BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 SUBJECTCODE_ID := $(shell git log -n 1 --format=%h)
 TIMESTAMP ?= $(shell date +"%Y%m%d-%H%M%S")
 export TIMESTAMP   # Only eval TIMESTAMP in the top make.
-PROJECT := f5-openstack-lbaasv2-driver
+CHANGESOURCE := f5-openstack-lbaasv2-driver
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 export MAKEFILE_DIR := $(dir $(MAKEFILE_PATH))
 export TEST_DIR := $(abspath $(MAKEFILE_DIR))/../test
@@ -77,7 +77,7 @@ export TEMPEST_VENV_ACTIVATE := $(TEMPEST_VENV_DIR)/bin/activate
 export API_SESSION := api_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 export SCENARIO_SESSION := scenario_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 export DRIVER_TEMPEST_SESSION := driver.tempest_$(SUBJECTCODE_ID)_$(TIMESTAMP)
-export FROM_AGENT_SESSION := from_agent_$(SUBJECTCODE_ID)_$(TIMESTAMP)
+export FROM_AGENT_SESSION := from.agent_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 
 # LEAF MAKE TARGETS:
 #
@@ -95,35 +95,35 @@ export FROM_AGENT_SESSION := from_agent_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 
 install_tlc:
 	@echo "installing the tlc client on the worker..."
-	cd scripts && sudo -EH ./$@.sh
+	cd scripts && ./disallow_dangerous_vars.sh && sudo -EH ./$@.sh
 
 install_test_infra:
 	@echo "installing tempest openstack interfaces and neutron_lbaas tests..."
-	cd scripts && ./$@.sh
+	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh
 
 setup_tlc_session:
 	@echo "setting up TLC session..."
-	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
+	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
 
 configure_test_infra:
 	@echo "injecting TLC symbol and openstack IDs into 'tempest' conf files..."
-	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
+	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
 
 run_neutron_lbaas:
 	@echo "running tests extracted from 'neutron_lbaas' project..."
-	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_tlc_session
+	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh || $(MAKE) -C ../ cleanup_tlc_session
 
 run_agent_transfers:
 	@echo "running tests extracted from 'f5-openstack-agent' project..."
-	cd scripts && ./$@.sh
+	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh
 
 cleanup_tlc_session:
 	@echo "running tlc --session TEST_SESSION --debug cleanup..."
-	cd scripts && ./$@.sh
+	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh
 
 cleanup_failed_tlc:
 	@echo "running tlc --session TEST_SESSION --debug cleanup && exit 1..."
-	cd scripts && ./$@.sh
+	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh
 
 # BRANCH MAKE TARGETS:
 #
@@ -152,8 +152,8 @@ tempest_11.5.4_overcloud:
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.5.4.2.0.291.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=overcloud ;\
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
-	export GUMBALLS_PROJECT=$(PROJECT)_$(BRANCH)_$@ ;\
-	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$${GUMBALLS_PROJECT} ;\
+	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(BRANCH)-$@ ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . run_tests
 
@@ -162,8 +162,8 @@ tempest_11.6.0_overcloud:
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.6.0.0.0.401.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=overcloud ;\
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
-	export GUMBALLS_PROJECT=$(PROJECT)_$(BRANCH)_$@ ;\
-	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$${GUMBALLS_PROJECT} ;\
+	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(BRANCH)-$@ ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . run_tests
 
@@ -171,8 +171,8 @@ tempest_11.6.1_overcloud:
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.6.1.1.0.326.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=overcloud ;\
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
-	export GUMBALLS_PROJECT=$(PROJECT)_$(BRANCH)_$@ ;\
-	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$${GUMBALLS_PROJECT} ;\
+	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(BRANCH)-$@ ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . run_tests
 
@@ -181,8 +181,8 @@ tempest_12.1.1_overcloud:
 	export TEST_VE_IMAGE=os_ready-BIGIP-12.1.1.2.0.204.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=overcloud ;\
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
-	export GUMBALLS_PROJECT=$(PROJECT)_$(BRANCH)_$@ ;\
-	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$${GUMBALLS_PROJECT} ;\
+	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(BRANCH)-$@ ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . run_tests
 
@@ -191,8 +191,8 @@ tempest_11.5.4_undercloud:
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.5.4.2.0.291.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=undercloud ;\
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
-	export GUMBALLS_PROJECT=$(PROJECT)_$(BRANCH)_$@ ;\
-	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$${GUMBALLS_PROJECT} ;\
+	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(BRANCH)-$@ ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . run_tests
 
@@ -201,8 +201,8 @@ tempest_11.6.0_undercloud:
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.6.0.0.0.401.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=undercloud ;\
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
-	export GUMBALLS_PROJECT=$(PROJECT)_$(BRANCH)_$@ ;\
-	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$${GUMBALLS_PROJECT} ;\
+	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(BRANCH)-$@ ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . run_tests
 
@@ -210,8 +210,8 @@ tempest_11.6.1_undercloud:
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.6.1.1.0.326.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=undercloud ;\
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
-	export GUMBALLS_PROJECT=$(PROJECT)_$(BRANCH)_$@ ;\
-	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$${GUMBALLS_PROJECT} ;\
+	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(BRANCH)-$@ ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . run_tests
 
@@ -220,8 +220,8 @@ tempest_12.1.1_undercloud:
 	export TEST_VE_IMAGE=os_ready-BIGIP-12.1.1.2.0.204.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=undercloud ;\
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
-	export GUMBALLS_PROJECT=$(PROJECT)_$(BRANCH)_$@ ;\
-	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(PROJECT)/$${GUMBALLS_PROJECT} ;\
+	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(BRANCH)-$@ ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	$(MAKE) -C . run_tests
 
