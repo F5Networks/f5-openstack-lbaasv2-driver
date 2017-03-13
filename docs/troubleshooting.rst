@@ -7,6 +7,7 @@ Troubleshooting
 
     Example: ``Project_9572afc14db14c8a806d8c8219446e7b``
 
+.. _set-log-level-debug:
 
 Set Logging Level to DEBUG
 --------------------------
@@ -234,6 +235,16 @@ VxLAN traffic is not reaching BIG-IP
         }
 
 
+F5 agent doesn't apply Enhanced Service Definitions to BIG-IP virtual server
+----------------------------------------------------------------------------
 
+If you configured an Enhanced Service Definition (ESD) and the F5 agent didn't apply the ESD to your BIG-IP:
+
+- Check your JSON with a JSON linter. The F5 OpenStack agent ignores invalid JSON files.
+- Check the log file for invalid tags. [#]_
+- If your agent recently restarted, make sure the ESD JSON file is in the :file:`/etc/neutron/services/f5/esd/` directory. ESDs only remain in F5 agent memory while the agent is running. Removing the ESD JSON file from :file:`/etc/neutron/services/f5/esd/` directory will cause a loss of the ESD if the agent restarts. For this reason, we recommend that you leave all ESD JSON files in place as long as you need them to remain active.
+
+
+.. [#] :ref:`Logging level must be set to DEBUG <set-log-level-debug>`.
 
 .. _port lockdown behavior: https://support.f5.com/kb/en-us/solutions/public/17000/300/sol17333.html

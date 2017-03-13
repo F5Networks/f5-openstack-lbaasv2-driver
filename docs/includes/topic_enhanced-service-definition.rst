@@ -1,350 +1,395 @@
-Customizing OpenStack LBaaSv2 Using Enhanced Service Definitions
-=================================================================
+.. _esd:
 
-There are many load balancing configurations which have no direct
-implementation in the OpenStack LBaaSv2 specification. It is easy to
-directly customize BIG-IP traffic management using profiles, policies,
-and iRules, but LBaaSv2 has no way to apply these to BIG-IP virtual
-servers. To help users get the most from their BIG-IPs, F5 Networks
-extended its implementation of LBaaSv2 to add an Enhanced Service
-Definition (ESD) feature. With ESDs, you can deploy OpenStack load
-balancers customized for specific applications.
+Enhance L7 Policy Capabilites with Enhanced Service Definitions
+===============================================================
+
+.. versionadded:: 9.3.0
+
+Overview
+--------
+
+BIG-IP has many load balancing configurations that don't have direct implementation in the OpenStack LBaaSv2 specification. While it's easy to customize BIG-IP local traffic management settings using `profiles`_, `policies`_, and `iRules`_, LBaaSv2 doesn't provide a way to apply these to BIG-IP virtual servers. Enhanced Service Definitions (ESDs) allow you to apply BIG-IP LTM `profiles`_, `policies`_, and `iRules`_ to OpenStack load balancers.
+
+.. sidebar:: Helpful Hints
+
+    1. Use a JSON lint application to validate your ESD files.
+    2. Restart the F5 LBaaSv2 agent (f5-openstack-agent) every time you add or modify ESD files.
+    3. Use a unique name for each ESD you define. ESD names are case-sensitive.
+    4. Configure all `profiles`_, `policies`_, and/or `iRules`_ in the ``/Common`` partition on your BIG-IP **before** deploying your ESD.
+    5. Remember that **ESDs overwrite existing settings**.
+    6. When using `iRules`_ and `policies`_, remember that any iRule priority must be defined in the iRule itself.
+    7. If you have DEBUG logging enabled, :ref:`check the agent log <set-log-level-debug>` for statements reporting on tag validity.
 
 How ESDs Work
+`````````````
+
+An ESD is a set of tags and values that define custom settings for BIG-IP objects. Typically, an ESD applies one or more profiles, policies, or iRules to a BIG-IP virtual server. The F5 agent reads all ESD JSON files located in :file:`/etc/neutron/services/f5/esd/` on startup.
+
+The F5 agent applies ESDs to BIG-IP virtual servers using LBaaSv2 `L7 policy`_ operations. When you create an LBaaSv2 L7 policy object (``neutron lbaas-l7policy-create``), the agent checks the policy name against the names of all available ESDs. If it finds a match, the agent applies the ESD to the BIG-IP virtual server associated with the policy. If the agent doesn't find a matching ESD, it creates a standard L7 policy. Essentially, the F5 agent supersedes the standard LBaaSv2 behavior, translating ``neutron lbaas-l7policy-create mypolicy`` into “apply the mypolicy ESD to the BIG-IP”.
+
+You can define multiple ESDs, each of contains a set of predefined tags and values, in a single JSON file. The agent validates each tag and discards any that are invalid. ESDs remain fixed in agent memory until an agent is restarted.
+When you apply multiple L7 policies, each subsequent ESD overwrites the virtual server settings defined by previous ESDs. For this reason, we recommend that you define all settings you want to apply for a specific application in a single ESD. If you define multiple ESDs, each should apply to one (1) specific application.
+
+:ref:`Deleting an L7 policy that matches an ESD <esd-delete>` removes all ESD settings from the virtual server, returning the virtual server to its original state.
+
+.. caution::
+
+    The F5 agent ignores all ESD files that aren't valid JSON. If your ESD policy wasn't applied, check your JSON.
+
+Agent Process
+`````````````
+
+During startup, the F5 LBaaSv2 agent reads all JSON files in :file:`/etc/neutron/services/f5/esd/` and evaluates the ESD as follows:
+
+#. The JSON is valid (the agent ignores all invalid JSON files).
+#. The :ref:`supported tag <esd-supported-tags>` definitions are formatted correctly:
+
+    #. Use a single string, or a comma-delimited list using standard JSON list notation (``[]``) . [1]_
+    #. The tag value (`profile`_, `policy`_, or `iRule`_) must exist in the ``/Common`` partition.
+    #. All of the desired profiles, policies, and/or iRules must be configured on your BIG-IP *before* you deploy the ESD.
+
+.. important::
+
+    **The agent ignores all incorrectly-formatted tags**, including those referencing non-existent BIG-IP objects.
+    If an ESD contains a mix of valid and invalid tags, the agent applies the valid tags and ignores the invalid ones.
+
+.. [1] The ``lbaas_irule`` and ``lbaas_policy`` tags accept a comma-delimited list; all others accept only a single string.
+
+
+Prerequisites
 -------------
 
-An ESD is a set of tags and values that define custom settings,
-typically one or more profiles, policies, or iRules which are applied to
-a BIG-IP virtual server. ESDs are stored in JSON files on the system
-running an F5 OpenStack LBaaSv2 agent. When the agent starts, it reads
-all ESD JSON files located in /etc/neutron/services/f5/esd/, ignoring
-files that are not valid JSON. A JSON file can contain multiple ESDs,
-and each ESD contains a set of predefined tags and values. The agent
-validates each tag and discards invalid tags. ESDs remain fixed in agent
-memory until an agent is restarted.
+- Licensed, operational BIG-IP :term:`device` or :term:`device service cluster`.
+- Operational OpenStack cloud (|openstack| release).
+- F5 :ref:`agent <Install the F5 Agent>` and :ref:`LBaaSv2 driver <Install the F5 LBaaSv2 Driver>` installed on the hosts from which you want to manage your BIG-IP(s).
+- Basic understanding of `BIG-IP system configuration <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-system-initial-configuration-12-0-0/2.html#conceptid>`_.
+- Basic understanding of `BIG-IP Local Traffic Management <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-basics-12-0-0.html>`_.
 
-You apply ESDs to virtual servers using LBaaSv2 L7 policy operations.
-When you create an LBaaSv2 L7 policy object, the agent checks if the
-policy name matches the name of an ESD. If it does, the agent applies
-the ESD to the virtual server associated with the policy. If the policy
-name does not match an ESD name, a standard L7 policy is created
-instead. Essentially, the F5 agent overloads the meaning of an L7 policy
-name. If an L7 policy name matches an ESD name, creating an L7 policy
-means “apply an ESD.” If an L7 policy name does not match an ESD name,
-creating an L7 policy means “create an L7 policy.”
+Caveats
+-------
+L7 policies originated in the Mitaka release of OpenStack; as such:
 
-While you can apply multiple L7 policies, doing so will overwrite
-virtual server settings defined by previous ESDs. Deleting an L7 policy
-that matches an ESD will remove all ESD settings from the virtual
-server, and return the virtual server to its original state. For these
-reasons, it is best to define a single ESD that contains all settings
-you want to apply for a specific application, instead of applying
-multiple ESDs.
+- ESDs are available in a Mitaka (v9.x.x) or greater version of the F5 LBaaSv2 agent.
+- ESDs are not available in the Liberty version of the F5 agent (v8.x.x).
 
-Because L7 policies were introduced in the Mitaka release of OpenStack,
-you can only use ESDs with a Mitaka (or greater) version of the F5
-LBaaSv2 agent. You cannot use ESDs with the Liberty version of the F5
-agent. Release v9.3.0 is the first version of the agent that supports
-ESDs.
-
-Creating ESDs
+Configuration
 -------------
 
-Create ESDs by editing files to define one or more ESDs in JSON format.
-Each file can contain any number of ESDs, and you can create any number
-of ESD files. Files can have any valid file name, but must end with a
-“.json” extension (e.g., mobile\_app.json). Copy the ESD files to the
-/etc/neutron/services/f5/esd/ directory. ESDs must have a unique name
-across all files. If you define more than one ESD using the same name,
-the agent will retain one of the ESDs, but which one is undefined.
+Enhanced Service Definitions (ESDs) must be defined in valid JSON. To apply multiple ESDs to a single application, define them all in a single file. Create as many individual ESDs as you need for your applications. Each ESD must have a unique name to avoid conflicts; if you give multiple ESDs the same name, the agent will implement one of them (method of selection is undefined).
+
 Finally, restart the agent whenever you add or modify ESD files.
 
-ESD files have this general format::
+.. _esd-supported-tags:
 
-  {
-    "<ESD name>": {
-      "<tag_name>": "<tag value>",
-      "<tag_name>": "<tag value>",
+Supported Tags
+``````````````
+
+Use the tags in the table below to define the policies you want the F5 agent to apply to the BIG-IP.
+
+.. table:: Enhanced Service Definition tags
+
+    +----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+
+    | Tag                        | Description                                                                                                                                                                                                                     | Example Value             |
+    +============================+=================================================================================================================================================================================================================================+===========================+
+    | lbaas\_ctcp                | Specify a named TCP profile for clients. This tag has a single value.                                                                                                                                                           | tcp-mobile-optimized      |
+    +----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+
+    | lbaas\_stcp                | Specify a named TCP profile for servers. This tag has a single value.                                                                                                                                                           | tcp-lan-optimized         |
+    +----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+
+    | lbaas\_cssl\_profile       | Specify a named client SSL profile to implement SSL/TLS offload. This can replace the use of, or override the life-cycle management of certificates and keys in LBaaSv2 SSL termination support. This tag has a single value.   | clientssl                 |
+    +----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+
+    | lbaas\_sssl\_profile       | Specify a named server side SSL profile for re-encryption of traffic towards the pool member servers. **This tag can only be used once per ESD**.                                                                               | serverssl                 |
+    +----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+
+    | lbaas\_irule (multiple)    | Specify a named iRule to attach to the virtual server. This tag can have multiple values, defined in a JSON list (``[]``). Any iRule priority must be defined within the iRule itself.                                          | [                         |
+    |                            |                                                                                                                                                                                                                                 | "base\_sorry\_page",      |
+    |                            |                                                                                                                                                                                                                                 | "base\_80\_443\_redirect" |
+    |                            |                                                                                                                                                                                                                                 | ]                         |
+    +----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+
+    | lbaas\_policy (multiple)   | Specify a named policy to attach to the virtual server. This tag can have multiple values, defined in a JSON list (``[]``). Any policy priority must be defined within the iRule itself.                                        | policy\_asm\_app1         |
+    |                            | *All L7 content policies are applied before these policies.*                                                                                                                                                                    |                           |
+    +----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+
+    | lbaas\_persist             | Specify a named fallback persistence profile for a virtual server. This tag has a single value.                                                                                                                                 | hash                      |
+    +----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+
+    | lbaas\_fallback\_persist   | Specify a named fallback persistence profile for a virtual server. This tag has a single value.                                                                                                                                 | source\_addr              |
+    +----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+
+
+.. rubric:: Example
+
+.. code-block:: JSON
+    :caption: Basic ESD format
+
+    {
+      "<ESD name>": {
+        "<tag_name>": "<tag value>",
+        "<tag_name>": "<tag value>",
+        …
+      },
       …
-    },
-    …
-  }
-
-An example ESD file, demo.json, is installed with the agent and provides
-examples you can follow::
-
-  {
-    "esd_demo_1": {
-      "lbaas_ctcp": "tcp-mobile-optimized",
-      "lbaas_stcp": "tcp-lan-optimized",
-      "lbaas_cssl_profile": "clientssl",
-      "lbaas_sssl_profile": "serverssl",
-      "lbaas_irule": ["_sys_https_redirect"],
-      "lbaas_policy": ["demo_policy"],
-      "lbaas_persist": "hash",
-      "lbaas_fallback_persist": "source_addr"
-    },
-    "esd_demo_2": {
-      "lbaas_irule": [
-        "_sys_https_redirect",
-        "_sys_APM_ExchangeSupport_helper"
-      ]
     }
-  }
 
-ESD files must be formatted as valid JSON. If your file is not valid
-JSON, all ESDs in the file will be ignored. Consider using a JSON lint
-application (e.g., jsonlint.com) to validate your JSON files.
+.. _esd-create:
 
-The following tags are supported for ESDs:
+Create an Enhanced Service Definition
+-------------------------------------
 
-+----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+
-| Tag                        | Description                                                                                                                                                                                                                     | Example                   |
-+============================+=================================================================================================================================================================================================================================+===========================+
-| lbaas\_ctcp                | Specify a named TCP profile for clients. This tag has a single value.                                                                                                                                                           | tcp-mobile-optimized      |
-+----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+
-| lbaas\_stcp                | Specify a named TCP profile for servers. This tag has a single value.                                                                                                                                                           | tcp-lan-optimized         |
-+----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+
-| lbaas\_cssl\_profile       | Specify a named client SSL profile to implement SSL/TLS offload. This can replace the use of, or override the life-cycle management of certificates and keys in LBaaSv2 SSL termination support. This tag has a single value.   | clientssl                 |
-+----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+
-| lbaas\_sssl\_profile       | Specify a named server side SSL profile for re-encryption of traffic towards the pool member servers. This tag should only be present once.                                                                                     | serverssl                 |
-+----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+
-| lbaas\_irule (multiple)    | Specify a named iRule to attach to the virtual server. This tag can have multiple values. Any iRule priority must be defined within the iRule itself.                                                                           | base\_sorry\_page,        |
-|                            |                                                                                                                                                                                                                                 |                           |
-|                            |                                                                                                                                                                                                                                 | base\_80\_443\_redirect   |
-+----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+
-| lbaas\_policy (multiple)   | Specify a named policy to attach to the virtual server. This tag can have multiple values Any policy priority must be defined within the iRule itself. All L7 content policies are applied first, then these named policies.    | policy\_asm\_app1         |
-+----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+
-| lbaas\_persist             | Specify a named fallback persistence profile for a virtual server. This tag has a single value.                                                                                                                                 | hash                      |
-+----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+
-| lbaas\_fallback\_persist   | Specify a named fallback persistence profile for a virtual server. This tag has a single value.                                                                                                                                 | source\_addr              |
-+----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+
+#. Define the desired BIG-IP virtual server configurations in valid JSON.
 
-An ESD does not need to include every tag. Only included tags will be
-applied to a virtual server.
+    .. tip::
 
-During startup, the F5 LBaaSv2 agent will read all ESD JSON files (any
-file with .json extension) and validate the ESD by ensuring:
+        The agent package includes an example ESD file, demo.json. You can amend this example file -- and save it with a unique name -- to create ESDs specific to your applications.
 
-1. The ESD file is a valid JSON format. Any invalid JSON file will be
-   ignored.
-2. The tag name is valid (i.e., one of the tags listed in the table
-   above).
-3. The tag value is correctly defined: a single string (for most tags),
-   or a comma delimited list using JSON [] notation (only for
-   lbaas\_irule and lbaas\_policy tags).
-4. The tag value (profile, policy, or iRule) exists in the Common
-   partition. Keep these rules in mind:
-   a. Any profile, policy, or iRule used in an ESD must be created in
-      the Common partition.
-   b. Any profile, policy, or iRule must be pre-configured on your
-      BIG-IP before re-starting the F5 LBaaSv2 agent.
 
-Any tag that does not pass the validation steps above will be ignored.
-An ESD that contains a mix of valid and invalid tags will still be used,
-but only valid tags will be applied.
+    .. code-block:: JSON
+        :caption: demo.json
 
-Using ESDs
-----------
+        {
+          "esd_demo_1": {
+            "lbaas_ctcp": "tcp-mobile-optimized",
+            "lbaas_stcp": "tcp-lan-optimized",
+            "lbaas_cssl_profile": "clientssl",
+            "lbaas_sssl_profile": "serverssl",
+            "lbaas_irule": ["_sys_https_redirect"],
+            "lbaas_policy": ["demo_policy"],
+            "lbaas_persist": "hash",
+            "lbaas_fallback_persist": "source_addr"
+          },
+          "esd_demo_2": {
+            "lbaas_irule": [
+              "_sys_https_redirect",
+              "_sys_APM_ExchangeSupport_helper"
+            ]
+          }
+        }
 
-Follow this workflow for using ESDs.
 
-1. Pre-configure profiles, policies, and iRules on your BIG-IP.
-2. Create an ESD in a JSON file located in
-   /etc/neutron/services/f5/esd/.
-3. Restart the F5 LBaaSv2 agent.
-4. Create a Neutron load balancer with a listener (and pool, members,
-   monitor).
-5. Create a Neutron L7 policy object with a name parameter that matches
-   your ESD name.
+#. Copy the ESD file(s) to the :file:`/etc/neutron/services/f5/esd/` directory.
 
-You apply an ESD to a virtual server using L7 policy objects in LBaaSv2.
-Using the Neutron CLI, you can create an L7 policy like this::
+#. Restart the F5 OpenStack agent.
 
-  lbaas-l7policy-create --listener <name or ID> --name <ESD name> --action <action>
+    .. code-block:: bash
 
-The action parameter is ignored, but must be included for Neutron to
-accept the command. For example::
+        $ sudo systemctl restart f5-openstack-agent
 
-  lbaas-l7policy-create --listener vip1 --name mobile_app --action REJECT
 
-In this example, when the F5 agent receives the lbaas-l7policy-create
-command, it looks up the ESD name “mobile\_app” in its table of ESDs.
-The agent applies each tag defined in the ESD named “mobile\_app” to the
-virtual server created for the listener named “vip1”. The REJECT action
-is ignored.
+.. _esd-delete:
 
-Use the L7 policy delete operation to remove an ESD::
+Delete an Enhanced Service Definition
+-------------------------------------
 
-  lbaas-l7policy-delete <ESD name or L7 policy ID>
+Use Neutron's `L7 policy delete`_ operation to remove its associated ESD.
 
-It is important to note that ESDs will overwrite any existing setting of
-a BIG-IP virtual server. For example, if you create an LBaaSv2 pool with
-cookie session persistence (which is applied to the virtual server
-fronting the pool) and then apply an ESD that uses hash persistence,
-cookie persistence will be replaced with hash persistence. Removing the
-ESD by deleting the L7 policy will restore the virtual server back to
-cookie persistence. Likewise, creating a pool with session persistence
-*after* applying an ESD will overwrite the ESD persist value, if
-defined. Order of operations is important – last one wins.
+.. code-block:: bash
 
-Use Cases
----------
+    $ neutron lbaas-l7policy-delete <ESD name or L7 policy ID>
 
-Following are examples of using ESDs to work around the limitations of
-LBaaSv2.
 
-Customizing Client-side SSL Termination
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _esd-usage:
 
-LBaaSv2 supports client-side SSL termination by creating TLS listeners –
-listeners with TERMINATED\_HTTPS protocol. Using TERMINATED\_HTTPS in
-LBaaSv2 requires a certificate and key stored in the Barbican secret
-store service. While this satisfies many security requirements, you may
-want to use an SSL profile different from what is created with a
-Barbican certificate and key.
+Usage
+-----
 
-To use a different profile, create a listener with an HTTPS protocol,
-and then create an L7 policy object using an ESD that has an
-lbaas_cssl_profile tag. For example::
+1. Configure all desired `profiles`_, `policies`_, and `iRules`_ on your BIG-IP.
 
-  "lbaas_cssl_profile": "clientssl"
+2. :ref:`Create an ESD <esd-create>` (for example, :file:`/etc/neutron/services/f5/esd/my_esd.json`).
 
-Adding Server-side SSL Termination
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+3. Restart the F5 OpenStack agent.
 
-LBaaSv2 has no way of specifying server-side SSL termination, as TLS
-listeners only define a client-side SSL profile. You may need to also
-re-encrypt traffic between your BIG-IP and pool member servers. To add
-server-side SSL termination, use an ESD that includes an
-lbaas_sssl_profile tag. For example::
+4. `Create a Neutron load balancer`_ with a listener (and pool, members, monitor).
 
-  "lbaas_sssl_profile": "serverssl"
+5. `Create a Neutron L7 policy`_ object with a name parameter that matches your ESD name.
 
-Customizing Session Persistence
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. code-block:: bash
 
-LBaaSv2 supports session persistence, though in the LBaaSv2 model
-persistence types are defined for pools not listeners. The F5 agent maps
-LBaaSv2 pool session persistence values to BIG-IP virtual servers
-associated with the pool. LBaaSv2 only supports three options
-(HTTP_COOKIE, APP_COOKIE, and SOURCE_ADDR), and these are mapped to
-either cookie or source\_addr persistence on BIG-IPs. Many more
-persistence profiles are available on BIG-IPs, such as dest_addr, hash,
-ssl, sip, etc. To use these profiles, specify the lbaas_persist and
-lbaas_fallback_persist tags in an ESD. For example::
+        $ neutron lbaas-l7policy-create --listener <name or ID> --name <ESD name> --action <action>
 
-  "lbaas_persist": "hash",
-   "lbaas_fallback_persist": "source_addr"
 
-It is good practice to define a fallback persistence profile as well in
-case a client does not support the persistence profile you specify.
+    .. important::
 
-Adding iRules
-~~~~~~~~~~~~~
+        Neutron requires the ``--action`` parameter for ``lbaas-l7policy-create`` commands. The F5 OpenStack agent ignores ``--action`` when launching an ESD.
 
-iRules are a powerful tool for customizing traffic management. As an
-example, you may want to re-write certificate values into request
-headers. Create an iRule that does this and use the tag lbaas\_irule to
-add the iRule to a virtual server. Unlike other tags (except
-lbaas\_policy), the lbaas\_irule tag supports multiple values. You
-define values for lbaas\_irule using JSON list notation (comma delimited
-strings within brackets, []). Use brackets [] even if you only define a
-single iRule. Here are two examples: one ESD applies a single iRule, the
-other applies two iRules::
+        .. rubric:: For example:
 
-  {
-    "esd_demo_1": {
-      "lbaas_irule": ["header_rewrite"]
-    },
-    "esd_demo_2": {
-      "lbaas_irule": [
-      "header_rewrite",
-      "remove_response_header"
-     ]
+        .. code-block:: bash
+
+            $ neutron lbaas-l7policy-create --listener vip1 --name mobile_app --action REJECT
+
+        When the F5 agent receives the ``lbaas-l7policy-create`` command:
+
+        - It looks up the ESD name ``mobile_app`` in its table of ESDs.
+        - The agent applies each tag defined in the ``mobile_app`` ESD to the virtual server created for the listener named “vip1”.
+        - The agent ignores the REJECT action.
+
+
+
+Usage Examples
+--------------
+
+Following are examples of using ESDs to work around the limitations of LBaaSv2.
+
+Add iRules
+``````````
+
+Use the ``lbaas_irule`` tag to add any desired `iRules`_ to any BIG-IP virtual server associated with an LBaaSv2 load balancer.
+
+For example, if you want to re-write certificate values into request headers:
+
+#. Create the desired iRule(s) in the ``/Common`` partition on the BIG-IP.
+#. Define the ``lbaas_irule`` tag with a JSON list.
+
+.. rubric:: Example:
+
+.. code-block:: JSON
+    :linenos:
+
+    {
+      "esd_demo_1": {
+        \\ define a single iRule
+        "lbaas_irule": ["header_rewrite"]
+      },
+      "esd_demo_2": {
+        \\ define two (2) iRules
+        "lbaas_irule": [
+          "header_rewrite",
+          "remove_response_header"
+        ]
+      }
     }
-  }
 
-When using iRules, be sure to define the iRule priority within the iRule
-itself. The order of application of iRules is not guaranteed, though the
-agent makes a best effort by adding iRules in the order they are defined
-in the tag.
+.. important::
 
-Adding Policies
-~~~~~~~~~~~~~~~
+    When using iRules, be sure to define the iRule priority within the iRule itself. The order in which the F5 agent applies iRules isn't guaranteed; the agent adds iRules in the order in which they're defined in the ESD.
 
-The Mitaka release of OpenStack LBaaSv2 introduced L7 policies to manage
-traffic based on L7 content. The LBaaSv2 L7 policy and rule model may
-work for your needs. If not, create a policy on your BIG-IP and apply
-that policy to your LBaaSv2 listener using the lbaas\_policy tag. As
-with the lbaas\_irule tag, the lbaas\_policy tag requires brackets
-surrounding one or more policy names. For example::
 
-  {
-    "esd_demo_1": {
-      "lbaas_policy": ["custom_policy1"]
-    },
-    "esd_demo_2": {
-      "lbaas_policy ": [
-      "custom_policy1",
-      "custom_policy2"
-      ]
+Add LTM Policies
+````````````````
+
+Use the ``lbaas_policy`` tag to assign a BIG-IP LTM `policy`_ to a virtual server associated with an LBaaSv2 load balancer.
+
+#. Create the `policy`_ in the ``/Common`` partition on the BIG-IP.
+#. Define the ``lbaas_policy`` tag with a JSON list.
+
+.. rubric:: Example:
+
+.. code-block:: JSON
+    :linenos:
+
+    {
+      \\ define a single policy
+      "esd_demo_1": {
+        "lbaas_policy": ["custom_policy1"]
+      },
+      \\ define two (2) policies
+      "esd_demo_2": {
+        "lbaas_policy ": [
+        "custom_policy1",
+        "custom_policy2"
+        ]
+      }
     }
-  }
 
-Using TCP Profiles
-~~~~~~~~~~~~~~~~~~
 
-ESDs allow you to define TCP profiles that determine how a server
-processes TCP traffic. These can be used to fine tune TCP performance
-for specific applications. For example, if your load balancer fronts an
-application used for mobile clients, you can use the
-‘tcp\_mobile\_optimized’ client profile to optimize TCP processing. Of
-course, that profile may not be optimal for traffic between your BIG-IP
-and the pool member servers, so you can specify different profiles for
-client-side and server-side traffic. Use the lbaas\_ctcp tag for client
-profiles and the lbaas\_stcp tag for server profiles. If you only
-include the client tag, lbaas\_ctcp, and not the server tag,
-lbaas\_stcp, the client profile is used for both. Following are two
-examples. In the first, esd\_demo\_1, the tcp profile will be used for
-both client-side and server-side traffic. In the second, esd\_demo\_2,
-the tcp\_mobile\_optimized profile is used for client-side traffic, and
-tcp\_lan\_optimized profile is used for server-side traffic::
+Add Server-side SSL Termination
+```````````````````````````````
 
-  {
-    "esd_demo_1": {
-    "lbaas_ctcp": "tcp"
-    },
-    "esd_demo_2": {
-      "lbaas_ctcp": "tcp_mobile_optimized",
-      "lbaas_stcp": "tcp_lan_optimized"
+Use the ``lbaas_sssl_profile`` tag to add `BIG-IP server-side SSL termination`_ to a virtual server associated with an LBaaSv2 load balancer.
+
+.. rubric:: Example:
+
+.. code-block:: JSON
+
+    "lbaas_sssl_profile": "serverssl"
+
+
+Customize Client-side SSL Termination
+`````````````````````````````````````
+
+Use the ``lbaas_cssl_profile tag`` tag to add a `BIG-IP SSL profile`_ to a virtual server associated with an LBaaSv2 load balancer.
+
+#. Create a `client SSL profile`_ in the ``/Common`` partition on the BIG-IP.
+#. `Create an LBaaSv2 HTTPS listener`_.
+#. Create an L7 policy object using the ``lbaas_cssl_profile`` tag.
+
+.. rubric:: Example:
+
+.. code-block:: JSON
+
+    "lbaas_cssl_profile": "clientssl"
+
+
+Customize Session Persistence
+`````````````````````````````
+
+Use the ``lbaas_persist`` and ``lbaas_fallback_persist`` tags to configure a `BIG-IP session persistence profile`_ on a virtual server associated with an LBaaSv2 load balancer.
+
+
+.. important::
+
+    In the LBaaSv2 session persistence model, persistence types apply to pools, not listeners. The F5 agent maps LBaaSv2 pool session persistence values to the BIG-IP virtual server(s) associated with the pool. The BIG-IP provides many persistence profiles beyond those available in LBaaSv2, including ``dest_addr``, ``hash``, ``ssl``, ``sip``, etc.
+
+.. rubric:: Example:
+
+.. code-block:: JSON
+    :linenos:
+
+    "lbaas_persist": "hash",
+    "lbaas_fallback_persist": "source_addr"
+
+.. tip::
+
+    It's good practice to define a fallback persistence profile as well, in case a client doesn't support the specified persistence profile.
+
+
+Use TCP Profiles
+````````````````
+
+Use the ``lbaas_ctcp`` tag to define a `BIG-IP TCP profile`_ for a virtual server associated with an LBaaSv2 load balancer. BIG-IP TCP profiles, which determine how a server processes TCP traffic, can fine-tune TCP performance for specific applications.
+
+- ``lbaas_ctcp`` -- Use this tag for client profiles.
+- ``lbaas_stcp`` -- Use this tag for server profiles.
+
+.. important::
+
+    If you only define the client tag (``lbaas_ctcp``), the F5 agent assigns the client profile to the virtual server for both client- and server-side traffic.
+
+.. rubric:: For example:
+
+If your load balancer fronts an application used for mobile clients, you can use the ``tcp_mobile_optimized`` BIG-IP client SSL profile to optimize TCP processing.
+
+.. code-block:: json
+
+    "lbaas_ctcp": "tcp_mobile_optimized"
+
+Of course, that profile may not be optimal for traffic between your BIG-IP and the pool member servers. You can specify different profiles for client-side and server-side traffic.
+
+For ``esd_demo_1`` in the example below, we define a single TCP profile ("tcp") for both client- and server-side traffic. For ``esd_demo_2``, we assign separate TCP policies for client- and server-side traffic (``tcp_mobile_optimized`` and ``tcp_lan_optimized``, respectively).
+
+.. code-block:: json
+    :linenos:
+
+    {
+      "esd_demo_1": {
+      "lbaas_ctcp": "tcp"
+      },
+      "esd_demo_2": {
+        "lbaas_ctcp": "tcp_mobile_optimized",
+        "lbaas_stcp": "tcp_lan_optimized"
+      }
     }
-  }
 
-Helpful Hints
-~~~~~~~~~~~~~
 
-1. Use a JSON lint application to validate your ESD files. Forgetting a
-   quote, including a trailing comma, or not balancing braces/brackets
-   are common mistakes that cause JSON validation errors.
 
-2. Restart the F5 LBaaSv2 agent (f5-openstack-agent) after adding or
-   modifying ESD files.
-
-3. Use a unique name for each ESD you define. ESD names are case
-   sensitive.
-
-4. Any profile, policy, or iRule referenced in your ESD must be
-   pre-configured on your BIG-IP, and it must be created in the Common
-   partition.
-
-5. ESDs overwrite any existing settings. For example, the
-   lbaas\_cssl\_profile replaces the SSL profile created for TLS
-   listeners.
-
-6. When using iRules and policies, remember that any iRule priority must
-   be defined within the iRule itself.
-
-7. If DEBUG logging is enabled, check the agent log,
-   /var/log/neutron/f5-openstack-agent.log, for statements that report
-   whether a tag is valid or invalid.
+.. _L7 policy: https://wiki.openstack.org/wiki/Neutron/LBaaS/l7#L7_Policies
+.. _Create a Neutron load balancer: https://docs.openstack.org/mitaka/networking-guide/config-lbaas.html#building-an-lbaas-v2-load-balancer
+.. _Create a Neutron L7 policy: https://docs.openstack.org/cli-reference/neutron.html
+.. _iRules: https://devcentral.f5.com/irules
+.. _policies: https://support.f5.com/csp/article/K15085
+.. _profiles: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-profiles-reference-12-0-0/2.html
+.. _profile: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-profiles-reference-12-0-0/2.html
+.. _policy: https://support.f5.com/csp/article/K15085
+.. _iRule: https://devcentral.f5.com/irules
+.. _client SSL profile: https://support.f5.com/csp/article/K14783
+.. _BIG-IP server-side SSL termination: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-ssl-administration-13-0-0/4.html#guid-45595e00-5179-4055-87f7-277eb7d922bd
+.. _BIG-IP SSL profile: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-profiles-reference-13-0-0/6.html
+.. _Create an LBaaSv2 HTTPS listener: https://docs.openstack.org/mitaka/networking-guide/config-lbaas.html#adding-an-https-listener
+.. _BIG-IP session persistence profile: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-profiles-reference-13-0-0/4.html
+.. _BIG-IP TCP profile: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-profiles-reference-13-0-0/1.html#guid-4b08badd-ccd9-4ddc-a4c3-1d8f788f38c3
+.. _L7 policy delete: https://docs.openstack.org/cli-reference/neutron.html#neutron-lbaas-l7policy-delete
