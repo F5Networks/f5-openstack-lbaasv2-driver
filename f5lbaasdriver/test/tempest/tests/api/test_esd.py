@@ -14,8 +14,6 @@ u"""F5 Networks® LBaaSv2 L7 policy tempest tests."""
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from neutron.plugins.common import constants as plugin_const
-from neutron_lbaas.services.loadbalancer import constants as lb_const
 from tempest import config
 from tempest.lib.common.utils import data_utils
 from tempest import test
