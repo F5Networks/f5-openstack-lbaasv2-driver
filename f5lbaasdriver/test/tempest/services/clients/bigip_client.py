@@ -214,7 +214,8 @@ class BigIpClient(object):
             vs = self.bigip.tm.ltm.virtuals.virtual.load(
                 name=vs_name, partition=partition)
 
-            return True
+            persist = getattr(vs, 'persist', None)
+            return persist and persist[0]['name'] == persist
 
         return False
 
