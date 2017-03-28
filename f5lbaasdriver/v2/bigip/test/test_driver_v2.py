@@ -102,11 +102,17 @@ def happy_path_driver():
     return mock_driver, mock.MagicMock(name='mock_context')
 
 
+@mock.patch('f5lbaasdriver.v2.bigip.message_consumers.F5RPCConsumer')
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.agent_rpc')
-@mock.patch('f5lbaasdriver.v2.bigip.driver_v2.plugin_rpc')
-def test_f5driverv2(mock_plugin_rpc, mock_agent_rpc):
+def test_f5driverv2(mock_agent_rpc, mock_F5RPCConsumer):
     mock_plugin = mock.MagicMock(name='mock_plugin')
-    d = dv2.F5DriverV2(plugin=mock_plugin)
+    mock_cfg = mock.Mock()
+    mock_service = mock.Mock()
+    with mock.patch('oslo_service.service.launch', mock_service, create=True):
+        with mock.patch('oslo_config.cfg', mock_cfg, create=True):
+            d = dv2.F5DriverV2(plugin=mock_plugin)
+    assert d.consumer, 'created consumer'
+    assert mock_service.called, "Launched consumer..."
     assert d.plugin == mock_plugin
     assert d.env is None
     assert isinstance(d.loadbalancer, dv2.LoadBalancerManager)
