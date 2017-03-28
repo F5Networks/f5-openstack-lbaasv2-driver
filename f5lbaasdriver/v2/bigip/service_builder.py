@@ -299,6 +299,8 @@ class LBaaSv2ServiceBuilder(object):
                 segment_data.get('segmentation_id', None)
             network['provider:network_type'] = \
                 segment_data.get('network_type', None)
+            network['provider:physical_network'] = \
+                segment_data.get('physical_network', None)
 
         net_type = network.get('provider:network_type', "undefined")
         if net_type == 'vxlan':
