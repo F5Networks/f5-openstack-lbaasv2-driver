@@ -82,6 +82,7 @@ class TestEsdBasic(f5_base.F5BaseTestCase):
         self._wait_for_load_balancer_status(self.load_balancer.get('id'))
         self._run_traffic('server1')
         self._delete_esd()
+        self._run_traffic('server1')
         self._wait_for_load_balancer_status(self.load_balancer.get('id'))
 
     def test_policy_abort_deployment(self):
@@ -91,4 +92,5 @@ class TestEsdBasic(f5_base.F5BaseTestCase):
             self._run_traffic('server1')
         assert 'Connection aborted' in str(ex)
         self._delete_esd()
+        self._run_traffic('server1')
         self._wait_for_load_balancer_status(self.load_balancer.get('id'))
