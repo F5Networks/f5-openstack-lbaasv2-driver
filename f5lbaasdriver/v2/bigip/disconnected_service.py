@@ -76,5 +76,7 @@ class DisconnectedService(object):
             }
             if 'provider:network_type' in network:
                 data['network_type'] = network['provider:network_type']
+            if 'provider:physical_network' in network:
+                data['physical_network'] = network['provider:physical_network']
 
         return data
