@@ -19,7 +19,7 @@ set -x
 
 # Activate our tempest virtualenv
 source ${TEMPEST_VENV_ACTIVATE}
-cd ${NEUTRON_LBAAS_DIR}
+cd /home/buildbot/neutron-lbaas
 
 # LBaaSv2 API test cases with F5 tox.ini file
 tox -e apiv2 -c f5.tox.ini -- \

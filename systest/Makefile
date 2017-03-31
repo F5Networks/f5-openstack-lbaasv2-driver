@@ -47,11 +47,9 @@ export DEVTEST_DIR := /home/buildbot/dev-test
 export DEVTEST_REPO := git@bldr-git.int.lineratesystems.com:openstack/dev-test.git
 
 # tempest (OpenStack tempest test library)
-export TEMPEST_DIR := /home/buildbot/tempest
 export TEMPEST_REPO := http://git.openstack.org/openstack/tempest
 
 # neutron-lbaas (OpenStack Neutron LBaaS repo for the test cases to run)
-export NEUTRON_LBAAS_DIR := /home/buildbot/neutron-lbaas
 export NEUTRON_LBAAS_REPO := https://github.com/F5Networks/neutron-lbaas.git
 export NEUTRON_LBAAS_BRANCH := stable/mitaka
 
