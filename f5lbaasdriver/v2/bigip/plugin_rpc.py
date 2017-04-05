@@ -38,9 +38,8 @@ class LBaaSv2PluginCallbacksRPC(object):
     def __init__(self, driver=None):
         """LBaaSv2PluginCallbacksRPC constructor."""
         self.driver = driver
-        self._create_rpc_listener()
 
-    def _create_rpc_listener(self):
+    def create_rpc_listener(self):
         topic = constants.TOPIC_PROCESS_ON_HOST_V2
         if self.driver.env:
             topic = topic + "_" + self.driver.env
