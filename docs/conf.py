@@ -335,7 +335,14 @@ rst_epilog = '''
 .. |f5_agent_readme| raw:: html
 
    <a href="https://github.com/F5Networks/f5-openstack-agent/blob/%(openstack_release_l)s/README.rst">README</a>
+.. |f5_lbaasv2_driver_pip_url| replace:: git+https://github.com/F5Networks/f5-openstack-lbaasv2-driver@v%(version)s
+.. |f5_lbaasv2_driver_deb_url| replace:: https://github.com/F5Networks/f5-openstack-lbaasv2-driver/releases/download/v%(version)s/python-f5-openstack-lbaasv2-driver_%(version)s-1_1404_all.deb
+.. |f5_lbaasv2_driver_rpm_url| replace:: https://github.com/F5Networks/f5-openstack-lbaasv2-driver/releases/download/v%(version)s/f5-openstack-lbaasv2-driver-%(version)s-1.el7.noarch.rpm
+.. |f5_lbaasv2_driver_deb_package| replace:: python-f5-openstack-lbaasv2-driver_%(version)s-1_1404_all.deb
+.. |f5_lbaasv2_driver_rpm_package| replace:: f5-openstack-lbaasv2-driver-%(version)s-1.el7.noarch.rpm
+.. |f5_agent_pip_url| replace:: git+https://github.com/F5Networks/f5-openstack-agent@v%(version)s
 ''' % {
   'openstack_release': openstack_release,
-  'openstack_release_l': openstack_release.lower()
+  'openstack_release_l': openstack_release.lower(),
+  'version': version
 }
