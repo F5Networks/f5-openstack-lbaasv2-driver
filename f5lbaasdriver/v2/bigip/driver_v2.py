@@ -14,6 +14,7 @@ u"""F5 Networks® LBaaSv2 Driver Implementation."""
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import os
 import sys
 import uuid
 
@@ -22,6 +23,9 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import importutils
 
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as plugin_constants
 from neutron_lib import constants as q_const
@@ -103,6 +107,15 @@ class F5DriverV2(object):
         # mixins agent_notifiers dictionary for it's env
         self.plugin.agent_notifiers.update(
             {q_const.AGENT_TYPE_LOADBALANCER: self.agent_rpc})
+
+        registry.subscribe(
+            self.post_fork_callback, resources.PROCESS, events.AFTER_CREATE)
+
+    def post_fork_callback(self, resources, event, trigger):
+        LOG.debug("F5DriverV2 received post neutron child fork "
+                  "notification pid(%d) print trigger(%s)" % (
+                      os.getpid(), trigger))
+        self.plugin_rpc.create_rpc_listener()
 
 
 class EntityManager(object):

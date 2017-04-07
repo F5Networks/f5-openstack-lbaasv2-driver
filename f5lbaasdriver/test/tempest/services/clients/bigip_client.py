@@ -186,13 +186,34 @@ class BigIpClient(object):
             name=name, partition=partition)
 
     def virtual_server_has_policy(self, vs_name, policy_name, partition):
-        if self.virtual_server_exists(name=vs_name, partition=partition):
-            vs = self.bigip.tm.ltm.virtuals.virtual.load(
-                name=vs_name, partition=partition)
+        vs = self.bigip.tm.ltm.virtuals.virtual.load(
+            name=vs_name, partition=partition)
 
-            policies = vs.policies_s.get_collection()
-            for policy in policies:
-                if policy.name == policy_name:
-                    return True
+        policies = vs.policies_s.get_collection()
+        for policy in policies:
+            if policy.name == policy_name:
+                return True
 
         return False
+
+    def virtual_server_has_profile(self, vs_name, profile_name, partition):
+        vs = self.bigip.tm.ltm.virtuals.virtual.load(
+            name=vs_name, partition=partition)
+
+        profiles = vs.profiles_s.get_collection()
+        for profile in profiles:
+            if profile.name == profile_name:
+                return True
+
+    def virtual_server_has_persist(self, vs_name, persist, partition):
+        vs = self.bigip.tm.ltm.virtuals.virtual.load(
+            name=vs_name, partition=partition)
+
+        persist = getattr(vs, 'persist', None)
+        return persist and persist[0]['name'] == persist
+
+    def virtual_server_has_value(self, vs_name, attr, value, partition):
+        vs = self.bigip.tm.ltm.virtuals.virtual.load(
+            name=vs_name, partition=partition)
+
+        return getattr(vs, attr, None) == value
