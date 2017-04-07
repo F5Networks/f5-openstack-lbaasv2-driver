@@ -24,7 +24,6 @@ Contents
     Supported Features <map_lbaasv2-features>
     Sample Configuration Files <includes/ref_agent-config-file>
     Coding Example <coding-example-lbaasv2>
-    Release Notes <release_notes>
     Upgrading <includes/topic_upgrading-f5-lbaasv2-plugin>
     Glossary <glossary>
     troubleshooting
