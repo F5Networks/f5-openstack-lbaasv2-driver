@@ -16,7 +16,6 @@ before_install:
 - git config --global user.name "Travis F5 Openstack"
 install:
 - pip install hacking pytest coverage
-- pip install -r requirements.txt
 - pip install -r requirements.test.txt
 - pip install -r requirements.docs.txt
 script:
