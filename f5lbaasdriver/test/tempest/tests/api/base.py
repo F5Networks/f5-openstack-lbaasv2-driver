@@ -174,11 +174,9 @@ class BaseTestCase(base.BaseNetworkTest):
     def setUp(cls):
         cls.LOG.info(('Starting: {0}').format(cls._testMethodName))
         super(BaseTestCase, cls).setUp()
-        cls.bigip_client.snapshot_device()
 
     def tearDown(cls):
         super(BaseTestCase, cls).tearDown()
-        cls.bigip_client.reset_device_to_pretest_snapshot()
         cls.LOG.info(('Finished: {0}\n').format(cls._testMethodName))
 
     @classmethod
