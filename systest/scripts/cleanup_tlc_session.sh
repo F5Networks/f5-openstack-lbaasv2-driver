@@ -18,4 +18,5 @@
 set -x
 
 # We only need to cleanup the session, we didn't use barbican-enabled TLC file
+tlc --session ${TEST_SESSION} --debug cmd uninstall_barbican
 tlc --session ${TEST_SESSION} --debug cleanup
