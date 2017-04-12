@@ -14,7 +14,6 @@ u"""F5 Networks® LBaaSv2 Driver Implementation."""
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import os
 import sys
 import uuid
 
@@ -24,9 +23,6 @@ from oslo_log import log as logging
 from oslo_service import service
 from oslo_utils import importutils
 
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as plugin_constants
 from neutron_lib import constants as q_const

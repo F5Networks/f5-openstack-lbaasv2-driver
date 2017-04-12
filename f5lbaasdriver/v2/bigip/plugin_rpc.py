@@ -37,7 +37,6 @@ class LBaaSv2PluginCallbacksRPC(object):
         """LBaaSv2PluginCallbacksRPC constructor."""
         self.driver = driver
 
-
     # get a list of loadbalancer ids which are active on this agent host
     @log_helpers.log_method_call
     def get_active_loadbalancers_for_agent(self, context, host=None):
