@@ -36,6 +36,9 @@ MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 export MAKEFILE_DIR := $(dir $(MAKEFILE_PATH))
 export TEST_DIR := $(abspath $(MAKEFILE_DIR))/../test
 
+# Test exclude directory
+export EXCLUDE_DIR := $(MAKEFILE_DIR)/exclude/
+
 # Repos that are used for the tests and environment
 # TLC
 export TLC_DIR := /home/buildbot/tlc
@@ -167,6 +170,7 @@ tempest_11.5.4_overcloud:
 	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(BRANCH)-$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export EXCLUDE_FILE=tempest_11.5.4_overcloud.yaml ;\
 	$(MAKE) -C . run_tests
 
 # Tempest Tests for 11.6.x overcloud VE deployment
@@ -177,6 +181,7 @@ tempest_11.6.0_overcloud:
 	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(BRANCH)-$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export EXCLUDE_FILE=tempest_11.6.0_overcloud.yaml ;\
 	$(MAKE) -C . run_tests
 
 tempest_11.6.1_overcloud:
@@ -186,6 +191,7 @@ tempest_11.6.1_overcloud:
 	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(BRANCH)-$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export EXCLUDE_FILE=tempest_11.6.1_overcloud.yaml ;\
 	$(MAKE) -C . run_tests
 
 # Tempest Tests for 12.1.x overcloud VE deployment
@@ -196,6 +202,7 @@ tempest_12.1.1_overcloud:
 	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(BRANCH)-$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export EXCLUDE_FILE=tempest_12.1.1_overcloud.yaml ;\
 	$(MAKE) -C . run_tests
 
 # Tempest Tests for 11.5.x undercloud VE deployment
@@ -207,6 +214,7 @@ tempest_11.5.4_undercloud:
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
+	export EXCLUDE_FILE=tempest_11.5.4_undercloud.yaml ;\
 	$(MAKE) -C . run_tests
 
 tempest_11.5.4_undercloud_gre:
@@ -217,6 +225,7 @@ tempest_11.5.4_undercloud_gre:
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=gre ;\
+	export EXCLUDE_FILE=tempest_11.5.4_undercloud_gre.yaml ;\
 	$(MAKE) -C . run_tests
 
 tempest_11.5.4_undercloud_vlan:
@@ -227,6 +236,7 @@ tempest_11.5.4_undercloud_vlan:
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=vlan ;\
+	export EXCLUDE_FILE=tempest_11.5.4_undercloud_vlan.yaml ;\
 	$(MAKE) -C . run_tests
 
 # Tempest Tests for 11.6.x undercloud VE deployment
@@ -238,6 +248,7 @@ tempest_11.6.0_undercloud:
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
+	export EXCLUDE_FILE=tempest_11.6.0_undercloud.yaml ;\
 	$(MAKE) -C . run_tests
 
 tempest_11.6.0_undercloud_gre:
@@ -248,6 +259,7 @@ tempest_11.6.0_undercloud_gre:
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=gre ;\
+	export EXCLUDE_FILE=tempest_11.6.0_undercloud_gre.yaml ;\
 	$(MAKE) -C . run_tests
 
 tempest_11.6.0_undercloud_vlan:
@@ -258,6 +270,7 @@ tempest_11.6.0_undercloud_vlan:
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=vlan ;\
+	export EXCLUDE_FILE=tempest_11.6.0_undercloud_vlan.yaml ;\
 	$(MAKE) -C . run_tests
 
 tempest_11.6.1_undercloud:
@@ -268,6 +281,7 @@ tempest_11.6.1_undercloud:
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
+	export EXCLUDE_FILE=tempest_11.6.1_undercloud.yaml ;\
 	$(MAKE) -C . run_tests
 
 tempest_11.6.1_undercloud_gre:
@@ -278,6 +292,7 @@ tempest_11.6.1_undercloud_gre:
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=gre ;\
+	export EXCLUDE_FILE=tempest_11.6.1_undercloud_gre.yaml ;\
 	$(MAKE) -C . run_tests
 
 tempest_11.6.1_undercloud_vlan:
@@ -288,6 +303,7 @@ tempest_11.6.1_undercloud_vlan:
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=vlan ;\
+	export EXCLUDE_FILE=tempest_11.6.1_undercloud_vlan.yaml ;\
 	$(MAKE) -C . run_tests
 
 # Tempest Tests for 12.1.x undercloud VE deployment
@@ -299,6 +315,7 @@ tempest_12.1.1_undercloud:
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
+	export EXCLUDE_FILE=tempest_12.1.1_undercloud.yaml ;\
 	$(MAKE) -C . run_tests
 
 tempest_12.1.1_undercloud_gre:
@@ -309,6 +326,7 @@ tempest_12.1.1_undercloud_gre:
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=gre ;\
+	export EXCLUDE_FILE=tempest_12.1.1_undercloud_gre.yaml ;\
 	$(MAKE) -C . run_tests
 
 tempest_12.1.1_undercloud_vlan:
@@ -319,6 +337,7 @@ tempest_12.1.1_undercloud_vlan:
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=vlan ;\
+	export EXCLUDE_FILE=tempest_12.1.1_undercloud_vlan.yaml ;\
 	$(MAKE) -C . run_tests
 
 
