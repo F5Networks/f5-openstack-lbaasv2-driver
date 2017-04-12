@@ -220,6 +220,6 @@ pseudoxml:
 .PHONY: preview
 preview:
 	@echo "Running autobuild. View live edits at:"
-	@echo "  http://127.0.0.1:8000/index.html"
+	@echo "  http://0.0.0.0:8000/index.html"
 	@echo ""
-	sphinx-autobuild --host 127.0.0.1 -b html ./ $(BUILDDIR)
+	sphinx-autobuild --host 0.0.0.0 -b html ./ $(BUILDDIR)
