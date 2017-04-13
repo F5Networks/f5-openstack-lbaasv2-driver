@@ -21,6 +21,10 @@ set -x
 source ${TEMPEST_VENV_ACTIVATE}
 cd ${NEUTRON_LBAAS_DIR}
 
+# ThE=e following tox commands will fail, if the ${EXCLUDE_FILE}
+# doesn't exist in the ${EXCLUDE_DIR}.
+
+
 # LBaaSv2 API test cases with F5 tox.ini file
 tox -e apiv2 -c f5.tox.ini --sitepackages -- \
   --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
