@@ -4,7 +4,7 @@
 Basic Environment Requirements for F5 LBaaSv2
 =============================================
 
-This document provides the minimum basic requirements for using F5® LBaaSv2 in OpenStack |openstack|.
+This document provides the minimum basic requirements for using F5 LBaaSv2 in OpenStack |openstack|.
 
 OpenStack Requirements
 ----------------------
@@ -41,7 +41,7 @@ BIG-IP Requirements
 
 .. important::
 
-    - You must have the appropriate `license`_ for the BIG-IP® features you wish to use.
+    - You must have the appropriate `license`_ for the BIG-IP features you wish to use.
 
     - All numbers shown in the table below are per BIG-IP device.
 

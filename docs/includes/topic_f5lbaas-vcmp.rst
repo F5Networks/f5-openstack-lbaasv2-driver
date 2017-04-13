@@ -4,7 +4,7 @@ F5 LBaaSv2 and vCMP
 Overview
 --------
 
-Virtual Clustered Multiprocessing™ (vCMP®) is a feature of the BIG-IP® system that allows you to run multiple instances of BIG-IP software on a single hardware platform. vCMP allocates a specific share of the hardware resources to each BIG-IP® instance, or :term:`vCMP guest`.
+Virtual Clustered Multiprocessing™ (vCMP) is a feature of the BIG-IP system that allows you to run multiple instances of BIG-IP software on a single hardware platform. vCMP allocates a specific share of the hardware resources to each BIG-IP instance, or :term:`vCMP guest`.
 
 A vCMP guest consists of a TMOS instance and one or more BIG-IP modules. The :term:`vCMP host` allocates a share of the hardware resources to each guest; each guest also has its own management IP address, self IP addresses, virtual servers, and so on. In this way, each guest can effectively receive and process application traffic with no knowledge of other guests on the system.
 
@@ -42,11 +42,11 @@ Configuration
     .. code-block:: text
         :emphasize-lines: 8
 
-        # If you are using vCMP® with VLANs, you will need to configure
-        # your vCMP® host addresses, in addition to the guests addresses.
-        # vCMP® Host access is necessary for provisioning VLANs to a guest.
-        # Use icontrol_hostname for vCMP® guests and icontrol_vcmp_hostname
-        # for vCMP® hosts. The plug-in will automatically determine
+        # If you are using vCMP with VLANs, you will need to configure
+        # your vCMP host addresses, in addition to the guests addresses.
+        # vCMP Host access is necessary for provisioning VLANs to a guest.
+        # Use icontrol_hostname for vCMP guests and icontrol_vcmp_hostname
+        # for vCMP hosts. The plug-in will automatically determine
         # which host corresponds to each guest.
         #
         icontrol_vcmp_hostname = 192.168.1.245
@@ -58,7 +58,7 @@ Configuration
         :emphasize-lines: 19
 
         ###############################################################################
-        #  Device Driver - iControl® Driver Setting
+        #  Device Driver - iControl Driver Setting
         ###############################################################################
         #
         # icontrol_hostname is valid for external device type only.
@@ -71,7 +71,7 @@ Configuration
         # is not standalone, all devices in the sync failover
         # device group for the hostname specified must have 
         # their management IP address reachable to the agent.
-        # If order to access devices' iControl® interfaces via
+        # If order to access devices' iControl interfaces via
         # self IPs, you should specify them as a comma
         # separated list below. 
         #

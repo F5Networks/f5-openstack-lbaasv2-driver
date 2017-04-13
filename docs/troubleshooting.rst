@@ -11,7 +11,7 @@ Troubleshooting
 Set Logging Level to DEBUG
 --------------------------
 
-To troubleshoot general problems, set the Neutron and the F5® agent ``debug`` setting to ``True``.
+To troubleshoot general problems, set the Neutron and the F5 agent ``debug`` setting to ``True``.
 
 Extensive logging will then appear in the ``neutron-server`` and ``f5-oslbaasv1-agent`` log files on their respective hosts.
 
@@ -60,7 +60,7 @@ Here are a few things you can try:
         $ sudo service f5-oslbaasv2-agent status           \\ Ubuntu
 
 
-3. Make sure you can connect to the BIG-IP® and that the iControl® hostname, username, and password in the :ref:`agent configuration file` are correct.
+3. Make sure you can connect to the BIG-IP and that the iControl hostname, username, and password in the :ref:`agent configuration file` are correct.
 
 4. If you're using ``global_routed_mode``, comment out (#) the ``vtep`` lines (shown below) in the :ref:`agent configuration file`.
 

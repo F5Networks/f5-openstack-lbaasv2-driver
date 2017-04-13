@@ -6,7 +6,7 @@ Capacity-Based Scale Out
 Overview
 --------
 
-When using :ref:`differentiated service environments <Differentiated Service Environments>`, you can configure capacity metrics for the F5® agent to provide scale out across multiple BIG-IP device groups. The F5 agent :ref:`configuration parameters <Configure the F5 OpenStack Agent>`  ``environment_group_number`` and ``environment_capacity_score`` allow the F5 LBaaSv2 agent scheduler to assign requests to the group that has the lowest capacity score.
+When using :ref:`differentiated service environments <Differentiated Service Environments>`, you can configure capacity metrics for the F5 agent to provide scale out across multiple BIG-IP device groups. The F5 agent :ref:`configuration parameters <Configure the F5 OpenStack Agent>`  ``environment_group_number`` and ``environment_capacity_score`` allow the F5 LBaaSv2 agent scheduler to assign requests to the group that has the lowest capacity score.
 
 Each F5 agent expected to manage a specific :term:`device group` must be configured with the same ``icontrol_endpoints``. They must also be configured with the same ``environment_group_number``; this is used by the F5 LBaaSv2 driver to map the agents to the BIG-IP device group. The ``environment_group_number`` provides a convenient way for the F5 driver to identify agents that are available to handle requests for any of the devices in a given group.
 

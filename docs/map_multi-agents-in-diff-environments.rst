@@ -4,7 +4,7 @@ Multiple Agents and Differentiated Service Environments
 Overview
 --------
 
-You can run :ref:`multiple F5® agents <Agent Redundancy and Scale Out>` on separate hosts in OpenStack to provide agent redundancy and scale out. Additionally, you can set up custom :ref:`service environments <Differentiated Service Environments>` in your OpenStack cloud to manage environments with different requirements and/or configurations.
+You can run :ref:`multiple F5 agents <Agent Redundancy and Scale Out>` on separate hosts in OpenStack to provide agent redundancy and scale out. Additionally, you can set up custom :ref:`service environments <Differentiated Service Environments>` in your OpenStack cloud to manage environments with different requirements and/or configurations.
 
 Use Case
 --------
@@ -38,7 +38,7 @@ Configuration
 
 #. :ref:`Configure the F5 agents <Configure the F5 OpenStack Agent>`.
 
-    * Each agent must be configured with the same iControl® endpoint(s).
+    * Each agent must be configured with the same iControl endpoint(s).
     * Each agent must be configured with the same ``environment_prefix``; this is the name you assigned to the new custom environment.
     * Each agent must run on a separate host (in other words, the hostname must be unique).
 

@@ -1,11 +1,11 @@
 Before You Begin
 ================
 
-In order to use F5® LBaaSv2 services, you will need the following:
+In order to use F5 LBaaSv2 services, you will need the following:
 
 - Operational OpenStack cloud (|openstack| release).
 
-- Licensed, operational BIG-IP® :term:`device` or :term:`device cluster`; can be deployed either as an OpenStack instance (BIG-IP VE) or external to the cloud (VE or hardware).
+- Licensed, operational BIG-IP :term:`device` or :term:`device cluster`; can be deployed either as an OpenStack instance (BIG-IP VE) or external to the cloud (VE or hardware).
 
 .. important::
 

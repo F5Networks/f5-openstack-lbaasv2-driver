@@ -10,7 +10,7 @@ Overview
 
     We refer to 'hosts' a lot in this document. A 'host' could be a Neutron controller, a compute node, a container, etc.; the important takeaway is that in order to run multiple agents in one environment, **each agent must have a unique** ``hostname``. [#]_
 
-When the Neutron LBaaS plugin loads the F5® LBaaSv2 driver, it creates a global messaging queue to be used for all callbacks and status update requests from F5 LBaaSv2 agents. Requests are passed from the global messaging queue to F5 LBaaSv2 drivers in a round-robin fashion, then passed on to an F5 agent as described in the :ref:`Agent-Tenant Affinity` section.
+When the Neutron LBaaS plugin loads the F5 LBaaSv2 driver, it creates a global messaging queue to be used for all callbacks and status update requests from F5 LBaaSv2 agents. Requests are passed from the global messaging queue to F5 LBaaSv2 drivers in a round-robin fashion, then passed on to an F5 agent as described in the :ref:`Agent-Tenant Affinity` section.
 
 Agent-Tenant Affinity
 `````````````````````
@@ -83,7 +83,7 @@ To manage one BIG-IP device or device service group with multiple F5 agents, dep
 
     .. tip::
 
-        * Be sure to provide the iControl® endpoints for all BIG-IP devices you'd like the agents to manage.
+        * Be sure to provide the iControl endpoints for all BIG-IP devices you'd like the agents to manage.
         * You can configure the F5 agent once, on the Neutron controller, then copy the agent config file (:file:`/etc/neutron/services/f5/f5-openstack-agent.ini`) over to the other hosts.
 
 #. :ref:`Start the F5 agent` on each host.
@@ -102,5 +102,5 @@ Further Reading
     * :ref:`Multiple Agents and Differentiated Service Environments`
 
 
-.. [#] **F5 Networks® does not provide support for container service deployments.** If you are already well versed in containerized environments, you can run one F5 agent per container. The neutron.conf file must be present in the container. The service provider driver does not need to run in the container; rather, it only needs to be in the container's build context.
+.. [#] **F5 Networks does not provide support for container service deployments.** If you are already well versed in containerized environments, you can run one F5 agent per container. The neutron.conf file must be present in the container. The service provider driver does not need to run in the container; rather, it only needs to be in the container's build context.
 
