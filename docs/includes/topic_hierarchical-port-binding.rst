@@ -4,7 +4,7 @@ Hierarchical Port Binding
 Overview
 --------
 
-Neutron `hierarchical port binding`_ [#]_ allows software-defined networking (SDN) users to dynamically configure VLANs and VLAN tags for a physical BIG-IP® :term:`device` or :term:`device service cluster` connected to a 'top of rack' L3 switch (a network 'segment'). Telling the F5® agent what physical switch and port the BIG-IPs are connected to allows the agent to configure the BIG-IPs to process traffic for networks that are dynamically created in that segment.
+Neutron `hierarchical port binding`_ [#]_ allows software-defined networking (SDN) users to dynamically configure VLANs and VLAN tags for a physical BIG-IP :term:`device` or :term:`device service cluster` connected to a 'top of rack' L3 switch (a network 'segment'). Telling the F5 agent what physical switch and port the BIG-IPs are connected to allows the agent to configure the BIG-IPs to process traffic for networks that are dynamically created in that segment.
 
 Disconnected Services
 `````````````````````

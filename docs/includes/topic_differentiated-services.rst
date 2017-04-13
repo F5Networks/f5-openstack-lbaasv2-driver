@@ -6,9 +6,9 @@ Differentiated Service Environments
 Overview
 --------
 
-The F5® LBaaSv2 driver and F5 agent can manage multiple BIG-IP environments. In a :dfn:`differentiated service environment` -- a uniquely-named environment for which dedicated F5 LBaaS services are required -- the F5 driver  has its own, uniquely-named messaging queue. The F5 LBaaS agent scheduler for a differentiated service environment can only assign tasks to agents running in that environment.
+The F5 LBaaSv2 driver and F5 agent can manage multiple BIG-IP environments. In a :dfn:`differentiated service environment` -- a uniquely-named environment for which dedicated F5 LBaaS services are required -- the F5 driver  has its own, uniquely-named messaging queue. The F5 LBaaS agent scheduler for a differentiated service environment can only assign tasks to agents running in that environment.
 
-The service environment corresponds to the ``environment_prefix`` parameter in the :ref:`agent configuration file`. when you create a new ``lbaas-loadbalancer`` in OpenStack, this prefix is prepended to the OpenStack tenant id and used to create a new partition on your BIG-IP® device(s). The default ``environment_prefix`` parameter is ``Project``.
+The service environment corresponds to the ``environment_prefix`` parameter in the :ref:`agent configuration file`. when you create a new ``lbaas-loadbalancer`` in OpenStack, this prefix is prepended to the OpenStack tenant id and used to create a new partition on your BIG-IP device(s). The default ``environment_prefix`` parameter is ``Project``.
 
 Differentiated service environments can be used in conjunction with :ref:`capacity-based scale out` to provide agent redundancy and scale out across BIG-IP device groups.
 

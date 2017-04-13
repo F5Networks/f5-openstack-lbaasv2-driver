@@ -6,7 +6,7 @@ F5 LBaaSv2 to BIG-IP Configuration Mapping
 Overview
 --------
 
-When you issue ``neutron lbaas`` commands on your OpenStack Neutron controller or host, the F5® LBaaSv2 driver and F5 agent configure objects on your BIG-IP® device(s). Here, we've provided some insight into what exactly happens behind the scenes to configure BIG-IP objects. You can also view the actual calls made by setting the F5 agent's DEBUG level to 'True' in the :ref:`agent configuration file` and viewing the logs (:file:`/var/log/neutron/f5-openstack-agent.log`).
+When you issue ``neutron lbaas`` commands on your OpenStack Neutron controller or host, the F5 LBaaSv2 driver and F5 agent configure objects on your BIG-IP device(s). Here, we've provided some insight into what exactly happens behind the scenes to configure BIG-IP objects. You can also view the actual calls made by setting the F5 agent's DEBUG level to 'True' in the :ref:`agent configuration file` and viewing the logs (:file:`/var/log/neutron/f5-openstack-agent.log`).
 
 .. include:: ref_neutron-to-bigip-configs-table.rst
    :start-line: 5

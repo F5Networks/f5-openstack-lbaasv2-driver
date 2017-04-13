@@ -6,7 +6,7 @@ HA mode
 Overview
 --------
 
-:term:`HA`, or, 'high availability', mode refers to high availability of the BIG-IP® device(s). The F5® agent can configure BIG-IP to operate in :term:`standalone`, :term:`pair`, or :term:`scalen` mode. The F5 agent configures LBaaS objects on HA BIG-IP devices in real time.
+:term:`HA`, or, 'high availability', mode refers to high availability of the BIG-IP device(s). The F5 agent can configure BIG-IP to operate in :term:`standalone`, :term:`pair`, or :term:`scalen` mode. The F5 agent configures LBaaS objects on HA BIG-IP devices in real time.
 
 Use Case
 --------
@@ -41,7 +41,7 @@ Prerequisites
 
 - Basic understanding of OpenStack networking concepts. See the `OpenStack docs <http://docs.openstack.org/mitaka/>`_ for more information.
 
-- Basic understanding of `BIG-IP® Local Traffic Management <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-basics-12-0-0.html>`_
+- Basic understanding of `BIG-IP Local Traffic Management <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-basics-12-0-0.html>`_
 
 - F5 :ref:`agent <agent:home>` and :ref:`service provider driver <Install the F5 LBaaSv2 Driver>` installed on the Neutron controller and all other hosts from which you want to provision LBaaS services.
 

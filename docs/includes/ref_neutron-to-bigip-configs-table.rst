@@ -3,7 +3,7 @@
 Neutron Command to BIG-IP Configuration Mapping Table
 =====================================================
 
-F5 LBaaSv2 uses the `f5-sdk <http://f5-sdk.readthedocs.io/en/latest/>`_ to communicate with BIG-IP via the iControl® REST API. The table below shows the corresponding iControl endpoint and BIG-IP object for each neutron lbaas- ‘create’ command.
+F5 LBaaSv2 uses the `f5-sdk <http://f5-sdk.readthedocs.io/en/latest/>`_ to communicate with BIG-IP via the iControl REST API. The table below shows the corresponding iControl endpoint and BIG-IP object for each neutron lbaas- ‘create’ command.
 
 +----------------------------------------+-----------------------------------------------------------------------------------------+-----------------------------------+
 | Command                                | URI                                                                                     | BIG-IP Configurations Applied     |

@@ -6,7 +6,7 @@ L2 Adjacent Mode
 Overview
 --------
 
-The F5® agent uses the L2/L3 segmentation mode settings to determine the L2/L3 network configurations for your BIG-IP® device(s).
+The F5 agent uses the L2/L3 segmentation mode settings to determine the L2/L3 network configurations for your BIG-IP device(s).
 
 .. warning::
 
@@ -142,7 +142,7 @@ Device VLAN to interface and tag mapping
 VLAN device and interface to port mappings
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- ``vlan_binding_driver``: Binds tagged VLANs to specific BIG-IP ports; it should be configured using a valid subclass of the iControl® :class:`VLANBindingBase` class. [#]_ **To use this feature, uncomment the line in the :ref:`agent configuration file`.**
+- ``vlan_binding_driver``: Binds tagged VLANs to specific BIG-IP ports; it should be configured using a valid subclass of the iControl :class:`VLANBindingBase` class. [#]_ **To use this feature, uncomment the line in the :ref:`agent configuration file`.**
 
 
 Device Tunneling (VTEP) selfips
@@ -160,7 +160,7 @@ Device Tunneling (VTEP) selfips
         # Device Tunneling (VTEP) selfips
         #
         # This is a single entry or comma separated list of cidr (h/m) format
-        # selfip addresses, one per BIG-IP® device, to use for VTEP addresses.
+        # selfip addresses, one per BIG-IP device, to use for VTEP addresses.
         #
         # If no gre or vxlan tunneling is required, these settings should be
         # commented out or set to None.
@@ -228,10 +228,10 @@ Static ARP population for members on tunnel networks
         # f5_populate_static_arp = True
         #
         ...
-        # This is a boolean entry which determines if the BIG-IP® will use
+        # This is a boolean entry which determines if the BIG-IP will use
         # L2 Population service to update its fdb tunnel entries. This needs
         # to be setup in accordance with the way the other tunnel agents are
-        # setup.  If the BIG-IP® agent and other tunnel agents don't match
+        # setup.  If the BIG-IP agent and other tunnel agents don't match
         # the tunnel setup will not work properly.
         #
         l2_population = True
@@ -256,7 +256,7 @@ Namespaces and Routing
         :emphasize-lines: 8
 
         # Allow overlapping IP subnets across multiple tenants.
-        # This creates route domains on BIG-IP® in order to
+        # This creates route domains on BIG-IP in order to
         # separate the tenant networks.
         #
         # This setting is forced to False if
@@ -340,14 +340,14 @@ SNAT Mode and SNAT Address Counts
         # This setting will force the use of SNATs.
         #
         # If this is set to False, a SNAT will not
-        # be created (routed mode) and the BIG-IP®
+        # be created (routed mode) and the BIG-IP
         # will attempt to set up a floating self IP
         # as the subnet's default gateway address.
         # and a wild card IP forwarding virtual
         # server will be set up on member's network.
         # Setting this to False will mean Neutron
         # floating self IPs will no longer work
-        # if the same BIG-IP® device is not being used
+        # if the same BIG-IP device is not being used
         # as the Neutron Router implementation.
         #
         # This setting will be forced to True if
@@ -396,16 +396,16 @@ Common Networks
         # separated list where if the name is a neutron
         # network id used for a vip or a pool member,
         # the network should not be created or deleted
-        # on the BIG-IP®, but rather assumed that the value
+        # on the BIG-IP, but rather assumed that the value
         # is the name of the network already created in
         # the Common partition with all L3 addresses
         # assigned to route domain 0.  This is useful
         # for shared networks which are already defined
-        # on the BIG-IP® prior to LBaaS configuration. The
+        # on the BIG-IP prior to LBaaS configuration. The
         # network should not be managed by the LBaaS agent,
         # but can be used for VIPs or pool members
         #
-        # If your Internet VLAN on your BIG-IP® is named
+        # If your Internet VLAN on your BIG-IP is named
         # /Common/external, and that corresponds to
         # Neutron uuid: 71718972-78e2-449e-bb56-ce47cc9d2680
         # then the entry would look like:

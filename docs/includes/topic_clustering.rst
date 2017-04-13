@@ -6,7 +6,7 @@ Manage BIG-IP Clusters with F5 LBaaSv2
 Overview
 --------
 
-The F5® LBaaSv2 agent and driver can manage BIG-IP® :term:`device service clusters`, providing :term:`high availability`, :term:`mirroring`, and :term:`failover` services within your OpenStack cloud.
+The F5 LBaaSv2 agent and driver can manage BIG-IP :term:`device service clusters`, providing :term:`high availability`, :term:`mirroring`, and :term:`failover` services within your OpenStack cloud.
 
 The F5 agent applies LBaaS configuration changes to each BIG-IP :term:`device` in a cluster at the same time, in real time. It is unnecessary to use BIG-IP's '`configuration synchronization`_ mode' to sync LBaaS objects managed by the agent across the devices in a cluster.
 
@@ -100,7 +100,7 @@ Configuration
         #
         #
 
-#. Add the IP address for each BIG-IP device, the admin username, and the admin password to the :ref:`Device Driver - iControl® Driver Setting <Device Driver Settings / iControl Driver Settings>` section of the config file. Values must be comma-separated.
+#. Add the IP address for each BIG-IP device, the admin username, and the admin password to the :ref:`Device Driver - iControl Driver Setting <Device Driver Settings / iControl Driver Settings>` section of the config file. Values must be comma-separated.
 
     .. code-block:: text
         :emphasize-lines: 10
