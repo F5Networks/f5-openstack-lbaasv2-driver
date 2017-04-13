@@ -21,7 +21,7 @@ set -x
 source ${TEMPEST_VENV_ACTIVATE}
 cd ${NEUTRON_LBAAS_DIR}
 
-# ThE=e following tox commands will fail, if the ${EXCLUDE_FILE}
+# The following tox commands will fail, if the ${EXCLUDE_FILE}
 # doesn't exist in the ${EXCLUDE_DIR}.
 
 
