@@ -24,6 +24,8 @@ cd ${NEUTRON_LBAAS_DIR}
 # The following tox commands will fail, if the ${EXCLUDE_FILE}
 # doesn't exist in the ${EXCLUDE_DIR}.
 
+# Create .pytest.rootdir file at root of the neutron-lbaas repository directory
+touch ${NEUTRON_LBAAS_DIR}/.pytest.rootdir
 
 # LBaaSv2 API test cases with F5 tox.ini file
 tox -e apiv2 -c f5.tox.ini --sitepackages -- \
