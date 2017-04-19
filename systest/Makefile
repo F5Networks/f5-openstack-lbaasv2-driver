@@ -47,7 +47,7 @@ export TLC_BRANCH := buildbot
 
 # toolsbase (replicate internal directory structure for TLC install)
 export TOOLSBASE_DIR := /toolsbase
-export TOOLSBASE_REPO := https://bldr-git.int.lineratesystems.com/openstack/tlc-toolsbase.git
+export TOOLSBASE_REPO := https://gitlab.pdbld.f5net.com/openstack/tlc-toolsbase.git
 
 # dev-test (contains all of our TLC files for configuration)
 export DEVTEST_DIR := /home/buildbot/dev-test
@@ -60,7 +60,7 @@ export TEMPEST_REPO := http://git.openstack.org/openstack/tempest
 # neutron-lbaas (OpenStack Neutron LBaaS repo for the test cases to run)
 export NEUTRON_LBAAS_DIR := /home/buildbot/neutron-lbaas
 export NEUTRON_LBAAS_REPO := https://github.com/F5Networks/neutron-lbaas.git
-export NEUTRON_LBAAS_BRANCH := stable/mitaka
+export NEUTRON_LBAAS_BRANCH := stable/newton
 
 # TLC path and python path requirements
 export PATH := /tools/bin:$(PATH)
