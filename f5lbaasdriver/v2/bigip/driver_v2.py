@@ -109,7 +109,7 @@ class F5DriverV2(object):
             {q_const.AGENT_TYPE_LOADBALANCER: self.agent_rpc})
 
         registry.subscribe(
-            self.post_fork_callback, resources.PROCESS, events.AFTER_CREATE)
+            self.post_fork_callback, resources.PROCESS, events.AFTER_INIT)
 
     def post_fork_callback(self, resources, event, trigger):
         LOG.debug("F5DriverV2 received post neutron child fork "

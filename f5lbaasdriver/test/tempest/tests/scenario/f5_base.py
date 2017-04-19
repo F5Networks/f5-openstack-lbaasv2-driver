@@ -19,7 +19,6 @@ from f5lbaasdriver.test.tempest.services.clients import l7rule_client
 
 from tempest import config
 from tempest.lib.exceptions import NotFound
-from tempest.scenario import network_resources as net_resources
 
 
 config = config.CONF
@@ -92,10 +91,9 @@ class F5BaseTestCase(base.BaseTestCase):
         if ip_version == 4:
             if (config.network.public_network_id and not
                     config.network.project_networks_reachable):
-                load_balancer = net_resources.AttributeDict(self.load_balancer)
-                self._assign_floating_ip_to_lb_vip(load_balancer)
+                self._assign_floating_ip_to_lb_vip(self.load_balancer)
                 self.vip_ip = self.floating_ips[
-                    load_balancer.id][0]['floating_ip_address']
+                    load_balancer_id][0]['floating_ip_address']
 
         # Currently the ovs-agent is not enforcing security groups on the
         # vip port - see https://bugs.launchpad.net/neutron/+bug/1163569

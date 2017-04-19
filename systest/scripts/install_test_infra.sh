@@ -35,13 +35,13 @@ pip install ${TEMPEST_DIR}
 rm -rf ${DEVTEST_DIR}
 git clone -b ${TEST_OPENSTACK_DISTRO} ${DEVTEST_REPO} ${DEVTEST_DIR}
 
-pip install git+ssh://git@bldr-git.int.lineratesystems.com/tools/pytest-autolog.git
+pip install git+https://gitlab.pdbld.f5net.com/tools/pytest-autolog.git
 # This should be listed in requirement.test.txt also, but will not succeed
 # from that location without sudo
 sudo pip install git+https://github.com/F5Networks/f5-openstack-agent.git@${BRANCH}
-# Install neutron at stable/mitaka because stable/liberty tests will not work
-# because they use an upper contraints file in the installation script that
-# neutron-lbaas uses for tox tests.
+# Install neutron at stable/mitaka or stable/newton because stable/liberty tests
+# will not work because they use an upper contraints file in the installation script
+# that neutron-lbaas uses for tox tests.
 # The file that causes this to happen is: neutron-lbaas/tools/tox_install.sh
 #
 # The use of the liberty version of this file restricts the crpytography
