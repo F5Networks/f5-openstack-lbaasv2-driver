@@ -1,6 +1,6 @@
 Sphinx>=1.4.5
 six>=1.10.0
 sphinx-rtd-theme
-git+https://github.com/openstack/neutron.git@stable/mitaka
-git+https://github.com/openstack/neutron-lbaas.git@stable/mitaka
-pytest==2.9.1
+git+https://github.com/openstack/neutron.git@stable/newton
+git+https://github.com/openstack/neutron-lbaas.git@stable/newton
+pytest==3.0.1
