@@ -38,9 +38,8 @@ class LBaaSv2PluginCallbacksRPC(object):
     def __init__(self, driver=None):
         """LBaaSv2PluginCallbacksRPC constructor."""
         self.driver = driver
-        self._create_rpc_listener()
 
-    def _create_rpc_listener(self):
+    def create_rpc_listener(self):
         topic = constants.TOPIC_PROCESS_ON_HOST_V2
         if self.driver.env:
             topic = topic + "_" + self.driver.env
@@ -285,7 +284,7 @@ class LBaaSv2PluginCallbacksRPC(object):
     @log_helpers.log_method_call
     def update_loadbalancer_status(self, context,
                                    loadbalancer_id=None,
-                                   status=plugin_constants.ERROR,
+                                   status=None,
                                    operating_status=None):
         """Agent confirmation hook to update loadbalancer status."""
         with context.session.begin(subtransactions=True):
@@ -384,7 +383,7 @@ class LBaaSv2PluginCallbacksRPC(object):
             self,
             context,
             member_id=None,
-            provisioning_status=plugin_constants.ERROR,
+            provisioning_status=None,
             operating_status=None):
         """Agent confirmations hook to update member status."""
         with context.session.begin(subtransactions=True):

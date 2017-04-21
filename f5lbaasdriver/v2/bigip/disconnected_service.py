@@ -41,31 +41,42 @@ class DisconnectedService(object):
 
     def get_network_segment(self, context, agent_configuration, network):
         data = None
+
         network_segment_physical_network = \
             agent_configuration.get('network_segment_physical_network', None)
-        if network_segment_physical_network:
-            supported_encapsulations = [
-                x.lower() for x in self.supported_encapsulations +
-                agent_configuration.get('tunnel_types', [])
-            ]
-            # look up segment details in the ml2_network_segments table
-            segments = db.get_network_segments(context.session, network['id'],
-                                               filter_dynamic=None)
-            for segment in segments:
-                if ((network_segment_physical_network ==
-                     segment['physical_network']) and
-                    (segment['network_type'].lower() in
-                     supported_encapsulations)):
-                    data = segment
-                    break
-            if not data:
-                LOG.error('network_id %s does not match physical_network %s' %
-                          (network['id'], network_segment_physical_network))
-        else:
+
+        supported_encapsulations = [
+            x.lower() for x in self.supported_encapsulations +
+            agent_configuration.get('tunnel_types', [])
+        ]
+        # look up segment details in the ml2_network_segments table
+        segments = db.get_network_segments(context.session, network['id'],
+                                           filter_dynamic=None)
+
+        for segment in segments:
+            if ((network_segment_physical_network ==
+                 segment['physical_network']) and
+                (segment['network_type'].lower() in
+                 supported_encapsulations)):
+                data = segment
+                break
+            elif (network['provider:network_type'] == 'opflex' and
+                  segment['network_type'] == 'vlan'):
+                data = segment
+                LOG.debug("Got OPFLEX segment: %s" % segment)
+                break
+
+        if not data:
+            LOG.debug('Using default segment for network %s' %
+                      (network['id']))
+
             # neutron is expected to provide this data immediately
             data = {
                 'segmentation_id': network['provider:segmentation_id']
             }
             if 'provider:network_type' in network:
                 data['network_type'] = network['provider:network_type']
+            if 'provider:physical_network' in network:
+                data['physical_network'] = network['provider:physical_network']
+
         return data

@@ -14,6 +14,7 @@ u"""F5 Networks® LBaaSv2 Driver Implementation."""
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import os
 import sys
 import uuid
 
@@ -22,6 +23,9 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import importutils
 
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as plugin_constants
 from neutron_lib import constants as q_const
@@ -31,6 +35,7 @@ from neutron_lbaas.extensions import lbaas_agentschedulerv2
 
 from f5lbaasdriver.v2.bigip import agent_rpc
 from f5lbaasdriver.v2.bigip import exceptions as f5_exc
+from f5lbaasdriver.v2.bigip import neutron_client
 from f5lbaasdriver.v2.bigip import plugin_rpc
 
 LOG = logging.getLogger(__name__)
@@ -95,10 +100,22 @@ class F5DriverV2(object):
         self.agent_rpc = agent_rpc.LBaaSv2AgentRPC(self)
         self.plugin_rpc = plugin_rpc.LBaaSv2PluginCallbacksRPC(self)
 
+        self.q_client = \
+            neutron_client.F5NetworksNeutronClient(self.plugin)
+
         # add this agent RPC to the neutron agent scheduler
         # mixins agent_notifiers dictionary for it's env
         self.plugin.agent_notifiers.update(
             {q_const.AGENT_TYPE_LOADBALANCER: self.agent_rpc})
+
+        registry.subscribe(
+            self.post_fork_callback, resources.PROCESS, events.AFTER_CREATE)
+
+    def post_fork_callback(self, resources, event, trigger):
+        LOG.debug("F5DriverV2 received post neutron child fork "
+                  "notification pid(%d) print trigger(%s)" % (
+                      os.getpid(), trigger))
+        self.plugin_rpc.create_rpc_listener()
 
 
 class EntityManager(object):
@@ -117,8 +134,7 @@ class EntityManager(object):
             rpc_callable = getattr(self.driver.agent_rpc, rpc_method)
             rpc_callable(context, self.api_dict, service, agent_host)
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
-                lbaas_agentschedulerv2.NoActiveLbaasAgent,
-                f5_exc.F5MismatchedTenants) as e:
+                lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
             LOG.error("Exception: %s: %s" % (rpc_method, e))
         except Exception as e:
             LOG.error("Exception: %s: %s" % (rpc_method, e))
@@ -186,8 +202,7 @@ class LoadBalancerManager(EntityManager):
                 context, loadbalancer.to_api_dict(), service, agent_host)
 
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
-                lbaas_agentschedulerv2.NoActiveLbaasAgent,
-                f5_exc.F5MismatchedTenants) as e:
+                lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
             LOG.error("Exception: loadbalancer create: %s" % e)
             driver.plugin.db.update_status(
                 context,
@@ -236,8 +251,7 @@ class LoadBalancerManager(EntityManager):
                 context, loadbalancer.to_api_dict(), service, agent_host)
 
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
-                lbaas_agentschedulerv2.NoActiveLbaasAgent,
-                f5_exc.F5MismatchedTenants) as e:
+                lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
             LOG.error("Exception: loadbalancer delete: %s" % e)
             driver.plugin.db.delete_loadbalancer(context, loadbalancer.id)
         except Exception as e:
@@ -407,10 +421,31 @@ class MemberManager(EntityManager):
     @log_helpers.log_method_call
     def delete(self, context, member):
         """Delete a member."""
-
         self.loadbalancer = member.pool.loadbalancer
-        self.api_dict = member.to_dict(pool=False)
-        self._call_rpc(context, member, 'delete_member')
+        member_port = None
+        driver = self.driver
+        try:
+            agent_host, service = self._setup_crud(context, member)
+
+            driver.agent_rpc.delete_member(
+                context, member.to_dict(pool=False), service, agent_host)
+
+            # Get port for member.
+            members = service.get("members", [])
+            for m in members:
+                if member.id == m['id']:
+                    member_port = m.get('port', None)
+                    break
+
+            if member_port:
+                if member_port['device_owner'] == 'network:f5lbaasv2':
+                    LOG.debug("Delete F5 Networks owned port")
+                    driver.q_client.delete_port(context,
+                                                port_id=member_port['id'])
+
+        except Exception as e:
+            LOG.error("Exception: member delete: %s" % e.message)
+            raise e
 
 
 class HealthMonitorManager(EntityManager):
@@ -460,7 +495,7 @@ class L7PolicyManager(EntityManager):
         """Create an L7 policy."""
 
         self.loadbalancer = policy.listener.loadbalancer
-        self.api_dict = policy.to_dict(listener=False)
+        self.api_dict = policy.to_dict(listener=False, rules=False)
         self._call_rpc(context, policy, 'create_l7policy')
 
     @log_helpers.log_method_call
@@ -487,7 +522,7 @@ class L7PolicyManager(EntityManager):
         """Delete a policy."""
 
         self.loadbalancer = policy.listener.loadbalancer
-        self.api_dict = policy.to_dict(listener=False)
+        self.api_dict = policy.to_dict(listener=False, rules=False)
         self._call_rpc(context, policy, 'delete_l7policy')
 
 
