@@ -1,4 +1,4 @@
-Sphinx>=1.4.5
+Sphinx>=1.5.3
 six>=1.10.0
 sphinx-rtd-theme
 git+https://github.com/openstack/neutron.git@stable/newton
