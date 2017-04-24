@@ -1,6 +1,6 @@
 Sphinx>=1.5.3
 six>=1.10.0
-sphinx-rtd-theme
+git+https://github.com/f5devcentral/f5-sphinx-theme@master
 git+https://github.com/openstack/neutron.git@stable/newton
 git+https://github.com/openstack/neutron-lbaas.git@stable/newton
 pytest==3.0.1
