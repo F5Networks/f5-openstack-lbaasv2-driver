@@ -41,5 +41,8 @@ tox -e scenariov2 -c f5.tox.ini --sitepackages -- \
   --autolog-outputdir ${RESULTS_DIR} \
   --autolog-session ${SCENARIO_SESSION}
 
+# create directories for copying tempest.conf file
+mkdir -p ${TEMPEST_CONFIG_DIR}
+
 # Returning pass so that all tests run
 exit 0
