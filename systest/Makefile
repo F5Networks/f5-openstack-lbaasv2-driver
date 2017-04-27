@@ -61,8 +61,7 @@ export TEMPEST_REPO := http://git.openstack.org/openstack/tempest
 export NEUTRON_LBAAS_DIR := /home/buildbot/neutron-lbaas
 export NEUTRON_LBAAS_REPO := https://github.com/F5Networks/neutron-lbaas.git
 export NEUTRON_LBAAS_BRANCH := stable/mitaka
-export UPPER_CONSTRAINTS_BRANCH := stable/liberty
-https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=$(UPPER_CONSTRAINTS_BRANCH)
+https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=stable/$(BRANCH)
 
 
 # TLC path and python path requirements
