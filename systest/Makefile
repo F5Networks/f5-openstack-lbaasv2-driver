@@ -61,7 +61,7 @@ export TEMPEST_REPO := http://git.openstack.org/openstack/tempest
 export NEUTRON_LBAAS_DIR := /home/buildbot/neutron-lbaas
 export NEUTRON_LBAAS_REPO := https://github.com/F5Networks/neutron-lbaas.git
 export NEUTRON_LBAAS_BRANCH := stable/mitaka
-export UPPER_CONSTRAINTS_FILE := https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=stable/mitaka
+export UPPER_CONSTRAINTS_FILE := https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=$(NEUTRON_LBAAS_BRANCH)
 
 # TLC path and python path requirements
 export PATH := /tools/bin:$(PATH)
@@ -78,8 +78,7 @@ export TLC_FILE_DIR := $(DEVTEST_DIR)/traffic
 # Virtualenv & tempest requirements
 export VENVDIR := /home/buildbot/virtualenvs
 export TEMPEST_VENV_DIR := $(VENVDIR)/tempest
-export TEMPEST_VENV_ETC_DIR := $(TEMPEST_VENV_DIR)/etc
-export TEMPEST_CONFIG_DIR := $(TEMPEST_VENV_ETC_DIR)/tempest
+export TEMPEST_CONFIG_DIR := $(TEMPEST_VENV_DIR)/etc/tempest
 export TEMPEST_VENV_ACTIVATE := $(TEMPEST_VENV_DIR)/bin/activate
 
 # Results Directories

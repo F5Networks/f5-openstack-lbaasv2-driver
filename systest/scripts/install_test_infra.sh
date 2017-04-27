@@ -56,8 +56,7 @@ git clone\
   ${NEUTRON_LBAAS_DIR}
 
 # create directories for copying tempest.conf file
+mkdir -p ${TEMPEST_CONFIG_DIR}
 
-mkdir ${TEMPEST_VENV_ETC_DIR}
-mkdir ${TEMPEST_CONFIG_DIR}
 # Copy our tox.ini file to neutron so we can run py.test instead of testr
 cp -f conf/neutron-lbaas.tox.ini ${NEUTRON_LBAAS_DIR}/f5.tox.ini
