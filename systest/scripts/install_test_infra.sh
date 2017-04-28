@@ -25,11 +25,6 @@ source ${TEMPEST_VENV_ACTIVATE}
 # Install tox
 pip install tox
 
-# Install tempest & its config files
-rm -rf ${TEMPEST_DIR}
-git clone ${TEMPEST_REPO} ${TEMPEST_DIR}
-pip install ${TEMPEST_DIR}
-
 
 # We need to clone the OpenStack devtest repo for our TLC files
 rm -rf ${DEVTEST_DIR}
@@ -59,6 +54,9 @@ git clone\
   --single-branch \
   ${NEUTRON_LBAAS_REPO} \
   ${NEUTRON_LBAAS_DIR}
+
+# create directories for copying tempest.conf file
+mkdir -p ${TEMPEST_CONFIG_DIR}
 
 # Copy our tox.ini file to neutron so we can run py.test instead of testr
 cp -f conf/neutron-lbaas.tox.ini ${NEUTRON_LBAAS_DIR}/f5.tox.ini
