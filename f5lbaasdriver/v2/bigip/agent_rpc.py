@@ -15,6 +15,8 @@ u"""RPC Calls to Agents for F5® LBaaSv2."""
 # limitations under the License.
 #
 
+import os
+
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 import oslo_messaging as messaging
@@ -27,12 +29,13 @@ LOG = logging.getLogger(__name__)
 
 
 class LBaaSv2AgentRPC(object):
+    first_pid = None
 
     def __init__(self, driver=None):
         self.driver = driver
         self.topic = constants.TOPIC_LOADBALANCER_AGENT_V2
-        self._create_rpc_publisher()
 
+    @log_helpers.log_method_call
     def _create_rpc_publisher(self):
         self.topic = constants.TOPIC_LOADBALANCER_AGENT_V2
         if self.driver.env:
@@ -40,6 +43,7 @@ class LBaaSv2AgentRPC(object):
         target = messaging.Target(topic=self.topic,
                                   version=constants.BASE_RPC_API_VERSION)
         self._client = rpc.get_client(target, version_cap=None)
+        return self._client
 
     def make_msg(self, method, **kwargs):
         return {'method': method,
@@ -58,18 +62,29 @@ class LBaaSv2AgentRPC(object):
         self.__call_rpc_method(context, msg, rpc_method='cast', **kwargs)
 
     def __call_rpc_method(self, context, msg, **kwargs):
+        my_pid = os.getpid()
+        first_pid = self.first_pid
+        if my_pid != first_pid or not first_pid:
+            err = "Unexpected PID change old: {}, new {}" if first_pid \
+                else "First init of RPCClient {}{}"
+            LOG.error(err.format(self.first_pid, my_pid))
+            self.first_pid = my_pid
+            client = self._create_rpc_publisher()
+        else:
+            client = self._client
         options = dict(
             ((opt, kwargs[opt])
              for opt in ('fanout', 'timeout', 'topic', 'version')
              if kwargs.get(opt))
         )
+        print("msg:", msg)
         if msg['namespace']:
             options['namespace'] = msg['namespace']
 
         if options:
-            callee = self._client.prepare(**options)
+            callee = client.prepare(**options)
         else:
-            callee = self._client
+            callee = client
 
         func = getattr(callee, kwargs['rpc_method'])
         return func(context, msg['method'], **msg['args'])
