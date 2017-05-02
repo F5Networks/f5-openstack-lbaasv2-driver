@@ -188,7 +188,6 @@ class LoadBalancerManager(EntityManager):
                 'device_id': str(
                     uuid.uuid5(uuid.NAMESPACE_DNS, str(agent_host))
                 ),
-                'device_owner': 'network:f5lbaasv2',
                 'status': q_const.PORT_STATUS_ACTIVE
             }
             port_data[portbindings.HOST_ID] = agent_host
