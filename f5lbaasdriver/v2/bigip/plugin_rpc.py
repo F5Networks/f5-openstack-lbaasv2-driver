@@ -21,8 +21,6 @@ from oslo_log import log as logging
 
 from neutron.api.v2 import attributes
 from neutron.common import constants as neutron_const
-from neutron.common import rpc as neutron_rpc
-from neutron.db import agents_db
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as plugin_constants
 from neutron_lbaas.db.loadbalancer import models
@@ -38,19 +36,6 @@ class LBaaSv2PluginCallbacksRPC(object):
     def __init__(self, driver=None):
         """LBaaSv2PluginCallbacksRPC constructor."""
         self.driver = driver
-
-    def create_rpc_listener(self):
-        topic = constants.TOPIC_PROCESS_ON_HOST_V2
-        if self.driver.env:
-            topic = topic + "_" + self.driver.env
-
-        self.conn = neutron_rpc.create_connection(new=True)
-        self.conn.create_consumer(
-            topic,
-            [self,
-             agents_db.AgentExtRpcCallback(self.driver.plugin.db)],
-            fanout=False)
-        self.conn.consume_in_threads()
 
     # get a list of loadbalancer ids which are active on this agent host
     @log_helpers.log_method_call

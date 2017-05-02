@@ -14,18 +14,15 @@ u"""F5 Networks® LBaaSv2 Driver Implementation."""
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import os
 import sys
 import uuid
 
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
+from oslo_service import service
 from oslo_utils import importutils
 
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as plugin_constants
 from neutron_lib import constants as q_const
@@ -35,6 +32,7 @@ from neutron_lbaas.extensions import lbaas_agentschedulerv2
 
 from f5lbaasdriver.v2.bigip import agent_rpc
 from f5lbaasdriver.v2.bigip import exceptions as f5_exc
+from f5lbaasdriver.v2.bigip import message_consumers
 from f5lbaasdriver.v2.bigip import neutron_client
 from f5lbaasdriver.v2.bigip import plugin_rpc
 
@@ -72,6 +70,12 @@ class F5NoAttachedLoadbalancerException(f5_exc.F5LBaaSv2DriverException):
 
 class F5DriverV2(object):
     u"""F5 Networks® LBaaSv2 Driver."""
+    _rpc_warning = """Please note that by having the parent own the RPC worker
+there can exist the possiblity of a race condition resulting in either a
+deadlock or corrupted RPC frame.  In either case, it has been observed that the
+stability of F5's LBaaS agent comes into question.  If there are not RPC
+workers set or if neutron has been made to run on a single process, this is
+less likely to occur."""
 
     def __init__(self, plugin=None, env=None):
         """Driver initialization."""
@@ -108,14 +112,18 @@ class F5DriverV2(object):
         self.plugin.agent_notifiers.update(
             {q_const.AGENT_TYPE_LOADBALANCER: self.agent_rpc})
 
-        registry.subscribe(
-            self.post_fork_callback, resources.PROCESS, events.AFTER_CREATE)
-
-    def post_fork_callback(self, resources, event, trigger):
-        LOG.debug("F5DriverV2 received post neutron child fork "
-                  "notification pid(%d) print trigger(%s)" % (
-                      os.getpid(), trigger))
-        self.plugin_rpc.create_rpc_listener()
+        # Create an RPC listening service
+        # To make the parent PID hold the service, change workers to 1
+        workers = 2
+        # For a dynamically-set worker level (not tested):
+        # rpc_workers = getattr(cfg.CONF, 'rpc_workers', 1)
+        # workers = 1 if rpc_workers <= 1 else rpc_workers
+        if workers < 1:
+            msg = str(self._rpc_warning)
+            LOG.warning(msg)
+        self.consumer = message_consumers.F5RPCConsumer(self)
+        LOG.info("F5 LBaaSv2 Driver is launching the consumer service")
+        service.launch(cfg.CONF, self.consumer, workers=workers)
 
 
 class EntityManager(object):
