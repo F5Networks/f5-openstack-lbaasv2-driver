@@ -175,24 +175,27 @@ class LBaaSv2ServiceBuilder(object):
         if len(ports) == 1:
             member_dict['port'] = ports[0]
             self._populate_member_network(context, member_dict, network)
-        else:
-            if not ports:
-                cidr = IPNetwork(subnet['cidr'])
-                member_ip = IPNetwork("%s/%d" %
-                                      (member.address, cidr.prefixlen))
-                if cidr == member_ip:
-                    LOG.debug("Create port for member")
-                    member_dict['port'] = \
-                        self.q_client.create_port_for_member(
-                            context, member.address,
-                            subnet_id=subnet_id)
-                    self._populate_member_network(
-                        context, member_dict, network)
-                else:
-                    LOG.error("Member IP %s is not in subnet %s" %
-                              (member.address, subnet['cidr']))
-            else:
-                LOG.error("Multiple ports found: %s" % ports)
+
+        # Do not manage neutron ports for external members
+
+        # else:
+        #     if not ports:
+        #         cidr = IPNetwork(subnet['cidr'])
+        #         member_ip = IPNetwork("%s/%d" %
+        #                               (member.address, cidr.prefixlen))
+        #         if cidr == member_ip:
+        #             LOG.debug("Create port for member")
+        #             member_dict['port'] = \
+        #                 self.q_client.create_port_for_member(
+        #                     context, member.address,
+        #                     subnet_id=subnet_id)
+        #             self._populate_member_network(
+        #                 context, member_dict, network)
+        #         else:
+        #             LOG.error("Member IP %s is not in subnet %s" %
+        #                       (member.address, subnet['cidr']))
+        #     else:
+        #         LOG.error("Multiple ports found: %s" % ports)
 
         return (member_dict, subnet, network)
 
