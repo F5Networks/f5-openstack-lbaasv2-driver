@@ -21,7 +21,7 @@ set -x
 source ${TEMPEST_VENV_ACTIVATE}
 
 tox --sitepackages -e functional -- \
-  -lvv --tb=short \
+  -lvv \
   --autolog-outputdir ${RESULTS_DIR} \
   --autolog-session ${FROM_AGENT_SESSION} \
   ${TEST_DIR}/functional/from_agent
