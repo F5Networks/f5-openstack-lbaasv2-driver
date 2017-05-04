@@ -36,16 +36,16 @@ export EXCLUDE_DIR := $(MAKEFILE_DIR)/exclude/
 # Repos that are used for the tests and environment
 # TLC
 export TLC_DIR := /home/buildbot/tlc
-export TLC_REPO := https://bldr-git.int.lineratesystems.com/openstack/tlc.git
+export TLC_REPO := https://gitlab.pdbld.f5net.com/openstack/tlc.git
 export TLC_BRANCH := buildbot
 
 # toolsbase (replicate internal directory structure for TLC install)
 export TOOLSBASE_DIR := /toolsbase
-export TOOLSBASE_REPO := https://bldr-git.int.lineratesystems.com/openstack/tlc-toolsbase.git
+export TOOLSBASE_REPO := https://gitlab.pdbld.f5net.com/openstack/tlc-toolsbase.git
 
 # dev-test (contains all of our TLC files for configuration)
 export DEVTEST_DIR := /home/buildbot/dev-test
-export DEVTEST_REPO := git@bldr-git.int.lineratesystems.com:openstack/dev-test.git
+export DEVTEST_REPO := git@gitlab.pdbld.f5net.com:openstack/dev-test.git
 
 # tempest (OpenStack tempest test library)
 export TEMPEST_DIR := /home/buildbot/tempest
