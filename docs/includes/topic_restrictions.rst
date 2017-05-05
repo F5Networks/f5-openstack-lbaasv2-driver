@@ -5,30 +5,22 @@
 Unsupported Features
 ====================
 
-The following features are unsupported in |release|; they will be introduced in future releases.
+The following features or integrations are unsupported in |release|; they will be introduced in future releases.
 
-* `BIG-IP® vCMP® <https://f5.com/resources/white-papers/virtual-clustered-multiprocessing-vcmp>`_
+Neutron
+-------
+
+* Distributed Virtual Router (`DVR <https://specs.openstack.org/openstack/neutron-specs/specs/juno/neutron-ovs-dvr.html>`_)
+* Role Based Access Control (`RBAC <http://specs.openstack.org/openstack/neutron-specs/specs/liberty/rbac-networks.html>`_) for networks
+
+F5 OpenStack
+------------
+
 * Agent High Availability (HA) [#]_
-* Differentiated environments [#]_
-
-
-.. note::
-
-    The features supported in |release| are a subset of the `Neutron LBaaSv2 API <https://wiki.openstack.org/wiki/Neutron/LBaaS/API_2.0>`_ delivered in the OpenStack |openstack| release. The following restriction(s) apply:
-
-    .. table::
-
-        +----------------+----------------------------------------------------+
-        | Object         | Unsupported                                        |
-        +================+====================================================+
-        | loadbalancer   || Statistics                                        |
-        |                || (e.g., ``neutron lbaas-loadbalancer-stats``)      |
-        +----------------+----------------------------------------------------+
 
 
 .. rubric:: Footnotes
 .. [#] Similar to BIG-IP :term:`high availability`, but applies to the F5 agent processes.
-.. [#] Multiple F5 agents running on the same host, managing *separate* BIG-IP environments.
 
 
 
