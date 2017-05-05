@@ -22,6 +22,7 @@ Contents
     Basic Environment Requirements <includes/topic_basic-environment-reqs>
     F5 LBaaSv2 to BIG-IP Mapping <includes/topic_neutron-bigip-command-mapping>
     Supported Features <map_lbaasv2-features>
+    Unsupported Features <includes/topic_restrictions>
     Sample Configuration Files <includes/ref_agent-config-file>
     Coding Example <coding-example-lbaasv2>
     Upgrading <includes/topic_upgrading-f5-lbaasv2-plugin>
