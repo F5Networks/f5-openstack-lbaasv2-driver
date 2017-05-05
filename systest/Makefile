@@ -17,12 +17,6 @@
 .PHONY: all functest \
 install_tlc \
 install_test_infra \
-tempest_11.5.4_overcloud tempest_11.5.4_undercloud \
-tempest_11.5.4_undercloud_gre tempest_11.5.4_undercloud_vlan \
-tempest_11.6.0_overcloud tempest_11.6.0_undercloud \
-tempest_11.6.0_undercloud_gre tempest_11.6.0_undercloud_vlan \
-tempest_11.6.1_overcloud tempest_11.6.1_undercloud \
-tempest_11.6.1_undercloud_gre tempest_11.6.1_undercloud_vlan \
 tempest_12.1.1_overcloud tempest_12.1.1_undercloud \
 tempest_12.1.1_undercloud_gre tempest_12.1.1_undercloud_vlan
 
@@ -61,6 +55,7 @@ export TEMPEST_REPO := http://git.openstack.org/openstack/tempest
 export NEUTRON_LBAAS_DIR := /home/buildbot/neutron-lbaas
 export NEUTRON_LBAAS_REPO := https://github.com/F5Networks/neutron-lbaas.git
 export NEUTRON_LBAAS_BRANCH := stable/newton
+export UPPER_CONSTRAINTS_FILE := https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=$(NEUTRON_LBAAS_BRANCH)
 
 # TLC path and python path requirements
 export PATH := /tools/bin:$(PATH)
@@ -142,19 +137,7 @@ cleanup_failed_tlc:
 # These are all of the functests that we want to run as part of bbot job
 # We ignore the return value so that we run all of the tests
 functest: install_tlc install_test_infra
-	-$(MAKE) -C . tempest_11.5.4_overcloud
-	-$(MAKE) -C . tempest_11.6.0_overcloud
-	-$(MAKE) -C . tempest_11.6.1_overcloud
 	-$(MAKE) -C . tempest_12.1.1_overcloud
-	-$(MAKE) -C . tempest_11.5.4_undercloud
-	-$(MAKE) -C . tempest_11.5.4_undercloud_gre
-	-$(MAKE) -C . tempest_11.5.4_undercloud_vlan
-	-$(MAKE) -C . tempest_11.6.0_undercloud
-	-$(MAKE) -C . tempest_11.6.0_undercloud_gre
-	-$(MAKE) -C . tempest_11.6.0_undercloud_vlan
-	-$(MAKE) -C . tempest_11.6.1_undercloud
-	-$(MAKE) -C . tempest_11.6.1_undercloud_gre
-	-$(MAKE) -C . tempest_11.6.1_undercloud_vlan
 	-$(MAKE) -C . tempest_12.1.1_undercloud
 	-$(MAKE) -C . tempest_12.1.1_undercloud_gre
 	-$(MAKE) -C . tempest_12.1.1_undercloud_vlan
