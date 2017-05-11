@@ -20,7 +20,7 @@ Quick Start
     .. rubric:: Example:
     .. code-block:: text
 
-        $ sudo pip install git+https://github.com/F5Networks/f5-openstack-lbaasv2-driver@liberty
+        $ sudo pip install git+https://github.com/F5Networks/f5-openstack-lbaasv2-driver@mitaka
 
 
 .. warning::
@@ -63,3 +63,4 @@ The ``f5-openstack-lbaasv2-driver`` package can be installed using ``rpm``.
     $ sudo rpm –ivh |f5_lbaasv2_driver_rpm_package|
 
 
+.. tip:: Release tags always use the format "vx.x.x"

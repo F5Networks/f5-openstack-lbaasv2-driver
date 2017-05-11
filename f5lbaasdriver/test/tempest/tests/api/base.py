@@ -127,6 +127,19 @@ class BaseTestCase(base.BaseNetworkTest):
                                          listener.get('id'))
                 cls._wait_for_load_balancer_status(lb_id)
             cls._try_delete_resource(cls._delete_load_balancer, lb_id)
+        # Wait for VIP port to be deleted
+        for vip_port in cls.vip_ports:
+            port_deleted = False
+            for i in range(20):
+                if cls.ports_client.is_resource_deleted(vip_port['id']):
+                    port_deleted = True
+                    break
+                time.sleep(1)
+            if port_deleted is False:
+                raise AssertionError(
+                    'VIP port {} not deleted by loadbalancer'.format(
+                        vip_port['id']))
+
         # Loadbalancer is gone, so folder on device should be gone too
         assert not cls.bigip_client.folder_exists(
             'Project_' + cls.subnet['tenant_id'])
@@ -155,6 +168,7 @@ class BaseTestCase(base.BaseNetworkTest):
     @classmethod
     def setUpClass(cls):
         cls.LOG = logging.getLogger(cls._get_full_case_name())
+        cls.vip_ports = []
         super(BaseTestCase, cls).setUpClass()
 
     def setUp(cls):
@@ -172,8 +186,10 @@ class BaseTestCase(base.BaseNetworkTest):
             cls._wait_for_load_balancer_status(lb.get('id'))
 
         cls._lbs_to_delete.append(lb.get('id'))
+        # Due to a possible race betwen the test port teardown and the lb
+        # delete in neutron-lbaas, the test should not tear down the VIP port.
         port = cls.ports_client.show_port(lb['vip_port_id'])
-        cls.ports.append(port['port'])
+        cls.vip_ports.append(port['port'])
         return lb
 
     @classmethod

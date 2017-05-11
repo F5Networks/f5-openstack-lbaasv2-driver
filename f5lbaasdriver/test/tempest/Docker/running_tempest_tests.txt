@@ -1,0 +1,8 @@
+To run the tempest tests with the docker container defined in the 'tempest_tests' Dockerfile, do the following:
+
+1. Git clone a copy of the f5-openstack-lbaasv2-driver
+2. Navigate to the top-level of that repo: f5-openstack-lbaasv2-driver/
+3. docker build -t tempest_tests -f f5lbaasdriver/test/tempest/Docker/tempest_tests f5lbaasdriver/test/tempest/Docker/
+4. docker run -e OS_AUTH_URL=<auth_url> -e ICONTROL_HOSTNAME=11.11.11.5 -e CONTROLLER_HOSTNAME=11.11.11.2 -e OS_TENANT_ID=xxxxx -e OS_AUTH_URL_V3=<auth_url_v3> tempest_tests
+
+You can also use the run-in-toolenv script in the f5lbaasdriver/test/tempest/Docker location. In there, you'll have to define the environment variables you'll need. The same as the ones above, and set your docker image name. Then just run the script from the top-level of the repo: f5lbaasdriver/test/tempest/Docker/run-in-toolenv

@@ -42,3 +42,9 @@ cat ${TEMPEST_CONFIG_DIR}/tempest.conf.orig \
   | sed "s/{{ OS_PUBLIC_NETWORK_ID }}/${OS_PUBLIC_NETWORK_ID}/" \
   | sed "s/{{ OS_CIRROS_IMAGE_ID }}/${OS_CIRROS_IMAGE_ID}/" \
   > ${TEMPEST_CONFIG_DIR}/tempest.conf
+
+# Add tempest configuration options for running tempest tests in f5lbaasv2driver
+BIGIP_IP=`ssh -i ~/.ssh/id_rsa_testlab testlab@${OS_CONTROLLER_IP} cat ve_mgmt_ip`
+echo "[f5_lbaasv2_driver]" >> ${TEMPEST_CONFIG_DIR}/tempest.conf
+echo "icontrol_hostname = ${BIGIP_IP}" >> ${TEMPEST_CONFIG_DIR}/tempest.conf
+echo "transport_url = rabbit://guest:guest@${OS_CONTROLLER_IP}:5672/" >> ${TEMPEST_CONFIG_DIR}/tempest.conf

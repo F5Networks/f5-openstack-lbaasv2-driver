@@ -46,9 +46,9 @@ API Documentation
     * :ref:`f5lbaasdriver.v2`
 
 
-.. |Build Status| image:: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=liberty
-    :target: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver
+.. |Build Status| image:: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=mitaka
+    :target: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver?branch=mitaka
     :alt: Build Status
-.. |Docs Build Status| image:: http://readthedocs.org/projects/f5-openstack-lbaasv2-driver/badge/?version=latest
-    :target: http://f5-openstack-lbaasv2-driver.readthedocs.io/en/latest/?badge=latest
+.. |Docs Build Status| image:: http://readthedocs.org/projects/f5-openstack-lbaasv2-driver/badge/?version=mitaka
+    :target: http://f5-openstack-lbaasv2-driver.readthedocs.io/en/latest/?badge=mitaka
     :alt: Documentation Status

@@ -3,5 +3,21 @@
                 "test_listener_basic",
                 "test_load_balancer_basic",
                 "test_load_balancer_tls",
-                "test_session_persistence"]
+                "test_session_persistence",
+                "test_policy_deployment",
+                "test_policy_abort_deployment",
+                "test_policy_deployment",
+                "test_policy_redirect_pool_header_equal_to",
+                "test_policy_redirect_pool_cookie_contains",
+                "test_policy_redirect_pool_hostname_starts_with",
+                "test_policy_redirect_pool_cookie_not_contains",
+                "test_policy_redirect_url_hostname_ends_with",
+                "test_policy_redirect_url_path_starts_with",
+                "test_policy_redirect_url_file_type_not_contains",
+                "test_policy_redirect_url_file_type_fails_bad_compare_type",
+                "test_policy_reject_header_starts_with",
+                "test_policy_reject_file_type_equal_to",
+                "test_policy_reorder_and_rule_update",
+                "test_policy_deployment_operand_match",
+                "test_stats"]
 }

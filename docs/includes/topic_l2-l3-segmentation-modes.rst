@@ -52,7 +52,7 @@ Prerequisites
 
 - Administrator access to both the BIG-IP device(s) and the OpenStack cloud.
 
-- Knowledge of `OpenStack Networking <http://docs.openstack.org/liberty/networking-guide/>`_ concepts.
+- Knowledge of `OpenStack Networking <http://docs.openstack.org/mitaka/networking-guide/>`_ concepts.
 
 - Knowledge of BIG-IP `system configuration`_, `local traffic management`_, & `device service clustering`_.
 

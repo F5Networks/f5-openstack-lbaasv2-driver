@@ -38,7 +38,6 @@ Caveats
 -------
 
 - vCMP® is unsupported in this release (v |release|).
-- Clustering is limited to two (2) BIG-IP devices in this release.
 
 
 Configuration

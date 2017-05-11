@@ -18,6 +18,8 @@ Supported Features
     includes/topic_agent-redundancy-scaleout
     includes/topic_differentiated-services
     includes/topic_f5lbaas-vcmp
+    includes/topic_f5lbaas-l7_content_switching
+    includes/topic_enhanced-service-definition
 
 
 
