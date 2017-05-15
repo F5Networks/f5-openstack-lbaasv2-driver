@@ -102,3 +102,7 @@ ENV/
 
 # Buildbot logs/directories
 systest/test_results
+
+# vim
+*~
+*.swp
