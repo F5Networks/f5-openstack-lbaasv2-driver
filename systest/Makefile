@@ -149,7 +149,7 @@ tempest_12.1.1_undercloud:
 	export TEST_OPENSTACK_CLOUD=undercloud ;\
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
 	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(BRANCH)-$@ ;\
-	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$(CHANGESOURCE)/$${GUMBALLS_PROJECT} ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
 	export EXCLUDE_FILE=$@.yaml ;\
