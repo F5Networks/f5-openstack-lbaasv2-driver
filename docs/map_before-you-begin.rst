@@ -32,9 +32,9 @@ Install the F5 Service Provider Package
 
 1. Download from GitHub.
 
-.. code-block:: shell
+.. parsed-literal::
 
-    $ curl -O -L https://github.com/F5Networks/neutron-lbaas/releases/download/v8.0.1/f5.tgz
+    $ curl –L –O |f5_lbaasv2_driver_shim_url|
 
 
 2. Install the service provider package on the Neutron controller.
