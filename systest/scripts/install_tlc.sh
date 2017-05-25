@@ -18,9 +18,9 @@
 set -ex
 
 # Copy the testlab key and make sure it has right owner/permissions
-cp -f /home/buildbot/.ssh/id_rsa /home/buildbot/.ssh/id_rsa_testlab
-chmod 600 /home/buildbot/.ssh/id_rsa_testlab
-chown buildbot:buildbot /home/buildbot/.ssh/id_rsa_testlab
+cp -f /home/jenkins/.ssh/id_rsa /home/jenkins/.ssh/id_rsa_testlab
+chmod 600 /home/jenkins/.ssh/id_rsa_testlab
+chown jenkins:jenkins /home/jenkins/.ssh/id_rsa_testlab
 
 # Update the system and install required debian packages
 ln -fs /bin/bash /usr/local/bin/bash
