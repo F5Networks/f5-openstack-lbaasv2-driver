@@ -50,6 +50,8 @@ extensions = [
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
+suppress_warnings = ['image.nonlocal_uri']
+
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 # source_suffix = ['.rst', '.md']
@@ -313,6 +315,9 @@ texinfo_documents = [
 
 # intersphinx: refer to other F5 OpenStack documentation sets.
 
+f5_lbaasv2_driver_shim_version = '9.1.0'
+f5_lbaasv2_driver_shim_url = 'https://github.com/F5Networks/neutron-lbaas/releases/download/v%s/f5.tgz' % f5_lbaasv2_driver_shim_version
+
 intersphinx_mapping = {'heat': (
      'http://f5-openstack-heat.readthedocs.io/en/mitaka', None),
      'heatplugins': (
@@ -343,9 +348,11 @@ rst_epilog = '''
 .. |f5_lbaasv2_driver_rpm_url| replace:: https://github.com/F5Networks/f5-openstack-lbaasv2-driver/releases/download/v%(version)s/f5-openstack-lbaasv2-driver-%(version)s-1.el7.noarch.rpm
 .. |f5_lbaasv2_driver_deb_package| replace:: python-f5-openstack-lbaasv2-driver_%(version)s-1_1404_all.deb
 .. |f5_lbaasv2_driver_rpm_package| replace:: f5-openstack-lbaasv2-driver-%(version)s-1.el7.noarch.rpm
+.. |f5_lbaasv2_driver_shim_url| replace:: %(f5_lbaasv2_driver_shim_url)s
 .. |f5_agent_pip_url| replace:: git+https://github.com/F5Networks/f5-openstack-agent@v%(version)s
 ''' % {
   'openstack_release': openstack_release,
   'openstack_release_l': openstack_release.lower(),
+  'f5_lbaasv2_driver_shim_url': f5_lbaasv2_driver_shim_url,
   'version': version
 }
