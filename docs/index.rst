@@ -37,14 +37,6 @@ Contents
 .. include:: includes/topic_lbaasv2-plugin-overview.rst
     :start-line: 2
 
-API Documentation
-=================
-
-* :ref:`f5lbaasdriver`
-
-    * :ref:`f5lbaasdriver.utils`
-    * :ref:`f5lbaasdriver.v2`
-
 
 .. |Build Status| image:: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=liberty
     :target: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver
