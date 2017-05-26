@@ -92,11 +92,11 @@ Further Reading
 
 
 .. rubric:: Footnotes:
-.. [#] This is done for all tunnel types, not just those configured as the ``advertised_tunnel_types`` in the :ref:`L2 Segmentation Mode Settings`.
+.. [#] This is done for all tunnel types, not just those configured as the ``advertised_tunnel_types`` in the :ref:`L2 Segmentation Mode` Settings.
 .. [#] Configured in ``Environment Settings --> environment_prefix``. The default prefix is ``Project``.
 .. [#] Run ``openstack project list`` to get a list of configured tenant names and IDs.
 .. [#] If using :ref:`global routed mode`, all traffic is directed to the self IP (no tunnel is created).
-.. [#] Configured in :ref:`L3 Segmentation Mode Settings` --> ``f5_snat_addresses_per_subnet``.
+.. [#] Configured in :ref:`L3 Segmentation Mode` Settings --> ``f5_snat_addresses_per_subnet``.
 .. [#] See :ref:`Certificate Manager / SSL Offloading`.
 
 

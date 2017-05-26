@@ -81,7 +81,7 @@ NA1: Global Routed Mode
 
 Edge deployment architecture using only OpenStack networking provider networks, with F5 OpenStack agents deployed in :ref:`Global Routed Mode <global-routed-mode>`.
 
-.. figure:: ../media/f5-lbaas-test-architecture-grm.png
+.. figure:: media/f5-lbaas-test-architecture-grm.png
     :align: center
     :alt: Global Routed Mode
 
@@ -90,7 +90,7 @@ NA2: L2 Adjacent Mode
 
 Micro-segmentation architecture using tenant networks, with F5 agents deployed in :ref:`L2 Adjacent Mode <L2 Segmentation Mode>`. Execute tests for VLAN and then VxLAN network types.
 
-.. figure:: ../media/f5-lbaas-test-architecture-l2adj.png
+.. figure:: media/f5-lbaas-test-architecture-l2adj.png
     :align: center
     :alt: L2 Adjacent Mode
 
