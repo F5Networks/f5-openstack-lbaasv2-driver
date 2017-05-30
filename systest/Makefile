@@ -22,6 +22,11 @@ tempest_12.1.1_undercloud_gre tempest_12.1.1_undercloud_vlan
 
 # - <nearest reachable tag>-<num commits since>-g<abbreviated commit id>
 export BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+# The branch may contain the text 'stable/' before the OpenStack release name
+# To allow this type of branch name and any other to work with the cloud deployment
+# and with Jenkins, we should strip out the forward slash, leaving something like:
+# stable/newton -> stablenewton
+SANITIZED_BRANCH := $(subst /,,$(BRANCH))
 SUBJECTCODE_ID := $(shell git log -n 1 --format=%h)
 TIMESTAMP ?= $(shell date +"%Y%m%d-%H%M%S")
 export TIMESTAMP   # Only eval TIMESTAMP in the top make.
@@ -61,7 +66,10 @@ export UPPER_CONSTRAINTS_FILE := https://git.openstack.org/cgit/openstack/requir
 export PATH := /tools/bin:$(PATH)
 export PYTHONPATH := /tools/lib:/tools/bin:$(PYTHONPATH)
 export USER := jenkins
-export TEST_OPENSTACK_DISTRO := $(BRANCH)
+# Because the sanitized branch may still contain the string 'stable',
+# we must strip that out to get the OpenStack release name alone. This
+# will be used in the current TLC deployment of the stack.
+export TEST_OPENSTACK_DISTRO := $(subst stable,,$(SANITIZED_BRANCH))
 export TEST_CIRROS_IMAGE := cirros-0.3.4-x86_64-disk.qcow2
 export TEST_OPENSTACK_NODE_COUNT := 3
 export TEST_OPENSTACK_DEPLOY := multinode
@@ -284,9 +292,9 @@ tempest_12.1.1_undercloud_vxlan:
 	export TEST_VE_IMAGE=os_ready-BIGIP-12.1.1.2.0.204.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=undercloud ;\
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
-	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(BRANCH)-$@ ;\
+	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(SANITIZED_BRANCH)-$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$${GUMBALLS_PROJECT} ;\
-	export TEST_SESSION=$@_$(BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
 	export EXCLUDE_FILE=$@.yaml ;\
 	$(MAKE) -C . run_tests
