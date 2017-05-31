@@ -26,23 +26,32 @@ source ${TEMPEST_VENV_ACTIVATE}
 touch ${MAKEFILE_DIR}/../f5lbaasdriver/test/tempest/tests/.pytest.rootdir
 touch ${NEUTRON_LBAAS_DIR}/neutron_lbaas/tests/tempest/v2/.pytest.rootdir
 
+
+# The following tox commands will fail, if the ${EXCLUDE_FILE}
+# doesn't exist in the ${EXCLUDE_DIR}.
+
 # Navigate to the root of the repo, where the tox.ini file is found
 cd ${MAKEFILE_DIR}/../
+
 tox --sitepackages -e tempest -c tox.ini -- \
-  -lvv --tb=line \
+  --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
+  -lvv \
   --autolog-outputdir ${RESULTS_DIR} \
   --autolog-session ${DRIVER_TEMPEST_SESSION}
 
 cd ${NEUTRON_LBAAS_DIR}
+
 # LBaaSv2 API test cases with F5 tox.ini file
-tox -e apiv2 -c f5.tox.ini -- \
-  -lvv --tb=short \
+tox -e apiv2 -c f5.tox.ini --sitepackages -- \
+  --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
+  -lvv \
   --autolog-outputdir ${RESULTS_DIR} \
   --autolog-session ${API_SESSION}
 
 # LBaaSv2 Scenario test cases with F5 tox.ini file
-tox -e scenariov2 -c f5.tox.ini -- \
-  -lvv --tb=short \
+tox -e scenariov2 -c f5.tox.ini --sitepackages -- \
+  --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
+  -lvv \
   --autolog-outputdir ${RESULTS_DIR} \
   --autolog-session ${SCENARIO_SESSION}
 
