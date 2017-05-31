@@ -28,7 +28,7 @@ pip install tox
 
 # We need to clone the OpenStack devtest repo for our TLC files
 rm -rf ${DEVTEST_DIR}
-git clone -b ${TEST_OPENSTACK_DISTRO} ${DEVTEST_REPO} ${DEVTEST_DIR}
+git clone -b ${BRANCH} ${DEVTEST_REPO} ${DEVTEST_DIR}
 
 pip install git+ssh://git@gitlab.pdbld.f5net.com/tools/pytest-autolog.git
 # This should be listed in requirement.test.txt also, but will not succeed
