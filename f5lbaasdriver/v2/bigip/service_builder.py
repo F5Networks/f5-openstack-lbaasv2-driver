@@ -16,7 +16,6 @@ u"""Service Module for F5® LBaaSv2."""
 #
 import datetime
 import json
-from netaddr import IPNetwork
 
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
@@ -215,8 +214,8 @@ class LBaaSv2ServiceBuilder(object):
 
         # we no longer support member port creation
         if len(ports) == 0:
-            LOG.warning("Lbaas member %s has no associated neutron port" % member.address)
-
+            LOG.warning("Lbaas member %s has no associated neutron port"
+                        % member.address)
 
         return (member_dict, subnet, network)
 

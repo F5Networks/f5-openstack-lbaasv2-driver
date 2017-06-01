@@ -16,7 +16,6 @@ import mock
 import pytest
 from uuid import uuid4
 
-#from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 from f5lbaasdriver.v2.bigip.service_builder import LBaaSv2ServiceBuilder
 
 
@@ -60,7 +59,8 @@ def test_get_extended_member_no_port(mock_log):
 
     service_builder = LBaaSv2ServiceBuilder(driver)
 
-    member_dict, subnet, net = service_builder._get_extended_member(context, member)
+    member_dict, subnet, net = \
+        service_builder._get_extended_member(context, member)
     assert mock_log.warning.call_args_list == \
         [mock.call('Lbaas member 10.2.2.10 has no associated neutron port')]
 
@@ -73,6 +73,6 @@ def test_get_extended_member_one_port(mock_log):
     driver.plugin.db._core_plugin.get_ports.return_value = [1]
 
     service_builder = LBaaSv2ServiceBuilder(driver)
-
-    test_member = service_builder._get_extended_member(context, member)
+    member_dict, subnet, net = \
+        service_builder._get_extended_member(context, member)
     assert mock_log.warning.call_args_list == []
