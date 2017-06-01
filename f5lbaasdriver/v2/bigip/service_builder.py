@@ -16,7 +16,6 @@ u"""Service Module for F5® LBaaSv2."""
 #
 import datetime
 import json
-from netaddr import IPNetwork
 
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
@@ -171,28 +170,10 @@ class LBaaSv2ServiceBuilder(object):
             filter
         )
 
-        # There should be only one.
-        if len(ports) == 1:
-            member_dict['port'] = ports[0]
-            self._populate_member_network(context, member_dict, network)
-        else:
-            if not ports:
-                cidr = IPNetwork(subnet['cidr'])
-                member_ip = IPNetwork("%s/%d" %
-                                      (member.address, cidr.prefixlen))
-                if cidr == member_ip:
-                    LOG.debug("Create port for member")
-                    member_dict['port'] = \
-                        self.q_client.create_port_for_member(
-                            context, member.address,
-                            subnet_id=subnet_id)
-                    self._populate_member_network(
-                        context, member_dict, network)
-                else:
-                    LOG.error("Member IP %s is not in subnet %s" %
-                              (member.address, subnet['cidr']))
-            else:
-                LOG.error("Multiple ports found: %s" % ports)
+        # we no longer support member port creation
+        if len(ports) == 0:
+            LOG.warning("Lbaas member %s has no associated neutron port"
+                        % member.address)
 
         return (member_dict, subnet, network)
 
