@@ -31,7 +31,7 @@ pipeline {
                     # - copy results files to nfs
                     #   (note that the nfs results directory is mounted inside
                     #   the CI worker's home directory)
-                    cp -rp $WORKSPACE/systest/test_results/* ~/results/
+                    cp -r $WORKSPACE/systest/test_results/* ~/results/
                 '''
             }
         }
