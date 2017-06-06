@@ -41,9 +41,14 @@ Use the command below to create a  member for the pool, specifying the subnet, I
 
     $ neutron lbaas-member-create --subnet private-subnet --address 172.16.101.89 --protocol-port 80 pool1
 
-.. include:: /includes/topic_lbaasv2-plugin-overview.rst
-   :start-after: start-neutron-port-note:
-   :end-before: end-neutron-port-note
+.. warning::
+
+   If a Neutron port does not exist for the assigned subnet and IP address, you may see the following warnings in the logs: ::
+
+      f5-openstack-agent.log -- “Member definition does not include Neutron port"
+      server.log -- “Lbaas member has no associated neutron port”
+
+   If you see these warnings, you may need to manually create a Neutron port for the pool member.
 
 Create a health monitor
 ```````````````````````

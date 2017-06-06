@@ -11,6 +11,11 @@ Disconnected Services
 
 Because it is possible for LBaaSv2 objects to be provisioned on a Neutron network which has not yet been bound to a segment, the F5 agent can provision LBaaSv2 services in a disconnected state. When the agent discovers the intended network(s), these 'disconnected services' will be connected to the VLAN(s) and BIG-IP(s) as intended. You can customize how often the F5 agent will poll, and the maximum amount of time it should wait, for the network to be created before the request fails. This is, essentially, a fail-safe built into the F5 agent that allows for a certain degree of variation in the timing of the VLAN deployment and the request to create the LBaaS objects for it.
 
+.. include:: /includes/topic_lbaasv2-plugin-overview.rst
+   :start-after: start-neutron-port-note
+   :end-before: end-neutron-port-note
+
+
 Use Case
 --------
 
