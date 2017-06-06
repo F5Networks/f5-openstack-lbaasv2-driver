@@ -9,12 +9,17 @@ Overview
 When you issue ``neutron lbaas`` commands on your OpenStack Neutron controller or host, the F5® LBaaSv2 driver and F5 agent configure objects on your BIG-IP® device(s). Here, we've provided some insight into what exactly happens behind the scenes to configure BIG-IP objects. You can also view the actual calls made by setting the F5 agent's DEBUG level to 'True' in the :ref:`agent configuration file` and viewing the logs (:file:`/var/log/neutron/f5-openstack-agent.log`).
 
 .. include:: ref_neutron-to-bigip-configs-table.rst
-    :start-line: 5
-    :end-line: 26
+   :start-line: 5
+   :end-line: 26
 
 
 
 The configurations applied when you issue ``neutron lbaas`` commands depend on how your BIG-IP is deployed and your network architecture. Far fewer configurations are made for an :term:`overcloud`, :term:`standalone` BIG-IP deployment than for an :term:`undercloud` :term:`active-standby pair` or :term:`device service cluster`.
+
+.. include:: /includes/topic_lbaasv2-plugin-overview.rst
+   :start-after: start-neutron-port-note:
+   :end-before: end-neutron-port-note
+
 
 The table below shows what happens on the BIG-IP when various commands are issued in Neutron to the F5 agent for a standalone, overcloud BIG-IP.
 

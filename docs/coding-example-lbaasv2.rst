@@ -41,6 +41,9 @@ Use the command below to create a  member for the pool, specifying the subnet, I
 
     $ neutron lbaas-member-create --subnet private-subnet --address 172.16.101.89 --protocol-port 80 pool1
 
+.. include:: /includes/topic_lbaasv2-plugin-overview.rst
+   :start-after: start-neutron-port-note:
+   :end-before: end-neutron-port-note
 
 Create a health monitor
 ```````````````````````
