@@ -21,7 +21,7 @@ The F5 agent manages services on your BIG-IP. When it first receives a task from
 
 .. important::
 
-   As of v8.3.1, the F5 LBaaSv2 driver no longer manages Neutron ports for LBaaS pool members.
+   As of v9.3.1, the F5 LBaaSv2 driver no longer manages Neutron ports for LBaaS pool members.
 
    For example, say you create a pool member using the command below: ::
 
