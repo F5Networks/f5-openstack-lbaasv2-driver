@@ -9,8 +9,8 @@ Overview
 When you issue ``neutron lbaas`` commands on your OpenStack Neutron controller or host, the F5® LBaaSv2 driver and F5 agent configure objects on your BIG-IP® device(s). Here, we've provided some insight into what exactly happens behind the scenes to configure BIG-IP objects. You can also view the actual calls made by setting the F5 agent's DEBUG level to 'True' in the :ref:`agent configuration file` and viewing the logs (:file:`/var/log/neutron/f5-openstack-agent.log`).
 
 .. include:: ref_neutron-to-bigip-configs-table.rst
-    :start-line: 5
-    :end-line: 26
+   :start-line: 5
+   :end-line: 26
 
 
 
@@ -65,12 +65,15 @@ Command                                    Action
                                            |    - It is assigned to the virtual server (or, listener) specified in the
                                            |    command.
 --------------------------------------     ---------------------------------------------------------------------------------
-``neutron lbaas-member-create``            | 1. A new member is created in the specified pool using the IP address and port
-                                           |    supplied in the command.
+``neutron lbaas-member-create``            | 1. A new member is created in the specified pool using the IP address and
+                                           |    subnet supplied in the command.
                                            |    - If the member is the first created for the specified pool, the pool
                                            |    status will change on the BIG-IP.
                                            |    - If the member is the first created with the supplied IP address, a new
                                            |    node is also created.
+                                           |    - If the member's IP address and subnet correspond to an existing Neutron
+                                           |      port, the agent creates a forwarding database (FDB) entry for the member
+                                           |      on the BIG-IP device(s). [#tablefn7]_
 --------------------------------------     ---------------------------------------------------------------------------------
 ``neutron lbaas-healthmonitor-create``     | 1. A new health monitor is created on the BIG-IP for the specified pool.
                                            |    - If the health monitor is the first created for the specified pool, the
@@ -98,7 +101,7 @@ Further Reading
 .. [#] If using :ref:`global routed mode`, all traffic is directed to the self IP (no tunnel is created).
 .. [#] Configured in :ref:`L3 Segmentation Mode` Settings --> ``f5_snat_addresses_per_subnet``.
 .. [#] See :ref:`Certificate Manager / SSL Offloading`.
-
+.. [#tablefn7] If the pool member does not have a corresponding Neutron port, warnings will print to the :code:`f5-openstack-agent` and :code:`neutron-server` log; the agent **will not** create an FDB entry for the member on the BIG-IP device(s).
 
 .. _self IP: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/tmos-routing-administration-12-0-0/6.html#conceptid
 .. _SNAT automap: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/tmos-routing-administration-12-0-0/8.html#unique_375712497

@@ -171,9 +171,14 @@ class LBaaSv2ServiceBuilder(object):
         )
 
         # we no longer support member port creation
-        if len(ports) == 0:
+        if len(ports) == 1:
+            member_dict['port'] = ports[0]
+            self._populate_member_network(context, member_dict, network)
+        elif len(ports) == 0:
             LOG.warning("Lbaas member %s has no associated neutron port"
                         % member.address)
+        elif len(ports) > 1:
+            LOG.warning("Multiple ports found for member: %s" % member.address)
 
         return (member_dict, subnet, network)
 
