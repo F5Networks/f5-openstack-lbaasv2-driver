@@ -13,14 +13,14 @@
 # limitations under the License.
 #
 #
-# The buildbot worker has access to the lab NFS.
+# The jenkins worker has access to the lab NFS.
 # It's possible that filesystem operations could have
 # unintended consequences if "PATH" variables are
 # incorrect.  This script restricts the "dangerous" path variables
 # to predefined values.
 # A developer must amend this list to insert new top-level path
 # variables.
-if [ "${TLC_DIR}" != "/home/buildbot/tlc" ];then
+if [ "${TLC_DIR}" != "/home/jenkins/tlc" ];then
     echo TLC_DIR "${TLC_DIR}" not allowed!
     exit 31
 fi
@@ -28,19 +28,19 @@ if [ "${TOOLSBASE_DIR}" != "/toolsbase" ];then
     echo TOOLSBASE_DIR "${TOOLSBASE_DIR}" not allowed!
     exit 31
 fi
-if [ "${DEVTEST_DIR}" != "/home/buildbot/dev-test" ];then
+if [ "${DEVTEST_DIR}" != "/home/jenkins/dev-test" ];then
     echo DEVTEST_DIR "${DEVTEST_DIR}" not allowed!
     exit 31
 fi
-if [ "${TEMPEST_DIR}" != "/home/buildbot/tempest" ];then
+if [ "${TEMPEST_DIR}" != "/home/jenkins/tempest" ];then
     echo TEMPEST_DIR "${TEMPEST_DIR}" not allowed!
     exit 31
 fi
-if [ "${NEUTRON_LBAAS_DIR}" != "/home/buildbot/neutron-lbaas" ];then
+if [ "${NEUTRON_LBAAS_DIR}" != "/home/jenkins/neutron-lbaas" ];then
     echo NEUTRON_LBAAS_DIR "${NEUTRON_LBAAS_DIR}" not allowed!
     exit 31
 fi
-if [ "${VENVDIR}" != "/home/buildbot/virtualenvs" ];then
+if [ "${VENVDIR}" != "/home/jenkins/virtualenvs" ];then
     echo VENVDIR "${VENVDIR}" not allowed!
     exit 31
 fi

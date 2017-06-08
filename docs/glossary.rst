@@ -71,10 +71,13 @@ Glossary
     multi-arm mode
     multiple-arm mode
         Multi-arm mode is a network topology wherein servers/clients connect to the BIG-IP via different interfaces; two or more VLANs can be used to handle management and data traffic.
+        
     vcmp
         Virtual Clustered Multiprocessing (vCMP) is a feature of the BIG-IP system that allows you to run multiple instances of the BIG-IP software on a single hardware platform.
+        
     vCMP host
         The vCMP host is the system-wide hypervisor that makes it possible for you to create and view BIG-IP instances, or vCMP 'guests'.
+        
     vCMP guest
         A vCMP guest is an instance of BIG-IP software created on the vCMP system for the purpose of provisioning one or more BIG-IP modules to process application traffic.
 

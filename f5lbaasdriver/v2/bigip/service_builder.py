@@ -16,7 +16,6 @@ u"""Service Module for F5® LBaaSv2."""
 #
 import datetime
 import json
-from netaddr import IPNetwork
 
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
@@ -109,7 +108,7 @@ class LBaaSv2ServiceBuilder(object):
             if (agent and not self._valid_tenant_ids(network,
                                                      loadbalancer.tenant_id,
                                                      agent)):
-                LOG.debug("Creating a loadbalancer %s for tenant %s on a"
+                LOG.error("Creating a loadbalancer %s for tenant %s on a"
                           "  non-shared network %s owned by %s." % (
                               loadbalancer.id,
                               loadbalancer.tenant_id,
@@ -171,31 +170,15 @@ class LBaaSv2ServiceBuilder(object):
             filter
         )
 
-        # There should be only one.
+        # we no longer support member port creation
         if len(ports) == 1:
             member_dict['port'] = ports[0]
             self._populate_member_network(context, member_dict, network)
-
-        # Do not manage neutron ports for external members
-
-        # else:
-        #     if not ports:
-        #         cidr = IPNetwork(subnet['cidr'])
-        #         member_ip = IPNetwork("%s/%d" %
-        #                               (member.address, cidr.prefixlen))
-        #         if cidr == member_ip:
-        #             LOG.debug("Create port for member")
-        #             member_dict['port'] = \
-        #                 self.q_client.create_port_for_member(
-        #                     context, member.address,
-        #                     subnet_id=subnet_id)
-        #             self._populate_member_network(
-        #                 context, member_dict, network)
-        #         else:
-        #             LOG.error("Member IP %s is not in subnet %s" %
-        #                       (member.address, subnet['cidr']))
-        #     else:
-        #         LOG.error("Multiple ports found: %s" % ports)
+        elif len(ports) == 0:
+            LOG.warning("Lbaas member %s has no associated neutron port"
+                        % member.address)
+        elif len(ports) > 1:
+            LOG.warning("Multiple ports found for member: %s" % member.address)
 
         return (member_dict, subnet, network)
 
@@ -350,29 +333,25 @@ class LBaaSv2ServiceBuilder(object):
 
     @log_helpers.log_method_call
     def _is_common_network(self, network, agent):
-        # all networks are common
-        return True
+        common_external_networks = False
+        common_networks = {}
 
+        if agent and "configurations" in agent:
+            agent_configs = self.deserialize_agent_configurations(
+                agent['configurations'])
 
-        # common_external_networks = False
-        # common_networks = {}
-        #
-        # if agent and "configurations" in agent:
-        #     agent_configs = self.deserialize_agent_configurations(
-        #         agent['configurations'])
-        #
-        #     if 'common_networks' in agent_configs:
-        #         common_networks = agent_configs['common_networks']
-        #
-        #     if 'f5_common_external_networks' in agent_configs:
-        #         common_external_networks = (
-        #             agent_configs['f5_common_external_networks'])
-        #
-        # return (network['shared'] or
-        #         (network['id'] in common_networks) or
-        #         ('router:external' in network and
-        #          network['router:external'] and
-        #          common_external_networks))
+            if 'common_networks' in agent_configs:
+                common_networks = agent_configs['common_networks']
+
+            if 'f5_common_external_networks' in agent_configs:
+                common_external_networks = (
+                    agent_configs['f5_common_external_networks'])
+
+        return (network['shared'] or
+                (network['id'] in common_networks) or
+                ('router:external' in network and
+                 network['router:external'] and
+                 common_external_networks))
 
     def _valid_tenant_ids(self, network, lb_tenant_id, agent):
         if (network['tenant_id'] == lb_tenant_id):

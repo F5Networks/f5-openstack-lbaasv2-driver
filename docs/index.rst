@@ -11,11 +11,16 @@ F5 OpenStack Neutron LBaaSv2
     <script async defer src="https://f5-openstack-slack.herokuapp.com/slackin.js"></script>
 
 
-Contents
-========
+.. include:: includes/ref_lbaasv2-version-compatibility.rst
+    :start-line: 2
+
+.. include:: includes/topic_lbaasv2-plugin-overview.rst
+    :start-line: 2
+
 
 .. toctree::
-    :maxdepth: 2
+   :caption: Contents
+   :maxdepth: 2
 
     Quick Start Guide <map_quick-start-guide>
     User Guide <map_f5-lbaasv2-user-guide>
@@ -30,20 +35,6 @@ Contents
     troubleshooting
     Solution Test Plan <solution-test-plan>
 
-
-.. include:: includes/ref_lbaasv2-version-compatibility.rst
-    :start-line: 2
-
-.. include:: includes/topic_lbaasv2-plugin-overview.rst
-    :start-line: 2
-
-API Documentation
-=================
-
-* :ref:`f5lbaasdriver`
-
-    * :ref:`f5lbaasdriver.utils`
-    * :ref:`f5lbaasdriver.v2`
 
 
 .. |Build Status| image:: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=mitaka

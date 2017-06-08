@@ -19,5 +19,7 @@
                 "test_policy_reject_file_type_equal_to",
                 "test_policy_reorder_and_rule_update",
                 "test_policy_deployment_operand_match",
-                "test_stats"]
+                "test_stats",
+                "test_create_load_balancer_missing_tenant_id_field_for_admin",
+                "test_create_load_balancer_for_another_tenant"]
 }
