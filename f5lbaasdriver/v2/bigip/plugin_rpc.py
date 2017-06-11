@@ -510,58 +510,57 @@ class LBaaSv2PluginCallbacksRPC(object):
                               fixed_address_count=1, host=None):
         """Create port on subnet."""
         port = None
-        with context.session.begin(subtransactions=True):
-            if subnet_id:
-                try:
-                    subnet = self.driver.plugin.db._core_plugin.get_subnet(
-                        context,
-                        subnet_id
-                    )
-                    if not mac_address:
-                        mac_address = attributes.ATTR_NOT_SPECIFIED
-                    fixed_ip = {'subnet_id': subnet['id']}
-                    if fixed_address_count > 1:
-                        fixed_ips = []
-                        for _ in range(0, fixed_address_count):
-                            fixed_ips.append(fixed_ip)
-                    else:
-                        fixed_ips = [fixed_ip]
+        if subnet_id:
+            try:
+                subnet = self.driver.plugin.db._core_plugin.get_subnet(
+                    context,
+                    subnet_id
+                )
+                if not mac_address:
+                    mac_address = attributes.ATTR_NOT_SPECIFIED
+                fixed_ip = {'subnet_id': subnet['id']}
+                if fixed_address_count > 1:
+                    fixed_ips = []
+                    for _ in range(0, fixed_address_count):
+                        fixed_ips.append(fixed_ip)
+                else:
+                    fixed_ips = [fixed_ip]
 
-                    if not host:
-                        host = ''
-                    if not name:
-                        name = ''
+                if not host:
+                    host = ''
+                if not name:
+                    name = ''
 
-                    port_data = {
-                        'tenant_id': subnet['tenant_id'],
-                        'name': name,
-                        'network_id': subnet['network_id'],
-                        'mac_address': mac_address,
-                        'admin_state_up': True,
-                        'device_id': str(uuid.uuid5(
-                            uuid.NAMESPACE_DNS, str(host))),
-                        'device_owner': 'network:f5lbaasv2',
-                        'status': neutron_const.PORT_STATUS_ACTIVE,
-                        'fixed_ips': fixed_ips
-                    }
-                    port_data[portbindings.HOST_ID] = host
-                    port_data[portbindings.VIF_TYPE] = constants.VIF_TYPE
-                    if ('binding:capabilities' in
-                            portbindings.EXTENDED_ATTRIBUTES_2_0['ports']):
-                        port_data['binding:capabilities'] = {
-                            'port_filter': False}
-                    port = self.driver.plugin.db._core_plugin.create_port(
-                        context, {'port': port_data})
-                    # Because ML2 marks ports DOWN by default on creation
-                    update_data = {
-                        'status': neutron_const.PORT_STATUS_ACTIVE
-                    }
-                    self.driver.plugin.db._core_plugin.update_port(
-                        context, port['id'], {'port': update_data})
+                port_data = {
+                    'tenant_id': subnet['tenant_id'],
+                    'name': name,
+                    'network_id': subnet['network_id'],
+                    'mac_address': mac_address,
+                    'admin_state_up': True,
+                    'device_id': str(uuid.uuid5(
+                        uuid.NAMESPACE_DNS, str(host))),
+                    'device_owner': 'network:f5lbaasv2',
+                    'status': neutron_const.PORT_STATUS_ACTIVE,
+                    'fixed_ips': fixed_ips
+                }
+                port_data[portbindings.HOST_ID] = host
+                port_data[portbindings.VIF_TYPE] = constants.VIF_TYPE
+                if ('binding:capabilities' in
+                        portbindings.EXTENDED_ATTRIBUTES_2_0['ports']):
+                    port_data['binding:capabilities'] = {
+                        'port_filter': False}
+                port = self.driver.plugin.db._core_plugin.create_port(
+                    context, {'port': port_data})
+                # Because ML2 marks ports DOWN by default on creation
+                update_data = {
+                    'status': neutron_const.PORT_STATUS_ACTIVE
+                }
+                self.driver.plugin.db._core_plugin.update_port(
+                    context, port['id'], {'port': update_data})
 
-                except Exception as e:
-                    LOG.error("Exception: create_port_on_subnet: %s",
-                              e.message)
+            except Exception as e:
+                LOG.error("Exception: create_port_on_subnet: %s",
+                          e.message)
 
             return port
 
@@ -641,76 +640,73 @@ class LBaaSv2PluginCallbacksRPC(object):
     @log_helpers.log_method_call
     def delete_port_by_name(self, context, port_name=None):
         """Delete port by name."""
-        with context.session.begin(subtransactions=True):
-            if port_name:
-                filters = {'name': [port_name]}
-                try:
-                    ports = self.driver.plugin.db._core_plugin.get_ports(
+        if port_name:
+            filters = {'name': [port_name]}
+            try:
+                ports = self.driver.plugin.db._core_plugin.get_ports(
+                    context,
+                    filters=filters
+                )
+                for port in ports:
+                    self.driver.plugin.db._core_plugin.delete_port(
                         context,
-                        filters=filters
+                        port['id']
                     )
-                    for port in ports:
-                        self.driver.plugin.db._core_plugin.delete_port(
-                            context,
-                            port['id']
-                        )
-                except Exception as e:
-                    LOG.error("failed to delete port: %s", e.message)
+            except Exception as e:
+                LOG.error("failed to delete port: %s", e.message)
 
     @log_helpers.log_method_call
     def add_allowed_address(self, context, port_id=None, ip_address=None):
         """Add allowed addresss."""
-        with context.session.begin(subtransactions=True):
-            if port_id and ip_address:
-                try:
-                    port = self.driver.plugin.db._core_plugin.get_port(
-                        context=context, id=port_id)
-                    found_pair = False
-                    address_pairs = []
-                    if 'allowed_address_pairs' in port:
-                        for aap in port['allowed_address_pairs']:
-                            if (aap['ip_address'] == ip_address and
-                                    aap['mac_address'] == port['mac_address']):
-                                found_pair = True
-                                break
-                            address_pairs.append(aap)
+        if port_id and ip_address:
+            try:
+                port = self.driver.plugin.db._core_plugin.get_port(
+                    context=context, id=port_id)
+                found_pair = False
+                address_pairs = []
+                if 'allowed_address_pairs' in port:
+                    for aap in port['allowed_address_pairs']:
+                        if (aap['ip_address'] == ip_address and
+                                aap['mac_address'] == port['mac_address']):
+                            found_pair = True
+                            break
+                        address_pairs.append(aap)
 
-                        if not found_pair:
-                            address_pairs.append(
-                                {'ip_address': ip_address,
-                                 'mac_address': port['mac_address']}
-                            )
-                    port = {'port': {'allowed_address_pairs': address_pairs}}
-                    self.driver.plugin.db._core_plugin.update_port(
-                        context,
-                        port_id,
-                        port
-                    )
-                except Exception as exc:
-                    LOG.error('could not add allowed address pair: %s'
-                              % exc.message)
+                    if not found_pair:
+                        address_pairs.append(
+                            {'ip_address': ip_address,
+                             'mac_address': port['mac_address']}
+                        )
+                port = {'port': {'allowed_address_pairs': address_pairs}}
+                self.driver.plugin.db._core_plugin.update_port(
+                    context,
+                    port_id,
+                    port
+                )
+            except Exception as exc:
+                LOG.error('could not add allowed address pair: %s'
+                          % exc.message)
 
     @log_helpers.log_method_call
     def remove_allowed_address(self, context, port_id=None, ip_address=None):
         """Remove allowed addresss."""
         if port_id and ip_address:
-            with context.session.begin(subtransactions=True):
-                try:
-                    port = self.driver.plugin.db._core_plugin.get_port(
-                        context=context, id=port_id)
-                    address_pairs = []
-                    if 'allowed_address_pairs' in port:
-                        for aap in port['allowed_address_pairs']:
-                            if (aap['ip_address'] == ip_address and
-                                    aap['mac_address'] == port['mac_address']):
-                                continue
-                            address_pairs.append(aap)
-                    port = {'port': {'allowed_address_pairs': address_pairs}}
-                    self.driver.plugin.db._core_plugin.update_port(
-                        context,
-                        port_id,
-                        port
-                    )
-                except Exception as exc:
-                    LOG.error('could not remove allowed address pair: %s'
-                              % exc.message)
+            try:
+                port = self.driver.plugin.db._core_plugin.get_port(
+                    context=context, id=port_id)
+                address_pairs = []
+                if 'allowed_address_pairs' in port:
+                    for aap in port['allowed_address_pairs']:
+                        if (aap['ip_address'] == ip_address and
+                                aap['mac_address'] == port['mac_address']):
+                            continue
+                        address_pairs.append(aap)
+                port = {'port': {'allowed_address_pairs': address_pairs}}
+                self.driver.plugin.db._core_plugin.update_port(
+                    context,
+                    port_id,
+                    port
+                )
+            except Exception as exc:
+                LOG.error('could not remove allowed address pair: %s'
+                          % exc.message)

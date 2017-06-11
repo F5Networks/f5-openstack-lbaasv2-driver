@@ -26,6 +26,7 @@ class F5StatsBaseTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(F5StatsBaseTestCase, self).setUp()
+        self.tenant_id = self.subnet['tenant_id']
         self.members = {}
         self._create_servers()
         self._start_servers()

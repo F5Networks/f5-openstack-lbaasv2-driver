@@ -29,6 +29,7 @@ class F5BaseTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(F5BaseTestCase, self).setUp()
+        self.tenant_id = self.subnet['tenant_id']
         self.members = {}
         self.l7policy_client = l7policy_client.L7PolicyClientJSON(
             *self.client_args)
@@ -101,7 +102,7 @@ class F5BaseTestCase(base.BaseTestCase):
         # security group with a rule that allows tcp port 80 to the vip port.
         self.ports_client.update_port(
             self.load_balancer.get('vip_port_id'),
-            security_groups=[self.security_group.id])
+            security_groups=[self.security_group.get('id')])
 
     def _create_member(self, server_ip, server_position, load_balancer_id=None,
                        pool_id=None, subnet_id=None):
