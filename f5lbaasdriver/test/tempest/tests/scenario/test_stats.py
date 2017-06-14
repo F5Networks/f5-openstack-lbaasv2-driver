@@ -75,7 +75,7 @@ class F5StatsBaseTestCase(base.BaseTestCase):
                     config.network.project_networks_reachable):
                 self._assign_floating_ip_to_lb_vip(self.load_balancer)
                 self.vip_ip = self.floating_ips[
-                    self.load_balancer.id][0]['floating_ip_address']
+                    load_balancer_id][0]['floating_ip_address']
 
         # Currently the ovs-agent is not enforcing security groups on the
         # vip port - see https://bugs.launchpad.net/neutron/+bug/1163569
@@ -83,7 +83,7 @@ class F5StatsBaseTestCase(base.BaseTestCase):
         # security group with a rule that allows tcp port 80 to the vip port.
         self.ports_client.update_port(
             self.load_balancer.get('vip_port_id'),
-            security_groups=[self.security_group.id])
+            security_groups=[self.security_group.get('id')])
 
     def _create_member(self, server_ip, server_position, load_balancer_id=None,
                        pool_id=None, subnet_id=None):
