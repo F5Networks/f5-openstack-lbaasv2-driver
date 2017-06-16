@@ -77,4 +77,4 @@ Install the F5 LBaaSv2 Driver
 
 
 .. _license: https://f5.com/products/how-to-buy/simplified-licensing
-.. _OpenStack Networking Concepts: http://docs.openstack.org/mitaka/networking-guide/
+.. _OpenStack Networking Concepts: http://docs.openstack.org/newton/networking-guide/

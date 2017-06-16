@@ -20,7 +20,7 @@ Quick Start
     .. rubric:: Example:
     .. code-block:: text
 
-        $ sudo pip install git+https://github.com/F5Networks/f5-openstack-lbaasv2-driver@mitaka
+        $ sudo pip install git+https://github.com/F5Networks/f5-openstack-lbaasv2-driver@stable/newton
 
 
 .. warning::

@@ -86,11 +86,11 @@ to Openstack_CLA@f5.com prior to their code submission being included
 in this project.
 
 
-.. |Build Status| image:: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=mitaka
-    :target: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver?branch=mitaka
+.. |Build Status| image:: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=stable/newton
+    :target: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver?branch=stable/newton
 
-.. |Docs Build Status| image:: https://readthedocs.org/projects/f5-openstack-lbaasv2-driver/badge/?version=mitaka
-    :target: http://f5-openstack-lbaasv2-driver.readthedocs.io/en/mitaka/?badge=mitaka
+.. |Docs Build Status| image:: https://readthedocs.org/projects/f5-openstack-lbaasv2-driver/badge/?version=stable/newton
+    :target: http://f5-openstack-lbaasv2-driver.readthedocs.io/en/stable/newton/?badge=stable/newton
     :alt: Documentation Status
 
 .. |slack badge| image:: https://f5-openstack-slack.herokuapp.com/badge.svg

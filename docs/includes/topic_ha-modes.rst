@@ -39,7 +39,7 @@ Prerequisites
 
 - Administrator access to both BIG-IP device(s) and OpenStack cloud.
 
-- Basic understanding of OpenStack networking concepts. See the `OpenStack docs <http://docs.openstack.org/mitaka/>`_ for more information.
+- Basic understanding of OpenStack networking concepts. See the `OpenStack docs <http://docs.openstack.org/newton/>`_ for more information.
 
 - Basic understanding of `BIG-IP® Local Traffic Management <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-basics-12-0-0.html>`_
 

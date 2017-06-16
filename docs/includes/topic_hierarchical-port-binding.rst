@@ -40,7 +40,7 @@ Prerequisites
 
 - F5 ref:`agent <Install the F5 Agent>` and :ref:`LBaaSv2 driver <Install the F5 LBaaSv2 Driver>` installed on all hosts from which BIG-IP services will be provisioned.
 
-- Knowledge of `OpenStack Networking <http://docs.openstack.org/mitaka/networking-guide/>`_ concepts.
+- Knowledge of `OpenStack Networking <http://docs.openstack.org/newton/networking-guide/>`_ concepts.
 
 - Knowledge of BIG-IP `system configuration`_, `local traffic management`_, & `device service clustering`_.
 

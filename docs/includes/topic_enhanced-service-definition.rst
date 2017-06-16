@@ -378,7 +378,7 @@ For ``esd_demo_1`` in the example below, we define a single TCP profile ("tcp") 
 
 
 .. _L7 policy: https://wiki.openstack.org/wiki/Neutron/LBaaS/l7#L7_Policies
-.. _Create a Neutron load balancer: https://docs.openstack.org/mitaka/networking-guide/config-lbaas.html#building-an-lbaas-v2-load-balancer
+.. _Create a Neutron load balancer: https://docs.openstack.org/newton/networking-guide/config-lbaas.html#building-an-lbaas-v2-load-balancer
 .. _Create a Neutron L7 policy: https://docs.openstack.org/cli-reference/neutron.html
 .. _iRules: https://devcentral.f5.com/irules
 .. _policies: https://support.f5.com/csp/article/K15085
@@ -389,7 +389,7 @@ For ``esd_demo_1`` in the example below, we define a single TCP profile ("tcp") 
 .. _client SSL profile: https://support.f5.com/csp/article/K14783
 .. _BIG-IP server-side SSL termination: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-ssl-administration-13-0-0/4.html#guid-45595e00-5179-4055-87f7-277eb7d922bd
 .. _BIG-IP SSL profile: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-profiles-reference-13-0-0/6.html
-.. _Create an LBaaSv2 HTTPS listener: https://docs.openstack.org/mitaka/networking-guide/config-lbaas.html#adding-an-https-listener
+.. _Create an LBaaSv2 HTTPS listener: https://docs.openstack.org/newton/networking-guide/config-lbaas.html#adding-an-https-listener
 .. _BIG-IP session persistence profile: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-profiles-reference-13-0-0/4.html
 .. _BIG-IP TCP profile: https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-profiles-reference-13-0-0/1.html#guid-4b08badd-ccd9-4ddc-a4c3-1d8f788f38c3
 .. _L7 policy delete: https://docs.openstack.org/cli-reference/neutron.html#neutron-lbaas-l7policy-delete

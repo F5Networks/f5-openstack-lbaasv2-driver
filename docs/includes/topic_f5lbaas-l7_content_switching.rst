@@ -162,7 +162,7 @@ Prerequisites
 - Operational OpenStack cloud (|openstack| release).
 - Administrator access to both BIG-IP device(s) and OpenStack cloud.
 - F5 :ref:`agent <agent:home>` and :ref:`service provider driver <Install the F5 LBaaSv2 Driver>` installed on the Neutron controller and all other hosts from which you want to provision LBaaS services.
-- Knowledge of `OpenStack Networking <http://docs.openstack.org/mitaka/networking-guide/>`_ concepts.
+- Knowledge of `OpenStack Networking <http://docs.openstack.org/newton/networking-guide/>`_ concepts.
 - Basic understanding of `BIG-IP system configuration <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-system-initial-configuration-12-0-0/2.html#conceptid>`_.
 - Basic understanding of `BIG-IP Local Traffic Management <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-basics-12-0-0.html>`_
 
