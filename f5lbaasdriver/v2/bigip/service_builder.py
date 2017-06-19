@@ -221,15 +221,6 @@ class LBaaSv2ServiceBuilder(object):
 
         return self.net_cache[network_id]
 
-    @log_helpers.log_method_call
-    def _get_listener(self, context, listener_id):
-        """Retrieve listener from Neutron db."""
-        listener = self.plugin.db.get_listener(
-            context,
-            listener_id
-        )
-        return listener.to_api_dict()
-
     def _populate_member_network(self, context, member, network):
         """Add vtep networking info to pool member and update the network."""
         member['vxlan_vteps'] = []
@@ -507,17 +498,11 @@ class LBaaSv2ServiceBuilder(object):
                                  session_persistence=False)
 
         pool_dict['members'] = [{'id': member.id} for member in pool.members]
-        pool_dict['listeners'] = [{'id': listener.id}
-                                  for listener in pool.listeners]
         pool_dict['l7_policies'] = [{'id': l7_policy.id}
                                     for l7_policy in pool.l7_policies]
         if pool.session_persistence:
             pool_dict['session_persistence'] = (
                 pool.session_persistence.to_api_dict())
-        if pool.listener:
-            pool_dict['listener_id'] = pool.listener.id
-        else:
-            pool_dict['listener_id'] = None
 
         return pool_dict
 

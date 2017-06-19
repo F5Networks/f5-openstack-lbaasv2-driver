@@ -217,3 +217,13 @@ class BigIpClient(object):
             name=vs_name, partition=partition)
 
         return getattr(vs, attr, None) == value
+
+    def virtual_server_has_pool(self, vs_name, partition, pool_name):
+        vs = self.bigip.tm.ltm.virtuals.virtual.load(
+            name=vs_name, partition=partition)
+        expected_pool = '/' + partition + '/' + pool_name
+        if not hasattr(vs, 'pool'):
+            return False
+        elif vs.pool == expected_pool:
+            return True
+        return False
