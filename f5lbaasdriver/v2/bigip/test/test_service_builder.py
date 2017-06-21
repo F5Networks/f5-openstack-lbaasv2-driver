@@ -274,3 +274,16 @@ def test_get_members(pools, members):
 
     for test_member, member in zip(test_members, members):
         assert test_member is member
+
+
+def test__pool_to_dict():
+    '''Ensure function does not add listeners or listener_id to pool dict.'''
+    driver = mock.MagicMock()
+    fake_pool = FakeDict()
+    fake_pool.members = []
+    fake_pool.l7_policies = []
+
+    sb = LBaaSv2ServiceBuilder(driver)
+    pool_dict = sb._pool_to_dict(fake_pool)
+    assert 'listener_id' not in pool_dict
+    assert 'listeners' not in pool_dict
