@@ -17,8 +17,15 @@
 .PHONY: all functest \
 install_tlc \
 install_test_infra \
-tempest_12.1.1_overcloud tempest_12.1.1_undercloud \
-tempest_12.1.1_undercloud_gre tempest_12.1.1_undercloud_vlan
+tempest_13.0.0_undercloud_vxlan tempest_11.5.4_overcloud_vxlan \
+tempest_11.6.0_overcloud_vxlan tempest_11.6.1_overcloud_vxlan \
+tempest_12.1.1_undercloud_vxlan tempest_11.5.4_undercloud_vxlan \
+tempest_11.5.4_undercloud_gre tempest_11.5.4_undercloud_vlan \
+tempest_11.6.0_undercloud_vxlan tempest_11.6.0_undercloud_gre \
+tempest_11.6.0_undercloud_vlan tempest_11.6.1_undercloud_vxlan \
+tempest_11.6.1_undercloud_gre tempest_11.6.1_undercloud_vlan \
+tempest_12.1.1_undercloud_vxlan tempest_12.1.1_undercloud_gre \
+tempest_12.1.1_undercloud_vlan 
 
 # - <nearest reachable tag>-<num commits since>-g<abbreviated commit id>
 export BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
@@ -144,6 +151,18 @@ cleanup_failed_tlc:
 # Not using the tempest TLC files for liberty because they install barbican
 # which causes the tests to lockup/hang
 
+# Tempest Tests for 13.0.0 undercloud VE deployment
+tempest_13.0.0_undercloud_vxlan:
+	export TEST_VE_IMAGE=os_ready-BIGIP-13.0.0.0.0.1645.qcow2 ;\
+	export TEST_OPENSTACK_CLOUD=undercloud ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(SANITIZED_BRANCH)-$@ ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$${GUMBALLS_PROJECT} ;\
+	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
+	export EXCLUDE_FILE=$@.yaml ;\
+	$(MAKE) -C . run_tests
+
 # Tempest Tests for 11.5.x overcloud VE deployment
 tempest_11.5.4_overcloud_vxlan:
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.5.4.2.0.291.qcow2 ;\
@@ -152,6 +171,7 @@ tempest_11.5.4_overcloud_vxlan:
 	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(SANITIZED_BRANCH)-$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
 	export EXCLUDE_FILE=$@.yaml ;\
 	$(MAKE) -C . run_tests
 
@@ -173,6 +193,18 @@ tempest_11.6.1_overcloud_vxlan:
 	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(SANITIZED_BRANCH)-$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export EXCLUDE_FILE=$@.yaml ;\
+	$(MAKE) -C . run_tests
+
+# Tempest Tests for 12.1.1 undercloud VE deployment
+tempest_12.1.1_undercloud_vxlan:
+	export TEST_VE_IMAGE=os_ready-BIGIP-12.1.1.2.0.204.qcow2 ;\
+	export TEST_OPENSTACK_CLOUD=undercloud ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(SANITIZED_BRANCH)-$@ ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$${GUMBALLS_PROJECT} ;\
+	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
 	export EXCLUDE_FILE=$@.yaml ;\
 	$(MAKE) -C . run_tests
 
