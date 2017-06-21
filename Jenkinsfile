@@ -5,10 +5,11 @@ pipeline {
         docker {
             label "docker"
             registryUrl "https://docker-registry.pdbld.f5net.com"
-            image "bdo/jenkins-worker-ubuntu-16.04:master"
+            image "openstack-infra/drivertestrunner:latest"
             args "-v /etc/localtime:/etc/localtime:ro" \
                 + " -v /srv/mesos/trtl/results:/home/jenkins/results" \
                 + " -v /srv/nfs:/testlab" \
+                + " -v /var/run/docker.sock:/var/run/docker.sock" \
                 + " --env-file /srv/kubernetes/infra/jenkins-worker/config/openstack-test.env"
         }
     }

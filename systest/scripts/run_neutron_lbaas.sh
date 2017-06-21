@@ -17,9 +17,6 @@
 
 set -x
 
-# Activate our tempest virtualenv
-source ${TEMPEST_VENV_ACTIVATE}
-
 # Create .pytest.rootdir files at the root of the driver and neutron-lbaas
 # respositories to make the results suite names be rooted at the top-level
 # of the respective test repository
@@ -35,7 +32,7 @@ cd ${MAKEFILE_DIR}/../
 
 tox --sitepackages -e tempest -c tox.ini -- \
   --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
-  -lvv \
+  -lravv \
   --autolog-outputdir ${RESULTS_DIR} \
   --autolog-session ${DRIVER_TEMPEST_SESSION}
 
