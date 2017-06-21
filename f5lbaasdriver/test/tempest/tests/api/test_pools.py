@@ -47,6 +47,7 @@ class PoolTestJSON(base.BaseTestCase):
         network_name = data_utils.rand_name('network')
         cls.network = cls.create_network(network_name)
         cls.subnet = cls.create_subnet(cls.network)
+        cls.partition = 'Project_' + cls.subnet['tenant_id']
         cls.create_lb_kwargs = {'tenant_id': cls.subnet['tenant_id'],
                                 'vip_subnet_id': cls.subnet['id']}
         cls.load_balancer = \
@@ -62,7 +63,7 @@ class PoolTestJSON(base.BaseTestCase):
         super(PoolTestJSON, cls).resource_cleanup()
 
     @test.attr(type='smoke')
-    def test_create_shared_pools(self):
+    def test_create_shared_detached_pools(self):
 
         # create detached pool -- no listeners
         shared_pool_kwargs = {'loadbalancer_id': self.load_balancer_id,
@@ -87,6 +88,15 @@ class PoolTestJSON(base.BaseTestCase):
         second_listener = self._create_listener(**second_listener_kwargs)
         self.addCleanup(self._delete_listener, second_listener['id'])
 
+        # Check that bigip has pools set for each listener
+        vs1_name = 'Project_' + first_listener['id']
+        vs2_name = 'Project_' + second_listener['id']
+        pool_name = 'Project_' + shared_pool['id']
+        assert self.bigip_client.virtual_server_has_pool(
+            vs1_name, self.partition, pool_name) is True
+        assert self.bigip_client.virtual_server_has_pool(
+            vs2_name, self.partition, pool_name) is True
+
         res = self.client.call(self.context, 'get_service_by_loadbalancer_id',
                                loadbalancer_id=self.load_balancer_id)
 
@@ -94,18 +104,58 @@ class PoolTestJSON(base.BaseTestCase):
         self.assertEqual(pool['id'], shared_pool['id'])
 
         # validate pool has two listeners
-        listeners = pool['listeners']
-        self.assertEqual(2, len(listeners))
+        assert res['listeners'][0]['default_pool_id'] == shared_pool['id']
+        assert res['listeners'][1]['default_pool_id'] == shared_pool['id']
 
-        # validate pool/listener relationship
-        assert((listeners[0]['id'] == first_listener['id'] and
-                listeners[1]['id'] == second_listener['id']) or
-               (listeners[0]['id'] == second_listener['id'] and
-                listeners[1]['id'] == first_listener['id']))
+        assert 'listeners' not in pool
 
         pp = pprint.PrettyPrinter(indent=4)
         pp.pprint(res)
 
+        # delete shared pool
+        self._delete_pool(shared_pool['id'], wait=True)
+        res = self.client.call(self.context, 'get_service_by_loadbalancer_id',
+                               loadbalancer_id=self.load_balancer_id)
+
+        # validate listeners not associated with a pool
+        self.assertEqual(0, len(res['pools']))
+        for listener in res['listeners']:
+            self.assertIsNone(listener['default_pool_id'])
+
+    @test.attr(type='smoke')
+    def test_create_shared_pools(self):
+
+        # create first listener with no pool yet
+        first_listener_kwargs = {'loadbalancer_id': self.load_balancer_id,
+                                 'description': 'First Listener',
+                                 'protocol': 'HTTP',
+                                 'protocol_port': 80}
+        first_listener = self._create_listener(**first_listener_kwargs)
+        self.addCleanup(self._delete_listener, first_listener['id'])
+
+        # create attached pool
+        shared_pool_kwargs = {'listener_id': first_listener['id'],
+                              'protocol': 'HTTP',
+                              'description': 'Shared pool',
+                              'lb_algorithm': 'ROUND_ROBIN'}
+        shared_pool = self._create_pool(**shared_pool_kwargs)
+
+        # create second listener with that default pool set
+        second_listener_kwargs = first_listener_kwargs
+        second_listener_kwargs['default_pool_id'] = shared_pool['id']
+        second_listener_kwargs['protocol_port'] = 8080
+        second_listener_kwargs['description'] = 'Second Listener'
+        second_listener = self._create_listener(**second_listener_kwargs)
+        self.addCleanup(self._delete_listener, second_listener['id'])
+
+        # Check that bigip has pools set for each listener
+        vs1_name = 'Project_' + first_listener['id']
+        vs2_name = 'Project_' + second_listener['id']
+        pool_name = 'Project_' + shared_pool['id']
+        assert self.bigip_client.virtual_server_has_pool(
+            vs1_name, self.partition, pool_name) is True
+        assert self.bigip_client.virtual_server_has_pool(
+            vs2_name, self.partition, pool_name) is True
         # delete shared pool
         self._delete_pool(shared_pool['id'], wait=True)
         res = self.client.call(self.context, 'get_service_by_loadbalancer_id',
