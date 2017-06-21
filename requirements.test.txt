@@ -1,7 +1,7 @@
 -c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=stable/newton
 -e .
 git+https://github.com/openstack/neutron.git@stable/newton
-git+https://github.com/openstack/neutron-lbaas.git@stable/newton
+git+https://github.com/F5Networks/neutron-lbaas.git@stable/newton
 git+https://github.com/F5Networks/pytest-symbols.git
 git+https://github.com/F5Networks/f5-openstack-test.git@stable/newton
 tempest==12.1.0
