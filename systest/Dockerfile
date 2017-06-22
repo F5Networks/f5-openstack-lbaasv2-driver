@@ -32,4 +32,28 @@ pip install git+git://github.com/kislyuk/argcomplete.git@5cd934c586ab2a4f4 && \
 pip install git+git://github.com/erikrose/blessings.git@1a463ac86c76453151 && \
 pip install git+git://github.com/bw2/ConfigArgParse.git@93b6c6d57e3e05d751 && \
 pip install prettytable==0.7.2
+RUN     ln -fs /bin/bash /usr/local/bin/bash
+RUN     git clone https://gitlab.pdbld.f5net.com/openstack/tlc-toolsbase.git \
+/toolsbase
+RUN     cd /toolsbase && git checkout 8641ada1fa72079476427e364b326c539739b21d
+RUN     mkdir -p /toolsbase/independent/share
+RUN     mkdir -p /toolsbase/Ubuntu-10-x86_64/share
+RUN     find /toolsbase/independent/ /toolsbase/Ubuntu-10-x86_64/ -iname *pyc \
+-exec rm {} \;
+RUN     rm -rf /toolsbase/independent/bin/tlc_pb2.py
+RUN     ln -sf /toolsbase/Ubuntu-10-x86_64 /tools
+RUN     for f in interactive.py ipaddr.py switch_lacp_config.py switches.py; \
+do \
+    rm -rf /toolsbase/Ubuntu-10-x86_64/bin/$f; \
+    rm -rf /toolsbase/independent/bin/$f; \
+done
+RUN     git clone -b jenkins --single-branch https://gitlab.pdbld.f5net.com/openstack/tlc.git /home/jenkins/tlc
+ADD     ./scripts/patches/* /tmp/
+RUN     patch /home/jenkins/tlc/tlc/install.sh /tmp/tlc_install.sh.patch
+RUN     patch /toolsbase/independent/create_softlinks /tmp/create_softlinks.patch
+RUN     patch /home/jenkins/tlc/vmware/install.sh /tmp/vmware_install.patch
+RUN     cd /home/jenkins/tlc/tlc && ./install.sh && cd ../tl3 && ./install.sh \
+&& cd ../vmware && ./install.sh && cd ../tlc_client && \
+python ./setup.py install && cd ../bash_completion_feature && \
+./install_bash_completions.sh
 USER    jenkins
