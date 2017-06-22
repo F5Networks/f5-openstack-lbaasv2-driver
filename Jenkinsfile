@@ -11,14 +11,11 @@ pipeline {
         stage("systest") {
             steps {
                 sh '''
-                    # - source this job's environment variables
-                    export ENV_FILE=systest/${JOB_BASE_NAME}.env
-                    if [ -e $ENV_FILE ]; then
-                        . $ENV_FILE
-                    fi
+                    # - initialize env vars
+                    . systest/scripts/init_env.sh
 
-                    # - print build properties
-                    printenv | sort | grep -v OS_PASSWORD
+                    # - record start of build
+                    systest/scripts/record_build_start.sh
 
                     # - setup ssh agent
                     eval $(ssh-agent -s)
@@ -28,10 +25,8 @@ pipeline {
                     target_name=tempest_$(echo $JOB_BASE_NAME | sed s/-/_/g)
                     make -C systest $target_name
 
-                    # - copy results files to nfs
-                    #   (note that the nfs results directory is mounted inside
-                    #   the CI worker's home directory)
-                    cp -r $WORKSPACE/systest/test_results/* ~/results/
+                    # - record results
+                    systest/scripts/record_results.sh
                 '''
             }
         }
