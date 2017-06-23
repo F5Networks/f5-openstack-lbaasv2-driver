@@ -56,4 +56,14 @@ RUN     cd /home/jenkins/tlc/tlc && ./install.sh && cd ../tl3 && ./install.sh \
 && cd ../vmware && ./install.sh && cd ../tlc_client && \
 python ./setup.py install && cd ../bash_completion_feature && \
 ./install_bash_completions.sh
+RUN     mkdir -p /home/jenkins/virtualenvs
+RUN     virtualenv /home/jenkins/virtualenvs/tempest
+#RUN     source /home/jenkins/virtualenvs/tempest/bin/activate
+RUN     pip install git+git://github.com/pytest-dev/pluggy.git@c4c7361ded0a1049490b5bc38ce443c28dbb4cd9
+RUN     pip install git+git://github.com/pytest-dev/py.git@765b42a8f23f53233c2d11c3de5cfe8b3efccbb4
+RUN     pip install git+git://github.com/tox-dev/tox.git@9db6c78e97915097e838f345a669ef0f6bdcd113
+RUN     git clone git@gitlab.pdbld.f5net.com:openstack/dev-test.git /home/jenkins/dev-test
+RUN     cd /home/jenkins/dev-test && git checkout 2af5589a
+RUN     pip install git+ssh://git@gitlab.pdbld.f5net.com/tools/pytest-autolog.git@791a2a50
+
 USER    jenkins
