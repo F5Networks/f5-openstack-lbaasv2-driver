@@ -1,7 +1,17 @@
 #!/usr/bin/env groovy
 
 pipeline {
-    agent { docker defaultWorker.getConfig("openstack-test") }
+    agent {
+        docker {
+            label "docker"
+            registryUrl "https://docker-registry.pdbld.f5net.com"
+            image "bdo/jenkins-worker-ubuntu-16.04:master"
+            args "-v /etc/localtime:/etc/localtime:ro" \
+                + " -v /srv/mesos/trtl/results:/home/jenkins/results" \
+                + " -v /srv/nfs:/testlab" \
+                + " --env-file /srv/kubernetes/infra/jenkins-worker/config/openstack-test.env"
+        }
+    }
     options {
         ansiColor('xterm')
         timestamps()
