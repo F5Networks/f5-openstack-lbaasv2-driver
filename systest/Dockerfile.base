@@ -65,4 +65,7 @@ RUN     pip install git+git://github.com/tox-dev/tox.git@9db6c78e97915097e838f34
 RUN     git clone git@gitlab.pdbld.f5net.com:openstack/dev-test.git /home/jenkins/dev-test
 RUN     cd /home/jenkins/dev-test && git checkout 2af5589a
 RUN     pip install git+ssh://git@gitlab.pdbld.f5net.com/tools/pytest-autolog.git@791a2a50
+RUN     pip install git+git://github.com/chardet/chardet.git@9b8c5c2fb118d76c6beeab9affd01c332732a530
+RUN     pip install git+git://github.com/certifi/python-certifi.git@4f35e3529c78ced74040cf5d80bf8ec4aac9a190
+RUN     pip install git+git://github.com/requests/requests.git@51de61f914fda8d4f6a8ac8c2852abcc82b0b94e
 USER    jenkins
