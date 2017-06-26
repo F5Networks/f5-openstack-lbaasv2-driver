@@ -18,5 +18,5 @@
 set -ex
 
 # Run the setup & commands for the session
-./install_lbaasv2.sh
+./ansible_install_lbaasv2.sh
 /tools/bin/tlc --session ${TEST_SESSION} --debug cmd configure_lbaasv2

@@ -100,11 +100,8 @@ export FROM_AGENT_SESSION := from.agent_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 # without exception, invoke the aforementioned scripts.
 #
 
-install_test_infra:
-	@echo "installing tempest openstack interfaces and neutron_lbaas tests..."
-	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh
 
-setup_tlc_session:
+microservice_setup_tlc_session:
 	@echo "setting up TLC session..."
 	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
 
@@ -340,8 +337,8 @@ tempest_12.1.1_undercloud_vlan:
 	export EXCLUDE_FILE=$@.yaml ;\
 	$(MAKE) -C . run_tests
 
-run_tests: install_tlc install_test_infra
-	$(MAKE) -C . setup_tlc_session
+run_tests:
+	$(MAKE) -C . microservice_setup_tlc_session
 	$(MAKE) -C . configure_test_infra
 	$(MAKE) -C . run_neutron_lbaas
 	$(MAKE) -C . run_agent_transfers
