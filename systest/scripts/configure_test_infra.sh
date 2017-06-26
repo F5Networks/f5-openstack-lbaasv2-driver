@@ -17,6 +17,8 @@
 
 set -ex
 
+# Copy over our tox.ini
+cp -f /home/jenkins/f5-openstack-lbaasv2-driver/systest/scripts/conf/neutron-lbaas.tox.ini ${NEUTRON_LBAAS_DIR}/f5.tox.ini
 # Copy over our default tempest files
 cp -f conf/tempest.conf ${TEMPEST_CONFIG_DIR}/tempest.conf.orig
 cp -f conf/accounts.yaml ${TEMPEST_CONFIG_DIR}/accounts.yaml
