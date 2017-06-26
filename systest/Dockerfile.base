@@ -65,5 +65,4 @@ RUN     pip install git+git://github.com/tox-dev/tox.git@9db6c78e97915097e838f34
 RUN     git clone git@gitlab.pdbld.f5net.com:openstack/dev-test.git /home/jenkins/dev-test
 RUN     cd /home/jenkins/dev-test && git checkout 2af5589a
 RUN     pip install git+ssh://git@gitlab.pdbld.f5net.com/tools/pytest-autolog.git@791a2a50
-RUN     git clone -b stable/mitaka --single-branch https://github.com/F5Networks/neutron-lbaas.git /home/jenkins/neutron-lbaas
 USER    jenkins
