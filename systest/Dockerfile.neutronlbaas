@@ -1,0 +1,3 @@
+FROM     docker-registry.pdbld.f5net.com/openstack-test/driverbase:aae922cb316c
+USER    jenkins
+RUN     git clone -b stable/mitaka --single-branch https://github.com/F5Networks/neutron-lbaas.git /home/jenkins/neutron-lbaas
