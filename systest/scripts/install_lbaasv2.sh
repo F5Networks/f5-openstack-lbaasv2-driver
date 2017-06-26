@@ -37,7 +37,7 @@ echo [hosts] > ansible_conf.ini
 echo "${OS_CONTROLLER_IP} ansible_ssh_common_args='-o StrictHostKeyChecking=no' host_key_checking=False ansible_connection=ssh ansible_ssh_user=testlab ansible_ssh_private_key_file=/home/jenkins/f5-openstack-lbaasv2-driver/id_rsa_testlab" >> ansible_conf.ini
 
 git clone -b ${TEST_OPENSTACK_DISTRO} https://github.com/f5devcentral/f5-openstack-ansible.git
-docker run -e EXTRA_VARS="${EXTRA_VARS}" -it --volumes-from d42d4ff9281b -w `pwd`\
+docker run -e EXTRA_VARS="${EXTRA_VARS}" -it --volumes-from `hostname | xargs` -w `pwd`\
  docker-registry.pdbld.f5net.com/f5/openstack/ansible/microservice:1db6f8999731\
  ansible-playbook -v\
  --inventory-file=/home/jenkins/f5-openstack-lbaasv2-driver/systest/scripts/ansible_conf.ini\
