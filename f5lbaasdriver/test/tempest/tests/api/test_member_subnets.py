@@ -17,13 +17,14 @@
 import ipaddress
 
 from tempest import config
-from tempest import test
 from tempest.lib.common.utils import data_utils
+from tempest import test
 
 from f5.bigip import ManagementRoot
 from f5lbaasdriver.test.tempest.tests.api import base
 
 config = config.CONF
+
 
 class MemberSubnetTestJSON(base.BaseAdminTestCase):
     """Test creating two members on different subnets, same network.
@@ -120,9 +121,8 @@ class MemberSubnetTestJSON(base.BaseAdminTestCase):
         assert self._has_selfip_for_member(member1)
         assert self._has_selfip_for_member(member2)
 
-
     def _has_selfip_for_member(self, member):
-        # Verify that self IP overlaps with member IP
+        # Verify that a self IP exists that overlaps with member IP
         address = self._split_address(member['address'])
         member_address = ipaddress.ip_address(address)
 
