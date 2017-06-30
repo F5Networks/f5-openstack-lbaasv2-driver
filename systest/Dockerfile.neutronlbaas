@@ -1,0 +1,15 @@
+FROM    docker-registry.pdbld.f5net.com/openstack-test/driverbase:9661571e94bb
+RUN     rm /usr/local/lib/python2.7/dist-packages/beautifulsoup4-4.6.0-py2.7.egg
+RUN     rm /usr/local/lib/python2.7/dist-packages/python_dateutil-2.6.0-py2.7.egg
+RUN     git clone -b stable/mitaka --single-branch https://github.com/F5Networks/neutron-lbaas.git /home/jenkins/neutron-lbaas
+RUN     cd neutron-lbaas/tools && sudo -H ./tox_install.sh https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=stable/mitaka
+RUN     sudo -H pip install git+git://github.com/openstack/tempest.git@aff9cc072bbbb222b09a3411b203c180b493eae8
+RUN     sudo -H pip install /home/jenkins/neutron-lbaas
+USER    jenkins
+RUN     git clone -b mitaka https://github.com/f5devcentral/f5-openstack-ansible.git
+RUN     sudo -H pip install git+git://github.com/zancas/f5-openstack-test.git@69e8cf274141f11a6fa68000c1e154ae182378de
+RUN     sudo -H pip install git+git://github.com/F5Networks/f5-common-python.git@f4b73d9f216768df08d69af37f2d9a4e85b51431
+RUN     sudo -H pip install git+git://github.com/openstack/python-glanceclient.git@99ca367083459b698f052c56a1e73492dafcc383
+RUN     sudo -H pip install git+git://github.com/openstack/python-heatclient.git@9f7b9a582335460b7f431ced25dc6d71168c620e
+RUN     sudo -H pip install git+git://github.com/openstack/python-neutronclient.git@8fe5386a006992bdf606872d5e8ad57e60786c50
+RUN     sudo -H pip install git+git://github.com/openstack/python-keystoneclient.git@a0c67b860b3c5ff6f5fbb0e406dcbc3fd7aa9f88
