@@ -19,6 +19,11 @@ set -x
 
 set +e
 
+smoke_screen=""
+if [ ${SMOKE_TEST} == "1" ] && [ ${SMOKE_DEBUG} == "" ]; then
+    smoke_screen="> /dev/null"
+fi
+
 runTLCSetup() {
   # Excecute the TLC setup command given.
   eval $1
@@ -93,6 +98,6 @@ fi
 
 set -e
 # Run the remaining TLC commands
-/tools/bin/tlc --session ${TEST_SESSION} --debug cmd ready
-/tools/bin/tlc --session ${TEST_SESSION} --debug cmd test_env
-/tools/bin/tlc --session ${TEST_SESSION} --debug cmd lbaasv2
+/tools/bin/tlc --session ${TEST_SESSION} --debug cmd ready ${smoke_screen}
+/tools/bin/tlc --session ${TEST_SESSION} --debug cmd test_env ${smoke_screen}
+/tools/bin/tlc --session ${TEST_SESSION} --debug cmd lbaasv2 ${smoke_screen}

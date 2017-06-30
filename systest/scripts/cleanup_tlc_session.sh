@@ -17,6 +17,12 @@
 
 set -x
 
+smoke_screen=""
+if [ ${SMOKE_TEST} == "1" ] && [ ${SMOKE_DEBUG} == "" ]; then
+    smoke_screen="> /dev/null"
+fi
+
 # Teardown the barbican worker and cleanup the TLC session
-tlc --session ${TEST_SESSION} --debug cmd uninstall_barbican
-tlc --session ${TEST_SESSION} --debug cleanup
+tlc --session ${TEST_SESSION} --debug cmd uninstall_barbican ${smoke_screen}
+tlc --session ${TEST_SESSION} --debug cleanup ${smoke_screen}
+
