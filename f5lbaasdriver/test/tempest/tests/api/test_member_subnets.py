@@ -1,5 +1,4 @@
 # coding=utf-8
-u"""F5 Networks® LBaaSv2 L7 policy tempest tests."""
 # Copyright 2017 F5 Networks Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
