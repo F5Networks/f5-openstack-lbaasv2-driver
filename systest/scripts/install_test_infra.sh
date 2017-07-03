@@ -17,20 +17,22 @@
 
 set -ex
 
+# - install testenv-all first because it has a bunch of pinned dependencies
+sudo pip install git+ssh://git@gitlab.pdbld.f5net.com/bdo/testenv-all.git
+sudo pip install git+ssh://git@gitlab.pdbld.f5net.com/tools/pytest-meta.git
+sudo pip install git+ssh://git@gitlab.pdbld.f5net.com/tools/pytest-autolog.git
+sudo pip install git+ssh://git@gitlab.pdbld.f5net.com/tools/pytest-symbols.git
+sudo pip install tox virtualenv virtualenvwrapper
+
 # Create a virtualenv
 rm -rf ${TEMPEST_VENV_DIR}
 virtualenv ${TEMPEST_VENV_DIR}
 source ${TEMPEST_VENV_ACTIVATE}
 
-# Install tox
-pip install tox
-
-
 # We need to clone the OpenStack devtest repo for our TLC files
 rm -rf ${DEVTEST_DIR}
 git clone -b ${BRANCH} ${DEVTEST_REPO} ${DEVTEST_DIR}
 
-pip install git+ssh://git@gitlab.pdbld.f5net.com/tools/pytest-autolog.git
 # This should be listed in requirement.test.txt also, but will not succeed
 # from that location without sudo
 sudo pip install git+https://github.com/F5Networks/f5-openstack-agent.git@${BRANCH}

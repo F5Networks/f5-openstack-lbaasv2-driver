@@ -189,7 +189,7 @@ tempest_11.5.4_undercloud_vxlan:
 	export EXCLUDE_FILE=$@.yaml ;\
 	$(MAKE) -C . run_tests
 
-run_tests: install_tlc install_test_infra
+run_tests: install_test_infra install_tlc
 	$(MAKE) -C . setup_tlc_session
 	$(MAKE) -C . configure_test_infra
 	$(MAKE) -C . run_neutron_lbaas
