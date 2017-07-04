@@ -39,6 +39,7 @@ echo [hosts] > ansible_conf.ini
 echo "${OS_CONTROLLER_IP} ansible_ssh_common_args='-o StrictHostKeyChecking=no' host_key_checking=False ansible_connection=ssh ansible_ssh_user=testlab ansible_ssh_private_key_file=/home/jenkins/f5-openstack-lbaasv2-driver/id_rsa_testlab" >> ansible_conf.ini
 
 cp -f /home/jenkins/.ssh/id_rsa /home/jenkins/f5-openstack-lbaasv2-driver/id_rsa_testlab
+cp -f /home/jenkins/.ssh/id_rsa /home/jenkins/.ssh/id_rsa_testlab
 docker run \
 --volumes-from `hostname | xargs` \
 docker-registry.pdbld.f5net.com/openstack/ansible:1db6f8999731 \
