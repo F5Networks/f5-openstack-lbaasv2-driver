@@ -42,7 +42,7 @@ cp -f /home/jenkins/.ssh/id_rsa /home/jenkins/f5-openstack-lbaasv2-driver/id_rsa
 cp -f /home/jenkins/.ssh/id_rsa /home/jenkins/.ssh/id_rsa_testlab
 docker run \
 --volumes-from `hostname | xargs` \
-docker-registry.pdbld.f5net.com/openstack/ansible:1db6f8999731 \
+docker-registry.pdbld.f5net.com/f5-openstack/ansiblemicroservice:1db6f8999731 \
 ansible-playbook \
 --inventory-file=/home/jenkins/f5-openstack-lbaasv2-driver/systest/scripts/ansible_conf.ini \
 --extra-vars "${EXTRA_VARS}" \
