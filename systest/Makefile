@@ -15,8 +15,6 @@
 
 # Inform make that targets are NOT files.
 .PHONY: all functest \
-install_tlc \
-install_test_infra \
 tempest_13.0.0_undercloud_vxlan tempest_11.5.4_overcloud_vxlan \
 tempest_11.6.0_overcloud_vxlan tempest_11.6.1_overcloud_vxlan \
 tempest_12.1.1_undercloud_vxlan tempest_11.5.4_undercloud_vxlan \
@@ -44,16 +42,6 @@ export TEST_DIR := $(abspath $(MAKEFILE_DIR))/../test
 
 # Test exclude directory
 export EXCLUDE_DIR := $(MAKEFILE_DIR)/exclude/
-
-# Repos that are used for the tests and environment
-# TLC
-export TLC_DIR := /home/jenkins/tlc
-export TLC_REPO := https://gitlab.pdbld.f5net.com/openstack/tlc.git
-export TLC_BRANCH := buildbot
-
-# toolsbase (replicate internal directory structure for TLC install)
-export TOOLSBASE_DIR := /toolsbase
-export TOOLSBASE_REPO := https://gitlab.pdbld.f5net.com/openstack/tlc-toolsbase.git
 
 # dev-test (contains all of our TLC files for configuration)
 export DEVTEST_DIR := /home/jenkins/dev-test
@@ -111,15 +99,8 @@ export FROM_AGENT_SESSION := from.agent_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 # without exception, invoke the aforementioned scripts.
 #
 
-install_tlc:
-	@echo "installing the tlc client on the worker..."
-	cd scripts && ./disallow_dangerous_vars.sh && sudo -EH ./$@.sh
 
-install_test_infra:
-	@echo "installing tempest openstack interfaces and neutron_lbaas tests..."
-	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh
-
-setup_tlc_session:
+microservice_setup_tlc_session:
 	@echo "setting up TLC session..."
 	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
 
@@ -355,9 +336,8 @@ tempest_12.1.1_undercloud_vlan:
 	export EXCLUDE_FILE=$@.yaml ;\
 	$(MAKE) -C . run_tests
 
-run_tests: install_tlc install_test_infra
-	$(MAKE) -C . setup_tlc_session
+run_tests:
+	$(MAKE) -C . microservice_setup_tlc_session
 	$(MAKE) -C . configure_test_infra
 	$(MAKE) -C . run_neutron_lbaas
-	$(MAKE) -C . run_agent_transfers
 	$(MAKE) -C . cleanup_tlc_session

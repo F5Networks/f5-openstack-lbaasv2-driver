@@ -17,9 +17,6 @@
 
 set -x
 
-# Activate our tempest virtualenv
-source ${TEMPEST_VENV_ACTIVATE}
-
 # Create .pytest.rootdir files at the root of the driver and neutron-lbaas
 # respositories to make the results suite names be rooted at the top-level
 # of the respective test repository
