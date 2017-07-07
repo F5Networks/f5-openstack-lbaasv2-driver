@@ -40,6 +40,7 @@ echo "${OS_CONTROLLER_IP} ansible_ssh_common_args='-o StrictHostKeyChecking=no' 
 
 cp -f /home/jenkins/.ssh/id_rsa /home/jenkins/f5-openstack-lbaasv2-driver/id_rsa_testlab
 cp -f /home/jenkins/.ssh/id_rsa /home/jenkins/.ssh/id_rsa_testlab
+docker pull docker-registry.pdbld.f5net.com/f5-openstack/ansiblemicroservice
 docker run \
 --volumes-from `hostname | xargs` \
 docker-registry.pdbld.f5net.com/f5-openstack/ansiblemicroservice:1db6f8999731 \
