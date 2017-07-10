@@ -28,10 +28,6 @@ pipeline {
                     # - record start of build
                     systest/scripts/record_build_start.sh
 
-                    # - setup ssh agent
-                    eval $(ssh-agent -s)
-                    ssh-add
-
                     # - run systests
                     target_name=tempest_$(echo $JOB_BASE_NAME | sed s/-/_/g)
                     make -C systest $target_name
