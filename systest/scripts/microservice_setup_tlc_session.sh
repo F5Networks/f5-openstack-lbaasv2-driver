@@ -93,6 +93,8 @@ fi
 
 set -e
 ## Run the setup & commands for the session
+/tools/bin/tlc --session ${TEST_SESSION} --debug cmd ready
+/tools/bin/tlc --session ${TEST_SESSION} --debug cmd test_env
 /tools/bin/tlc --session ${TEST_SESSION} --debug cmd barbican
 ./ansible_install_lbaasv2.sh
 /tools/bin/tlc --session ${TEST_SESSION} --debug cmd configure_lbaasv2
