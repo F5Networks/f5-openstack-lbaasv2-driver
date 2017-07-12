@@ -36,14 +36,12 @@ EXTRA_VARS="${EXTRA_VARS} f5_global_routed_mode=${GLOBAL_ROUTED_MODE} bigip_netl
 EXTRA_VARS="${EXTRA_VARS} use_barbican_cert_manager=True neutron_lbaas_shim_install_dest=/usr/lib/python2.7/site-packages/neutron_lbaas/drivers/f5"
 
 echo [hosts] > ansible_conf.ini
-echo "${OS_CONTROLLER_IP} ansible_ssh_common_args='-o StrictHostKeyChecking=no' host_key_checking=False ansible_connection=ssh ansible_ssh_user=testlab ansible_ssh_private_key_file=/home/jenkins/f5-openstack-lbaasv2-driver/id_rsa_testlab" >> ansible_conf.ini
+echo "${OS_CONTROLLER_IP} ansible_ssh_common_args='-o StrictHostKeyChecking=no' host_key_checking=False ansible_connection=ssh ansible_ssh_user=testlab ansible_ssh_private_key_file=/root/id_rsa" >> ansible_conf.ini
 
-cp -f /home/jenkins/.ssh/id_rsa /home/jenkins/f5-openstack-lbaasv2-driver/id_rsa_testlab
-cp -f /home/jenkins/.ssh/id_rsa /home/jenkins/.ssh/id_rsa_testlab
 docker pull docker-registry.pdbld.f5net.com/f5-openstack/ansiblemicroservice
 docker run \
 --volumes-from `hostname | xargs` \
-f5-openstack/ansiblemicroservice:7dc25be93853 \
+docker-registry.pdbld.f5net.com/f5-openstack/ansiblemicroservice:48792741500c \
 ansible-playbook \
 --extra-vars "${EXTRA_VARS}" \
 --inventory-file=/home/jenkins/f5-openstack-lbaasv2-driver/systest/scripts/ansible_conf.ini \
