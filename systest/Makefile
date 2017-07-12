@@ -197,6 +197,7 @@ tempest_12.1.1_overcloud_vxlan:
 	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(SANITIZED_BRANCH)-$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
 	export EXCLUDE_FILE=$@.yaml ;\
 	$(MAKE) -C . run_tests
 
