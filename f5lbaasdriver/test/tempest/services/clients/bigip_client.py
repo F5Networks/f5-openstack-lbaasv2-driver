@@ -227,3 +227,12 @@ class BigIpClient(object):
         elif vs.pool == expected_pool:
             return True
         return False
+
+    def pool_exists(self, pool_name, partition):
+        return self.bigip.tm.ltm.pools.pool.exists(
+            name=pool_name, partition=partition)
+
+    def delete_pool(self, pool_name, partition):
+        p = self.bigip.tm.ltm.pools.pool.load(
+            name=pool_name, partition=partition)
+        p.delete()
