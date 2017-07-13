@@ -86,7 +86,6 @@ class PoolSyncTestJSON(base.BaseTestCase):
 
         # delete pool directly on BIG-IP
         self._remove_pool(self.pool['id'], self.partition)
-        assert not self._pool_exists(self.pool_id, self.partition)
 
         # update listener to force pool sync
         update_kwargs = {'description': 'resync ACTIVE pool'}
