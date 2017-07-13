@@ -90,6 +90,13 @@ export SCENARIO_SESSION := scenario_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 export DRIVER_TEMPEST_SESSION := driver.tempest_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 export FROM_AGENT_SESSION := from.agent_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 
+# PR smoke testing...
+ifdef $(SMOKE_TEST)
+export TEST_RUN := run_smoke_tests
+else
+export TEST_RUN := run_tests
+endif
+
 # LEAF MAKE TARGETS:
 #
 # This section contains "leaf" make targets.  These targets do not call other
@@ -151,7 +158,7 @@ tempest_13.0.0_undercloud_vxlan:
 	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
 	export EXCLUDE_FILE=$@.yaml ;\
-	$(MAKE) -C . run_tests
+	$(MAKE) -C . ${TEST_RUN}
 
 # Tempest Tests for 12.1.1 undercloud VE deployment
 tempest_12.1.1_undercloud_vxlan:
@@ -163,7 +170,7 @@ tempest_12.1.1_undercloud_vxlan:
 	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
 	export EXCLUDE_FILE=$@.yaml ;\
-	$(MAKE) -C . run_tests
+	$(MAKE) -C . ${TEST_RUN}
 
 # Tempest Tests for 11.6.1 undercloud VE deployment
 tempest_11.6.1_undercloud_vxlan:
@@ -175,7 +182,7 @@ tempest_11.6.1_undercloud_vxlan:
 	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
 	export EXCLUDE_FILE=$@.yaml ;\
-	$(MAKE) -C . run_tests
+	$(MAKE) -C . ${TEST_RUN}
 
 # Tempest Tests for 11.5.4 undercloud VE deployment
 tempest_11.5.4_undercloud_vxlan:
@@ -187,7 +194,23 @@ tempest_11.5.4_undercloud_vxlan:
 	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
 	export EXCLUDE_FILE=$@.yaml ;\
-	$(MAKE) -C . run_tests
+	$(MAKE) -C . ${TEST_RUN}
+
+smoke_test:
+	# change me  to stop PR tests!
+	export SMOKE_TEST=1
+	# make against the different versions we want to incorporate in smoke...
+	# see if we can't make some of this go into a parallel processing mode...
+	$(MAKE) -C . tempest_12.1.1_undercloud_vxlan & \
+	$(MAKE) -C . tempest_13.0.0_undercloud_vxlan & \
+	wait
+
+# Jenkins at-PR based run
+run_smoke_tests: install_tlc install_test_infra
+	$(MAKE) -C . setup_tlc_session
+	$(MAKE) -C . configure_test_infra
+	$(MAKE) -C . run_neutron_lbaas
+	$(MAKE) -C . cleanup_tlc_session
 
 run_tests: install_test_infra install_tlc
 	$(MAKE) -C . setup_tlc_session

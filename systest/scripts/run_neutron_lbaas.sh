@@ -27,12 +27,16 @@ cd ${NEUTRON_LBAAS_DIR}
 # Create .pytest.rootdir file at root of the neutron-lbaas repository directory
 touch ${NEUTRON_LBAAS_DIR}/.pytest.rootdir
 
-# LBaaSv2 API test cases with F5 tox.ini file
-tox -e apiv2 -c f5.tox.ini --sitepackages -- \
-  --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
-  -lvv --tb=short \
-  --autolog-outputdir ${RESULTS_DIR} \
-  --autolog-session ${API_SESSION}
+
+# Only run scenario tests if we're running a smoke test.
+if [ -z "${SMOKE_TESTS}" ]; then
+  # LBaaSv2 API test cases with F5 tox.ini file
+  tox -e apiv2 -c f5.tox.ini --sitepackages -- \
+    --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
+    -lvv --tb=short \
+    --autolog-outputdir ${RESULTS_DIR} \
+    --autolog-session ${API_SESSION}
+fi
 
 # LBaaSv2 Scenario test cases with F5 tox.ini file
 tox -e scenariov2 -c f5.tox.ini --sitepackages -- \
