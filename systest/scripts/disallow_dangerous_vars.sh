@@ -24,8 +24,8 @@ if [ "${DEVTEST_DIR}" != "/home/jenkins/dev-test" ];then
     echo DEVTEST_DIR "${DEVTEST_DIR}" not allowed!
     exit 31
 fi
-if [ "${TEMPEST_DIR}" != "/home/jenkins/tempest" ];then
-    echo TEMPEST_DIR "${TEMPEST_DIR}" not allowed!
+if [ "${TEMPEST_DIR}" == "" ];then
+    echo Empty value for TEMPEST_DIR not allowed!
     exit 31
 fi
 if [ "${NEUTRON_LBAAS_DIR}" != "/home/jenkins/neutron-lbaas" ];then
