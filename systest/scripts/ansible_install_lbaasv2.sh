@@ -38,8 +38,8 @@ EXTRA_VARS="${EXTRA_VARS} use_barbican_cert_manager=True neutron_lbaas_shim_inst
 echo [hosts] > ansible_conf.ini
 echo "${OS_CONTROLLER_IP} ansible_ssh_common_args='-o StrictHostKeyChecking=no' host_key_checking=False ansible_connection=ssh ansible_ssh_user=testlab ansible_ssh_private_key_file=/root/id_rsa" >> ansible_conf.ini
 
-sudo -E docker pull docker-registry.pdbld.f5net.com/f5-openstack/ansiblemicroservice
-sudo -E docker run \
+docker pull docker-registry.pdbld.f5net.com/f5-openstack/ansiblemicroservice
+docker run \
 --volumes-from `hostname | xargs` \
 docker-registry.pdbld.f5net.com/f5-openstack/ansiblemicroservice:48792741500c \
 ansible-playbook \
