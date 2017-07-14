@@ -38,6 +38,7 @@ export TIMESTAMP   # Only eval TIMESTAMP in the top make.
 CHANGESOURCE := f5-openstack-lbaasv2-driver
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 export MAKEFILE_DIR := $(dir $(MAKEFILE_PATH))
+export PROJROOTDIR := $(abspath $(MAKEFILE_DIR))/../
 export TEST_DIR := $(abspath $(MAKEFILE_DIR))/../test
 
 # Test exclude directory
@@ -270,7 +271,8 @@ tempest_11.6.0_undercloud_vlan:
 	$(MAKE) -C . run_tests
 
 # Tempest Tests for 11.6.1 undercloud VE deployment
-tempest_11.6.1_undercloud_vxlan:
+zancas_test_new_container_11.6.1_undercloud_vxlan:
+	export PROJROOTDIR=$(PROJROOTDIR) ;\
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.6.1.1.0.326.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=undercloud ;\
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
