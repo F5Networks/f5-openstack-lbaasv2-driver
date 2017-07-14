@@ -1,0 +1,6 @@
+109,110c109,110
+<     chmod 644 ${TOOLS_LIB}/${share}
+<     rm -f ${TOOLS_LIB}/${share}.bu
+---
+>     chmod 644 ${TOOLS_SHARE}/${share}
+>     rm -f ${TOOLS_SHARE}/${share}.bu
