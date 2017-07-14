@@ -39,7 +39,7 @@ CHANGESOURCE := f5-openstack-lbaasv2-driver
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 export MAKEFILE_DIR := $(dir $(MAKEFILE_PATH))
 export PROJROOTDIR := $(abspath $(MAKEFILE_DIR))/../
-export TEST_DIR := $(abspath $(MAKEFILE_DIR))/../test
+export TEST_DIR := $(abspath $(MAKEFILE_DIR))../test
 
 # Test exclude directory
 export EXCLUDE_DIR := $(MAKEFILE_DIR)/exclude/
@@ -49,7 +49,7 @@ export DEVTEST_DIR := /home/jenkins/dev-test
 export DEVTEST_REPO := git@gitlab.pdbld.f5net.com:openstack/dev-test.git
 
 # tempest (OpenStack tempest test library)
-export TEMPEST_DIR := /home/jenkins/tempest
+export TEMPEST_DIR := $(PROJROOTDIR)tempest
 export TEMPEST_REPO := http://git.openstack.org/openstack/tempest
 
 # neutron-lbaas (OpenStack Neutron LBaaS repo for the test cases to run)
@@ -175,18 +175,6 @@ tempest_11.6.1_overcloud_vxlan:
 	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(SANITIZED_BRANCH)-$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
-	export EXCLUDE_FILE=$@.yaml ;\
-	$(MAKE) -C . run_tests
-
-# Tempest Tests for 12.1.1 undercloud VE deployment
-tempest_12.1.1_undercloud_vxlan:
-	export TEST_VE_IMAGE=os_ready-BIGIP-12.1.1.2.0.204.qcow2 ;\
-	export TEST_OPENSTACK_CLOUD=undercloud ;\
-	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
-	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(SANITIZED_BRANCH)-$@ ;\
-	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$${GUMBALLS_PROJECT} ;\
-	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
-	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
 	export EXCLUDE_FILE=$@.yaml ;\
 	$(MAKE) -C . run_tests
 
