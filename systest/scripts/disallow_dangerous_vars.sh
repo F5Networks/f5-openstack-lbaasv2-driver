@@ -20,6 +20,14 @@
 # to predefined values.
 # A developer must amend this list to insert new top-level path
 # variables.
+if [ "${TLC_DIR}" != "/home/jenkins/tlc" ];then
+    echo TLC_DIR "${TLC_DIR}" not allowed!
+    exit 31
+fi
+if [ "${TOOLSBASE_DIR}" != "/toolsbase" ];then
+    echo TOOLSBASE_DIR "${TOOLSBASE_DIR}" not allowed!
+    exit 31
+fi
 if [ "${DEVTEST_DIR}" != "/home/jenkins/dev-test" ];then
     echo DEVTEST_DIR "${DEVTEST_DIR}" not allowed!
     exit 31
