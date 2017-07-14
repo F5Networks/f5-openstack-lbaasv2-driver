@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-set -x
+set -ex
 
 # Create .pytest.rootdir files at the root of the driver and neutron-lbaas
 # respositories to make the results suite names be rooted at the top-level
@@ -28,13 +28,9 @@ sudo -E touch ${NEUTRON_LBAAS_DIR}/neutron_lbaas/tests/tempest/v2/.pytest.rootdi
 # doesn't exist in the ${EXCLUDE_DIR}.
 
 # Navigate to the root of the repo, where the tox.ini file is found
-cd ${MAKEFILE_DIR}/../
+cd ${PROJROOTDIR}
 
-sudo -E bash -c "tox --sitepackages -e tempest -c tox.ini -- \
-  --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
-  -lravv \
-  --autolog-outputdir ${RESULTS_DIR} \
-  --autolog-session ${DRIVER_TEMPEST_SESSION}"
+sudo -E bash -c "tox --sitepackages -e tempest -c tox.ini -- -lravv"
 
 cd ${NEUTRON_LBAAS_DIR}
 
