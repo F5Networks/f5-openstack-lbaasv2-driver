@@ -38,7 +38,8 @@ export TIMESTAMP   # Only eval TIMESTAMP in the top make.
 CHANGESOURCE := f5-openstack-lbaasv2-driver
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 export MAKEFILE_DIR := $(dir $(MAKEFILE_PATH))
-export TEST_DIR := $(abspath $(MAKEFILE_DIR))/../test
+export PROJROOTDIR := $(abspath $(MAKEFILE_DIR))/../
+export TEST_DIR := $(abspath $(MAKEFILE_DIR))../test
 
 # Test exclude directory
 export EXCLUDE_DIR := $(MAKEFILE_DIR)/exclude/
@@ -48,7 +49,7 @@ export DEVTEST_DIR := /home/jenkins/dev-test
 export DEVTEST_REPO := git@gitlab.pdbld.f5net.com:openstack/dev-test.git
 
 # tempest (OpenStack tempest test library)
-export TEMPEST_DIR := /home/jenkins/tempest
+export TEMPEST_DIR := $(PROJROOTDIR)tempest
 export TEMPEST_REPO := http://git.openstack.org/openstack/tempest
 
 # neutron-lbaas (OpenStack Neutron LBaaS repo for the test cases to run)
@@ -102,15 +103,15 @@ export FROM_AGENT_SESSION := from.agent_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 
 microservice_setup_tlc_session:
 	@echo "setting up TLC session..."
-	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
+	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
 
 configure_test_infra:
 	@echo "injecting TLC symbol and openstack IDs into 'tempest' conf files..."
-	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
+	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
 
 run_neutron_lbaas:
 	@echo "running tests extracted from 'neutron_lbaas' project..."
-	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh || $(MAKE) -C ../ cleanup_tlc_session
+	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_tlc_session
 
 run_agent_transfers:
 	@echo "running tests extracted from 'f5-openstack-agent' project..."
@@ -174,18 +175,6 @@ tempest_11.6.1_overcloud_vxlan:
 	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(SANITIZED_BRANCH)-$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
-	export EXCLUDE_FILE=$@.yaml ;\
-	$(MAKE) -C . run_tests
-
-# Tempest Tests for 12.1.1 undercloud VE deployment
-tempest_12.1.1_undercloud_vxlan:
-	export TEST_VE_IMAGE=os_ready-BIGIP-12.1.1.2.0.204.qcow2 ;\
-	export TEST_OPENSTACK_CLOUD=undercloud ;\
-	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
-	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(SANITIZED_BRANCH)-$@ ;\
-	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$${GUMBALLS_PROJECT} ;\
-	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
-	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
 	export EXCLUDE_FILE=$@.yaml ;\
 	$(MAKE) -C . run_tests
 
@@ -271,6 +260,7 @@ tempest_11.6.0_undercloud_vlan:
 
 # Tempest Tests for 11.6.1 undercloud VE deployment
 tempest_11.6.1_undercloud_vxlan:
+	export PROJROOTDIR=$(PROJROOTDIR) ;\
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.6.1.1.0.326.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=undercloud ;\
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
