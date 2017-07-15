@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-set -ex
+set -x
 
 # Create .pytest.rootdir files at the root of the driver and neutron-lbaas
 # respositories to make the results suite names be rooted at the top-level
