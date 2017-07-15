@@ -30,7 +30,11 @@ sudo -E touch ${NEUTRON_LBAAS_DIR}/neutron_lbaas/tests/tempest/v2/.pytest.rootdi
 # Navigate to the root of the repo, where the tox.ini file is found
 cd ${PROJROOTDIR}
 
-sudo -E bash -c "tox --sitepackages -e tempest -c tox.ini -- -lravv"
+sudo -E bash -c "tox --sitepackages -e tempest -c tox.ini -- \
+  --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
+  -lvv \
+  --autolog-outputdir ${RESULTS_DIR} \
+  --autolog-session ${API_SESSION}"
 
 cd ${NEUTRON_LBAAS_DIR}
 
