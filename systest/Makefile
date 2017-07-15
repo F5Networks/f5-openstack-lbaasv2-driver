@@ -259,7 +259,7 @@ tempest_11.6.0_undercloud_vlan:
 	$(MAKE) -C . run_tests
 
 # Tempest Tests for 11.6.1 undercloud VE deployment
-zancas_test_new_container_11.6.1_undercloud_vxlan:
+tempest_11.6.1_undercloud_vxlan:
 	export PROJROOTDIR=$(PROJROOTDIR) ;\
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.6.1.1.0.326.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=undercloud ;\

@@ -33,7 +33,8 @@ pipeline {
                     ssh-add
 
                     # - run systests
-                    make -C systest zancas_test_new_container_11.6.1_undercloud_vxlan
+                    target_name=tempest_$(echo $JOB_BASE_NAME | sed s/-/_/g)
+                    make -C systest $target_name
 
                     # - record results
                     systest/scripts/record_results.sh
