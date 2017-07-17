@@ -36,7 +36,7 @@ pipeline {
                     make -C systest $target_name
 
                     # - record results
-                    if [[ "${JOB_BASE_NAME}" != "smoke_test" ]]; then
+                    if [ "${JOB_BASE_NAME}" != "smoke_test" ]; then
                         systest/scripts/record_results.sh
                     fi
                 '''
