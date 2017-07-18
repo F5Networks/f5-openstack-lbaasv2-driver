@@ -65,7 +65,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'F5 OpenStack LBaaSv2 Driver'
+project = u'F5 Driver for OpenStack LBaaSv2'
 copyright = u'2017 F5 Networks Inc.'
 author = u'F5 Networks'
 

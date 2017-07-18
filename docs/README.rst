@@ -1,5 +1,9 @@
-F5 OpenStack LBaaSv2 Driver
-===========================
+F5 Driver for OpenStack LBaaSv2
+===============================
+
+.. sidebar:: **OpenStack version:**
+
+    |openstack|
 
 |Build Status|
 
@@ -10,29 +14,28 @@ F5 OpenStack LBaaSv2 Driver
 
 .. toctree::
    :titlesonly:
+   :hidden:
 
    environment-generator
-   
-
 
 version |release|
 -----------------
 
-.. sidebar:: Compatibility
-
-   **OpenStack version:** |openstack|
-
 |release-notes|
 
-F5's Neutron LBaaSv2 service provider driver (``f5lbaasdriver``) runs within the `OpenStack Neutron`_ controller.
-The |driver-long| is an alternative to the default Neutron LBaaS service provider driver.
+The |driver-long| is a Neutron LBaaSv2 service provider driver (``f5lbaasdriver``) that runs within the `OpenStack Neutron`_ controller.
+The |driver-short| is an alternative to the default Neutron LBaaS service provider driver.
 It enables use of F5 BIG-IP Local Traffic Manager services in an OpenStack cloud.
 
 Architecture
 ------------
 
 The |driver-long| runs within the OpenStack Neutron controller processes.
+<<<<<<< HEAD
 It watches the Neutron RPC messaging queue for calls to the `Neutron LBaaS API`_ and schedules tasks to the `F5 Agent for OpenStack Neutron`_.
+=======
+It watches the Neutron RPC messaging queue for calls to the `Neutron LBaaS API`_ and schedules tasks to the `F5 BIG-IP Controller for OpenStack`_.
+>>>>>>> 5cbb070... Fixes #669
 The |agent-long| uses iControl REST API calls to apply the desired configurations to BIG-IP device(s).
 
 Guides
@@ -58,7 +61,11 @@ Installation
 
 .. important::
 
+<<<<<<< HEAD
    * You must download and install the `F5 Agent for OpenStack Neutron`_ and the :ref:`F5 Service Provider Package <f5-sp-package-install>` **before** you install the F5 LBaaSv2 driver.
+=======
+   * You must download and install the `F5 BIG-IP Controller for OpenStack`_ and the :ref:`F5 Service Provider Package <f5-sp-package-install>` **before** you install the F5 LBaaSv2 driver.
+>>>>>>> 5cbb070... Fixes #669
 
    * Install the |driver-long| on your Neutron controller.
 
@@ -73,13 +80,7 @@ F5 Service Provider Package
 The F5 service provider package preps your Neutron installation for use with the |driver-long|.
 **This is a required package. The F5 OpenStack LBaaS Solution will not work if this package isn't installed.**
 
-Download the F5 LBaaSv2 service provider package, then add it to the python path for neutron_lbaas.
-
-.. code-block:: bash
-
-   curl -O -L https://github.com/F5Networks/neutron-lbaas/releases/download/v9.1.0/f5.tgz
-   sudo tar xvf f5.tgz -C /usr/lib/python2.7/site-packages/neutron_lbaas/drivers/ \\ CENTOS
-   sudo tar xvf f5.tgz -C /usr/lib/python2.7/dist-packages/neutron_lbaas/drivers/ \\ UBUNTU
+You'll need to download the F5 LBaaSv2 service provider package and add it to the python path for ``neutron_lbaas``, then download and install the |driver-short|.
 
 
 .. _driver-install-deb:
@@ -90,17 +91,14 @@ Download the F5 LBaaSv2 service provider package, then add it to the python path
 Debian
 ``````
 
-To download the package via the command line:
-
 .. parsed-literal::
 
-    $ curl –L –O |f5_lbaasv2_driver_deb_url|
+   curl -O -L |f5_lbaasv2_driver_shim_url|
+   sudo tar xvf f5.tgz -C /usr/lib/python2.7/dist-packages/neutron_lbaas/drivers/
+   curl –L –O |f5_lbaasv2_driver_deb_url|
+   dpkg –i |f5_lbaasv2_driver_deb_package|
 
-To install the package:
 
-.. parsed-literal::
-
-    $ sudo dpkg –i |f5_lbaasv2_driver_deb_package|
 
 .. index::
    triple: lbaasv2-driver; install; pip
@@ -110,11 +108,11 @@ To install the package:
 Pip
 ```
 
-To install the package from GitHub:
+Download and install the F5 service provider package, then ``pip install`` the package from GitHub.
 
 .. parsed-literal::
 
-    $ sudo pip install |f5_lbaasv2_driver_pip_url|
+   pip install |f5_lbaasv2_driver_pip_url|
 
 .. tip::
 
@@ -122,8 +120,7 @@ To install the package from GitHub:
 
    .. parsed-literal::
 
-      $ sudo pip install |f5_lbaasv2_driver_pip_url_branch|
-
+      pip install |f5_lbaasv2_driver_pip_url_branch|
 
 .. index::
    triple: lbaasv2-driver; install; rpm
@@ -134,17 +131,12 @@ To install the package from GitHub:
 RPM
 ```
 
-To download the package via the command line:
-
 .. parsed-literal::
 
-    $ curl –L –O |f5_lbaasv2_driver_rpm_url|
-
-To install the package:
-
-.. parsed-literal::
-
-    $ sudo rpm –ivh |f5_lbaasv2_driver_rpm_package|
+   curl -O -L |f5_lbaasv2_driver_shim_url|
+   sudo tar xvf f5.tgz -C /usr/lib/python2.7/site-packages/neutron_lbaas/drivers/
+   curl –L –O |f5_lbaasv2_driver_rpm_url|
+   rpm –ivh |f5_lbaasv2_driver_rpm_package|
 
 
 .. index::
