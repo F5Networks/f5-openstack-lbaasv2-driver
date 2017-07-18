@@ -20,8 +20,8 @@ install_test_infra \
 tempest_11.6.1_undercloud_vxlan tempest_11.5.4_undercloud_vxlan \
 tempest_12.1.1_undercloud_vxlan tempest_13.0.0_undercloud_vxlan
 
-# - <nearest reachable tag>-<num commits since>-g<abbreviated commit id>
-export BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+# Fixing branch to that specified in the public fork. This is necessary for build on PRs.
+export BRANCH := liberty
 # The branch may contain the text 'stable/' before the OpenStack release name
 # To allow this type of branch name and any other to work with the cloud deployment
 # and with Jenkins, we should strip out the forward slash, leaving something like:
@@ -128,6 +128,10 @@ run_agent_transfers:
 	@echo "running tests extracted from 'f5-openstack-agent' project..."
 	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh
 
+run_smoke_tests:
+	@echo "running smoke tests for build on PR..."
+	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh
+
 cleanup_tlc_session:
 	@echo "running tlc --session TEST_SESSION --debug cleanup..."
 	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh
@@ -189,9 +193,26 @@ tempest_11.5.4_undercloud_vxlan:
 	export EXCLUDE_FILE=$@.yaml ;\
 	$(MAKE) -C . run_tests
 
+tempest_smoke_test:
+	# Default deployment for smoke is 12.1.1 undercloud vxlan
+	export TEST_VE_IMAGE=os_ready-BIGIP-12.1.1.2.0.204.qcow2 ;\
+	export TEST_OPENSTACK_CLOUD=undercloud ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(SANITIZED_BRANCH)-$@ ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$${GUMBALLS_PROJECT} ;\
+	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
+	export EXCLUDE_FILE=$@.yaml ;\
+	$(MAKE) -C . run_smoke
+
 run_tests: install_test_infra install_tlc
 	$(MAKE) -C . setup_tlc_session
 	$(MAKE) -C . configure_test_infra
 	$(MAKE) -C . run_neutron_lbaas
-	$(MAKE) -C . run_agent_transfers
+	$(MAKE) -C . cleanup_tlc_session
+
+run_smoke: install_test_infra install_tlc
+	$(MAKE) -C . setup_tlc_session
+	$(MAKE) -C . configure_test_infra
+	$(MAKE) -C . run_smoke_tests
 	$(MAKE) -C . cleanup_tlc_session
