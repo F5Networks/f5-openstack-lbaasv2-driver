@@ -26,7 +26,7 @@ from neutron.db import agents_db
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as plugin_constants
 from neutron_lbaas.db.loadbalancer import models
-
+from neutron_lbaas.services.loadbalancer import constants as nlb_constant
 from f5lbaasdriver.v2.bigip import constants_v2 as constants
 
 LOG = logging.getLogger(__name__)
@@ -52,7 +52,51 @@ class LBaaSv2PluginCallbacksRPC(object):
             fanout=False)
         self.conn.consume_in_threads()
 
+    # change the admin_state_up of the an agent
+    @log_helpers.log_method_call
+    def set_agent_admin_state(self, context, admin_state_up, host=None):
+        """Set the admin_up_state of an agent"""
+        if not host:
+            LOG.error('tried to set agent admin_state_up without host')
+            return False
+        with context.session.begin(subtransactions=True):
+            
+            query = context.session.query(agents_db.Agent)
+            query = query.filter(
+                agents_db.Agent.agent_type == \
+                   nlb_constant.AGENT_TYPE_LOADBALANCERV2,
+                agents_db.Agent.host == host)
+            try:
+                agent = query.one()
+                if not agent.admin_state_up == admin_state_up:
+                    agent.admin_state_up = admin_state_up
+                    context.session.add(agent)
+            except Exception as exc:
+                LOG.error('query for agent produced: %s' % str(exc))
+                return False
+                
+        return True
+
+    # change the admin_state_up of the an agent
+    @log_helpers.log_method_call
+    def scrub_dead_agents(self, context, env, group, host=None):
+        """Set the admin_up_state of an agent"""
+        LOG.debug('scrubing dead agent bindings')
+        with context.session.begin(subtransactions=True):
+            try:
+                self.driver.scheduler.scrub_dead_agents(context,
+                                                        self.driver.plugin,
+                                                        env,
+                                                        group=None)
+            except Exception as exc:
+                LOG.error('scub dead agents exception: %s' % str(exc))
+                return False
+        return True
+        
     # get a list of loadbalancer ids which are active on this agent host
+    #
+    # deprecated
+    #
     @log_helpers.log_method_call
     def get_active_loadbalancers_for_agent(self, context, host=None):
         """Get a list of loadbalancers active on this host."""
@@ -129,7 +173,8 @@ class LBaaSv2PluginCallbacksRPC(object):
                 context,
                 self.driver.plugin,
                 env,
-                group)
+                group,
+                active=None)
 
             for agent in agents:
                 agent_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
@@ -137,9 +182,24 @@ class LBaaSv2PluginCallbacksRPC(object):
                     agent.id
                 )
                 for lb in agent_lbs:
+                    agent_host = agent['host']
+                    agent['alive'] = True
+                    if not self.driver.plugin.db.is_eligible_agent(active=True,
+                                                                   agent=agent):
+                        agent['alive'] = False
+                    if not agent['alive'] or not agent['admin_state_up']:
+                        reassigned_agent = self.driver.scheduler.rebind_loadbalancer(
+                            context,    
+                            self.driver.plugin,
+                            env,
+                            group,
+                            lb.id
+                        )
+                        if reassigned_agent:
+                            agent_host = reassigned_agent['host']  
                     loadbalancers.append(
                         {
-                            'agent_host': agent['host'],
+                            'agent_host': agent_host,
                             'lb_id': lb.id,
                             'tenant_id': lb.tenant_id
                         }
@@ -161,7 +221,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                 self.driver.plugin,
                 env,
                 group=group,
-                active=True
+                active=None
             )
 
             for agent in agents:
@@ -169,12 +229,29 @@ class LBaaSv2PluginCallbacksRPC(object):
                     context,
                     agent.id
                 )
+                
                 for lb in agent_lbs:
+                    agent_host = agent['host']
+                    agent['alive'] = True
+                    if not self.driver.plugin.db.is_eligible_agent(active=True,
+                                                                   agent=agent):
+                        agent['alive'] = False
+                    if not agent['alive'] or not agent['admin_state_up']:
+                        reassigned_agent = self.driver.scheduler.rebind_loadbalancer(
+                            context,    
+                            self.driver.plugin,
+                            env,
+                            group,
+                            lb.id
+                        )
+                        if reassigned_agent:
+                            agent_host = reassigned_agent['host']                        
+
                     if lb.provisioning_status == plugin_constants.ACTIVE:
 
                         loadbalancers.append(
                             {
-                                'agent_host': agent['host'],
+                                'agent_host': agent_host,
                                 'lb_id': lb.id,
                                 'tenant_id': lb.tenant_id
                             }
@@ -196,7 +273,8 @@ class LBaaSv2PluginCallbacksRPC(object):
                 context,
                 self.driver.plugin,
                 env,
-                group)
+                group,
+                active=None)
 
             for agent in agents:
                 agent_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
@@ -204,12 +282,27 @@ class LBaaSv2PluginCallbacksRPC(object):
                     agent.id
                 )
                 for lb in agent_lbs:
+                    agent_host = agent['host']
+                    agent['alive'] = True
+                    if not self.driver.plugin.db.is_eligible_agent(active=True,
+                                                                   agent=agent):
+                        agent['alive'] = False
+                    if not agent['alive'] or not agent['admin_state_up']:
+                        reassigned_agent = self.driver.scheduler.rebind_loadbalancer(
+                            context,    
+                            self.driver.plugin,
+                            env,
+                            group,
+                            lb.id
+                        )
+                        if reassigned_agent:
+                            agent_host = reassigned_agent['host']  
                     if (lb.provisioning_status != plugin_constants.ACTIVE and
                             lb.provisioning_status != plugin_constants.ERROR):
 
                         loadbalancers.append(
                             {
-                                'agent_host': agent['host'],
+                                'agent_host': agent_host,
                                 'lb_id': lb.id,
                                 'tenant_id': lb.tenant_id
                             }

@@ -117,6 +117,10 @@ class F5DriverV2(object):
                       os.getpid(), trigger))
         self.plugin_rpc.create_rpc_listener()
 
+    def _handle_driver_error(self, context, loadbalancer,
+                             loadbalancer_id, status):
+        pass
+
 
 class EntityManager(object):
     '''Parent for all managers defined in this module.'''
