@@ -26,7 +26,7 @@ tempest_12.1.1_undercloud_vxlan tempest_12.1.1_undercloud_gre \
 tempest_12.1.1_undercloud_vlan 
 
 # Fixing branch to that specified in the public fork. This is necessary for build on PRs.
-export BRANCH := liberty
+export BRANCH := mitaka
 # The branch may contain the text 'stable/' before the OpenStack release name
 # To allow this type of branch name and any other to work with the cloud deployment
 # and with Jenkins, we should strip out the forward slash, leaving something like:
@@ -57,7 +57,6 @@ export NEUTRON_LBAAS_DIR := /home/jenkins/neutron-lbaas
 export NEUTRON_LBAAS_REPO := https://github.com/F5Networks/neutron-lbaas.git
 export NEUTRON_LBAAS_BRANCH := stable/mitaka
 export UPPER_CONSTRAINTS_FILE := https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=$(NEUTRON_LBAAS_BRANCH)
-
 
 # TLC path and python path requirements
 export PATH := /tools/bin:$(PATH)
@@ -115,19 +114,19 @@ run_neutron_lbaas:
 
 run_agent_transfers:
 	@echo "running tests extracted from 'f5-openstack-agent' project..."
-	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh
+	cd scripts && ./$@.sh
 
 run_smoke_tests:
 	@echo "running smoke tests for build on PR..."
-	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh
+	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_tlc_session
 
 cleanup_tlc_session:
 	@echo "running tlc --session TEST_SESSION --debug cleanup..."
-	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh
+	cd scripts && ./$@.sh
 
 cleanup_failed_tlc:
 	@echo "running tlc --session TEST_SESSION --debug cleanup && exit 1..."
-	cd scripts && ./disallow_dangerous_vars.sh && ./$@.sh
+	cd scripts && ./$@.sh
 
 # BRANCH MAKE TARGETS:
 #
@@ -331,8 +330,8 @@ tempest_12.1.1_undercloud_vlan:
 	export EXCLUDE_FILE=$@.yaml ;\
 	$(MAKE) -C . run_tests
 
+# Default deployment for smoke is 12.1.1 undercloud vxlan
 tempest_smoke_test:
-	# Default deployment for smoke is 12.1.1 undercloud vxlan
 	export TEST_VE_IMAGE=os_ready-BIGIP-12.1.1.2.0.204.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=undercloud ;\
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
