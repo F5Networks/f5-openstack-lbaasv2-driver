@@ -1,6 +1,5 @@
-Sphinx>=1.5.3
-six>=1.10.0
+Sphinx>=1.6.2
 git+https://github.com/f5devcentral/f5-sphinx-theme@master
--e git+https://github.com/openstack/neutron#egg=neutron
--e git+https://github.com/openstack/neutron-lbaas.git#egg=neutron_lbaas
-pytest
+recommonmark
+cloud_sptheme
+sphinxjp.themes.basicstrap
