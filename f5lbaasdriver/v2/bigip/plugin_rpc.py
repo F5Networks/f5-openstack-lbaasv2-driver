@@ -20,7 +20,7 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 
 from neutron.api.v2 import attributes
-from neutron.common import constants as neutron_const
+from neutron_lib import constants as neutron_const
 from neutron.common import rpc as neutron_rpc
 from neutron.db import agents_db
 from neutron.extensions import portbindings
