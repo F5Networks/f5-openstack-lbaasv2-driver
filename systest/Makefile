@@ -66,7 +66,7 @@ export TEMPEST_REPO := http://git.openstack.org/openstack/tempest
 # neutron-lbaas (OpenStack Neutron LBaaS repo for the test cases to run)
 export NEUTRON_LBAAS_DIR := /home/jenkins/neutron-lbaas
 export NEUTRON_LBAAS_REPO := https://github.com/F5Networks/neutron-lbaas.git
-export NEUTRON_LBAAS_BRANCH := mitaka-eol
+export NEUTRON_LBAAS_BRANCH := stable/mitaka
 export UPPER_CONSTRAINTS_FILE := https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=$(NEUTRON_LBAAS_BRANCH)
 
 
