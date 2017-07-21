@@ -47,11 +47,11 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
             )
             # if the agent bound to this loadbalancer is alive, return it
             if lbaas_agent is not None:
-                if (not lbaas_agent['agent']['alive'] or \
-                    not lbaas_agent['agent']['admin_state_up']) and \
-                    env is not None:
+                if (not lbaas_agent['agent']['alive'] or
+                        not lbaas_agent['agent']['admin_state_up']) and \
+                        env is not None:
                     # The agent bound to this loadbalancer is not live
-                    # or is not active. Find another agent in the same 
+                    # or is not active. Find another agent in the same
                     # environment and environment group if possible
                     ac = self.deserialize_agent_configurations(
                         lbaas_agent['agent']['configurations']
@@ -81,12 +81,12 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
         if env_agents:
             reassigned_agent = env_agents[0]
             bindings = context.session.query(
-                            agent_scheduler.LoadbalancerAgentBinding).filter_by(
-                            agent_id=current_agent['id']).all()
+                agent_scheduler.LoadbalancerAgentBinding).filter_by(
+                agent_id=current_agent['id']).all()
             for binding in bindings:
                 binding.agent_id = reassigned_agent['id']
                 context.session.add(binding)
-            LOG.debug("%s Loadbalancers bound to agent %s now bound to %s" % \
+            LOG.debug("%s Loadbalancers bound to agent %s now bound to %s" %
                       (len(bindings),
                        current_agent['id'],
                        reassigned_agent['id']))
@@ -102,7 +102,7 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                                             env,
                                             group,
                                             active=None)
-        
+
         for agent in all_agents:
             if not plugin.db.is_eligible_agent(active=True, agent=agent):
                 if not agent['admin_state_up']:
@@ -281,5 +281,5 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                        'lbaas agent %(agent_id)s'),
                       {'loadbalancer_id': loadbalancer.id,
                        'agent_id': chosen_agent['id']})
-                
+
             return chosen_agent

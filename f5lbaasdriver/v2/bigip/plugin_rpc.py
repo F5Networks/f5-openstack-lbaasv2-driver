@@ -60,11 +60,11 @@ class LBaaSv2PluginCallbacksRPC(object):
             LOG.error('tried to set agent admin_state_up without host')
             return False
         with context.session.begin(subtransactions=True):
-            
+
             query = context.session.query(agents_db.Agent)
             query = query.filter(
-                agents_db.Agent.agent_type == \
-                   nlb_constant.AGENT_TYPE_LOADBALANCERV2,
+                agents_db.Agent.agent_type ==
+                nlb_constant.AGENT_TYPE_LOADBALANCERV2,
                 agents_db.Agent.host == host)
             try:
                 agent = query.one()
@@ -74,7 +74,7 @@ class LBaaSv2PluginCallbacksRPC(object):
             except Exception as exc:
                 LOG.error('query for agent produced: %s' % str(exc))
                 return False
-                
+
         return True
 
     # change the admin_state_up of the an agent
@@ -92,7 +92,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                 LOG.error('scub dead agents exception: %s' % str(exc))
                 return False
         return True
-        
+
     # get a list of loadbalancer ids which are active on this agent host
     #
     # deprecated
@@ -184,19 +184,20 @@ class LBaaSv2PluginCallbacksRPC(object):
                 for lb in agent_lbs:
                     agent_host = agent['host']
                     agent['alive'] = True
-                    if not self.driver.plugin.db.is_eligible_agent(active=True,
-                                                                   agent=agent):
+                    if not self.driver.plugin.db.is_eligible_agent(
+                            active=True, agent=agent):
                         agent['alive'] = False
                     if not agent['alive'] or not agent['admin_state_up']:
-                        reassigned_agent = self.driver.scheduler.rebind_loadbalancer(
-                            context,    
-                            self.driver.plugin,
-                            env,
-                            group,
-                            lb.id
-                        )
+                        reassigned_agent = \
+                            self.driver.scheduler.rebind_loadbalancer(
+                                context,
+                                self.driver.plugin,
+                                env,
+                                group,
+                                lb.id
+                            )
                         if reassigned_agent:
-                            agent_host = reassigned_agent['host']  
+                            agent_host = reassigned_agent['host']
                     loadbalancers.append(
                         {
                             'agent_host': agent_host,
@@ -229,23 +230,24 @@ class LBaaSv2PluginCallbacksRPC(object):
                     context,
                     agent.id
                 )
-                
+
                 for lb in agent_lbs:
                     agent_host = agent['host']
                     agent['alive'] = True
-                    if not self.driver.plugin.db.is_eligible_agent(active=True,
-                                                                   agent=agent):
+                    if not self.driver.plugin.db.is_eligible_agent(
+                            active=True, agent=agent):
                         agent['alive'] = False
                     if not agent['alive'] or not agent['admin_state_up']:
-                        reassigned_agent = self.driver.scheduler.rebind_loadbalancer(
-                            context,    
-                            self.driver.plugin,
-                            env,
-                            group,
-                            lb.id
-                        )
+                        reassigned_agent = \
+                            self.driver.scheduler.rebind_loadbalancer(
+                                context,
+                                self.driver.plugin,
+                                env,
+                                group,
+                                lb.id
+                            )
                         if reassigned_agent:
-                            agent_host = reassigned_agent['host']                        
+                            agent_host = reassigned_agent['host']
 
                     if lb.provisioning_status == plugin_constants.ACTIVE:
 
@@ -284,19 +286,20 @@ class LBaaSv2PluginCallbacksRPC(object):
                 for lb in agent_lbs:
                     agent_host = agent['host']
                     agent['alive'] = True
-                    if not self.driver.plugin.db.is_eligible_agent(active=True,
-                                                                   agent=agent):
+                    if not self.driver.plugin.db.is_eligible_agent(
+                            active=True, agent=agent):
                         agent['alive'] = False
                     if not agent['alive'] or not agent['admin_state_up']:
-                        reassigned_agent = self.driver.scheduler.rebind_loadbalancer(
-                            context,    
-                            self.driver.plugin,
-                            env,
-                            group,
-                            lb.id
-                        )
+                        reassigned_agent = \
+                            self.driver.scheduler.rebind_loadbalancer(
+                                context,
+                                self.driver.plugin,
+                                env,
+                                group,
+                                lb.id
+                            )
                         if reassigned_agent:
-                            agent_host = reassigned_agent['host']  
+                            agent_host = reassigned_agent['host']
                     if (lb.provisioning_status != plugin_constants.ACTIVE and
                             lb.provisioning_status != plugin_constants.ERROR):
 
