@@ -31,11 +31,7 @@ Architecture
 ------------
 
 The |driver-long| runs within the OpenStack Neutron controller processes.
-<<<<<<< HEAD
 It watches the Neutron RPC messaging queue for calls to the `Neutron LBaaS API`_ and schedules tasks to the `F5 Agent for OpenStack Neutron`_.
-=======
-It watches the Neutron RPC messaging queue for calls to the `Neutron LBaaS API`_ and schedules tasks to the `F5 BIG-IP Controller for OpenStack`_.
->>>>>>> 5cbb070... Fixes #669
 The |agent-long| uses iControl REST API calls to apply the desired configurations to BIG-IP device(s).
 
 Guides
@@ -61,12 +57,7 @@ Installation
 
 .. important::
 
-<<<<<<< HEAD
    * You must download and install the `F5 Agent for OpenStack Neutron`_ and the :ref:`F5 Service Provider Package <f5-sp-package-install>` **before** you install the F5 LBaaSv2 driver.
-=======
-   * You must download and install the `F5 BIG-IP Controller for OpenStack`_ and the :ref:`F5 Service Provider Package <f5-sp-package-install>` **before** you install the F5 LBaaSv2 driver.
->>>>>>> 5cbb070... Fixes #669
-
    * Install the |driver-long| on your Neutron controller.
 
 .. index::
@@ -205,7 +196,7 @@ What's Next
     :alt: Build Status
 
 
-.. _OpenStack Neutron: https://docs.openstack.org/developer/neutron/
+.. _OpenStack Neutron: https://docs.openstack.org/neutron/latest/
 .. _F5 Agent for OpenStack Neutron: /products/openstack/latest/agent/
 .. _F5 Driver for OpenStack LBaaSv2 user documentation: /cloud/openstack/latest/lbaas
 .. _Neutron LBaaS API: https://wiki.openstack.org/wiki/Neutron/LBaaS/API_2.0
