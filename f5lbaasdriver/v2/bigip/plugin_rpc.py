@@ -20,13 +20,13 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 
 from neutron.api.v2 import attributes
-from neutron_lib import constants as neutron_const
 from neutron.common import rpc as neutron_rpc
 from neutron.db import agents_db
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as plugin_constants
 from neutron_lbaas.db.loadbalancer import models
 from neutron_lbaas.services.loadbalancer import constants as nlb_constant
+from neutron_lib import constants as neutron_const
 from f5lbaasdriver.v2.bigip import constants_v2 as constants
 
 LOG = logging.getLogger(__name__)
