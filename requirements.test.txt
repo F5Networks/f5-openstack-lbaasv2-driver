@@ -1,7 +1,7 @@
--c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=stable/mitaka
+-c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=mitaka-eol
 -e .
-git+https://github.com/openstack/neutron.git@stable/mitaka
-git+https://github.com/openstack/neutron-lbaas.git@stable/mitaka
+git+https://github.com/openstack/neutron.git@mitaka-eol
+git+https://github.com/openstack/neutron-lbaas.git@mitaka-eol
 git+https://github.com/F5Networks/pytest-symbols.git
 git+https://github.com/F5Networks/f5-openstack-test.git@mitaka
 git+https://github.com/openstack/tempest.git@12.0.0
