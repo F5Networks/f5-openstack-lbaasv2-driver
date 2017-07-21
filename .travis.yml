@@ -67,6 +67,7 @@ deploy:
   - provider: script
     skip_cleanup: true
     on:
+      all_branches: true
       repo: F5Networks/f5-openstack-lbaasv2-driver
       condition: $TRAVIS_TAG = ""
     script:
@@ -79,6 +80,5 @@ deploy:
     on:
       tags: true
       repo: F5Networks/f5-openstack-lbaasv2-driver
-
     script:
     - ./docs/scripts/deploy-docs.sh publish-product-docs-to-prod openstack/$TRAVIS_BRANCH/lbaasv2-driver $RELEASE_TAG
