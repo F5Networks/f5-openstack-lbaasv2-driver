@@ -15,8 +15,8 @@
 
 # Inform make that targets are NOT files.
 .PHONY: all functest \
-tempest_13.0.0_undercloud_vxlan tempest_11.5.4_overcloud_vxlan \
-tempest_11.6.0_overcloud_vxlan tempest_11.6.1_overcloud_vxlan \
+tempest_13.0.0_undercloud_vxlan tempest_11.5.4_overcloud \
+tempest_11.6.0_overcloud tempest_11.6.1_overcloud \
 tempest_12.1.1_undercloud_vxlan tempest_11.5.4_undercloud_vxlan \
 tempest_11.5.4_undercloud_gre tempest_11.5.4_undercloud_vlan \
 tempest_11.6.0_undercloud_vxlan tempest_11.6.0_undercloud_gre \
@@ -150,7 +150,7 @@ tempest_13.0.0_undercloud_vxlan:
 	$(MAKE) -C . run_tests
 
 # Tempest Tests for 11.5.x overcloud VE deployment
-tempest_11.5.4_overcloud_vxlan:
+tempest_11.5.4_overcloud:
 	export PROJROOTDIR=$(PROJROOTDIR) ;\
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.5.4.2.0.291.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=overcloud ;\
@@ -158,12 +158,11 @@ tempest_11.5.4_overcloud_vxlan:
 	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(SANITIZED_BRANCH)-$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
-	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
 	export EXCLUDE_FILE=$@.yaml ;\
 	$(MAKE) -C . run_tests
 
 # Tempest Tests for 11.6.x overcloud VE deployment
-tempest_11.6.0_overcloud_vxlan:
+tempest_11.6.0_overcloud:
 	export PROJROOTDIR=$(PROJROOTDIR) ;\
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.6.0.0.0.401.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=overcloud ;\
@@ -171,11 +170,10 @@ tempest_11.6.0_overcloud_vxlan:
 	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(SANITIZED_BRANCH)-$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
-	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
 	export EXCLUDE_FILE=$@.yaml ;\
 	$(MAKE) -C . run_tests
 
-tempest_11.6.1_overcloud_vxlan:
+tempest_11.6.1_overcloud:
 	export PROJROOTDIR=$(PROJROOTDIR) ;\
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.6.1.1.0.326.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=overcloud ;\
@@ -183,12 +181,11 @@ tempest_11.6.1_overcloud_vxlan:
 	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(SANITIZED_BRANCH)-$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
-	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
 	export EXCLUDE_FILE=$@.yaml ;\
 	$(MAKE) -C . run_tests
 
 # Tempest Tests for 12.1.x overcloud VE deployment
-tempest_12.1.1_overcloud_vxlan:
+tempest_12.1.1_overcloud:
 	export PROJROOTDIR=$(PROJROOTDIR) ;\
 	export TEST_VE_IMAGE=os_ready-BIGIP-12.1.1.2.0.204.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=overcloud ;\
@@ -196,7 +193,6 @@ tempest_12.1.1_overcloud_vxlan:
 	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(SANITIZED_BRANCH)-$@ ;\
 	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$${GUMBALLS_PROJECT} ;\
 	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
-	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
 	export EXCLUDE_FILE=$@.yaml ;\
 	$(MAKE) -C . run_tests
 

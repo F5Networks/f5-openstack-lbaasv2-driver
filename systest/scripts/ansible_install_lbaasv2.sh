@@ -8,7 +8,6 @@ OS_CONTROLLER_IP=`/tools/bin/tlc --sid ${TEST_SESSION} symbols \
 SSH_CMD="ssh -i /home/jenkins/.ssh/id_rsa -o StrictHostKeyChecking=no testlab@${OS_CONTROLLER_IP}"
 BIGIP_IP=`${SSH_CMD} "cat /home/testlab/ve_mgmt_ip"`
 BIGIP_IP=${BIGIP_IP%%[[:cntrl:]]}
-NETWORK_TYPES=${TEST_TENANT_NETWORK_TYPE}
 AGENT_LOC=git+https://github.com/F5Networks/f5-openstack-agent.git@${BRANCH}
 DRIVER_LOC=git+https://github.com/F5Networks/f5-openstack-lbaasv2-driver.git@${BRANCH}
 NEUTRON_DRIVER_LOC=https://raw.githubusercontent.com/F5Networks/neutron-lbaas/stable/${BRANCH}/neutron_lbaas/drivers/f5/driver_v2.py
@@ -21,10 +20,10 @@ EXTRA_VARS="agent_pkg_location=${AGENT_LOC} driver_pkg_location=${DRIVER_LOC} ne
 
 if [[ $TEST_OPENSTACK_CLOUD == 'undercloud' ]]; then
     GLOBAL_ROUTED_MODE="False"
-    if [[ $NETWORK_TYPES == 'vlan' ]]; then
+    if [[ $TEST_TENANT_NETWORK_TYPE == 'vlan' ]]; then
         ADVERTISED_TUNNEL_TYPES=""
     else
-        ADVERTISED_TUNNEL_TYPES=${NETWORK_TYPES}
+        ADVERTISED_TUNNEL_TYPES=${TEST_TENANT_NETWORK_TYPE}
     fi
     EXTRA_VARS="${EXTRA_VARS} advertised_tunnel_types=${ADVERTISED_TUNNEL_TYPES}"
 else
