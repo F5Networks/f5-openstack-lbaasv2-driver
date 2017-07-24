@@ -24,7 +24,7 @@ from f5lbaasdriver.test.tempest.tests.api import base
 config = config.CONF
 
 
-class MemberSubnetTestJSON(base.BaseAdminTestCase):
+class MemberSubnetTestJSON(base.F5BaseAdminTestCase):
     """Test creating two members on different subnets, same network.
 
     Verifies that a self IP is created for configurations that have
