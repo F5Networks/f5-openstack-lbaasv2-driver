@@ -71,18 +71,14 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
 
     def rebind_loadbalancers(
             self, context, plugin, env, group, current_agent):
-        env_agents = self.get_agents_in_env(
-                        context,
-                        plugin,
-                        env,
-                        group=group,
-                        active=True
-                    )
+        env_agents = self.get_agents_in_env(context, plugin, env,
+                                            group=group, active=True)
         if env_agents:
             reassigned_agent = env_agents[0]
-            bindings = context.session.query(
-                agent_scheduler.LoadbalancerAgentBinding).filter_by(
-                agent_id=current_agent['id']).all()
+            bindings = \
+                context.session.query(
+                    agent_scheduler.LoadbalancerAgentBinding).filter_by(
+                        agent_id=current_agent['id']).all()
             for binding in bindings:
                 binding.agent_id = reassigned_agent['id']
                 context.session.add(binding)
