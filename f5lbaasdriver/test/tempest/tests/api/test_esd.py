@@ -24,7 +24,7 @@ from f5lbaasdriver.test.tempest.tests.api import base
 CONF = config.CONF
 
 
-class ESDTestJSON(base.BaseTestCase):
+class ESDTestJSON(base.F5BaseTestCase):
     """Enhanced service definition tempest tests.
 
     """

@@ -18,15 +18,13 @@ from tempest import config
 from tempest.lib.common.utils import data_utils
 from tempest import test
 
-from f5lbaasdriver.test.tempest.services.clients.bigip_client import \
-    BigIpClient
 from f5lbaasdriver.test.tempest.tests.api import base
 
 
 CONF = config.CONF
 
 
-class L7PolicyRulesTestJSON(base.BaseTestCase):
+class L7PolicyRulesTestJSON(base.F5BaseTestCase):
     """L7 Policy tempest tests.
 
     Tests the following operations in the Neutron-LBaaS API using the
@@ -66,7 +64,7 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
 
         cls.partition = 'Project_' + cls.subnet['tenant_id']
         cls.vs_name = 'Project_' + cls.listener_id
-        cls.bigip = BigIpClient()
+        cls.bigip = cls.bigip_client
 
     @classmethod
     def resource_cleanup(cls):

@@ -18,7 +18,7 @@ from tempest import config
 from tempest.lib.common.utils import data_utils
 from tempest import test
 
-from f5lbaasdriver.test.tempest.tests.api import base
+from neutron_lbaas.tests.tempest.v2.api import base
 
 CONF = config.CONF
 
