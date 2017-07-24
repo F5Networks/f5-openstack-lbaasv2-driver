@@ -108,14 +108,22 @@ class F5DriverV2(object):
         self.plugin.agent_notifiers.update(
             {q_const.AGENT_TYPE_LOADBALANCER: self.agent_rpc})
 
-        registry.subscribe(
-            self.post_fork_callback, resources.PROCESS, events.AFTER_INIT)
+        registry.subscribe(self._bindRegistryCallback(),
+                           resources.PROCESS,
+                           events.AFTER_CREATE)
 
-    def post_fork_callback(self, resources, event, trigger):
-        LOG.debug("F5DriverV2 received post neutron child fork "
-                  "notification pid(%d) print trigger(%s)" % (
-                      os.getpid(), trigger))
-        self.plugin_rpc.create_rpc_listener()
+    def _bindRegistryCallback(self):
+        # Defines a callback function with name tied to driver env. Need to
+        # enusre unique name, as registry callback manager references callback
+        # functions by name.
+        def post_fork_callback(resources, event, trigger):
+            LOG.debug("F5DriverV2 with env %s received post neutron child "
+                      "fork notification pid(%d) print trigger(%s)" % (
+                          self.env, os.getpid(), trigger))
+            self.plugin_rpc.create_rpc_listener()
+
+        post_fork_callback.__name__ += '_' + str(self.env)
+        return post_fork_callback
 
 
 class EntityManager(object):
