@@ -39,6 +39,7 @@ class LBaaSv2PluginCallbacksRPC(object):
     def __init__(self, driver=None):
         """LBaaSv2PluginCallbacksRPC constructor."""
         self.driver = driver
+        self.cluster_wide_agents = {}
 
     def create_rpc_listener(self):
         topic = constants.TOPIC_PROCESS_ON_HOST_V2
@@ -81,7 +82,7 @@ class LBaaSv2PluginCallbacksRPC(object):
     # change the admin_state_up of the an agent
     @log_helpers.log_method_call
     def scrub_dead_agents(self, context, env, group, host=None):
-        """Set the admin_up_state of an agent"""
+        """Remove all non-alive or admin down agents"""
         LOG.debug('scrubing dead agent bindings')
         with context.session.begin(subtransactions=True):
             try:
@@ -93,6 +94,54 @@ class LBaaSv2PluginCallbacksRPC(object):
                 LOG.error('scub dead agents exception: %s' % str(exc))
                 return False
         return True
+
+    # return a single active agent to implement cluster wide changes
+    # which can not efficiently mapped back to a particulare agent
+    @log_helpers.log_method_call
+    def get_clusterwide_agent(self, context, env, group, host=None):
+        """Get an agent to perform clusterwide tasks"""
+        LOG.debug('getting agent to perform clusterwide tasks')
+        with context.session.begin(subtransactions=True):
+            if (env, group) in self.cluster_wide_agents:
+                known_agent = self.cluster_wide_agents[(env, group)]
+                if self.driver.plugin.db.is_eligible_agent(active=True,
+                                                           agent=known_agent):
+                    return known_agent
+                else:
+                    del(self.cluster_wide_agents[(env, group)])
+            try:
+                agents = \
+                    self.driver.scheduler.get_agents_in_env(context,
+                                                            self.driver.plugin,
+                                                            env, group, True)
+                if agents:
+                    self.cluster_wide_agents[(env, group)] = agents[0]
+                    return agents[0]
+                else:
+                    LOG.error('no active agents available for clusterwide ',
+                              ' tasks %s group number %s' % (env, group))
+                    return None
+            except Exception as exc:
+                LOG.error('clusterwide agent exception: %s' % str(exc))
+                return None
+        return None
+
+    # validate a list of loadbalancer id - assure they are not deleted
+    @log_helpers.log_method_call
+    def validate_loadbalancers_state(self, context, loadbalancers, host=None):
+        lb_status = {}
+        for lbid in loadbalancers:
+            with context.session.begin(subtransactions=True):
+                try:
+                    lb_db = self.driver.plugin.db.get_loadbalancer(context,
+                                                                   lbid)
+                    lb_status[lbid] = lb_db.provisioning_status
+
+                except Exception as e:
+                    LOG.error('Exception: get_loadbalancer: %s',
+                              e.message)
+                    lb_status[lbid] = 'Unknown'
+        return lb_status
 
     # get a list of loadbalancer ids which are active on this agent host
     #
@@ -190,12 +239,12 @@ class LBaaSv2PluginCallbacksRPC(object):
                         agent['alive'] = False
                     if not agent['alive'] or not agent['admin_state_up']:
                         reassigned_agent = \
-                            self.driver.scheduler.rebind_loadbalancer(
+                            self.driver.scheduler.rebind_loadbalancers(
                                 context,
                                 self.driver.plugin,
                                 env,
                                 group,
-                                lb.id
+                                agent
                             )
                         if reassigned_agent:
                             agent_host = reassigned_agent['host']
@@ -240,12 +289,12 @@ class LBaaSv2PluginCallbacksRPC(object):
                         agent['alive'] = False
                     if not agent['alive'] or not agent['admin_state_up']:
                         reassigned_agent = \
-                            self.driver.scheduler.rebind_loadbalancer(
+                            self.driver.scheduler.rebind_loadbalancers(
                                 context,
                                 self.driver.plugin,
                                 env,
                                 group,
-                                lb.id
+                                agent
                             )
                         if reassigned_agent:
                             agent_host = reassigned_agent['host']
@@ -292,12 +341,12 @@ class LBaaSv2PluginCallbacksRPC(object):
                         agent['alive'] = False
                     if not agent['alive'] or not agent['admin_state_up']:
                         reassigned_agent = \
-                            self.driver.scheduler.rebind_loadbalancer(
+                            self.driver.scheduler.rebind_loadbalancers(
                                 context,
                                 self.driver.plugin,
                                 env,
                                 group,
-                                lb.id
+                                agent
                             )
                         if reassigned_agent:
                             agent_host = reassigned_agent['host']
