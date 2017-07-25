@@ -45,12 +45,10 @@ class LBaaSv2PluginCallbacksRPC(object):
         topic = constants.TOPIC_PROCESS_ON_HOST_V2
         if self.driver.env:
             topic = topic + "_" + self.driver.env
-
         self.conn = neutron_rpc.create_connection(new=True)
         self.conn.create_consumer(
             topic,
-            [self,
-             agents_db.AgentExtRpcCallback(self.driver.plugin.db)],
+            [self, agents_db.AgentExtRpcCallback(self.driver.plugin.db)],
             fanout=False)
         self.conn.consume_in_threads()
 
@@ -62,7 +60,6 @@ class LBaaSv2PluginCallbacksRPC(object):
             LOG.error('tried to set agent admin_state_up without host')
             return False
         with context.session.begin(subtransactions=True):
-
             query = context.session.query(agents_db.Agent)
             query = query.filter(
                 agents_db.Agent.agent_type ==
@@ -76,7 +73,6 @@ class LBaaSv2PluginCallbacksRPC(object):
             except Exception as exc:
                 LOG.error('query for agent produced: %s' % str(exc))
                 return False
-
         return True
 
     # change the admin_state_up of the an agent
@@ -86,10 +82,8 @@ class LBaaSv2PluginCallbacksRPC(object):
         LOG.debug('scrubing dead agent bindings')
         with context.session.begin(subtransactions=True):
             try:
-                self.driver.scheduler.scrub_dead_agents(context,
-                                                        self.driver.plugin,
-                                                        env,
-                                                        group=None)
+                self.driver.scheduler.scrub_dead_agents(
+                    context, self.driver.plugin, env, group=None)
             except Exception as exc:
                 LOG.error('scub dead agents exception: %s' % str(exc))
                 return False
@@ -154,17 +148,13 @@ class LBaaSv2PluginCallbacksRPC(object):
             if not host:
                 return []
             agents = self.driver.plugin.db.get_lbaas_agents(
-                context,
-                filters={'host': [host]}
-            )
+                context, filters={'host': [host]})
             if not agents:
                 return []
             elif len(agents) > 1:
                 LOG.warning('Multiple lbaas agents found on host %s' % host)
             lbs = self.driver.plugin.db.list_loadbalancers_on_lbaas_agent(
-                context,
-                agents[0].id
-            )
+                context, agents[0].id)
             lb_ids = [loadbalancer.id
                       for loadbalancer in lbs]
             active_lb_ids = set()
@@ -181,16 +171,12 @@ class LBaaSv2PluginCallbacksRPC(object):
 
     @log_helpers.log_method_call
     def get_service_by_loadbalancer_id(
-            self,
-            context,
-            loadbalancer_id=None,
-            host=None):
+            self, context, loadbalancer_id=None, host=None):
         """Get the complete service definition by loadbalancer_id."""
         service = {}
         with context.session.begin(subtransactions=True):
             LOG.debug('Building service definition entry for %s'
                       % loadbalancer_id)
-
             try:
                 lb = self.driver.plugin.db.get_loadbalancer(
                     context,
@@ -203,13 +189,11 @@ class LBaaSv2PluginCallbacksRPC(object):
                 # the preceeding get call returns a nested dict, unwind
                 # one level if necessary
                 agent = (agent['agent'] if 'agent' in agent else agent)
-                service = self.driver.service_builder.build(context,
-                                                            lb,
-                                                            agent)
+                service = self.driver.service_builder.build(
+                    context, lb, agent)
             except Exception as e:
                 LOG.error("Exception: get_service_by_loadbalancer_id: %s",
                           e.message)
-
             return service
 
     @log_helpers.log_method_call
@@ -217,40 +201,20 @@ class LBaaSv2PluginCallbacksRPC(object):
         """Get all loadbalancers for this group in this env."""
         loadbalancers = []
         plugin = self.driver.plugin
-
         with context.session.begin(subtransactions=True):
+            self.driver.scheduler.scrub_dead_agents(
+                context, plugin, env, group)
             agents = self.driver.scheduler.get_agents_in_env(
-                context,
-                self.driver.plugin,
-                env,
-                group,
-                active=None)
-
+                context, plugin, env, group, active=None)
             for agent in agents:
                 agent_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
                     context,
                     agent.id
                 )
                 for lb in agent_lbs:
-                    agent_host = agent['host']
-                    agent['alive'] = True
-                    if not self.driver.plugin.db.is_eligible_agent(
-                            active=True, agent=agent):
-                        agent['alive'] = False
-                    if not agent['alive'] or not agent['admin_state_up']:
-                        reassigned_agent = \
-                            self.driver.scheduler.rebind_loadbalancers(
-                                context,
-                                self.driver.plugin,
-                                env,
-                                group,
-                                agent
-                            )
-                        if reassigned_agent:
-                            agent_host = reassigned_agent['host']
                     loadbalancers.append(
                         {
-                            'agent_host': agent_host,
+                            'agent_host': agent['host'],
                             'lb_id': lb.id,
                             'tenant_id': lb.tenant_id
                         }
@@ -265,50 +229,25 @@ class LBaaSv2PluginCallbacksRPC(object):
         """Get all loadbalancers for this group in this env."""
         loadbalancers = []
         plugin = self.driver.plugin
-
         with context.session.begin(subtransactions=True):
+            self.driver.scheduler.scrub_dead_agents(
+                context, plugin, env, group)
             agents = self.driver.scheduler.get_agents_in_env(
-                context,
-                self.driver.plugin,
-                env,
-                group=group,
-                active=None
-            )
-
+                context, plugin, env, group, active=None)
             for agent in agents:
                 agent_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
                     context,
                     agent.id
                 )
-
                 for lb in agent_lbs:
-                    agent_host = agent['host']
-                    agent['alive'] = True
-                    if not self.driver.plugin.db.is_eligible_agent(
-                            active=True, agent=agent):
-                        agent['alive'] = False
-                    if not agent['alive'] or not agent['admin_state_up']:
-                        reassigned_agent = \
-                            self.driver.scheduler.rebind_loadbalancers(
-                                context,
-                                self.driver.plugin,
-                                env,
-                                group,
-                                agent
-                            )
-                        if reassigned_agent:
-                            agent_host = reassigned_agent['host']
-
                     if lb.provisioning_status == plugin_constants.ACTIVE:
-
                         loadbalancers.append(
                             {
-                                'agent_host': agent_host,
+                                'agent_host': agent['host'],
                                 'lb_id': lb.id,
                                 'tenant_id': lb.tenant_id
                             }
                         )
-
         if host:
             return [lb for lb in loadbalancers if lb['agent_host'] == host]
         else:
@@ -319,75 +258,47 @@ class LBaaSv2PluginCallbacksRPC(object):
         """Get all loadbalancers for this group in this env."""
         loadbalancers = []
         plugin = self.driver.plugin
-
         with context.session.begin(subtransactions=True):
+            self.driver.scheduler.scrub_dead_agents(
+                context, plugin, env, group)
             agents = self.driver.scheduler.get_agents_in_env(
-                context,
-                self.driver.plugin,
-                env,
-                group,
-                active=None)
-
+                context, plugin, env, group, active=None)
             for agent in agents:
                 agent_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
                     context,
                     agent.id
                 )
                 for lb in agent_lbs:
-                    agent_host = agent['host']
-                    agent['alive'] = True
-                    if not self.driver.plugin.db.is_eligible_agent(
-                            active=True, agent=agent):
-                        agent['alive'] = False
-                    if not agent['alive'] or not agent['admin_state_up']:
-                        reassigned_agent = \
-                            self.driver.scheduler.rebind_loadbalancers(
-                                context,
-                                self.driver.plugin,
-                                env,
-                                group,
-                                agent
-                            )
-                        if reassigned_agent:
-                            agent_host = reassigned_agent['host']
                     if (lb.provisioning_status != plugin_constants.ACTIVE and
                             lb.provisioning_status != plugin_constants.ERROR):
-
                         loadbalancers.append(
                             {
-                                'agent_host': agent_host,
+                                'agent_host': agent['host'],
                                 'lb_id': lb.id,
                                 'tenant_id': lb.tenant_id
                             }
                         )
-
         if host:
             return [lb for lb in loadbalancers if lb['agent_host'] == host]
         else:
             return loadbalancers
 
     @log_helpers.log_method_call
-    def update_loadbalancer_stats(self,
-                                  context,
-                                  loadbalancer_id=None,
-                                  stats=None):
+    def update_loadbalancer_stats(
+            self, context, loadbalancer_id=None, stats=None):
         """Update service stats."""
         with context.session.begin(subtransactions=True):
             try:
                 self.driver.plugin.db.update_loadbalancer_stats(
-                    context,
-                    loadbalancer_id,
-                    stats
+                    context, loadbalancer_id, stats
                 )
             except Exception as e:
                 LOG.error('Exception: update_loadbalancer_stats: %s',
                           e.message)
 
     @log_helpers.log_method_call
-    def update_loadbalancer_status(self, context,
-                                   loadbalancer_id=None,
-                                   status=None,
-                                   operating_status=None):
+    def update_loadbalancer_status(self, context, loadbalancer_id=None,
+                                   status=None, operating_status=None):
         """Agent confirmation hook to update loadbalancer status."""
         with context.session.begin(subtransactions=True):
             try:
@@ -416,12 +327,9 @@ class LBaaSv2PluginCallbacksRPC(object):
         self.driver.plugin.db.delete_loadbalancer(context, loadbalancer_id)
 
     @log_helpers.log_method_call
-    def update_listener_status(
-            self,
-            context,
-            listener_id=None,
-            provisioning_status=plugin_constants.ERROR,
-            operating_status=None):
+    def update_listener_status(self, context, listener_id=None,
+                               provisioning_status=plugin_constants.ERROR,
+                               operating_status=None):
         """Agent confirmation hook to update listener status."""
         with context.session.begin(subtransactions=True):
             try:
@@ -449,12 +357,9 @@ class LBaaSv2PluginCallbacksRPC(object):
         self.driver.plugin.db.delete_listener(context, listener_id)
 
     @log_helpers.log_method_call
-    def update_pool_status(
-            self,
-            context,
-            pool_id=None,
-            provisioning_status=plugin_constants.ERROR,
-            operating_status=None):
+    def update_pool_status(self, context, pool_id=None,
+                           provisioning_status=plugin_constants.ERROR,
+                           operating_status=None):
         """Agent confirmations hook to update pool status."""
         with context.session.begin(subtransactions=True):
             try:
@@ -481,12 +386,9 @@ class LBaaSv2PluginCallbacksRPC(object):
         self.driver.plugin.db.delete_pool(context, pool_id)
 
     @log_helpers.log_method_call
-    def update_member_status(
-            self,
-            context,
-            member_id=None,
-            provisioning_status=None,
-            operating_status=None):
+    def update_member_status(self, context, member_id=None,
+                             provisioning_status=None,
+                             operating_status=None):
         """Agent confirmations hook to update member status."""
         with context.session.begin(subtransactions=True):
             try:
@@ -514,11 +416,8 @@ class LBaaSv2PluginCallbacksRPC(object):
 
     @log_helpers.log_method_call
     def update_health_monitor_status(
-            self,
-            context,
-            health_monitor_id,
-            provisioning_status=plugin_constants.ERROR,
-            operating_status=None):
+            self, context, health_monitor_id,
+            provisioning_status=plugin_constants.ERROR, operating_status=None):
         """Agent confirmation hook to update health monitor status."""
         with context.session.begin(subtransactions=True):
             try:
@@ -545,12 +444,9 @@ class LBaaSv2PluginCallbacksRPC(object):
         self.driver.plugin.db.delete_healthmonitor(context, healthmonitor_id)
 
     @log_helpers.log_method_call
-    def update_l7policy_status(
-            self,
-            context,
-            l7policy_id=None,
-            provisioning_status=plugin_constants.ERROR,
-            operating_status=None):
+    def update_l7policy_status(self, context, l7policy_id=None,
+                               provisioning_status=plugin_constants.ERROR,
+                               operating_status=None):
         """Agent confirmation hook to update l7 policy status."""
         with context.session.begin(subtransactions=True):
             try:
@@ -579,13 +475,9 @@ class LBaaSv2PluginCallbacksRPC(object):
         self.driver.plugin.db.delete_l7policy(context, l7policy_id)
 
     @log_helpers.log_method_call
-    def update_l7rule_status(
-            self,
-            context,
-            l7rule_id=None,
-            l7policy_id=None,
-            provisioning_status=plugin_constants.ERROR,
-            operating_status=None):
+    def update_l7rule_status(self, context, l7rule_id=None, l7policy_id=None,
+                             provisioning_status=plugin_constants.ERROR,
+                             operating_status=None):
         """Agent confirmation hook to update l7 policy status."""
         with context.session.begin(subtransactions=True):
             try:
