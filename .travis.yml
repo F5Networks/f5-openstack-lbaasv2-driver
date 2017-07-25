@@ -67,7 +67,7 @@ deploy:
   - provider: script
     skip_cleanup: true
     on:
-      all_branches: true
+      branch: mitaka
       repo: F5Networks/f5-openstack-lbaasv2-driver
       condition: $TRAVIS_TAG = ""
     script:
