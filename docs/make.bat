@@ -38,6 +38,7 @@ if "%1" == "help" (
 	echo.  linkcheck  to check all external links for integrity
 	echo.  doctest    to run all doctests embedded in the documentation if enabled
 	echo.  coverage   to run coverage check of the documentation if enabled
+	echo.  preview    to build live preview of the documentation using sphinx-autobuild
 	goto end
 )
 
@@ -257,6 +258,14 @@ if "%1" == "pseudoxml" (
 	if errorlevel 1 exit /b 1
 	echo.
 	echo.Build finished. The pseudo-XML files are in %BUILDDIR%/pseudoxml.
+	goto end
+)
+
+if "%1" == "preview" (
+	echo.Running autobuild. View live edits at:
+	echo.  http://0.0.0.0:8000/
+	echo.
+	sphinx-autobuild --host 0.0.0.0 -b html ./ $(BUILDDIR)
 	goto end
 )
 
