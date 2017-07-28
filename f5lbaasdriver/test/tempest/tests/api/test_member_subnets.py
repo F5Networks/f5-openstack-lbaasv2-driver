@@ -104,7 +104,7 @@ class MemberSubnetTestJSON(base.F5BaseAdminTestCase):
         self.addCleanup(self._delete_member, pool.get('id'), member2.get('id'))
         assert self._has_selfip_for_member(member2)
 
-        # delete first and check second self IP
+        # delete first member and check second self IP
         self._delete_member(pool.get('id'), member1.get('id'))
         assert self._has_selfip_for_member(member2)
 
@@ -126,7 +126,7 @@ class MemberSubnetTestJSON(base.F5BaseAdminTestCase):
 
         selfips = self.bigip.tm.net.selfips.get_collection()
         for selfip in selfips:
-            selfip_address, selfip_rd = self._split_address(selfip.address)
+            selfip_address = self._split_address(selfip.address)
             network = ipaddress.ip_network(selfip_address, False)
             if member_address in network:
                 return True
