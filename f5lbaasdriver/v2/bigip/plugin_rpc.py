@@ -137,38 +137,6 @@ class LBaaSv2PluginCallbacksRPC(object):
                     lb_status[lbid] = 'Unknown'
         return lb_status
 
-    # get a list of loadbalancer ids which are active on this agent host
-    #
-    # deprecated
-    #
-    @log_helpers.log_method_call
-    def get_active_loadbalancers_for_agent(self, context, host=None):
-        """Get a list of loadbalancers active on this host."""
-        with context.session.begin(subtransactions=True):
-            if not host:
-                return []
-            agents = self.driver.plugin.db.get_lbaas_agents(
-                context, filters={'host': [host]})
-            if not agents:
-                return []
-            elif len(agents) > 1:
-                LOG.warning('Multiple lbaas agents found on host %s' % host)
-            lbs = self.driver.plugin.db.list_loadbalancers_on_lbaas_agent(
-                context, agents[0].id)
-            lb_ids = [loadbalancer.id
-                      for loadbalancer in lbs]
-            active_lb_ids = set()
-            lbs = self.driver.plugin.db.get_loadbalancers(
-                context,
-                filters={
-                    'status': [plugin_constants.ACTIVE],
-                    'id': lb_ids,
-                    'admin_state_up': [True]
-                })
-            for lb in lbs:
-                active_lb_ids.add(lb.id)
-            return active_lb_ids
-
     @log_helpers.log_method_call
     def get_service_by_loadbalancer_id(
             self, context, loadbalancer_id=None, host=None):
@@ -226,7 +194,7 @@ class LBaaSv2PluginCallbacksRPC(object):
 
     @log_helpers.log_method_call
     def get_active_loadbalancers(self, context, env, group=None, host=None):
-        """Get all loadbalancers for this group in this env."""
+        """Get active loadbalancers for this group in this env."""
         loadbalancers = []
         plugin = self.driver.plugin
         with context.session.begin(subtransactions=True):
@@ -255,7 +223,7 @@ class LBaaSv2PluginCallbacksRPC(object):
 
     @log_helpers.log_method_call
     def get_pending_loadbalancers(self, context, env, group=None, host=None):
-        """Get all loadbalancers for this group in this env."""
+        """Get pending loadbalancers for this group in this env."""
         loadbalancers = []
         plugin = self.driver.plugin
         with context.session.begin(subtransactions=True):
@@ -271,6 +239,35 @@ class LBaaSv2PluginCallbacksRPC(object):
                 for lb in agent_lbs:
                     if (lb.provisioning_status != plugin_constants.ACTIVE and
                             lb.provisioning_status != plugin_constants.ERROR):
+                        loadbalancers.append(
+                            {
+                                'agent_host': agent['host'],
+                                'lb_id': lb.id,
+                                'tenant_id': lb.tenant_id
+                            }
+                        )
+        if host:
+            return [lb for lb in loadbalancers if lb['agent_host'] == host]
+        else:
+            return loadbalancers
+
+    @log_helpers.log_method_call
+    def get_errored_loadbalancers(self, context, env, group=None, host=None):
+        """Get pending loadbalancers for this group in this env."""
+        loadbalancers = []
+        plugin = self.driver.plugin
+        with context.session.begin(subtransactions=True):
+            self.driver.scheduler.scrub_dead_agents(
+                context, plugin, env, group)
+            agents = self.driver.scheduler.get_agents_in_env(
+                context, plugin, env, group, active=None)
+            for agent in agents:
+                agent_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
+                    context,
+                    agent.id
+                )
+                for lb in agent_lbs:
+                    if (lb.provisioning_status == plugin_constants.ERROR):
                         loadbalancers.append(
                             {
                                 'agent_host': agent['host'],
