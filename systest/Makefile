@@ -13,18 +13,6 @@
 # limitations under the License.
 #
 
-# Inform make that targets are NOT files.
-.PHONY: all functest \
-tempest_13.0.0_undercloud_vxlan tempest_11.5.4_overcloud \
-tempest_11.6.0_overcloud tempest_11.6.1_overcloud \
-tempest_12.1.1_undercloud_vxlan tempest_11.5.4_undercloud_vxlan \
-tempest_11.5.4_undercloud_gre tempest_11.5.4_undercloud_vlan \
-tempest_11.6.0_undercloud_vxlan tempest_11.6.0_undercloud_gre \
-tempest_11.6.0_undercloud_vlan \
-tempest_11.6.1_undercloud_gre tempest_11.6.1_undercloud_vlan \
-tempest_12.1.1_undercloud_vxlan tempest_12.1.1_undercloud_gre \
-tempest_12.1.1_undercloud_vlan 
-
 # Fixing branch to that specified in the public fork. This is necessary for build on PRs.
 export BRANCH := stable/newton
 # The branch may contain the text 'stable/' before the OpenStack release name
@@ -102,6 +90,7 @@ export FROM_AGENT_SESSION := from.agent_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 
 microservice_setup_tlc_session:
 	@echo "setting up TLC session..."
+	sudo -E chown -Rf jenkins:jenkins $(PROJROOTDIR) && \
 	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
 
 configure_test_infra:
