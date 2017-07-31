@@ -1,4 +1,5 @@
 {
     "exclude": ["test_create_load_balancer_missing_tenant_id_field_for_admin",
-                "test_create_load_balancer_for_another_tenant"]
+                "test_create_load_balancer_for_another_tenant",
+                "test_create_load_balancer_missing_tenant_id_for_other_tenant"]
 }
