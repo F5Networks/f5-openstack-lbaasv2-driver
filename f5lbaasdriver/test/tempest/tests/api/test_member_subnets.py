@@ -91,7 +91,6 @@ class MemberSubnetTestJSON(base.F5BaseAdminTestCase):
                          'protocol_port': 8080,
                          'subnet_id': self.subnet2['id']}
         member1 = self._create_member(**member_kwargs)
-        self.addCleanup(self._delete_member, pool.get('id'), member1.get('id'))
         assert self._has_selfip_for_member(member1)
 
         # create second member on subnet3
