@@ -22,7 +22,7 @@ from f5lbaasdriver.test.tempest.tests.api import base
 CONF = config.CONF
 
 
-class PoolSyncTestJSON(base.BaseTestCase):
+class PoolSyncTestJSON(base.F5BaseTestCase):
     """Test re-sync pools after BIG-IP restart.
 
     To simulate a restart, the test directly deletes a pool on a BIG-IP, as
@@ -79,6 +79,17 @@ class PoolSyncTestJSON(base.BaseTestCase):
         name = 'Project_' + pool_id
         return self.bigip_client.delete_pool(name, partition)
 
+    def _member_exists(self, pool_id, member_id, partition):
+        pool_name = 'Project_' + pool_id
+        member_name = 'Project_' + member_id
+        return self.bigip_client.member_exists(
+            pool_name, member_name, partition)
+
+    def _remove_member(self, pool_id, member_id, partition):
+        pool_name = 'Project_' + pool_id
+        member_name = 'Project_' + member_id
+        self.bigip_client.delete_member(pool_name, member_name, partition)
+
     @test.attr(type='smoke')
     def test_pool_active_sync(self):
         # verify pool exists
@@ -95,3 +106,28 @@ class PoolSyncTestJSON(base.BaseTestCase):
         assert self._pool_exists(self.pool_id, self.partition)
 
         self._delete_pool(self.pool['id'])
+
+    @test.attr(type='smoke')
+    def test_pool_member_active_sync(self):
+        allocation_pool = self.subnet['allocation_pools'][0]
+        member_kwargs = {
+            'pool_id': self.pool_id,
+            'address': allocation_pool['start'],
+            'protocol_port': 8080,
+            'subnet_id': self.subnet['id']}
+        member = self._create_member(**member_kwargs)
+        self.addCleanup(self._delete_member, self.pool_id, member.get('id'))
+
+        # delete member directly on BIG-IP
+        self._remove_member(self.pool_id, member.get('id'), self.partition)
+        # delete pool directly on BIG-IP
+        self._remove_pool(self.pool_id, self.partition)
+
+        # update listener to force pool sync
+        update_kwargs = {'description': 'resync ACTIVE pool and member'}
+        self._update_listener(self.listener['id'], **update_kwargs)
+
+        # verify pool and member exists
+        assert self._member_exists(
+            self.pool_id, member.get('id'), self.partition)
+        assert self._pool_exists(self.pool_id, self.partition)
