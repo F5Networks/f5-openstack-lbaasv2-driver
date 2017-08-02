@@ -20,6 +20,7 @@ from tempest import test
 
 from f5lbaasdriver.test.tempest.tests.api import base
 
+import time
 
 CONF = config.CONF
 
@@ -77,15 +78,26 @@ class ESDTestJSON(base.F5BaseTestCase):
     @test.attr(type='smoke')
     def test_create_esd(self):
         """Test the creation of a L7 reject policy."""
+        attempts = 3
+        for attempt in range(attempts):
+            try:
+                policy = self._create_esd_policy()
+                self.check_esd()
+                break
+            except AssertionError as ex:
+                if attempt == attempts-1:
+                    # This was the last try, let's raise the exception
+                    raise ex
+                self._delete_l7policy(policy.get('id'))
+                # ESD might not be activated yet. Let's try again
+                time.sleep(2)
+
+    def _create_esd_policy(self):
         create_l7policy_kwargs = self.create_l7policy_kwargs
         create_l7policy_kwargs['action'] = "REJECT"
         create_l7policy_kwargs['name'] = "esd_demo_1"
 
-        new_policy = self._create_l7policy(
-            **create_l7policy_kwargs)
-        self.addCleanup(self._delete_l7policy, new_policy['id'])
-
-        self.check_esd()
+        return self._create_l7policy(**create_l7policy_kwargs)
 
     def check_esd(self):
         vs_name = 'Project_' + self.listener_id
