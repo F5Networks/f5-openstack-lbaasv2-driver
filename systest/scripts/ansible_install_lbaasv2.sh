@@ -33,9 +33,9 @@ fi
 EXTRA_VARS="${EXTRA_VARS} neutron_lbaas_init_location=${NEUTRON_INIT_LOC} restart_all_neutron_services=true remote_user=testlab"
 EXTRA_VARS="${EXTRA_VARS} f5_global_routed_mode=${GLOBAL_ROUTED_MODE} bigip_netloc=${BIGIP_IP} agent_service_name=f5-openstack-agent.service"
 EXTRA_VARS="${EXTRA_VARS} use_barbican_cert_manager=True neutron_lbaas_shim_install_dest=/usr/lib/python2.7/site-packages/neutron_lbaas/drivers/f5"
-
-sudo -E bash -c "echo [hosts] > /home/jenkins/zancas_tmp/ansible_conf.ini"
-sudo -E bash -c "echo \"${OS_CONTROLLER_IP} ansible_ssh_common_args='-o StrictHostKeyChecking=no' host_key_checking=False ansible_connection=ssh ansible_ssh_user=testlab ansible_ssh_private_key_file=/root/id_rsa\" >> /home/jenkins/zancas_tmp/ansible_conf.ini"
+sudo -E chown -Rf jenkins:jenkins /home/jenkins/container_mailbox
+bash -c "echo [hosts] > /home/jenkins/container_mailbox/ansible_conf.ini"
+bash -c "echo \"${OS_CONTROLLER_IP} ansible_ssh_common_args='-o StrictHostKeyChecking=no' host_key_checking=False ansible_connection=ssh ansible_ssh_user=testlab ansible_ssh_private_key_file=/root/id_rsa\" >> /home/jenkins/container_mailbox/ansible_conf.ini"
 
 sudo -E docker pull docker-registry.pdbld.f5net.com/f5-openstack/ansiblemicroservice
 sudo -E docker run \
