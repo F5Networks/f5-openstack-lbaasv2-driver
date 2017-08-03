@@ -31,7 +31,7 @@ touch ${NEUTRON_LBAAS_DIR}/neutron_lbaas/tests/tempest/v2/.pytest.rootdir
 cd ${PROJROOTDIR}
 
 sudo -E pip install .
-bash -c "tox --sitepackages -e tempest -c tox.ini -- \
+bash -c "tox -e tempest -c tox.ini --sitepackages -- \
   --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
   -lvv \
   --autolog-outputdir ${RESULTS_DIR} \
