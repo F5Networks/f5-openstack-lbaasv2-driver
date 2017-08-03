@@ -34,7 +34,7 @@ pipeline {
 
                     # - run systests
                     target_name=tempest_$(echo $JOB_BASE_NAME | sed s/-/_/g)
-                    make -C systest stubjenkins_test_11.6.1_undercloud_vxlan
+                    make -C systest $target_name
 
                     # - record results
                     if [ "${JOB_BASE_NAME}" != "smoke_test" ]; then
