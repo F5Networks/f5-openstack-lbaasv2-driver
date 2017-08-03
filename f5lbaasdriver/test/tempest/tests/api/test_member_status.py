@@ -27,7 +27,7 @@ from f5lbaasdriver.test.tempest.tests.api import base
 CONF = config.CONF
 
 
-class MemberStatusTestJSON(base.BaseTestCase):
+class MemberStatusTestJSON(base.F5BaseTestCase):
     """Test that pool member's operating status is set correctly."""
 
     @classmethod

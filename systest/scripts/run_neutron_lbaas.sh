@@ -25,21 +25,31 @@ cd ${NEUTRON_LBAAS_DIR}
 # doesn't exist in the ${EXCLUDE_DIR}.
 
 # Create .pytest.rootdir file at root of the neutron-lbaas repository directory
+touch ${MAKEFILE_DIR}/../f5lbaasdriver/test/tempest/tests/.pytest.rootdir
 touch ${NEUTRON_LBAAS_DIR}/.pytest.rootdir
 
-# LBaaSv2 API test cases with F5 tox.ini file
-tox -e apiv2 -c f5.tox.ini --sitepackages -- \
-  --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
-  -lvv --tb=short \
+# Navigate to the root of the repo, where the tox.ini file is found
+cd ${MAKEFILE_DIR}/../
+
+tox --sitepackages -e tempest -c tox.ini -- \
+  -lvv --tb=line \
   --autolog-outputdir ${RESULTS_DIR} \
-  --autolog-session ${API_SESSION}
+  --autolog-session ${DRIVER_TEMPEST_SESSION}
+
+
+# LBaaSv2 API test cases with F5 tox.ini file
+#tox -e apiv2 -c f5.tox.ini --sitepackages -- \
+#  --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
+#  -lvv --tb=short \
+#  --autolog-outputdir ${RESULTS_DIR} \
+#  --autolog-session ${API_SESSION}
 
 # LBaaSv2 Scenario test cases with F5 tox.ini file
-tox -e scenariov2 -c f5.tox.ini --sitepackages -- \
-  --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
-  -lvv --tb=short \
-  --autolog-outputdir ${RESULTS_DIR} \
-  --autolog-session ${SCENARIO_SESSION}
+#tox -e scenariov2 -c f5.tox.ini --sitepackages -- \
+#  --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
+#  -lvv --tb=short \
+#  --autolog-outputdir ${RESULTS_DIR} \
+#  --autolog-session ${SCENARIO_SESSION}
 
 # Returning pass so that all tests run
-exit 0
+#exit 0

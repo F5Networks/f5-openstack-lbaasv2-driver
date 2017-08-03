@@ -24,7 +24,7 @@ from f5lbaasdriver.test.tempest.tests.api import base
 config = config.CONF
 
 
-class MemberSubnetTestJSON(base.BaseAdminTestCase):
+class MemberSubnetTestJSON(base.F5BaseAdminTestCase):
     """Test creating two members on different subnets, same network.
 
     Verifies that a self IP is created for configurations that have
@@ -91,7 +91,6 @@ class MemberSubnetTestJSON(base.BaseAdminTestCase):
                          'protocol_port': 8080,
                          'subnet_id': self.subnet2['id']}
         member1 = self._create_member(**member_kwargs)
-        self.addCleanup(self._delete_member, pool.get('id'), member1.get('id'))
         assert self._has_selfip_for_member(member1)
 
         # create second member on subnet3
@@ -104,7 +103,7 @@ class MemberSubnetTestJSON(base.BaseAdminTestCase):
         self.addCleanup(self._delete_member, pool.get('id'), member2.get('id'))
         assert self._has_selfip_for_member(member2)
 
-        # delete first and check second self IP
+        # delete first member and check second self IP
         self._delete_member(pool.get('id'), member1.get('id'))
         assert self._has_selfip_for_member(member2)
 
@@ -126,7 +125,7 @@ class MemberSubnetTestJSON(base.BaseAdminTestCase):
 
         selfips = self.bigip.tm.net.selfips.get_collection()
         for selfip in selfips:
-            selfip_address, selfip_rd = self._split_address(selfip.address)
+            selfip_address = self._split_address(selfip.address)
             network = ipaddress.ip_network(selfip_address, False)
             if member_address in network:
                 return True
