@@ -421,13 +421,12 @@ class MemberManager(EntityManager):
         self._call_rpc(context, member, 'create_member')
         filters = {'device_id': [member.id]}
         port = driver.plugin.db._core_plugin.get_ports(context, filters)
-        LOG.error('f5networks port:%s', port)
         if port:
             port_id = port[0]['id']
-        LOG.debug('BBBBBBBBBBBBB:%s', port_id)
+            LOG.debug('BBBBBBBBBBBBB:%s' % port_id)
         if port_id:
             driver.plugin.db._core_plugin.delete_port(context, port_id)
-        LOG.debug('XXXXXX delete port')
+            LOG.debug('XXXXXX delete port: %s' % port_id)
 
     @log_helpers.log_method_call
     def update(self, context, old_member, member):
