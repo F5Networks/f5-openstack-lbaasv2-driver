@@ -24,13 +24,13 @@ cd ${NEUTRON_LBAAS_DIR}
 # doesn't exist in the ${EXCLUDE_DIR}.
 
 # Create .pytest.rootdir file at root of the neutron-lbaas repository directory
-sudo -E touch ${NEUTRON_LBAAS_DIR}/.pytest.rootdir
+touch ${NEUTRON_LBAAS_DIR}/.pytest.rootdir
 
 # LBaaSv2 Scenario test cases with F5 tox.ini file
 # The scenario tests are the current set of smoke tests. This is sufficient
 # for now, but we will be able to amend this set as needed.
 # In the near future, we should add our scenario tests as well.
-sudo -E bash -c "tox -e scenariov2 -c f5.tox.ini --sitepackages -- \
+bash -c "tox -e scenariov2 -c f5.tox.ini --sitepackages -- \
   --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
   -lvv \
   --autolog-outputdir ${RESULTS_DIR} \
