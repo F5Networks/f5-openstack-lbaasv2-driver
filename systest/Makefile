@@ -26,7 +26,7 @@ tempest_12.1.1_undercloud_vxlan tempest_12.1.1_undercloud_gre \
 tempest_12.1.1_undercloud_vlan 
 
 # Fixing branch to that specified in the public fork. This is necessary for build on PRs.
-export BRANCH := mitaka
+export BRANCH := stable/newton
 # The branch may contain the text 'stable/' before the OpenStack release name
 # To allow this type of branch name and any other to work with the cloud deployment
 # and with Jenkins, we should strip out the forward slash, leaving something like:
