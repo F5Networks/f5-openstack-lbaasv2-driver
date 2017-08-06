@@ -105,7 +105,7 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
         self.addCleanup(self._delete_l7policy, policy_id)
 
         assert not self.bigip.policy_exists(
-            'wrapper_policy', partition=self.partition)
+            'wrapper_policy', partition=self.partition, should_exist=False)
 
         assert not self.bigip.virtual_server_has_policy(
             self.vs_name, 'wrapper_policy', self.partition)
@@ -250,7 +250,7 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
         self._delete_l7rule(policy_id, rule_id, wait=True)
         self._delete_l7policy(policy_id, wait=True)
         assert not self.bigip.policy_exists(
-            'wrapper_policy', partition=self.partition)
+            'wrapper_policy', partition=self.partition, should_exist=False)
         assert not self.bigip.virtual_server_has_policy(
             self.vs_name, 'wrapper_policy', self.partition)
 
@@ -277,7 +277,7 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
         # remove rule and expect policy removed from BIG-IP
         self._delete_l7rule(policy_id, rule_id, wait=True)
         assert not self.bigip.policy_exists(
-            'wrapper_policy', partition=self.partition)
+            'wrapper_policy', partition=self.partition, should_exist=False)
         assert not self.bigip.virtual_server_has_policy(
             self.vs_name, 'wrapper_policy', self.partition)
 
