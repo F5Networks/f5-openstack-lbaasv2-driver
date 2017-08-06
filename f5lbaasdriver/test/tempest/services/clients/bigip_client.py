@@ -19,6 +19,7 @@ from f5.utils.testutils.registrytools import register_device
 
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
+import time
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -73,9 +74,23 @@ class BigIpClient(object):
     def folder_exists(self, folder):
         return self.bigip.tm.sys.folders.folder.exists(name=folder)
 
-    def policy_exists(self, name, partition):
+    def _policy_exists(self, name, partition):
         return self.bigip.tm.ltm.policys.policy.exists(
             name=name, partition=partition)
+
+    def policy_exists(self, name, partition, should_exist=True):
+        # The expectation here is that a policy should exist, but since
+        # policy CUD operations in OpenStack do not change the lb status
+        # to PENDING_UPDATE, we need to retry to check that the policy
+        # exists on the BIG-IP device.
+        attempts = 3
+        for attempt in range(attempts):
+            if self._policy_exists(name, partition) is should_exist:
+                return should_exist
+            if attempt == attempts-1:
+                return not should_exist
+            time.sleep(2)
+        return not should_exist
 
     def rule_exists(self, policy_name, rule_name, partition):
         if self.policy_exists(policy_name, partition):
