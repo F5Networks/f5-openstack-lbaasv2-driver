@@ -26,7 +26,7 @@ tempest_12.1.1_undercloud_vxlan tempest_12.1.1_undercloud_gre \
 tempest_12.1.1_undercloud_vlan 
 
 # Fixing branch to that specified in the public fork. This is necessary for build on PRs.
-export BRANCH := mitaka
+export BRANCH := stable/newton
 # The branch may contain the text 'stable/' before the OpenStack release name
 # To allow this type of branch name and any other to work with the cloud deployment
 # and with Jenkins, we should strip out the forward slash, leaving something like:
@@ -102,15 +102,15 @@ export FROM_AGENT_SESSION := from.agent_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 
 microservice_setup_tlc_session:
 	@echo "setting up TLC session..."
-	cd scripts && ./$@.sh # $(MAKE) -C ../ cleanup_failed_tlc
+	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
 
 configure_test_infra:
 	@echo "injecting TLC symbol and openstack IDs into 'tempest' conf files..."
-	cd scripts && ./$@.sh # $(MAKE) -C ../ cleanup_failed_tlc
+	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
 
 run_neutron_lbaas:
 	@echo "running tests extracted from 'neutron_lbaas' project..."
-	cd scripts && ./$@.sh # $(MAKE) -C ../ cleanup_tlc_session
+	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_tlc_session
 
 run_agent_transfers:
 	@echo "running tests extracted from 'f5-openstack-agent' project..."
@@ -118,7 +118,7 @@ run_agent_transfers:
 
 run_smoke_tests:
 	@echo "running smoke tests for build on PR..."
-	cd scripts && ./$@.sh # $(MAKE) -C ../ cleanup_tlc_session
+	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_tlc_session
 
 cleanup_tlc_session:
 	@echo "running tlc --session TEST_SESSION --debug cleanup..."
