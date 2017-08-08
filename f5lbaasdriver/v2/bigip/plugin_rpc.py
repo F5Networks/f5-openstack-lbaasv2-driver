@@ -137,6 +137,21 @@ class LBaaSv2PluginCallbacksRPC(object):
                     lb_status[lbid] = 'Unknown'
         return lb_status
 
+    # validate a list of pools id - assure they are not deleted
+    @log_helpers.log_method_call
+    def validate_pools_state(self, context, pools, host=None):
+        pool_status = {}
+        for poolid in pools:
+            with context.session.begin(subtransactions=True):
+                try:
+                    pool_db = self.driver.plugin.db.get_pool(context, poolid)
+                    pool_status[poolid] = pool_db.provisioning_status
+                except Exception as e:
+                    LOG.error('Exception: get_pool: %s',
+                              e.message)
+                    pool_status[poolid] = 'Unknown'
+        return pool_status
+
     @log_helpers.log_method_call
     def get_service_by_loadbalancer_id(
             self, context, loadbalancer_id=None, host=None):
