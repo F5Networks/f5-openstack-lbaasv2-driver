@@ -41,6 +41,7 @@ class F5BaseTestCase(base.BaseTestCase):
             CONF.f5_lbaasv2_driver.icontrol_hostname,
             CONF.f5_lbaasv2_driver.icontrol_username,
             CONF.f5_lbaasv2_driver.icontrol_password)
+
         cls.plugin_rpc = (
             plugin_rpc_client.F5PluginRPCClient()
         )

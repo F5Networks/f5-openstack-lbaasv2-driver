@@ -38,4 +38,4 @@ f5_lbaasv2_driver_opts = [
         default="rabbit://guest:guest@10.190.4.156:5672/",
         help='The transport_url to use for messaging, see neutron.conf'
     ),
-]:wq
+]

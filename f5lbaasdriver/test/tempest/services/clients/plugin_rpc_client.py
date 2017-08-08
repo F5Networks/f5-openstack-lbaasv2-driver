@@ -37,6 +37,7 @@ class F5PluginRPCClient(object):
         self.transport = messaging.get_transport(
             CONF,
             url=CONF.f5_lbaasv2_driver.transport_url)
+
         self.target = messaging.Target(topic=self.topic)
         self.client = messaging.RPCClient(self.transport, self.target)
         self.context = context.get_admin_context().to_dict()
