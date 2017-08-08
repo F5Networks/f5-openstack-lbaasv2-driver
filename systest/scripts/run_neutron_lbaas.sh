@@ -19,7 +19,6 @@ set -x
 
 # Activate our tempest virtualenv
 source ${TEMPEST_VENV_ACTIVATE}
-cd ${NEUTRON_LBAAS_DIR}
 
 # The following tox commands will fail, if the ${EXCLUDE_FILE}
 # doesn't exist in the ${EXCLUDE_DIR}.
@@ -36,20 +35,21 @@ tox --sitepackages -e tempest -c tox.ini -- \
   --autolog-outputdir ${RESULTS_DIR} \
   --autolog-session ${DRIVER_TEMPEST_SESSION}
 
+cd ${NEUTRON_LBAAS_DIR}
 
 # LBaaSv2 API test cases with F5 tox.ini file
-#tox -e apiv2 -c f5.tox.ini --sitepackages -- \
-#  --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
-#  -lvv --tb=short \
-#  --autolog-outputdir ${RESULTS_DIR} \
-#  --autolog-session ${API_SESSION}
+tox -e apiv2 -c f5.tox.ini --sitepackages -- \
+  --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
+  -lvv --tb=short \
+  --autolog-outputdir ${RESULTS_DIR} \
+  --autolog-session ${API_SESSION}
 
 # LBaaSv2 Scenario test cases with F5 tox.ini file
-#tox -e scenariov2 -c f5.tox.ini --sitepackages -- \
-#  --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
-#  -lvv --tb=short \
-#  --autolog-outputdir ${RESULTS_DIR} \
-#  --autolog-session ${SCENARIO_SESSION}
+tox -e scenariov2 -c f5.tox.ini --sitepackages -- \
+  --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
+  -lvv --tb=short \
+  --autolog-outputdir ${RESULTS_DIR} \
+  --autolog-session ${SCENARIO_SESSION}
 
 # Returning pass so that all tests run
-#exit 0
+exit 0
