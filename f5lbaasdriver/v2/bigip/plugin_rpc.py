@@ -114,11 +114,11 @@ class LBaaSv2PluginCallbacksRPC(object):
                 else:
                     LOG.error('no active agents available for clusterwide ',
                               ' tasks %s group number %s' % (env, group))
-                    return None
+                    return {}
             except Exception as exc:
                 LOG.error('clusterwide agent exception: %s' % str(exc))
-                return None
-        return None
+                return {}
+        return {}
 
     # validate a list of loadbalancer id - assure they are not deleted
     @log_helpers.log_method_call
