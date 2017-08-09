@@ -19,13 +19,23 @@ set -x
 
 # Activate our tempest virtualenv
 source ${TEMPEST_VENV_ACTIVATE}
-cd ${NEUTRON_LBAAS_DIR}
 
 # The following tox commands will fail, if the ${EXCLUDE_FILE}
 # doesn't exist in the ${EXCLUDE_DIR}.
 
 # Create .pytest.rootdir file at root of the neutron-lbaas repository directory
+touch ${MAKEFILE_DIR}/../f5lbaasdriver/test/tempest/tests/.pytest.rootdir
 touch ${NEUTRON_LBAAS_DIR}/.pytest.rootdir
+
+# Navigate to the root of the repo, where the tox.ini file is found
+cd ${MAKEFILE_DIR}/../
+
+tox --sitepackages -e tempest -c tox.ini -- \
+  -lvv --tb=line \
+  --autolog-outputdir ${RESULTS_DIR} \
+  --autolog-session ${DRIVER_TEMPEST_SESSION}
+
+cd ${NEUTRON_LBAAS_DIR}
 
 # LBaaSv2 API test cases with F5 tox.ini file
 tox -e apiv2 -c f5.tox.ini --sitepackages -- \
