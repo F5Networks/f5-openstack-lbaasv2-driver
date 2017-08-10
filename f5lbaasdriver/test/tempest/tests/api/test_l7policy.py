@@ -26,7 +26,7 @@ from f5lbaasdriver.test.tempest.tests.api import base
 CONF = config.CONF
 
 
-class L7PolicyTestJSON(base.BaseTestCase):
+class L7PolicyTestJSON(base.F5BaseTestCase):
     """L7 Policy tempest tests.
 
     Tests the following operations in the Neutron-LBaaS API using the

@@ -22,7 +22,7 @@ from f5lbaasdriver.test.tempest.tests.api import base
 CONF = config.CONF
 
 
-class PoolSyncTestJSON(base.BaseTestCase):
+class PoolSyncTestJSON(base.F5BaseTestCase):
     """Test re-sync pools after BIG-IP restart.
 
     To simulate a restart, the test directly deletes a pool on a BIG-IP, as
@@ -57,10 +57,6 @@ class PoolSyncTestJSON(base.BaseTestCase):
         cls.create_pool_kwargs = {'loadbalancer_id': cls.load_balancer_id,
                                   'protocol': "HTTP",
                                   'lb_algorithm': "ROUND_ROBIN"}
-        cls.pool = (
-            cls._create_pool(**cls.create_pool_kwargs))
-        cls.pool_id = cls.pool['id']
-
         cls.partition = 'Project_' + cls.load_balancer.get('tenant_id')
 
         # Get a client to emulate the agent's behavior.
@@ -79,8 +75,25 @@ class PoolSyncTestJSON(base.BaseTestCase):
         name = 'Project_' + pool_id
         return self.bigip_client.delete_pool(name, partition)
 
+    def _members_exists(self, pool_id, partition):
+        '''Expects only one member to exist in pool'''
+        pool_name = 'Project_' + pool_id
+        members = self.bigip_client.get_members(pool_name, partition)
+        if len(list(members)) > 0:
+            return True
+        return False
+
+    def _remove_members(self, pool_id, partition):
+        pool_name = 'Project_' + pool_id
+        self.bigip_client.delete_members(pool_name, partition)
+
     @test.attr(type='smoke')
     def test_pool_active_sync(self):
+        self.pool = (
+            self._create_pool(**self.create_pool_kwargs))
+        self.pool_id = self.pool['id']
+        self.addCleanup(self._delete_pool, self.pool_id)
+
         # verify pool exists
         assert self._pool_exists(self.pool_id, self.partition)
 
@@ -94,4 +107,30 @@ class PoolSyncTestJSON(base.BaseTestCase):
         # verify pool exists
         assert self._pool_exists(self.pool_id, self.partition)
 
-        self._delete_pool(self.pool['id'])
+    @test.attr(type='smoke')
+    def test_pool_member_active_sync(self):
+        self.pool = (
+            self._create_pool(**self.create_pool_kwargs))
+        self.pool_id = self.pool['id']
+        self.addCleanup(self._delete_pool, self.pool_id)
+
+        allocation_pool = self.subnet['allocation_pools'][0]
+        member_kwargs = {
+            'pool_id': self.pool_id,
+            'address': allocation_pool['start'],
+            'protocol_port': 8080,
+            'subnet_id': self.subnet['id']}
+        self._create_member(**member_kwargs)
+
+        # delete member directly on BIG-IP
+        self._remove_members(self.pool_id, self.partition)
+        # delete pool directly on BIG-IP
+        self._remove_pool(self.pool_id, self.partition)
+
+        # update listener to force pool sync
+        update_kwargs = {'description': 'resync ACTIVE pool and member'}
+        self._update_listener(self.listener['id'], **update_kwargs)
+
+        # verify pool and member exists
+        assert self._members_exists(self.pool_id, self.partition)
+        assert self._pool_exists(self.pool_id, self.partition)

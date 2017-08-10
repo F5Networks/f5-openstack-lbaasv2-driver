@@ -14,9 +14,6 @@
 
 from neutron_lbaas.tests.tempest.v2.scenario import base
 
-from f5lbaasdriver.test.tempest.services.clients import l7policy_client
-from f5lbaasdriver.test.tempest.services.clients import l7rule_client
-
 from tempest import config
 from tempest.lib.exceptions import NotFound
 
@@ -31,10 +28,6 @@ class F5BaseTestCase(base.BaseTestCase):
         super(F5BaseTestCase, self).setUp()
         self.tenant_id = self.subnet['tenant_id']
         self.members = {}
-        self.l7policy_client = l7policy_client.L7PolicyClientJSON(
-            *self.client_args)
-        self.l7rule_client = l7rule_client.L7RuleClientJSON(
-            *self.client_args)
         self._create_servers()
         self._start_servers()
         self._create_load_balancer()
