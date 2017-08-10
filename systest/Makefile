@@ -13,8 +13,15 @@
 # limitations under the License.
 #
 
-# Fixing branch to that specified in the public fork. This is necessary for build on PRs.
 export BRANCH := mitaka
+export GIT_REMOTE_URL := $(shell git config --get remote.origin.url)
+# The below operations are used for the builds on PR. The two variables are defined by the
+# Github Pull Request Builder plugin for Jenkins. --> ghprb...
+# https://wiki.jenkins.io/display/JENKINS/GitHub+pull+request+builder+plugin
+ghprbAuthorRepoGitUrl?=$(GIT_REMOTE_URL)
+ghprbActualCommit?=$(BRANCH)
+export DRIVER_PIP_INSTALL_LOCATION := git+$(ghprbAuthorRepoGitUrl)@$(ghprbActualCommit)
+
 # The branch may contain the text 'stable/' before the OpenStack release name
 # To allow this type of branch name and any other to work with the cloud deployment
 # and with Jenkins, we should strip out the forward slash, leaving something like:
@@ -50,10 +57,7 @@ export UPPER_CONSTRAINTS_FILE := https://git.openstack.org/cgit/openstack/requir
 export PATH := /tools/bin:$(PATH)
 export PYTHONPATH := /tools/lib:/tools/bin:$(PYTHONPATH)
 export USER := jenkins
-# Because the sanitized branch may still contain the string 'stable',
-# we must strip that out to get the OpenStack release name alone. This
-# will be used in the current TLC deployment of the stack.
-export TEST_OPENSTACK_DISTRO := $(subst stable,,$(SANITIZED_BRANCH))
+export TEST_OPENSTACK_DISTRO := mitaka
 export TEST_CIRROS_IMAGE := cirros-0.3.4-x86_64-disk.qcow2
 export TEST_OPENSTACK_NODE_COUNT := 3
 export TEST_OPENSTACK_DEPLOY := multinode
