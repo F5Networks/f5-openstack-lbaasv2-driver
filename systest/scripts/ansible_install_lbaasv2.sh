@@ -10,7 +10,7 @@ BIGIP_IP=`${SSH_CMD} "cat /home/testlab/ve_mgmt_ip"`
 BIGIP_IP=${BIGIP_IP%%[[:cntrl:]]}
 AGENT_LOC=git+https://github.com/F5Networks/f5-openstack-agent.git@${BRANCH}
 DRIVER_LOC=${DRIVER_PIP_INSTALL_LOCATION}
-NEUTRON_DRIVER_LOC=https://raw.githubusercontent.com/F5Networks/neutron-lbaas/stable/${BRANCH}/neutron_lbaas/drivers/f5/driver_v2.py
+NEUTRON_DRIVER_LOC=https://raw.githubusercontent.com/F5Networks/neutron-lbaas/stable/${TEST_OPENSTACK_DISTRO}/neutron_lbaas/drivers/f5/driver_v2.py
 
 # Since we don't do anything special in the __init__.py file, we can pull it from anywhere for now
 NEUTRON_INIT_LOC=https://raw.githubusercontent.com/F5Networks/neutron-lbaas/v9.1.0/neutron_lbaas/drivers/f5/__init__.py
