@@ -23,7 +23,7 @@ from f5lbaasdriver.test.tempest.tests.api import base
 CONF = config.CONF
 
 
-class L7PolicyTestJSONBasic(base.BaseTestCase):
+class L7PolicyTestJSONBasic(base.F5BaseTestCase):
     """L7 Policy tempest tests.
 
     Tests the following operations in the Neutron-LBaaS API using the
@@ -111,9 +111,11 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
         self.policies.append(l7policy)
         self._wait_for_load_balancer_status(self.load_balancer_id)
         assert (l7policy.get('action') == "REJECT")
-        assert not self.bigip_client.policy_exists("wrapper_policy",
-                                                   "Project_" +
-                                                   self.project_tenant_id)
+        assert not self.bigip_client.policy_exists(
+            "wrapper_policy",
+            "Project_" +
+            self.project_tenant_id,
+            should_exist=False)
 
     def test_policy_reject_header_ends_with(self):
         '''Reject traffic when header value ends with value.'''
@@ -233,10 +235,10 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
         self._delete_l7rule(l7policy.get('id'), self.rule2.get('id'))
         self._delete_l7rule(l7policy.get('id'), self.rule3.get('id'))
         self._wait_for_load_balancer_status(self.load_balancer_id)
-        assert not \
-            self.bigip_client.policy_exists("wrapper_policy",
-                                            "Project_" +
-                                            self.project_tenant_id)
+        assert not self.bigip_client.policy_exists("wrapper_policy",
+                                                   "Project_" +
+                                                   self.project_tenant_id,
+                                                   should_exist=False)
 
     def test_policy_reject_multi_policy_multi_rules(self):
         l7policy1 = self._create_l7policy(**self.reject_args)
@@ -316,10 +318,10 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
                                                     "Project_" +
                                                     self.project_tenant_id)
         self._delete_l7policy(l7policy2.get('id'))
-        assert not \
-            self.bigip_client.policy_exists("wrapper_policy",
-                                            "Project_" +
-                                            self.project_tenant_id)
+        assert not self.bigip_client.policy_exists("wrapper_policy",
+                                                   "Project_" +
+                                                   self.project_tenant_id,
+                                                   should_exist=False)
 
     def test_policy_reject_many_rules(self):
         l7policy = self._create_l7policy(**self.reject_args)
@@ -410,10 +412,10 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
         self._delete_l7rule(l7policy.get('id'), self.rule6.get('id'))
         self._delete_l7rule(l7policy.get('id'), self.rule7.get('id'))
         self._wait_for_load_balancer_status(self.load_balancer_id)
-        assert not \
-            (self.bigip_client.policy_exists("wrapper_policy",
-                                             "Project_" +
-                                             self.project_tenant_id))
+        assert not self.bigip_client.policy_exists("wrapper_policy",
+                                                   "Project_" +
+                                                   self.project_tenant_id,
+                                                   should_exist=False)
 
 
 class TestL7PolicyTestJSONRedirectToUrl(L7PolicyTestJSONBasic):
