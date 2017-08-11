@@ -108,11 +108,11 @@ class F5DriverV2(object):
         self.plugin.agent_notifiers.update(
             {q_const.AGENT_TYPE_LOADBALANCER: self.agent_rpc})
 
-        registry.subscribe(self._bingRegistryCallback(),
+        registry.subscribe(self._bindRegistryCallback(),
                            resources.PROCESS,
                            events.AFTER_CREATE)
 
-    def _bingRegistryCallback(self):
+    def _bindRegistryCallback(self):
         # Defines a callback function with name tied to driver env. Need to
         # enusre unique name, as registry callback manager references callback
         # functions by name
