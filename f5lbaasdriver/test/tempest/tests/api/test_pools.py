@@ -25,7 +25,7 @@ from f5lbaasdriver.test.tempest.tests.api import base
 CONF = config.CONF
 
 
-class PoolTestJSON(base.BaseTestCase):
+class PoolTestJSON(base.F5BaseTestCase):
     """Loadbalancer Tempest tests.
 
     Tests the following operations in the Neutron-LBaaS API using the

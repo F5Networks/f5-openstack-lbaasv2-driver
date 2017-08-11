@@ -13,20 +13,16 @@
 # limitations under the License.
 #
 
-# Inform make that targets are NOT files.
-.PHONY: all functest \
-tempest_13.0.0_undercloud_vxlan tempest_11.5.4_overcloud \
-tempest_11.6.0_overcloud tempest_11.6.1_overcloud \
-tempest_12.1.1_undercloud_vxlan tempest_11.5.4_undercloud_vxlan \
-tempest_11.5.4_undercloud_gre tempest_11.5.4_undercloud_vlan \
-tempest_11.6.0_undercloud_vxlan tempest_11.6.0_undercloud_gre \
-tempest_11.6.0_undercloud_vlan \
-tempest_11.6.1_undercloud_gre tempest_11.6.1_undercloud_vlan \
-tempest_12.1.1_undercloud_vxlan tempest_12.1.1_undercloud_gre \
-tempest_12.1.1_undercloud_vlan 
-
 # Fixing branch to that specified in the public fork. This is necessary for build on PRs.
 export BRANCH := stable/newton
+export GIT_REMOTE_URL := $(shell git config --get remote.origin.url)
+# The below operations are used for the builds on PR. The two variables are defined by the
+# Github Pull Request Builder plugin for Jenkins. --> ghprb...
+# https://wiki.jenkins.io/display/JENKINS/GitHub+pull+request+builder+plugin
+ghprbAuthorRepoGitUrl?=$(GIT_REMOTE_URL)
+ghprbActualCommit?=$(BRANCH)
+export DRIVER_PIP_INSTALL_LOCATION := git+$(ghprbAuthorRepoGitUrl)@$(ghprbActualCommit)
+
 # The branch may contain the text 'stable/' before the OpenStack release name
 # To allow this type of branch name and any other to work with the cloud deployment
 # and with Jenkins, we should strip out the forward slash, leaving something like:
@@ -62,10 +58,7 @@ export UPPER_CONSTRAINTS_FILE := https://git.openstack.org/cgit/openstack/requir
 export PATH := /tools/bin:$(PATH)
 export PYTHONPATH := /tools/lib:/tools/bin:$(PYTHONPATH)
 export USER := jenkins
-# Because the sanitized branch may still contain the string 'stable',
-# we must strip that out to get the OpenStack release name alone. This
-# will be used in the current TLC deployment of the stack.
-export TEST_OPENSTACK_DISTRO := $(subst stable,,$(SANITIZED_BRANCH))
+export TEST_OPENSTACK_DISTRO := newton
 export TEST_CIRROS_IMAGE := cirros-0.3.4-x86_64-disk.qcow2
 export TEST_OPENSTACK_NODE_COUNT := 3
 export TEST_OPENSTACK_DEPLOY := multinode
@@ -102,6 +95,7 @@ export FROM_AGENT_SESSION := from.agent_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 
 microservice_setup_tlc_session:
 	@echo "setting up TLC session..."
+	sudo -E chown -Rf jenkins:jenkins $(PROJROOTDIR) && \
 	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
 
 configure_test_infra:

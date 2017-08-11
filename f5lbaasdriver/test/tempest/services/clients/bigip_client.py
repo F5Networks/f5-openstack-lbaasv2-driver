@@ -1,6 +1,5 @@
 # coding=utf-8
-u"""F5 Networks® LBaaSv2 L7 rules client for tempest tests."""
-# Copyright 2016 F5 Networks Inc.
+# Copyright 2017 F5 Networks Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,15 +13,15 @@ u"""F5 Networks® LBaaSv2 L7 rules client for tempest tests."""
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+from f5.bigip import ManagementRoot
 from f5.utils.testutils.registrytools import order_by_weights
 from f5.utils.testutils.registrytools import register_device
-from icontrol.exceptions import iControlUnexpectedHTTPError
-from tempest import config
 
-from f5.bigip import ManagementRoot
+import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+import time
 
-config = config.CONF
-
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 URI_ORDER = {
     '/mgmt/tm/ltm/policy': 1,
@@ -45,30 +44,29 @@ URI_ORDER = {
 
 
 class BigIpClient(object):
-    def __init__(self):
-        self.bigip = ManagementRoot(config.f5_lbaasv2_driver.icontrol_hostname,
-                                    config.f5_lbaasv2_driver.icontrol_username,
-                                    config.f5_lbaasv2_driver.icontrol_password)
+    def __init__(self, hostname, username, password):
+        self.bigip = ManagementRoot(hostname, username, password)
 
     def reset_device_to_pretest_snapshot(self):
         posttest_snapshot = register_device(self.bigip)
         test_diff = frozenset(posttest_snapshot) - \
             frozenset(self.pretest_snapshot)
         uris = order_by_weights(test_diff, URI_ORDER)
-        filtered = [u for u in uris for a in URI_ORDER if a in u]
-        for selfLink in filtered:
-            try:
-                if selfLink in test_diff:
-                    posttest_snapshot[selfLink].delete()
-            except iControlUnexpectedHTTPError as exc:
-                if 'fdb/tunnel' in selfLink:
-                    for t in self.bigip.tm.net.fdb.tunnels.get_collection():
-                        if t.name != 'http-tunnel' \
-                                and t.name != 'socks-tunnel':
-                            t.update(records=[])
-                    posttest_snapshot[selfLink].delete()
-                else:
-                    raise exc
+
+        # Delete all tunnel records, if any exist
+        for t in self.bigip.tm.net.fdb.tunnels.get_collection():
+            if t.name != 'http-tunnel' \
+                    and t.name != 'socks-tunnel':
+                t.modify(records=None)
+
+        # Delete resources from device
+        for selfLink in uris:
+            if selfLink in test_diff:
+                if 'fdb' in selfLink:
+                    continue
+                if 'snat-translation' in selfLink:
+                    continue
+                posttest_snapshot[selfLink].delete()
 
     def snapshot_device(self):
         self.pretest_snapshot = register_device(self.bigip)
@@ -76,9 +74,23 @@ class BigIpClient(object):
     def folder_exists(self, folder):
         return self.bigip.tm.sys.folders.folder.exists(name=folder)
 
-    def policy_exists(self, name, partition):
+    def _policy_exists(self, name, partition):
         return self.bigip.tm.ltm.policys.policy.exists(
             name=name, partition=partition)
+
+    def policy_exists(self, name, partition, should_exist=True):
+        # The expectation here is that a policy should exist, but since
+        # policy CUD operations in OpenStack do not change the lb status
+        # to PENDING_UPDATE, we need to retry to check that the policy
+        # exists on the BIG-IP device.
+        attempts = 3
+        for attempt in range(attempts):
+            if self._policy_exists(name, partition) is should_exist:
+                return should_exist
+            if attempt == attempts-1:
+                return not should_exist
+            time.sleep(2)
+        return not should_exist
 
     def rule_exists(self, policy_name, rule_name, partition):
         if self.policy_exists(policy_name, partition):
@@ -236,3 +248,14 @@ class BigIpClient(object):
         p = self.bigip.tm.ltm.pools.pool.load(
             name=pool_name, partition=partition)
         p.delete()
+
+    def get_members(self, pool_name, partition):
+        pool = self.bigip.tm.ltm.pools.pool.load(
+            name=pool_name, partition=partition)
+        return pool.members_s.get_collection()
+
+    def delete_members(self, pool_name, partition):
+        pool = self.bigip.tm.ltm.pools.pool.load(
+            name=pool_name, partition=partition)
+        for member in pool.members_s.get_collection():
+            member.delete()
