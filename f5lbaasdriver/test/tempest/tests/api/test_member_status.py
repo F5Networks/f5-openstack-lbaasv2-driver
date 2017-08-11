@@ -26,7 +26,7 @@ from f5lbaasdriver.test.tempest.tests.api import base
 CONF = config.CONF
 
 
-class MemberStatusTestJSON(base.BaseTestCase):
+class MemberStatusTestJSON(base.F5BaseTestCase):
     """Test that pool member's operating status is set correctly."""
 
     @classmethod
@@ -72,7 +72,7 @@ class MemberStatusTestJSON(base.BaseTestCase):
         # create member
         allocation_pool = self.subnet['allocation_pools'][0]
         member_kwargs = {'pool_id': pool['id'],
-                         'address': allocation_pool['start'],
+                         'address': allocation_pool['end'],
                          'protocol_port': 8080,
                          'subnet_id': self.subnet['id']}
         member = self._create_member(**member_kwargs)
@@ -103,7 +103,7 @@ class MemberStatusTestJSON(base.BaseTestCase):
         # create member
         allocation_pool = self.subnet['allocation_pools'][0]
         member_kwargs = {'pool_id': pool['id'],
-                         'address': allocation_pool['start'],
+                         'address': allocation_pool['end'],
                          'protocol_port': 8080,
                          'subnet_id': self.subnet['id']}
         member = self._create_member(**member_kwargs)
@@ -134,7 +134,7 @@ class MemberStatusTestJSON(base.BaseTestCase):
         # create member
         allocation_pool = self.subnet['allocation_pools'][0]
         member_kwargs = {'pool_id': pool['id'],
-                         'address': allocation_pool['start'],
+                         'address': allocation_pool['end'],
                          'protocol_port': 8080,
                          'subnet_id': self.subnet['id']}
         member = self._create_member(**member_kwargs)
@@ -176,7 +176,7 @@ class MemberStatusTestJSON(base.BaseTestCase):
         # create member
         allocation_pool = self.subnet['allocation_pools'][0]
         member_kwargs = {'pool_id': pool['id'],
-                         'address': allocation_pool['start'],
+                         'address': allocation_pool['end'],
                          'protocol_port': 8080,
                          'subnet_id': self.subnet['id']}
         member = self._create_member(**member_kwargs)

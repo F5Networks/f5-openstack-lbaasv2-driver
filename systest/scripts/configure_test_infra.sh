@@ -18,11 +18,11 @@
 set -ex
 
 # Copy over our tox.ini
-sudo -E mkdir -p ${TEMPEST_CONFIG_DIR}
-sudo -E cp -f ${PROJROOTDIR}/systest/scripts/conf/neutron-lbaas.tox.ini ${NEUTRON_LBAAS_DIR}/f5.tox.ini
+mkdir -p ${TEMPEST_CONFIG_DIR}
+cp -f ${PROJROOTDIR}/systest/scripts/conf/neutron-lbaas.tox.ini ${NEUTRON_LBAAS_DIR}/f5.tox.ini
 # Copy over our default tempest files
-sudo -E cp -f conf/tempest.conf ${TEMPEST_CONFIG_DIR}/tempest.conf.orig
-sudo -E cp -f conf/accounts.yaml ${TEMPEST_CONFIG_DIR}/accounts.yaml
+cp -f conf/tempest.conf ${TEMPEST_CONFIG_DIR}/tempest.conf.orig
+cp -f conf/accounts.yaml ${TEMPEST_CONFIG_DIR}/accounts.yaml
 
 # Find the values for tempest.conf and substitute them
 OS_CONTROLLER_IP=`/tools/bin/tlc --sid ${TEST_SESSION} symbols \
@@ -39,10 +39,10 @@ OS_CIRROS_IMAGE_ID=`${ssh_cmd} "source ~/keystonerc_testlab && glance image-list
     | grep ${TEST_CIRROS_IMAGE} \
     | awk '{print $2}'`
 
-sudo -E bash -c "cat ${TEMPEST_CONFIG_DIR}/tempest.conf.orig | sed \"s/{{ OS_CONTROLLER_IP }}/${OS_CONTROLLER_IP}/\" | sed \"s/{{ OS_PUBLIC_ROUTER_ID }}/${OS_PUBLIC_ROUTER_ID}/\" | sed \"s/{{ OS_PUBLIC_NETWORK_ID }}/${OS_PUBLIC_NETWORK_ID}/\" | sed \"s/{{ OS_CIRROS_IMAGE_ID }}/${OS_CIRROS_IMAGE_ID}/\" > ${TEMPEST_CONFIG_DIR}/tempest.conf"
+bash -c "cat ${TEMPEST_CONFIG_DIR}/tempest.conf.orig | sed \"s/{{ OS_CONTROLLER_IP }}/${OS_CONTROLLER_IP}/\" | sed \"s/{{ OS_PUBLIC_ROUTER_ID }}/${OS_PUBLIC_ROUTER_ID}/\" | sed \"s/{{ OS_PUBLIC_NETWORK_ID }}/${OS_PUBLIC_NETWORK_ID}/\" | sed \"s/{{ OS_CIRROS_IMAGE_ID }}/${OS_CIRROS_IMAGE_ID}/\" > ${TEMPEST_CONFIG_DIR}/tempest.conf"
 
 # Add tempest configuration options for running tempest tests in f5lbaasv2driver
 BIGIP_IP=`ssh -i ~/.ssh/id_rsa_testlab testlab@${OS_CONTROLLER_IP} cat ve_mgmt_ip`
-sudo -E bash -c "echo \"[f5_lbaasv2_driver]\" >> ${TEMPEST_CONFIG_DIR}/tempest.conf"
-sudo -E bash -c "echo \"icontrol_hostname = ${BIGIP_IP}\" >> ${TEMPEST_CONFIG_DIR}/tempest.conf"
-sudo -E bash -c "echo \"transport_url = rabbit://guest:guest@${OS_CONTROLLER_IP}:5672/\" >> ${TEMPEST_CONFIG_DIR}/tempest.conf"
+bash -c "echo \"[f5_lbaasv2_driver]\" >> ${TEMPEST_CONFIG_DIR}/tempest.conf"
+bash -c "echo \"icontrol_hostname = ${BIGIP_IP}\" >> ${TEMPEST_CONFIG_DIR}/tempest.conf"
+bash -c "echo \"transport_url = rabbit://guest:guest@${OS_CONTROLLER_IP}:5672/\" >> ${TEMPEST_CONFIG_DIR}/tempest.conf"
