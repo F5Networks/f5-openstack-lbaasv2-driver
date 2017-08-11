@@ -110,7 +110,7 @@ class F5DriverV2(object):
 
         registry.subscribe(self._bindRegistryCallback(),
                            resources.PROCESS,
-                           events.AFTER_CREATE)
+                           events.AFTER_INIT)
 
     def _bindRegistryCallback(self):
         # Defines a callback function with name tied to driver env. Need to
