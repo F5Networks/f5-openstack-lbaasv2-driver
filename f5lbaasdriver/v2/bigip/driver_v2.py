@@ -38,6 +38,8 @@ from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 from f5lbaasdriver.v2.bigip import neutron_client
 from f5lbaasdriver.v2.bigip import plugin_rpc
 
+from neutron.api.v2 import attributes
+
 LOG = logging.getLogger(__name__)
 
 OPTS = [
@@ -209,6 +211,7 @@ class LoadBalancerManager(EntityManager):
                 loadbalancer.vip_port_id,
                 {'port': port_data}
             )
+            agent_host, service = self._schedule_agent_create_service(context)
 
             driver.agent_rpc.create_loadbalancer(
                 context, loadbalancer.to_api_dict(), service, agent_host)
@@ -408,8 +411,30 @@ class MemberManager(EntityManager):
         """Create a member."""
 
         self.loadbalancer = member.pool.loadbalancer
+        driver = self.driver
+        subnet = driver.plugin.db._core_plugin.get_subnet(context, member.subnet_id)
+        agent_host, service = self._setup_crud(context, member)
+        driver.plugin.db._core_plugin.create_port(context, {
+            'port': {
+                'tenant_id': subnet['tenant_id'],
+                'network_id': subnet['network_id'],
+                'mac_address': attributes.ATTR_NOT_SPECIFIED,
+                'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+                'device_id': member.id,
+                'device_owner': 'network:f5lbaasv2',
+                'admin_state_up': member.admin_state_up,
+                'name': 'fake_pool_port_' + member.id,
+                portbindings.HOST_ID: agent_host}})
         self.api_dict = member.to_dict(pool=False)
         self._call_rpc(context, member, 'create_member')
+        filters = {'device_id': [member.id]}
+        port = driver.plugin.db._core_plugin.get_ports(context, filters)
+        if port:
+            port_id = port[0]['id']
+            LOG.debug('BBBBBBBBBBBBB:%s' % port_id)
+        if port_id:
+            driver.plugin.db._core_plugin.delete_port(context, port_id)
+            LOG.debug('XXXXXX delete port: %s' % port_id)
 
     @log_helpers.log_method_call
     def update(self, context, old_member, member):
