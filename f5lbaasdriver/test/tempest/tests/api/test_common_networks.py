@@ -22,12 +22,12 @@ from tempest import config
 from tempest.lib.common.utils import data_utils
 from tempest import test
 
-from f5lbaasdriver.test.tempest.test.api import base
+from f5lbaasdriver.test.tempest.tests.api import base
 
 CONF = config.CONF
 
 
-class CommonNetworks(base.BaseTestCase):
+class CommonNetworks(base.F5BaseTestCase):
     """Test that f5_common_networks performs proper behavior"""
     timeout_for_agent_start = 5
     agent_ini_file = "/etc/neutron/services/f5/f5-openstack-agent.ini"
