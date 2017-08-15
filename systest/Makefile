@@ -315,7 +315,7 @@ tempest_12.1.2_undercloud_vxlan:
 
 tempest_12.1.2_undercloud_gre:
 	export PROJROOTDIR=$(PROJROOTDIR) ;\
-	export TEST_VE_IMAGE=os_ready-BIGIP-12.1.2.0.0.249.qcow22 ;\
+	export TEST_VE_IMAGE=os_ready-BIGIP-12.1.2.0.0.249.qcow2 ;\
 	export TEST_OPENSTACK_CLOUD=undercloud ;\
 	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ve_$${TEST_OPENSTACK_CLOUD}.tlc ;\
 	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(SANITIZED_BRANCH)-$@ ;\
