@@ -21,7 +21,7 @@ from f5lbaasdriver.test.tempest.tests.api import base
 CONF = config.CONF
 
 
-class ServiceBuilderTestJSON(base.BaseTestCase):
+class ServiceBuilderTestJSON(base.F5BaseTestCase):
     """F5 driver service builder tests."""
 
     @classmethod
