@@ -63,7 +63,7 @@ NEUTRON_LBAASCONF_BAK_PATH =\
 ENVMODULETEMPLATE = '''\
 #!/usr/bin/env python
 
-# Copyright 2014-2017 F5 Networks Inc.
+# Copyright 2014-2016 F5 Networks Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -78,10 +78,6 @@ ENVMODULETEMPLATE = '''\
 # limitations under the License.
 #
 
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
-
 from neutron_lbaas.drivers.f5.driver_v2 import F5LBaaSV2Driver
 
 
@@ -90,17 +86,6 @@ class {0}(F5LBaaSV2Driver):
 
     def __init__(self, plugin):
         super({0}, self).__init__(plugin, self.__class__.__name__)
-
-        registry.subscribe(self._bindRegistryCallback(),
-                           resources.PROCESS,
-                           events.AFTER_CREATE)
-
-    def _bindRegistryCallback(self):
-        def post_fork_callback(resources, event, trigger):
-            self.f5.plugin_rpc.create_rpc_listener()
-
-        post_fork_callback.__name__ += '_{0}'
-        return post_fork_callback
 '''
 
 

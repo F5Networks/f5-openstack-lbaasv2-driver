@@ -86,9 +86,11 @@ class DisconnectedService(object):
             levels = db.get_binding_levels(context.session, port_id, host_id)
             LOG.debug('XXXX levels: %s', levels)
             for level in levels:
-                segment = db.get_segment_by_id(context.session, level.segment_id)
+                segment = db.get_segment_by_id(context.session,
+                                               level.segment_id)
                 return segment
         except Exception as exc:
             LOG.error(
-                "could not get segment id by port %s and host %s, %s" % (port_id, host_id, exc.message))
+                "could not get segment id by port %s and host %s, %s"
+                % (port_id, host_id, exc.message))
         return None
