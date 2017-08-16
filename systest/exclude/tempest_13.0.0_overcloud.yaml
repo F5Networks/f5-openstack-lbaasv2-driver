@@ -3,5 +3,6 @@
                 "test_listener_basic",
                 "test_load_balancer_basic",
                 "test_load_balancer_tls",
-                "test_session_persistence"]
+                "test_session_persistence",
+                "test_create_load_balancer_for_another_tenant"]
 }
