@@ -51,10 +51,7 @@ class TestEsdBasic(f5_base.F5BaseTestCase):
             try:
                 if not uri_path:
                     uri_path = 'http://{}'.format(self.vip_ip)
-                print('making request to {}'.format(uri_path))
                 res = requests.get(uri_path, headers=headers, cookies=cookies)
-                print('Expected_server: {}'.format(expected_server))
-                print('Return server: {}'.format(res.text))
                 assert expected_server in res.text
                 assert res.status_code == expected_status
             except Exception as ex:
