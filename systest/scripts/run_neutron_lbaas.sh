@@ -23,7 +23,6 @@ set -x
 touch ${PROJROOTDIR}f5lbaasdriver/test/tempest/tests/.pytest.rootdir
 touch ${NEUTRON_LBAAS_DIR}/neutron_lbaas/tests/tempest/v2/.pytest.rootdir
 
-
 # The following tox commands will fail, if the ${EXCLUDE_FILE}
 # doesn't exist in the ${EXCLUDE_DIR}.
 

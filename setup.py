@@ -29,7 +29,8 @@ setup(name='f5-openstack-lbaasv2-driver',
       version=f5lbaasdriver.__version__,
       entry_points={
           'tempest.test_plugins': [
-              'f5-lbaasv2-driver-tempest-plugin = f5lbaasdriver.test.tempest.plugin:F5LBaaSv2DriverTempestPlugin'
+              'f5-lbaasv2-driver-tempest-plugin = '
+              'f5lbaasdriver.test.tempest.plugin:F5LBaaSv2DriverTempestPlugin'
           ],
           'console_scripts': ['add_f5agent_environment='
                               'f5lbaasdriver.utils.add_environment:main']},
