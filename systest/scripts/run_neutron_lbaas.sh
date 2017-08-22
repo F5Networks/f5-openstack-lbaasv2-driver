@@ -23,19 +23,27 @@ set -x
 touch ${PROJROOTDIR}f5lbaasdriver/test/tempest/tests/.pytest.rootdir
 touch ${NEUTRON_LBAAS_DIR}/neutron_lbaas/tests/tempest/v2/.pytest.rootdir
 
-
 # The following tox commands will fail, if the ${EXCLUDE_FILE}
 # doesn't exist in the ${EXCLUDE_DIR}.
 
 # Navigate to the root of the repo, where the tox.ini file is found
 cd ${PROJROOTDIR}
 
-sudo -E pip install .
 bash -c "tox -e tempest -c tox.ini --sitepackages -- \
   --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
   -lvv \
   --autolog-outputdir ${RESULTS_DIR} \
   --autolog-session ${API_SESSION}"
+
+cd ${NEUTRON_LBAAS_DIR}
+
+# Navigate to the root of the repo, where the tox.ini file is found
+cd ${MAKEFILE_DIR}/../
+
+tox --sitepackages -e tempest -c tox.ini -- \
+  -lvv --tb=line \
+  --autolog-outputdir ${RESULTS_DIR} \
+  --autolog-session ${DRIVER_TEMPEST_SESSION}
 
 cd ${NEUTRON_LBAAS_DIR}
 
