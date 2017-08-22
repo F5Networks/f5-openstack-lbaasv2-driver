@@ -37,16 +37,6 @@ bash -c "tox -e tempest -c tox.ini --sitepackages -- \
 
 cd ${NEUTRON_LBAAS_DIR}
 
-# Navigate to the root of the repo, where the tox.ini file is found
-cd ${MAKEFILE_DIR}/../
-
-tox --sitepackages -e tempest -c tox.ini -- \
-  -lvv --tb=line \
-  --autolog-outputdir ${RESULTS_DIR} \
-  --autolog-session ${DRIVER_TEMPEST_SESSION}
-
-cd ${NEUTRON_LBAAS_DIR}
-
 # LBaaSv2 API test cases with F5 tox.ini file
 bash -c "tox -e apiv2 -c f5.tox.ini --sitepackages -- \
   --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
