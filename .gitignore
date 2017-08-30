@@ -106,9 +106,3 @@ systest/test_results
 # vim
 *~
 *.swp
-
-# eclipse pydev
-.project
-.pydevproject
-.settings/
-
