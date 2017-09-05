@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 
-export BRANCH := mitaka
+export BRANCH := issue.730
 export GIT_REMOTE_URL := $(shell git config --get remote.origin.url)
 # The below operations are used for the builds on PR. The two variables are defined by the
 # Github Pull Request Builder plugin for Jenkins. --> ghprb...
@@ -95,15 +95,15 @@ export FROM_AGENT_SESSION := from.agent_$(SUBJECTCODE_ID)_$(TIMESTAMP)
 microservice_setup_tlc_session:
 	@echo "setting up TLC session..."
 	sudo -E chown -Rf jenkins:jenkins $(PROJROOTDIR) && \
-	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
+	cd scripts && ./$@.sh # || $(MAKE) -C ../ cleanup_failed_tlc
 
 configure_test_infra:
 	@echo "injecting TLC symbol and openstack IDs into 'tempest' conf files..."
-	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_failed_tlc
+	cd scripts && ./$@.sh # || $(MAKE) -C ../ cleanup_failed_tlc
 
 run_neutron_lbaas:
 	@echo "running tests extracted from 'neutron_lbaas' project..."
-	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_tlc_session
+	cd scripts && ./$@.sh # || $(MAKE) -C ../ cleanup_tlc_session
 
 run_agent_transfers:
 	@echo "running tests extracted from 'f5-openstack-agent' project..."
@@ -111,7 +111,7 @@ run_agent_transfers:
 
 run_smoke_tests:
 	@echo "running smoke tests for build on PR..."
-	cd scripts && ./$@.sh || $(MAKE) -C ../ cleanup_tlc_session
+	cd scripts && ./$@.sh # || $(MAKE) -C ../ cleanup_tlc_session
 
 cleanup_tlc_session:
 	@echo "running tlc --session TEST_SESSION --debug cleanup..."
@@ -201,7 +201,7 @@ tempest_11.5.4_undercloud_vxlan:
 	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
 	export EXCLUDE_FILE=$@.yaml ;\
 	$(MAKE) -C . run_tests
-	
+
 tempest_11.5.4_undercloud_gre:
 	export PROJROOTDIR=$(PROJROOTDIR) ;\
 	export TEST_VE_IMAGE=os_ready-BIGIP-11.5.4.2.0.291.qcow2 ;\
@@ -356,7 +356,7 @@ run_tests:
 	$(MAKE) -C . microservice_setup_tlc_session
 	$(MAKE) -C . configure_test_infra
 	$(MAKE) -C . run_neutron_lbaas
-	$(MAKE) -C . cleanup_tlc_session
+	# $(MAKE) -C . cleanup_tlc_session
 
 run_smoke:
 	$(MAKE) -C . microservice_setup_tlc_session
