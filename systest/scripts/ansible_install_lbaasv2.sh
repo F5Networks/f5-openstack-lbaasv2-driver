@@ -39,6 +39,6 @@ EXTRA_VARS="${EXTRA_VARS} use_barbican_cert_manager=True neutron_lbaas_shim_inst
 
 sudo -E docker run \
 --volumes-from `hostname | xargs` \
-docker-registry.pdbld.f5net.com/openstack-test-ansibleserver-breaux/mitaka:latest \
+docker-registry.pdbld.f5net.com/openstack-test-ansibleserver-prod/mitaka:latest \
 /f5-openstack-ansible/playbooks/agent_driver_deploy.yaml \
 --extra-vars "${EXTRA_VARS}"
