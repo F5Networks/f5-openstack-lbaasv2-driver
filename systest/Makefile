@@ -373,5 +373,6 @@ run_tests:
 run_smoke:
 	$(MAKE) -C . microservice_setup_tlc_session
 	$(MAKE) -C . configure_test_infra
-	$(MAKE) -C . run_smoke_tests
+	$(MAKE) -C . run_smoke_tests ; SMOKE_RC=$$? ;\
 	$(MAKE) -C . cleanup_tlc_session
+	exit $$SMOKE_RC

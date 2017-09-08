@@ -17,21 +17,14 @@
 
 set -ex
 
-# Activate our tempest virtualenv
-cd ${NEUTRON_LBAAS_DIR}
+# Create .pytest.rootdir files at the root of the driver.
+touch ${PROJROOTDIR}f5lbaasdriver/test/tempest/tests/.pytest.rootdir
 
-# The following tox commands will fail, if the ${EXCLUDE_FILE}
-# doesn't exist in the ${EXCLUDE_DIR}.
+# Navigate to the root of the repo, where the tox.ini file is found
+cd ${PROJROOTDIR}
 
-# Create .pytest.rootdir file at root of the neutron-lbaas repository directory
-touch ${NEUTRON_LBAAS_DIR}/.pytest.rootdir
-
-# LBaaSv2 Scenario test cases with F5 tox.ini file
-# The scenario tests are the current set of smoke tests. This is sufficient
-# for now, but we will be able to amend this set as needed.
-# In the near future, we should add our scenario tests as well.
-bash -c "tox -e scenariov2 -c f5.tox.ini --sitepackages -- \
-  --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
-  -lvv \
-  --autolog-outputdir ${RESULTS_DIR} \
-  --autolog-session ${SCENARIO_SESSION}"
+bash -c "tox -e tempest -c tox.ini --sitepackages -- \
+      --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
+        -lvv \
+          --autolog-outputdir ${RESULTS_DIR} \
+          --autolog-session ${API_SESSION} scenario/test_l7policies_and_rules.py::TestL7BasicRedirectToPool::test_policy_redirect_pool_cookie_contains"
