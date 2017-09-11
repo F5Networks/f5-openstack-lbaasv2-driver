@@ -23,8 +23,15 @@ touch ${PROJROOTDIR}f5lbaasdriver/test/tempest/tests/.pytest.rootdir
 # Navigate to the root of the repo, where the tox.ini file is found
 cd ${PROJROOTDIR}
 
+# Remove smoke test rc file, in case someone is iterating on smoke tests
+rm -rf ${SMOKE_RC_RESULT_FILE}
+
 bash -c "tox -e tempest -c tox.ini --sitepackages -- \
       --meta ${EXCLUDE_DIR}/${EXCLUDE_FILE} \
         -lvv \
           --autolog-outputdir ${RESULTS_DIR} \
-          --autolog-session ${API_SESSION} scenario/test_l7policies_and_rules.py::TestL7BasicRedirectToPool::test_policy_redirect_pool_cookie_contains"
+          --autolog-session ${API_SESSION} scenario/test_l7policies_and_rules.py::TestL7BasicRedirectToPool::test_policy_redirect_pool_cookie_contains" || echo $? > ${SMOKE_RC_RESULT_FILE}
+
+if [ ! -f "${SMOKE_RC_RESULT_FILE}" ]; then
+    echo 0 > ${SMOKE_RC_RESULT_FILE}
+fi
