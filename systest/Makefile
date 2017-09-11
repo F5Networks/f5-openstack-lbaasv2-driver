@@ -362,7 +362,11 @@ tempest_smoke_test:
 	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
 	export EXCLUDE_FILE=$@.yaml ;\
-	$(MAKE) -C . run_smoke
+	export SMOKE_RC_RESULT_FILE=$(PROJROOTDIR)/systest/smoke_rc_result ;\
+	$(MAKE) -C . run_smoke ;\
+	SMOKE_RC=$$(cat smoke_rc_result) ;\
+	exit $$SMOKE_RC
+
 
 run_tests:
 	$(MAKE) -C . microservice_setup_tlc_session
@@ -373,5 +377,5 @@ run_tests:
 run_smoke:
 	$(MAKE) -C . microservice_setup_tlc_session
 	$(MAKE) -C . configure_test_infra
-	$(MAKE) -C . run_smoke_tests
+	$(MAKE) -C . run_smoke_tests ;\
 	$(MAKE) -C . cleanup_tlc_session
