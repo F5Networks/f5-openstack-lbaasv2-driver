@@ -64,35 +64,37 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
 
         cls.partition = 'Project_' + cls.subnet['tenant_id']
         cls.vs_name = 'Project_' + cls.listener_id
-        cls.bigip = cls.bigip_client
 
     @classmethod
     def resource_cleanup(cls):
         super(L7PolicyRulesTestJSON, cls).resource_cleanup()
 
     def check_policy(self, policy='wrapper_policy'):
-        assert self.bigip.policy_exists(policy, partition=self.partition)
+        for bigip_client in self.bigip_clients:
+            assert bigip_client.policy_exists(policy, partition=self.partition)
 
     def check_rule(self, rule='', policy='wrapper_policy',
                    action=None, condition=None, value=None):
         # Validate BIG-IP has rule
-        assert self.bigip.rule_exists(
-            policy, rule, partition=self.partition)
+        for bigip_client in self.bigip_clients:
+            assert bigip_client.rule_exists(
+                policy, rule, partition=self.partition)
 
-        if action:
-            assert self.bigip.rule_has_action(
-                policy, rule, action, partition=self.partition)
+            if action:
+                assert bigip_client.rule_has_action(
+                    policy, rule, action, partition=self.partition)
 
-        if condition:
-            assert self.bigip.rule_has_condition(
-                policy, rule, condition, value, partition=self.partition)
+            if condition:
+                assert bigip_client.rule_has_condition(
+                    policy, rule, condition, value, partition=self.partition)
 
     def check_virtual_server(self):
         # Validate virtual server has policy
         vs_name = 'Project_' + self.listener_id
-        assert self.bigip.virtual_server_exists(vs_name, self.partition)
-        assert self.bigip.virtual_server_has_policy(
-            vs_name, 'wrapper_policy', self.partition)
+        for bigip_client in self.bigip_clients:
+            assert bigip_client.virtual_server_exists(vs_name, self.partition)
+            assert bigip_client.virtual_server_has_policy(
+                vs_name, 'wrapper_policy', self.partition)
 
     @test.attr(type='smoke')
     def test_create_policy_no_rule(self):
@@ -104,11 +106,12 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
         policy_id = new_policy['id']
         self.addCleanup(self._delete_l7policy, policy_id)
 
-        assert not self.bigip.policy_exists(
-            'wrapper_policy', partition=self.partition, should_exist=False)
+        for bigip_client in self.bigip_clients:
+            assert not bigip_client.policy_exists(
+                'wrapper_policy', partition=self.partition, should_exist=False)
 
-        assert not self.bigip.virtual_server_has_policy(
-            self.vs_name, 'wrapper_policy', self.partition)
+            assert not bigip_client.virtual_server_has_policy(
+                self.vs_name, 'wrapper_policy', self.partition)
 
     @test.attr(type='smoke')
     def test_create_policy_one_rule(self):
@@ -249,10 +252,11 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
         # remove both rule and policy and expect policy removed from BIG-IP
         self._delete_l7rule(policy_id, rule_id, wait=True)
         self._delete_l7policy(policy_id, wait=True)
-        assert not self.bigip.policy_exists(
-            'wrapper_policy', partition=self.partition, should_exist=False)
-        assert not self.bigip.virtual_server_has_policy(
-            self.vs_name, 'wrapper_policy', self.partition)
+        for bigip_client in self.bigip_clients:
+            assert not bigip_client.policy_exists(
+                'wrapper_policy', partition=self.partition, should_exist=False)
+            assert not bigip_client.virtual_server_has_policy(
+                self.vs_name, 'wrapper_policy', self.partition)
 
     @test.attr(type='smoke')
     def test_delete_all_rules(self):
@@ -276,10 +280,11 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
 
         # remove rule and expect policy removed from BIG-IP
         self._delete_l7rule(policy_id, rule_id, wait=True)
-        assert not self.bigip.policy_exists(
-            'wrapper_policy', partition=self.partition, should_exist=False)
-        assert not self.bigip.virtual_server_has_policy(
-            self.vs_name, 'wrapper_policy', self.partition)
+        for bigip_client in self.bigip_clients:
+            assert not bigip_client.policy_exists(
+                'wrapper_policy', partition=self.partition, should_exist=False)
+            assert not bigip_client.virtual_server_has_policy(
+                self.vs_name, 'wrapper_policy', self.partition)
 
     @test.attr(type='smoke')
     def test_delete_one_rule(self):
@@ -312,7 +317,8 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
 
         # remove first rule leaving second and expect new policy on BIG-IP
         self._delete_l7rule(policy_id, rule1_id, wait=True)
-        assert self.bigip.policy_exists(
-            'wrapper_policy', partition=self.partition)
-        assert self.bigip.virtual_server_has_policy(
-            self.vs_name, 'wrapper_policy', self.partition)
+        for bigip_client in self.bigip_clients:
+            assert bigip_client.policy_exists(
+                'wrapper_policy', partition=self.partition)
+            assert bigip_client.virtual_server_has_policy(
+                self.vs_name, 'wrapper_policy', self.partition)

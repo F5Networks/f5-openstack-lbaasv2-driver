@@ -178,6 +178,18 @@ tempest_11.6.1_overcloud:
 	export EXCLUDE_FILE=$@.yaml ;\
 	$(MAKE) -C . run_tests
 
+tempest_ha_11.6.1_overcloud:
+	export PROJROOTDIR=$(PROJROOTDIR) ;\
+	export TEST_VE_IMAGE=os_ready-BIGIP-11.6.1.1.0.326.qcow2 ;\
+	export TEST_OPENSTACK_CLOUD=overcloud ;\
+	export TLC_FILE=$(TLC_FILE_DIR)/$${TEST_OPENSTACK_CLOUD}/tempest_ha_$${TEST_OPENSTACK_CLOUD}.tlc ;\
+	export GUMBALLS_PROJECT=$(CHANGESOURCE)_$(SANITIZED_BRANCH)-$@ ;\
+	export RESULTS_DIR=$(MAKEFILE_DIR)/test_results/$${GUMBALLS_PROJECT} ;\
+	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
+	export EXCLUDE_FILE=$@.yaml ;\
+	export HA_TYPE=pair ;\
+	$(MAKE) -C . run_tests
+
 # Tempest Tests for 12.1.x overcloud VE deployment
 tempest_12.1.2_overcloud:
 	export PROJROOTDIR=$(PROJROOTDIR) ;\
@@ -351,7 +363,11 @@ tempest_smoke_test:
 	export TEST_SESSION=$@_$(SANITIZED_BRANCH)_$(SUBJECTCODE_ID)_$(TIMESTAMP) ;\
 	export TEST_TENANT_NETWORK_TYPE=vxlan ;\
 	export EXCLUDE_FILE=$@.yaml ;\
-	$(MAKE) -C . run_smoke
+	export SMOKE_RC_RESULT_FILE=$(PROJROOTDIR)/systest/smoke_rc_result ;\
+	$(MAKE) -C . run_smoke ;\
+	SMOKE_RC=$$(cat smoke_rc_result) ;\
+	exit $$SMOKE_RC
+
 
 run_tests:
 	$(MAKE) -C . microservice_setup_tlc_session
@@ -362,5 +378,5 @@ run_tests:
 run_smoke:
 	$(MAKE) -C . microservice_setup_tlc_session
 	$(MAKE) -C . configure_test_infra
-	$(MAKE) -C . run_smoke_tests
+	$(MAKE) -C . run_smoke_tests ;\
 	$(MAKE) -C . cleanup_tlc_session

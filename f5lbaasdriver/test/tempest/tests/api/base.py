@@ -34,13 +34,25 @@ class F5BaseTestCase(base.BaseTestCase):
 
     @classmethod
     def resource_setup(cls):
-        """Setup the clients and fixtures for test suite."""
+        """Setup the clients and fixtures for test suite.
+
+        When testing BIG-IP clusters, CONF.f5_lbaasv2_driver.icontrol_hostname
+        will be a comma delimited string of IP addresses. A list of clients is
+        created, and test writers should iterate the list when validating
+        BIG-IP operations. Test writers can choose to reference a single
+        BIG-IP using self.bigip_client, which points to the client created
+        with the first address in CONF.f5_lbaasv2_driver.icontrol_hostname.
+        """
         super(F5BaseTestCase, cls).resource_setup()
 
-        cls.bigip_client = BigIpClient(
-            CONF.f5_lbaasv2_driver.icontrol_hostname,
-            CONF.f5_lbaasv2_driver.icontrol_username,
-            CONF.f5_lbaasv2_driver.icontrol_password)
+        cls.bigip_clients = []
+        for host in CONF.f5_lbaasv2_driver.icontrol_hostname.split(","):
+            cls.bigip_clients.append(BigIpClient(
+                host,
+                CONF.f5_lbaasv2_driver.icontrol_username,
+                CONF.f5_lbaasv2_driver.icontrol_password))
+        cls.bigip_client = cls.bigip_clients[0]
+
         cls.plugin_rpc = (
             plugin_rpc_client.F5PluginRPCClient()
         )
