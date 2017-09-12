@@ -96,5 +96,16 @@ set -e
 /tools/bin/tlc --session ${TEST_SESSION} --debug cmd ready
 /tools/bin/tlc --session ${TEST_SESSION} --debug cmd test_env
 /tools/bin/tlc --session ${TEST_SESSION} --debug cmd barbican
+
+# Setup container mailbox for ansible playbooks
+./prepare_controller.sh
+
+# Optionally install heat plugins
+if [[ ${HA_TYPE} == "pair" ]]; then
+  ./ansible_install_heat_plugins.sh
+  /tools/bin/tlc --session ${TEST_SESSION} --debug cmd configure_cluster
+fi
+
+# Install lbaas components
 ./ansible_install_lbaasv2.sh
 /tools/bin/tlc --session ${TEST_SESSION} --debug cmd configure_lbaasv2
