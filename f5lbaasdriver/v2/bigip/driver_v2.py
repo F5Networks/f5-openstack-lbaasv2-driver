@@ -16,7 +16,6 @@ u"""F5 Networks® LBaaSv2 Driver Implementation."""
 
 import os
 import sys
-import uuid
 
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
@@ -158,7 +157,9 @@ class EntityManager(object):
         '''
 
         if entity.attached_to_loadbalancer() and self.loadbalancer:
-            return self._schedule_agent_create_service(context)
+            (agent, service) = self._schedule_agent_create_service(context)
+            return agent['host'], service
+
         raise F5NoAttachedLoadbalancerException()
 
     def _schedule_agent_create_service(self, context):
@@ -176,11 +177,40 @@ class EntityManager(object):
         )
         service = self.driver.service_builder.build(
             context, self.loadbalancer, agent)
-        return agent['host'], service
+        return agent, service
 
 
 class LoadBalancerManager(EntityManager):
     """LoadBalancerManager class handles Neutron LBaaS CRUD."""
+
+    def get_bigip_ports(self, context, agent_config):
+        scheduler = self.driver.scheduler
+        agent_config_dict = \
+            scheduler.deserialize_agent_configurations(
+                agent_config)
+        endpoints = agent_config_dict.get('icontrol_endpoints', {})
+
+        ports = []
+        for ep, ep_config in endpoints.iteritems():
+
+            interfaces = ep_config.get('device_interfaces', {})
+            mac_addrs = [a for i, a in interfaces.iteritems()
+                         if i != "mgmt"]
+
+            if mac_addrs:
+                filters = {'mac_address': mac_addrs}
+                try:
+                    ep_ports = \
+                        self.driver.plugin.db._core_plugin.get_ports(
+                            context,
+                            filters=filters
+                        )
+                    ports.extend(ep_ports)
+                except Exception as e:
+                    LOG.error("Exception: get_ports: %s",
+                              e.message)
+
+        return ports
 
     @log_helpers.log_method_call
     def create(self, context, loadbalancer):
@@ -188,23 +218,31 @@ class LoadBalancerManager(EntityManager):
         driver = self.driver
         self.loadbalancer = loadbalancer
         try:
-            agent_host, service = self._schedule_agent_create_service(context)
+            agent, service = self._schedule_agent_create_service(context)
+            agent_host = agent['host']
+            agent_config = agent.get('configurations', {})
+            LOG.debug("agent configurations: %s" % agent_config)
 
-            # Update the port for the VIP to show ownership by this driver
-            port_data = {
-                'admin_state_up': True,
-                'device_id': str(
-                    uuid.uuid5(uuid.NAMESPACE_DNS, str(agent_host))
-                ),
-                'device_owner': 'network:f5lbaasv2',
-                'status': q_const.PORT_STATUS_ACTIVE
-            }
-            port_data[portbindings.HOST_ID] = agent_host
-            driver.plugin.db._core_plugin.update_port(
-                context,
-                loadbalancer.vip_port_id,
-                {'port': port_data}
-            )
+            bigip_ports = self.get_bigip_ports(context, agent_config)
+            if not bigip_ports:
+                # Update the port for the VIP to show ownership by this driver
+                port_data = {
+                    'admin_state_up': True,
+                    'device_owner': 'network:f5lbaasv2',
+                    'status': q_const.PORT_STATUS_ACTIVE
+                }
+                port_data[portbindings.HOST_ID] = agent_host
+                port_data[portbindings.VNIC_TYPE] = "f5appliance"
+                port_data[portbindings.PROFILE] = {
+                    'agent_id': agent_host
+                }
+                driver.plugin.db._core_plugin.update_port(
+                    context,
+                    loadbalancer.vip_port_id,
+                    {'port': port_data}
+                )
+            else:
+                LOG.debug("Found bigip ports: %s", bigip_ports)
 
             driver.agent_rpc.create_loadbalancer(
                 context, loadbalancer.to_api_dict(), service, agent_host)
@@ -227,7 +265,8 @@ class LoadBalancerManager(EntityManager):
         driver = self.driver
         self.loadbalancer = loadbalancer
         try:
-            agent_host, service = self._schedule_agent_create_service(context)
+            agent, service = self._schedule_agent_create_service(context)
+            agent_host = agent['host']
 
             driver.agent_rpc.update_loadbalancer(
                 context,
@@ -253,7 +292,8 @@ class LoadBalancerManager(EntityManager):
         driver = self.driver
         self.loadbalancer = loadbalancer
         try:
-            agent_host, service = self._schedule_agent_create_service(context)
+            agent, service = self._schedule_agent_create_service(context)
+            agent_host = agent['host']
 
             driver.agent_rpc.delete_loadbalancer(
                 context, loadbalancer.to_api_dict(), service, agent_host)
