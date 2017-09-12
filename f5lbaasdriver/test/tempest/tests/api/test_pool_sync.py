@@ -67,25 +67,28 @@ class PoolSyncTestJSON(base.F5BaseTestCase):
     def resource_cleanup(cls):
         super(PoolSyncTestJSON, cls).resource_cleanup()
 
-    def _pool_exists(self, pool_id, partition):
+    def _pool_exists(self, pool_id, partition, bigip_client):
         name = 'Project_' + pool_id
-        return self.bigip_client.pool_exists(name, partition)
+
+        return bigip_client.pool_exists(name, partition)
 
     def _remove_pool(self, pool_id, partition):
         name = 'Project_' + pool_id
-        return self.bigip_client.delete_pool(name, partition)
+        for bigip_client in self.bigip_clients:
+            bigip_client.delete_pool(name, partition)
 
-    def _members_exists(self, pool_id, partition):
+    def _members_exists(self, pool_id, partition, bigip_client):
         '''Expects only one member to exist in pool'''
         pool_name = 'Project_' + pool_id
-        members = self.bigip_client.get_members(pool_name, partition)
+        members = bigip_client.get_members(pool_name, partition)
         if len(list(members)) > 0:
             return True
         return False
 
     def _remove_members(self, pool_id, partition):
         pool_name = 'Project_' + pool_id
-        self.bigip_client.delete_members(pool_name, partition)
+        for bigip_client in self.bigip_clients:
+            bigip_client.delete_members(pool_name, partition)
 
     @test.attr(type='smoke')
     def test_pool_active_sync(self):
@@ -95,7 +98,9 @@ class PoolSyncTestJSON(base.F5BaseTestCase):
         self.addCleanup(self._delete_pool, self.pool_id)
 
         # verify pool exists
-        assert self._pool_exists(self.pool_id, self.partition)
+        for bigip_client in self.bigip_clients:
+            assert self._pool_exists(
+                self.pool_id, self.partition, bigip_client)
 
         # delete pool directly on BIG-IP
         self._remove_pool(self.pool['id'], self.partition)
@@ -105,7 +110,9 @@ class PoolSyncTestJSON(base.F5BaseTestCase):
         self._update_listener(self.listener['id'], **update_kwargs)
 
         # verify pool exists
-        assert self._pool_exists(self.pool_id, self.partition)
+        for bigip_client in self.bigip_clients:
+            assert self._pool_exists(
+                self.pool_id, self.partition, bigip_client)
 
     @test.attr(type='smoke')
     def test_pool_member_active_sync(self):
@@ -132,5 +139,8 @@ class PoolSyncTestJSON(base.F5BaseTestCase):
         self._update_listener(self.listener['id'], **update_kwargs)
 
         # verify pool and member exists
-        assert self._members_exists(self.pool_id, self.partition)
-        assert self._pool_exists(self.pool_id, self.partition)
+        for bigip_client in self.bigip_clients:
+            assert self._members_exists(
+                self.pool_id, self.partition, bigip_client)
+            assert self._pool_exists(
+                self.pool_id, self.partition, bigip_client)

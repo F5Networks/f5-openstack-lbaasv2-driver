@@ -92,10 +92,11 @@ class PoolTestJSON(base.F5BaseTestCase):
         vs1_name = 'Project_' + first_listener['id']
         vs2_name = 'Project_' + second_listener['id']
         pool_name = 'Project_' + shared_pool['id']
-        assert self.bigip_client.virtual_server_has_pool(
-            vs1_name, self.partition, pool_name) is True
-        assert self.bigip_client.virtual_server_has_pool(
-            vs2_name, self.partition, pool_name) is True
+        for bigip_client in self.bigip_clients:
+            assert bigip_client.virtual_server_has_pool(
+                vs1_name, self.partition, pool_name) is True
+            assert bigip_client.virtual_server_has_pool(
+                vs2_name, self.partition, pool_name) is True
 
         res = self.client.call(self.context, 'get_service_by_loadbalancer_id',
                                loadbalancer_id=self.load_balancer_id)
@@ -152,10 +153,11 @@ class PoolTestJSON(base.F5BaseTestCase):
         vs1_name = 'Project_' + first_listener['id']
         vs2_name = 'Project_' + second_listener['id']
         pool_name = 'Project_' + shared_pool['id']
-        assert self.bigip_client.virtual_server_has_pool(
-            vs1_name, self.partition, pool_name) is True
-        assert self.bigip_client.virtual_server_has_pool(
-            vs2_name, self.partition, pool_name) is True
+        for bigip_client in self.bigip_clients:
+            assert bigip_client.virtual_server_has_pool(
+                vs1_name, self.partition, pool_name) is True
+            assert bigip_client.virtual_server_has_pool(
+                vs2_name, self.partition, pool_name) is True
         # delete shared pool
         self._delete_pool(shared_pool['id'], wait=True)
         res = self.client.call(self.context, 'get_service_by_loadbalancer_id',
