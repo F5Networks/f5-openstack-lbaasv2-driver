@@ -221,6 +221,50 @@ class LBaaSv2PluginCallbacksRPC(object):
             return loadbalancers
 
     @log_helpers.log_method_call
+    def get_loadbalancers_by_network(self, context, env, network_id, group=None, host=None,):
+        """Get all loadbalancers for this group in this env."""
+        loadbalancers = []
+        plugin = self.driver.plugin
+
+
+        network = self.driver.plugin.db._core_plugin.get_network(
+        context,
+        network_id)
+
+        subnets = network['subnets']
+
+
+        # get subnets on network and then filter based on the vip subnet.
+
+        with context.session.begin(subtransactions=True):
+            agents = self.driver.scheduler.get_agents_in_env(
+                context,
+                self.driver.plugin,
+                env,
+                group)
+
+            for agent in agents:
+                agent_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
+                    context,
+                    agent.id
+                )
+                for lb in agent_lbs:
+                    if lb.vip_subnet_id in subnets :
+                        loadbalancers.append(
+                            {
+                                'agent_host': agent['host'],
+                                'lb_id': lb.id,
+                                'tenant_id': lb.tenant_id,
+                                'network_id': network_id
+                            }
+                        )
+        if host:
+            return [lb for lb in loadbalancers if lb['agent_host'] == host]
+        else:
+            return loadbalancers
+
+
+    @log_helpers.log_method_call
     def update_loadbalancer_stats(self,
                                   context,
                                   loadbalancer_id=None,
