@@ -101,14 +101,15 @@ class ESDTestJSON(base.F5BaseTestCase):
 
     def check_esd(self):
         vs_name = 'Project_' + self.listener_id
-        assert self.bigip_client.virtual_server_has_profile(
-            vs_name, 'clientssl', self.partition)
-        assert self.bigip_client.virtual_server_has_profile(
-            vs_name, 'serverssl', self.partition)
-        assert self.bigip_client.virtual_server_has_profile(
-            vs_name, 'tcp-mobile-optimized', self.partition)
-        assert self.bigip_client.virtual_server_has_profile(
-            vs_name, 'tcp-lan-optimized', self.partition)
-        assert self.bigip_client.virtual_server_has_value(
-            vs_name, 'fallbackPersistence',
-            '/Common/source_addr', self.partition)
+        for bigip_client in self.bigip_clients:
+            assert bigip_client.virtual_server_has_profile(
+                vs_name, 'clientssl', self.partition)
+            assert bigip_client.virtual_server_has_profile(
+                vs_name, 'serverssl', self.partition)
+            assert bigip_client.virtual_server_has_profile(
+                vs_name, 'tcp-mobile-optimized', self.partition)
+            assert bigip_client.virtual_server_has_profile(
+                vs_name, 'tcp-lan-optimized', self.partition)
+            assert bigip_client.virtual_server_has_value(
+                vs_name, 'fallbackPersistence',
+                '/Common/source_addr', self.partition)
