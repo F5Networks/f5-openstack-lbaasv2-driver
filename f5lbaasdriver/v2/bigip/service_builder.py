@@ -331,28 +331,9 @@ class LBaaSv2ServiceBuilder(object):
                 agent_conf = {}
         return agent_conf
 
-    @log_helpers.log_method_call
+
     def _is_common_network(self, network, agent):
         return True
-        # common_external_networks = False
-        # common_networks = {}
-        #
-        # if agent and "configurations" in agent:
-        #     agent_configs = self.deserialize_agent_configurations(
-        #         agent['configurations'])
-        #
-        #     if 'common_networks' in agent_configs:
-        #         common_networks = agent_configs['common_networks']
-        #
-        #     if 'f5_common_external_networks' in agent_configs:
-        #         common_external_networks = (
-        #             agent_configs['f5_common_external_networks'])
-        #
-        # return (network['shared'] or
-        #         (network['id'] in common_networks) or
-        #         ('router:external' in network and
-        #          network['router:external'] and
-        #          common_external_networks))
 
     def _valid_tenant_ids(self, network, lb_tenant_id, agent):
         if (network['tenant_id'] == lb_tenant_id):
@@ -435,7 +416,7 @@ class LBaaSv2ServiceBuilder(object):
                 l7_policies=False
             )
             listener_dict['l7_policies'] = \
-                [{'id': l7_policy.id} for l7_policy in listener.l7_policies]
+                [{'id': l7_policy.id,'name':l7_policy.name} for l7_policy in listener.l7_policies]
             if listener.default_pool:
                 listener_dict['default_pool_id'] = listener.default_pool.id
 
@@ -510,7 +491,7 @@ class LBaaSv2ServiceBuilder(object):
         pool_dict['members'] = [{'id': member.id} for member in pool.members]
         pool_dict['listeners'] = [{'id': listener.id}
                                   for listener in pool.listeners]
-        pool_dict['l7_policies'] = [{'id': l7_policy.id}
+        pool_dict['l7_policies'] = [{'id': l7_policy.id,'name':l7_policy.name}
                                     for l7_policy in pool.l7_policies]
         if pool.session_persistence:
             pool_dict['session_persistence'] = (

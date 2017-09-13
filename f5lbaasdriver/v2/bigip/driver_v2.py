@@ -38,6 +38,15 @@ from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 from f5lbaasdriver.v2.bigip import neutron_client
 from f5lbaasdriver.v2.bigip import plugin_rpc
 
+import urllib3
+import requests
+
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 LOG = logging.getLogger(__name__)
 
 OPTS = [
@@ -75,6 +84,8 @@ class F5DriverV2(object):
 
     def __init__(self, plugin=None, env=None):
         """Driver initialization."""
+        LOG.debug('F5 LBAAS driver initializing')
+
         if not plugin:
             LOG.error('Required LBaaS Driver and Core Driver Missing')
             sys.exit(1)
