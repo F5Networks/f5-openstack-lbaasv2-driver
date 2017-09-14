@@ -54,6 +54,7 @@ class DisconnectedService(object):
                                            filter_dynamic=None)
 
         for segment in segments:
+            LOG.debug("F5 disconnected service check segment: %s" % segment)
             if ((network_segment_physical_network ==
                  segment['physical_network']) and
                 (segment['network_type'].lower() in

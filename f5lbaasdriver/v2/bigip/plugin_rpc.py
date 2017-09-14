@@ -710,3 +710,57 @@ class LBaaSv2PluginCallbacksRPC(object):
             except Exception as exc:
                 LOG.error('could not remove allowed address pair: %s'
                           % exc.message)
+
+    @log_helpers.log_method_call
+    def create_port_on_network(self, context, network_id=None,
+                               mac_address=None, name=None, host=None):
+        """Create a port on a network."""
+        ports = []
+        if network_id and name:
+            filters = {'name': [name]}
+            ports = self.driver.plugin.db._core_plugin.get_ports(
+                context,
+                filters=filters
+            )
+
+        if not ports:
+            network = self.driver.plugin.db._core_plugin.get_network(
+                context,
+                network_id
+            )
+
+            if not mac_address:
+                mac_address = attributes.ATTR_NOT_SPECIFIED
+            if not host:
+                host = ''
+            if not name:
+                name = ''
+
+            device_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, str(host)))
+            port_data = {
+                'tenant_id': network['tenant_id'],
+                'name': name,
+                'network_id': network_id,
+                'mac_address': mac_address,
+                'admin_state_up': True,
+                'device_id': device_id,
+                'device_owner': 'network:f5lbaasv2',
+                'status': neutron_const.PORT_STATUS_ACTIVE,
+                'fixed_ips': attributes.ATTR_NOT_SPECIFIED
+            }
+            port_data[portbindings.HOST_ID] = host
+            port_data[portbindings.VIF_TYPE] = 'other'
+            extended_attrs = portbindings.EXTENDED_ATTRIBUTES_2_0['ports']
+            if 'binding:capabilities' in extended_attrs:
+                port_data['binding:capabilities'] = {'port_filter': False}
+            port = self.driver.plugin.db._core_plugin.create_port(
+                context, {'port': port_data})
+            # Because ML2 marks ports DOWN by default on creation
+            update_data = {
+                'status': neutron_const.PORT_STATUS_ACTIVE
+            }
+            self.driver.plugin.db._core_plugin.update_port(
+                context, port['id'], {'port': update_data})
+            return port
+        else:
+            return ports[0]
