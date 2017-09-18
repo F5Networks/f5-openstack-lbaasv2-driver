@@ -37,6 +37,7 @@ EXTRA_VARS="${EXTRA_VARS} neutron_lbaas_init_location=${NEUTRON_INIT_LOC} restar
 EXTRA_VARS="${EXTRA_VARS} f5_global_routed_mode=${GLOBAL_ROUTED_MODE} bigip_netloc=${BIGIP_IP} agent_service_name=f5-openstack-agent.service"
 EXTRA_VARS="${EXTRA_VARS} use_barbican_cert_manager=True neutron_lbaas_shim_install_dest=/usr/lib/python2.7/site-packages/neutron_lbaas/drivers/f5"
 
+sudo -E docker pull docker-registry.pdbld.f5net.com/openstack-test-ansibleserver-prod/mitaka
 sudo -E docker run \
 --volumes-from `hostname | xargs` \
 docker-registry.pdbld.f5net.com/openstack-test-ansibleserver-prod/newton:latest \
