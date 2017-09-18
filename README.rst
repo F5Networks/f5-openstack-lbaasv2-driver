@@ -37,11 +37,7 @@ See the `F5 OpenStack Releases and Support Matrix <http://clouddocs.f5.com/cloud
 Documentation
 -------------
 
-<<<<<<< HEAD
 Documentation is published on `clouddocs.f5.com <http://clouddocs.f5.com/products/openstack/lbaasv2-driver/latest>`_.
-=======
-Documentation is published on `clouddocs.f5.com <http://clouddocs.f5.com/products/openstack/latest/lbaasv2-driver/>`_.
->>>>>>> upstream/liberty
 
 Filing Issues
 -------------
