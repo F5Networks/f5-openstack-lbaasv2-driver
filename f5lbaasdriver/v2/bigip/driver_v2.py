@@ -394,9 +394,23 @@ class PoolManager(EntityManager):
     def delete(self, context, pool):
         """Delete a pool."""
 
+        if self._attached_to_policy(context,pool):
+            raise Exception("Cannot delete pool, attached to policy")
+
+
+
         self.loadbalancer = pool.loadbalancer
         self.api_dict = self._get_pool_dict(pool)
         self._call_rpc(context, pool, 'delete_pool')
+
+    def _attached_to_policy(self, context, pool):
+        query = context.session.query(models.L7Policy)
+        query = query.filter((models.L7Policy).redirect_pool_id==pool.id)
+
+        if query.count() > 0:
+             return True
+
+        return False
 
 
 class MemberManager(EntityManager):
