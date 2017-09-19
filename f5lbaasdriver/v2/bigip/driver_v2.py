@@ -395,6 +395,8 @@ class PoolManager(EntityManager):
         """Delete a pool."""
 
         if self._attached_to_policy(context,pool):
+            self.driver.plugin.db.update_status(context, models.PoolV2, pool.id,
+                                    plugin_constants.ACTIVE)
             raise Exception("Cannot delete pool, attached to policy")
 
 
