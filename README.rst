@@ -21,6 +21,9 @@ F5 Driver for OpenStack LBaaSv2
 
 |Build Status| |slack badge|
 
+.. image:: https://coveralls.io/repos/github/F5Networks/f5-openstack-lbaasv2-driver/badge.svg
+:target: https://coveralls.io/github/F5Networks/f5-openstack-lbaasv2-driver
+
 Introduction
 ------------
 
