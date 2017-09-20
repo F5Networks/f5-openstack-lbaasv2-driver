@@ -507,7 +507,8 @@ class LBaaSv2PluginCallbacksRPC(object):
     @log_helpers.log_method_call
     def create_port_on_subnet(self, context, subnet_id=None,
                               mac_address=None, name=None,
-                              fixed_address_count=1, host=None):
+                              fixed_address_count=1, host=None,
+                              device_id=None, binding_profile={}):
         """Create port on subnet."""
         port = None
         with context.session.begin(subtransactions=True):
@@ -544,12 +545,16 @@ class LBaaSv2PluginCallbacksRPC(object):
                         'status': neutron_const.PORT_STATUS_ACTIVE,
                         'fixed_ips': fixed_ips
                     }
+                    if device_id:
+                        port_data['device_id'] = device_id
                     port_data[portbindings.HOST_ID] = host
-                    port_data[portbindings.VIF_TYPE] = constants.VIF_TYPE
+                    port_data[portbindings.VNIC_TYPE] = "f5appliance"
                     if ('binding:capabilities' in
                             portbindings.EXTENDED_ATTRIBUTES_2_0['ports']):
                         port_data['binding:capabilities'] = {
                             'port_filter': False}
+                    if binding_profile:
+                        port_data[portbindings.PROFILE] = binding_profile
                     port = self.driver.plugin.db._core_plugin.create_port(
                         context, {'port': port_data})
                     # Because ML2 marks ports DOWN by default on creation
