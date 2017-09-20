@@ -270,13 +270,16 @@ class LBaaSv2PluginCallbacksRPC(object):
     def _list_loadbalancers_on_lbaas_agent(self, context, id):
         query = context.session.query(models.LoadBalancer)
 
-        query.outerjoin(agent_scheduler.LoadbalancerAgentBinding,models.LoadBalancer==agent_scheduler.LoadbalancerAgentBinding.loadbalancer_id)
 
-        query = query.filter(agent_scheduler.LoadbalancerAgentBinding.agent_id == id)
+        query = context.session.query(agent_scheduler.LoadbalancerAgentBinding.loadbalancer_id)
+        query = query.filter_by(agent_id=id)
+        loadbalancer_ids = [item[0] for item in query]
+        if loadbalancer_ids:
+            lbs = self.get_loadbalancers(context,
+                                         filters={'id': loadbalancer_ids})
+            return [lb_db for lb_db in lbs]
 
-        lbs = [lb_db for lb_db in query]
-
-        return lbs
+        return []
 
 
 
