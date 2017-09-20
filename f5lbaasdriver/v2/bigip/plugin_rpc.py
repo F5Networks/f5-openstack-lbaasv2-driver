@@ -275,7 +275,7 @@ class LBaaSv2PluginCallbacksRPC(object):
         query = query.filter_by(agent_id=id)
         loadbalancer_ids = [item[0] for item in query]
         if loadbalancer_ids:
-            lbs = self.get_loadbalancers(context,
+            lbs = self.driver.plugin.db.get_loadbalancers(context,
                                          filters={'id': loadbalancer_ids})
             return [lb_db for lb_db in lbs]
 
