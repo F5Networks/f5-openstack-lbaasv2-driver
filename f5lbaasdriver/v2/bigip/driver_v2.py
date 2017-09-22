@@ -470,27 +470,12 @@ class MemberManager(EntityManager):
     def delete(self, context, member):
         """Delete a member."""
         self.loadbalancer = member.pool.loadbalancer
-        member_port = None
         driver = self.driver
         try:
             agent_host, service = self._setup_crud(context, member)
 
             driver.agent_rpc.delete_member(
                 context, member.to_dict(pool=False), service, agent_host)
-
-            # Get port for member.
-            members = service.get("members", [])
-            for m in members:
-                if member.id == m['id']:
-                    member_port = m.get('port', None)
-                    break
-
-            if member_port:
-                if member_port['device_owner'] == 'network:f5lbaasv2':
-                    LOG.debug("Delete F5 Networks owned port")
-                    driver.q_client.delete_port(context,
-                                                port_id=member_port['id'])
-
         except Exception as e:
             LOG.error("Exception: member delete: %s" % e.message)
             raise e
