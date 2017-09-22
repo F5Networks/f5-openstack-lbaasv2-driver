@@ -507,7 +507,8 @@ class LBaaSv2PluginCallbacksRPC(object):
     @log_helpers.log_method_call
     def create_port_on_subnet(self, context, subnet_id=None,
                               mac_address=None, name=None,
-                              fixed_address_count=1, host=None):
+                              fixed_address_count=1, host=None,
+                              device_id=None, binding_profile={}):
         """Create port on subnet."""
         port = None
         if subnet_id:
