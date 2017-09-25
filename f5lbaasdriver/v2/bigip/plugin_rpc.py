@@ -25,9 +25,8 @@ from neutron.common import rpc as neutron_rpc
 from neutron.db import agents_db
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as plugin_constants
-from neutron_lbaas.db.loadbalancer import models
 from neutron_lbaas import agent_scheduler
-from neutron_lbaas.services.loadbalancer import data_models
+
 
 
 from f5lbaasdriver.v2.bigip import constants_v2 as constants
@@ -70,7 +69,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                 return []
             elif len(agents) > 1:
                 LOG.warning('Multiple lbaas agents found on host %s' % host)
-            lbs = self. self._list_loadbalancers_on_lbaas_agent(
+            lbs = self. self.driver.plugin.db.list_loadbalancers_on_lbaas_agent(
                 context,
                 agents[0].id
             )
@@ -135,7 +134,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                 group)
 
             for agent in agents:
-                agent_lbs =  self._list_loadbalancers_on_lbaas_agent(
+                agent_lbs =  self.driver.plugin.db.list_loadbalancers_on_lbaas_agent(
                     context,
                     agent.id
                 )
@@ -168,7 +167,7 @@ class LBaaSv2PluginCallbacksRPC(object):
             )
 
             for agent in agents:
-                agent_lbs =  self._list_loadbalancers_on_lbaas_agent(
+                agent_lbs =  self.driver.plugin.db.list_loadbalancers_on_lbaas_agent(
                     context,
                     agent.id
                 )
@@ -202,7 +201,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                 group)
 
             for agent in agents:
-                agent_lbs =  self._list_loadbalancers_on_lbaas_agent(
+                agent_lbs =  self.driver.plugin.db.list_loadbalancers_on_lbaas_agent(
                     context,
                     agent.id
                 )
@@ -246,7 +245,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                 group)
 
             for agent in agents:
-                agent_lbs = self._list_loadbalancers_on_lbaas_agent(
+                agent_lbs = self.driver.plugin.db.list_loadbalancers_on_lbaas_agent(
                     context,
                     agent.id
                 )
@@ -265,21 +264,6 @@ class LBaaSv2PluginCallbacksRPC(object):
         else:
             return loadbalancers
 
-
-
-    def _list_loadbalancers_on_lbaas_agent(self, context, id):
-        query = context.session.query(models.LoadBalancer)
-
-
-        query = context.session.query(agent_scheduler.LoadbalancerAgentBinding.loadbalancer_id)
-        query = query.filter_by(agent_id=id)
-        loadbalancer_ids = [item[0] for item in query]
-        if loadbalancer_ids:
-            lbs = self.driver.plugin.db._get_resources(context, models.LoadBalancer,
-                                         filters={'id': loadbalancer_ids})
-            return [lb_db for lb_db in lbs]
-
-        return []
 
 
 
