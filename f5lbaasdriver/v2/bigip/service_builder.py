@@ -217,6 +217,7 @@ class LBaaSv2ServiceBuilder(object):
             member_dict['port'] = ports[0]
             self._populate_member_network(context, member_dict, network)
         elif len(ports) == 0:
+            self._populate_member_network(context, member_dict, network)
             LOG.warning("Lbaas member %s has no associated neutron port"
                         % member.address)
         elif len(ports) > 1:

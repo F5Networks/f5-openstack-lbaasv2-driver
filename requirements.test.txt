@@ -1,4 +1,4 @@
--c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=stable/liberty
+-c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=liberty-eol
 -e .
 git+https://github.com/openstack/neutron.git@liberty-eol
 git+https://github.com/F5Networks/neutron-lbaas.git@stable/mitaka
