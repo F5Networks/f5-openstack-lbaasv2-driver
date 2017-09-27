@@ -23,6 +23,7 @@ tempest_12.1.2_undercloud_vxlan tempest_13.0.0_undercloud_vxlan
 # Fixing branch to that specified in the public fork. This is necessary for build on PRs.
 export BRANCH := liberty
 # The branch may contain the text 'stable/' before the OpenStack release name
+# OR it may contain '-eol' after it for the eol tag.
 # To allow this type of branch name and any other to work with the cloud deployment
 # and with Jenkins, we should strip out the forward slash, leaving something like:
 # stable/newton -> stablenewton
@@ -59,7 +60,7 @@ export TEMPEST_REPO := http://git.openstack.org/openstack/tempest
 # neutron-lbaas (OpenStack Neutron LBaaS repo for the test cases to run)
 export NEUTRON_LBAAS_DIR := /home/jenkins/neutron-lbaas
 export NEUTRON_LBAAS_REPO := https://github.com/F5Networks/neutron-lbaas.git
-export NEUTRON_LBAAS_BRANCH := stable/mitaka
+export NEUTRON_LBAAS_BRANCH := mitaka-eol
 export UPPER_CONSTRAINTS_FILE := https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=$(NEUTRON_LBAAS_BRANCH)
 
 
