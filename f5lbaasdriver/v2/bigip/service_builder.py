@@ -291,12 +291,12 @@ class LBaaSv2ServiceBuilder(object):
 
         net_type = network.get('provider:network_type', "undefined")
         if net_type == 'vxlan':
-            if 'binding:host_id' in member['port']:
+            if 'port' in member and 'binding:host_id' in member['port']:
                 host = member['port']['binding:host_id']
                 member['vxlan_vteps'] = self._get_endpoints(
                     context, 'vxlan', host)
         if net_type == 'gre':
-            if 'binding:host_id' in member['port']:
+            if 'port' in member and 'binding:host_id' in member['port']:
                 host = member['port']['binding:host_id']
                 member['gre_vteps'] = self._get_endpoints(
                     context, 'gre', host)
