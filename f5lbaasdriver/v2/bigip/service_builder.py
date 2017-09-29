@@ -416,7 +416,7 @@ class LBaaSv2ServiceBuilder(object):
                 l7_policies=False
             )
             listener_dict['l7_policies'] = \
-                [{'id': l7_policy.id,'name':l7_policy.name} for l7_policy in listener.l7_policies]
+                [{'id': l7_policy.id,'name':l7_policy.name,'provisioning_status':l7_policy.provisioning_status} for l7_policy in listener.l7_policies]
             if listener.default_pool:
                 listener_dict['default_pool_id'] = listener.default_pool.id
 
@@ -491,7 +491,7 @@ class LBaaSv2ServiceBuilder(object):
         pool_dict['members'] = [{'id': member.id} for member in pool.members]
         pool_dict['listeners'] = [{'id': listener.id}
                                   for listener in pool.listeners]
-        pool_dict['l7_policies'] = [{'id': l7_policy.id,'name':l7_policy.name}
+        pool_dict['l7_policies'] = [{'id': l7_policy.id,'name':l7_policy.name,'provisioning_status':l7_policy.provisioning_status}
                                     for l7_policy in pool.l7_policies]
         if pool.session_persistence:
             pool_dict['session_persistence'] = (
