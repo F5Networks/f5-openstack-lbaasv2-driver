@@ -2,6 +2,8 @@
 
 set -ex
 
+# A test of running a smoke on PR when the user is not in F5Networks and is not an admin
+
 HEAT_PKG_LOC="git+https://github.com/F5Networks/f5-openstack-heat-plugins.git@${BRANCH}"
 PIP_INSTALL_LOC=/usr/lib/python2.7/site-packages/f5_heat
 HEAT_PLUGIN_LOC=/usr/lib/heat
