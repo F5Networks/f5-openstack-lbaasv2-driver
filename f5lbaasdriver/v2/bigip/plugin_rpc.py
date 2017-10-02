@@ -38,6 +38,7 @@ class LBaaSv2PluginCallbacksRPC(object):
     def __init__(self, driver=None):
         """LBaaSv2PluginCallbacksRPC constructor."""
         self.driver = driver
+        self.cluster_wide_agents = {}
 
     def create_rpc_listener(self):
         topic = constants.TOPIC_PROCESS_ON_HOST_V2
@@ -765,3 +766,84 @@ class LBaaSv2PluginCallbacksRPC(object):
             return port
         else:
             return ports[0]
+
+    # return a single active agent to implement cluster wide changes
+    # which can not efficiently mapped back to a particulare agent
+    @log_helpers.log_method_call
+    def get_clusterwide_agent(self, context, env, group, host=None):
+        """Get an agent to perform clusterwide tasks"""
+        LOG.debug('getting agent to perform clusterwide tasks')
+        with context.session.begin(subtransactions=True):
+            if (env, group) in self.cluster_wide_agents:
+                known_agent = self.cluster_wide_agents[(env, group)]
+                if self.driver.plugin.db.is_eligible_agent(active=True,
+                                                           agent=known_agent):
+                    return known_agent
+                else:
+                    del(self.cluster_wide_agents[(env, group)])
+            try:
+                agents = \
+                    self.driver.scheduler.get_agents_in_env(context,
+                                                            self.driver.plugin,
+                                                            env, group, True)
+                if agents:
+                    self.cluster_wide_agents[(env, group)] = agents[0]
+                    return agents[0]
+                else:
+                    LOG.error('no active agents available for clusterwide ',
+                              ' tasks %s group number %s' % (env, group))
+                    return {}
+            except Exception as exc:
+                LOG.error('clusterwide agent exception: %s' % str(exc))
+                return {}
+        return {}
+
+    # validate a list of loadbalancer id - assure they are not deleted
+    @log_helpers.log_method_call
+    def validate_loadbalancers_state(self, context, loadbalancers, host=None):
+        lb_status = {}
+        for lbid in loadbalancers:
+            with context.session.begin(subtransactions=True):
+                try:
+                    lb_db = self.driver.plugin.db.get_loadbalancer(context,
+                                                                   lbid)
+                    lb_status[lbid] = lb_db.provisioning_status
+
+                except Exception as e:
+                    LOG.error('Exception: get_loadbalancer: %s',
+                              e.message)
+                    lb_status[lbid] = 'Unknown'
+        return lb_status
+
+    # validate a list of pools id - assure they are not deleted
+    @log_helpers.log_method_call
+    def validate_pools_state(self, context, pools, host=None):
+        pool_status = {}
+        for poolid in pools:
+            with context.session.begin(subtransactions=True):
+                try:
+                    pool_db = self.driver.plugin.db.get_pool(context, poolid)
+                    pool_status[poolid] = pool_db.provisioning_status
+                except Exception as e:
+                    LOG.error('Exception: get_pool: %s',
+                              e.message)
+                    pool_status[poolid] = 'Unknown'
+        return pool_status
+
+    # validate a list of listeners id - assure they are not deleted
+    @log_helpers.log_method_call
+    def validate_listeners_state(self, context, listeners, host=None):
+        listener_status = {}
+        for listener_id in listeners:
+            with context.session.begin(subtransactions=True):
+                try:
+                    listener_db = \
+                        self.driver.plugin.db.get_listener(context,
+                                                           listener_id)
+                    listener_status[listener_id] = \
+                        listener_db.provisioning_status
+                except Exception as e:
+                    LOG.error('Exception: get_listener: %s',
+                              e.message)
+                    listener_status[listener_id] = 'Unknown'
+        return listener_status
