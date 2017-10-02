@@ -5,7 +5,7 @@ pipeline {
         docker {
             label "docker"
             registryUrl "https://docker-registry.pdbld.f5net.com"
-            image "openstack-test-testrunner-breaux/mitaka:latest"
+            image "openstack-test-testrunner-prod/mitaka:latest"
             args "-v /etc/localtime:/etc/localtime:ro" \
                 + " -v /srv/mesos/trtl/results:/home/jenkins/results" \
                 + " -v /srv/nfs:/testlab" \
