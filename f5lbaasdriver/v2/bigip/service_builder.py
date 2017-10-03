@@ -175,6 +175,7 @@ class LBaaSv2ServiceBuilder(object):
             member_dict['port'] = ports[0]
             self._populate_member_network(context, member_dict, network)
         elif len(ports) == 0:
+            self._populate_member_network(context, member_dict, network)
             LOG.warning("Lbaas member %s has no associated neutron port"
                         % member.address)
         elif len(ports) > 1:
@@ -239,12 +240,12 @@ class LBaaSv2ServiceBuilder(object):
 
         net_type = network.get('provider:network_type', "undefined")
         if net_type == 'vxlan':
-            if 'binding:host_id' in member['port']:
+            if 'port' in member and 'binding:host_id' in member['port']:
                 host = member['port']['binding:host_id']
                 member['vxlan_vteps'] = self._get_endpoints(
                     context, 'vxlan', host)
         if net_type == 'gre':
-            if 'binding:host_id' in member['port']:
+            if 'port' in member and 'binding:host_id' in member['port']:
                 host = member['port']['binding:host_id']
                 member['gre_vteps'] = self._get_endpoints(
                     context, 'gre', host)
