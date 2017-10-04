@@ -549,7 +549,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                     if device_id:
                         port_data['device_id'] = device_id
                     port_data[portbindings.HOST_ID] = host
-                    port_data[portbindings.VNIC_TYPE] = "f5appliance"
+                    port_data[portbindings.VIF_TYPE] = constants.VIF_TYPE
                     if ('binding:capabilities' in
                             portbindings.EXTENDED_ATTRIBUTES_2_0['ports']):
                         port_data['binding:capabilities'] = {
