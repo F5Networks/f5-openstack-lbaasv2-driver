@@ -26,7 +26,9 @@ pipeline {
                     . systest/scripts/init_env.sh
 
                     # - record start of build
-                    systest/scripts/record_build_start.sh
+                    if [ "${DONTRECORDTRTLRESULTS}" != "true"  ]; then
+                        systest/scripts/record_build_start.sh
+                    fi
 
                     # - setup ssh agent
                     eval $(ssh-agent -s)
@@ -37,8 +39,11 @@ pipeline {
                     make -C systest $target_name
 
                     # - record results
-                    if [ "${JOB_BASE_NAME}" != "smoke_test" ]; then
-                        systest/scripts/record_results.sh
+                    if [ -n "${JOB_BASE_NAME##*smoke*}" ]; then
+                        systest/scripts/record_publish_agent_coverage.sh
+                        if [ "${DONTRECORDTRTLRESULTS}" != "true"  ]; then
+                            systest/scripts/record_results.sh
+                        fi
                     fi
                 '''
             }

@@ -17,6 +17,12 @@
 
 set -x
 
+OS_CONTROLLER_IP=`/tools/bin/tlc --sid ${TEST_SESSION} symbols \
+| grep openstack_controller1ip_data_direct \
+| awk '{print $3}' | xargs`
+
+SSH_CMD="ssh -i /home/jenkins/.ssh/id_rsa -o StrictHostKeyChecking=no testlab@${OS_CONTROLLER_IP}"
+SCP_PREFIX="scp -i /home/jenkins/.ssh/id_rsa -o StrictHostKeyChecking=no testlab@${OS_CONTROLLER_IP}:"
 # Create .pytest.rootdir files at the root of the driver and neutron-lbaas
 # respositories to make the results suite names be rooted at the top-level
 # of the respective test repository
@@ -51,4 +57,15 @@ bash -c "tox -e scenariov2 -c f5.tox.ini --sitepackages -- \
   --autolog-outputdir ${RESULTS_DIR} \
   --autolog-session ${SCENARIO_SESSION}"
 
+${SSH_CMD} "sudo systemctl stop f5-openstack-agent"
+COUNTER=0
+until ${SCP_PREFIX}/tmp/store/session/.coverage.f5-openstack-agent ./;
+do COUNTER=$((COUNTER+1));
+    sleep .5;
+    if [ "$COUNTER" -gt 10 ]; then
+        exit 1
+    fi
+done
+mkdir -p ${AGENTCOVERAGEDIR}
+mv .coverage.f5-openstack-agent ${AGENTCOVERAGEDIR}/
 exit 0
