@@ -88,7 +88,7 @@ rst_prolog = '''
     var home = "clouddocs.f5.com";
     var rtd = "f5-openstack-lbaasv2-driver.readthedocs.io";
 
-    if (window.location.hostname === rtd) {window.location.assign("http://" + home + "/products/openstack/lbaasv2-driver/stable/newton");}
+    if (window.location.hostname === rtd) {window.location.assign("http://" + home + "/products/openstack/lbaasv2-driver/newton");}
    </script>
 '''
 
