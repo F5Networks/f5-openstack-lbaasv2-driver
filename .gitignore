@@ -1,4 +1,5 @@
 ### ignore sphinx / python stuff
+.contain
 venv/*
 .idea/*
 .venv/*

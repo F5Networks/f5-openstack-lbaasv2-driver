@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 
+export AGENTCOVERAGEDIR := ${AGENTCOVERAGEDIR}
 export BRANCH := mitaka
 export GIT_REMOTE_URL := $(shell git config --get remote.origin.url)
 # The below operations are used for the builds on PR. The two variables are defined by the
