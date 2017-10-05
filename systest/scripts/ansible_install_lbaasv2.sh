@@ -43,10 +43,3 @@ sudo -E docker run \
 docker-registry.pdbld.f5net.com/openstack-test-ansibleserver-prod/newton:latest \
 /f5-openstack-ansible/playbooks/agent_driver_deploy.yaml \
 --extra-vars "${EXTRA_VARS}"
-
-# Also install the F5 OpenStack ML2 Mechanism Driver via ansible
-sudo -E docker run \
---volumes-from `hostname | xargs` \
-docker-registry.pdbld.f5net.com/openstack-test-ansibleserver-prod/newton:latest \
-/f5-openstack-ansible/playbooks/ml2_driver_deploy.yaml \
---extra-vars "${EXTRA_VARS}"

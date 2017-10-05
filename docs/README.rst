@@ -191,7 +191,7 @@ What's Next
    `F5 Driver for OpenStack LBaaSv2 user documentation`_
 
 
-.. |Build Status| image:: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=liberty
+.. |Build Status| image:: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=stable/newton
     :target: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver
     :alt: Build Status
 
