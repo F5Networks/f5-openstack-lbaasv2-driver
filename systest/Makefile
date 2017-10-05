@@ -15,6 +15,7 @@
 
 # Fixing branch to that specified in the public fork. This is necessary for build on PRs.
 export BRANCH := stable/newton
+export AGENTCOVERAGEDIR := ${AGENTCOVERAGEDIR}
 export GIT_REMOTE_URL := $(shell git config --get remote.origin.url)
 # The below operations are used for the builds on PR. The two variables are defined by the
 # Github Pull Request Builder plugin for Jenkins. --> ghprb...

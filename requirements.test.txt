@@ -6,7 +6,19 @@ git+https://github.com/F5Networks/pytest-symbols.git
 git+https://github.com/F5Networks/f5-openstack-test.git@stable/newton
 
 f5-sdk==2.3.3
+
+# COMMUNITY CONSTRAINED SECTION
+# Community constrained packages, packages specified here MUST not specify a
+# version.  The versions of these packages are specified at the constraints
+# URL.  If you add a version here it will be ignored, and therefore be
+# misleading to readers of this file.
+-c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=stable/newton
+
+mock==IGNORED      # See section comment
+pytest==IGNORED    # See section comment
+decorator==IGNORED # See section comment
+paramiko==IGNORED  # See section comment
+python-glanceclient==IGNORED
+python-heatclient==IGNORED
+tempest==IGNORED   # See section comment
 pytest-cov==2.2.1
-tempest==12.1.0
-python-glanceclient==2.5.0
-python-heatclient==1.5.2
