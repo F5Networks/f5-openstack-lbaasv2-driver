@@ -5,7 +5,7 @@ set -ex
 # - JOB_NAME is provided by Jenkins
 #   (eg. "openstack/driver/liberty/12.1.1-undercloud-vxlan")
 
-git clone --single-branch --depth=1 -b mitaka https://github.com/F5Networks/f5-openstack-agent.git /home/jenkins/agent_commit
+git clone --single-branch --depth=1 -b stable/newton https://github.com/F5Networks/f5-openstack-agent.git /home/jenkins/agent_commit
 export AGENT_HASH=$(cd /home/jenkins/agent_commit && git rev-parse HEAD | xargs)
 export CI_PROGRAM=$(echo $JOB_NAME | cut -d "/" -f 1)
 export CI_PROJECT=$(echo $JOB_NAME | cut -d "/" -f 2)
