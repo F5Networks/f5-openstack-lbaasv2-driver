@@ -6,6 +6,7 @@ env:
   - PKG_RELEASE=$(python ${DIST_REPO}/scripts/get-version-release.py --release)
   - PKG_RELEASE_EL7=${DIST_REPO}/rpms/f5-openstack-lbaasv2-driver-${PKG_VERSION}-1.el7.noarch.rpm
   - PKG_RELEASE_1404=${DIST_REPO}/deb_dist/python-f5-openstack-lbaasv2-driver_${PKG_VERSION}-${PKG_RELEASE}_1404_all.deb
+  - RELEASE_TAG="v$(echo $PKG_VERSION | cut -d . -f 1,2)"
 services:
 - docker
 language: python
@@ -75,8 +76,6 @@ deploy:
    # if this is a tagged release, the docs go to /products/openstack/lbaasv2-driver/$TRAVIS_BRANCH/vX.Y
   - provider: script
     skip_cleanup: true
-    env:
-    - RELEASE_TAG="$(echo $TRAVIS_TAG |cut -c1-4)"
     on:
       tags: true
       repo: F5Networks/f5-openstack-lbaasv2-driver
