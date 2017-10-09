@@ -76,7 +76,7 @@ deploy:
   - provider: script
     skip_cleanup: true
     env:
-    - RELEASE_TAG="$(echo $TRAVIS_TAG |cut -c1-4)"
+    - RELEASE_TAG="$(echo $TRAVIS_TAG |cut -c1-5)"
     on:
       tags: true
       repo: F5Networks/f5-openstack-lbaasv2-driver
