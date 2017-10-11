@@ -1,5 +1,5 @@
 # coding=utf-8
-u"""F5 Networks® LBaaSv2 Driver Implementation."""
+u"""F5 Networks LBaaSv2 Driver Implementation."""
 # Copyright 2016 F5 Networks Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -80,7 +80,7 @@ class F5NoAttachedLoadbalancerException(f5_exc.F5LBaaSv2DriverException):
 
 
 class F5DriverV2(object):
-    u"""F5 Networks® LBaaSv2 Driver."""
+    u"""F5 Networks LBaaSv2 Driver."""
 
     def __init__(self, plugin=None, env=None):
         """Driver initialization."""

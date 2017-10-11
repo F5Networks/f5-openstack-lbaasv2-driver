@@ -3,7 +3,7 @@
 Coding Example
 ==============
 
-We've provided some code examples below to help you get started with the F5® OpenStack LBaaSv2 agent and driver. This series demonstrates how to configure basic load balancing via the Neutron CLI. To access the full Neutron LBaaS command set, please see the `OpenStack CLI Documentation <http://docs.openstack.org/cli-reference/neutron.html>`_. LBaaSv2 commands all begin with ``lbaas``.
+We've provided some code examples below to help you get started with the F5 OpenStack LBaaSv2 agent and driver. This series demonstrates how to configure basic load balancing via the Neutron CLI. To access the full Neutron LBaaS command set, please see the `OpenStack CLI Documentation <http://docs.openstack.org/cli-reference/neutron.html>`_. LBaaSv2 commands all begin with ``lbaas``.
 
 
 Create a load balancer
@@ -70,9 +70,9 @@ The example command below shows how to create a listener that uses the ``TERMINA
 
 .. important::
 
-    You must configure Barbican, Keystone, Neutron, and the F5® agent before you can create a tls load balancer.
+    You must configure Barbican, Keystone, Neutron, and the F5 agent before you can create a tls load balancer.
 
     See the `OpenStack LBaaS documentation <https://wiki.openstack.org/wiki/Network/LBaaS/docs/how-to-create-tls-loadbalancer>`_ for further information and configuration instructions for the OpenStack pieces.
 
-    The necessary F5® agent configurations are described in :ref:`Certificate Manager / SSL Offloading`.
+    The necessary F5 agent configurations are described in :ref:`Certificate Manager / SSL Offloading`.
 

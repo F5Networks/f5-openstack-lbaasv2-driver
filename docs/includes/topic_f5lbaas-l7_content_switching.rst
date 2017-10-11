@@ -73,13 +73,13 @@ L7 policies are ranked by a position value and are evaluated according to their 
 
     Send request to default pool
 
-OpenStack Policy/Rules Definition Versus BIG-IP® Policy/Rules:
+OpenStack Policy/Rules Definition Versus BIG-IP Policy/Rules:
 ``````````````````````````````````````````````````````````````
 
 The Neutron L7 terminology does not directly align with the common vocabulary of BIG-IP Local Traffic Manager. In the BIG-IP LTM, policies also have a set of rules, but it is the rules that specify actions and not the policy. Also, policies attached to a virtual server on the BIG-IP are all evaluated regardless of the truth of the associated rules. In addition to this difference the BIG-IP policies have no ordinal, it is the BIG-IP rules that have this attribute. Because of these confusing differences it is useful to attempt to define the terms as they apply to each domain.
 
     +------------------+-------------------------------+
-    | Neutron LBaaS L7 | BIG-IP® Local Traffic Manager |
+    | Neutron LBaaS L7 | BIG-IP Local Traffic Manager |
     +==================+===============================+
     | Policy           | Policy Rules (wrapper_policy) |
     +------------------+-------------------------------+
@@ -197,7 +197,7 @@ Configuration
 
     .. code-block:: text
 
-        # The resulting BIG-IP® LTM Policy configuration from the steps above.
+        # The resulting BIG-IP LTM Policy configuration from the steps above.
         ltm policy wrapper_policy {
             controls { forwarding }
             last-modified 2016-12-05:09:19:05

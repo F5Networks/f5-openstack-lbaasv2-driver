@@ -1,5 +1,5 @@
 # coding=utf-8
-u"""Constants for F5® LBaaSv2 Driver."""
+u"""Constants for F5 LBaaSv2 Driver."""
 # coding=utf-8
 # Copyright 2016 F5 Networks Inc.
 #

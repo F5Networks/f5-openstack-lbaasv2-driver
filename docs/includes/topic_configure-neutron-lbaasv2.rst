@@ -5,9 +5,9 @@
 Configure Neutron for LBaaSv2
 =============================
 
-You will need to make a few configurations in your Neutron environment in order to use the F5® OpenStack LBaasv2 driver and agent.
+You will need to make a few configurations in your Neutron environment in order to use the F5 OpenStack LBaasv2 driver and agent.
 
-First, you'll need to set F5 Networks® as the Neutron LBaaSv2 service provider driver. Then, add the LBaaSv2 plugin to the list of service plugins in the Neutron configuration file.
+First, you'll need to set F5 Networks as the Neutron LBaaSv2 service provider driver. Then, add the LBaaSv2 plugin to the list of service plugins in the Neutron configuration file.
 
 Set 'F5Networks' as the LBaaSv2 Service Provider
 ------------------------------------------------
@@ -25,7 +25,7 @@ Edit the ``service_providers`` section of :file:`/etc/neutron/neutron_lbaas.conf
 
 .. note::
 
-    If there is an active entry for the F5® LBaaSv1 service provider driver, comment (#) it out.
+    If there is an active entry for the F5 LBaaSv1 service provider driver, comment (#) it out.
 
 Add the Neutron LBaaSv2 Service Plugin
 --------------------------------------

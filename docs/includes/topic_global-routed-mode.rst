@@ -8,7 +8,7 @@ Global Routed Mode
 Overview
 --------
 
-The F5® agent determines BIG-IP® devices' L2 and L3 network configurations based on the settings provided in the :ref:`L2/L3 segmentation modes <L2 adjacent mode>` settings in the :ref:`agent configuration file`. When configured to use global routed mode, the F5 agent makes the following assumptions:
+The F5 agent determines BIG-IP devices' L2 and L3 network configurations based on the settings provided in the :ref:`L2/L3 segmentation modes <L2 adjacent mode>` settings in the :ref:`agent configuration file`. When configured to use global routed mode, the F5 agent makes the following assumptions:
 
     #. LBaaS objects are accessible via global L3 routes;
     #. All virtual IPs are routable from clients;
@@ -33,7 +33,7 @@ Global routed mode is generally used for :term:`undercloud` BIG-IP hardware depl
 
     Example BIG-IP 'undercloud' deployment
 
-Global routed mode uses BIG-IP `secure network address translation`_ (SNAT) 'automapping' to map one or more origin IP addresses to a pool of translation addresses. The pool is created by the BIG-IP Local Traffic Manager® (LTM) from existing `self IP`_ addresses. This means that *before* you configure the F5 agent to use global routed mode, you should create enough `self IP`_ addresses on the BIG-IP(s) to handle anticipated connection loads. [#]_ You do not need to configure a SNAT pool, as one will be created automatically.
+Global routed mode uses BIG-IP `secure network address translation`_ (SNAT) 'automapping' to map one or more origin IP addresses to a pool of translation addresses. The pool is created by the BIG-IP Local Traffic Manager (LTM) from existing `self IP`_ addresses. This means that *before* you configure the F5 agent to use global routed mode, you should create enough `self IP`_ addresses on the BIG-IP(s) to handle anticipated connection loads. [#]_ You do not need to configure a SNAT pool, as one will be created automatically.
 
 Prerequisites
 -------------
@@ -87,18 +87,18 @@ Configuration
         #  L3 Segmentation Mode Settings
         ###############################################################################
         #
-        # Global Routed Mode - No L2 or L3 Segmentation on BIG-IP®
+        # Global Routed Mode - No L2 or L3 Segmentation on BIG-IP
         #
         # This setting will cause the agent to assume that all VIPs
         # and pool members will be reachable via global device
-        # L3 routes, which must be already provisioned on the BIG-IP®s.
+        # L3 routes, which must be already provisioned on the BIG-IPs.
         #
         ...
         #
         f5_global_routed_mode = True
         #
         # Allow overlapping IP subnets across multiple tenants.
-        # This creates route domains on BIG-IP® in order to
+        # This creates route domains on BIG-IP in order to
         # separate the tenant networks.
         #
         # This setting is forced to False if
@@ -115,14 +115,14 @@ Configuration
         # This setting will force the use of SNATs.
         #
         # If this is set to False, a SNAT will not
-        # be created (routed mode) and the BIG-IP®
+        # be created (routed mode) and the BIG-IP
         # will attempt to set up a floating self IP
         # as the subnet's default gateway address.
         # and a wild card IP forwarding virtual
         # server will be set up on member's network.
         # Setting this to False will mean Neutron
         # floating self IPs will no longer work
-        # if the same BIG-IP® device is not being used
+        # if the same BIG-IP device is not being used
         # as the Neutron Router implementation.
         #
         # This setting will be forced to True if

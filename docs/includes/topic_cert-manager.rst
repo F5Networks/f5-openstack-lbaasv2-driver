@@ -10,9 +10,9 @@ Overview
 
 OpenStack's 'Barbican' certificate manager provides a secure location where users can store sensitive information, such as SSH keys, private keys, certificates, and user passwords (referred to as "`secrets`_ " in OpenStack lingo).
 
-The F5® agent uses Barbican certificates to perform :term:`SSL offloading` on BIG-IP®. It allows users to either create a new SSL profile, or to designate an existing `BIG-IP SSL profile`_ as the parent from which client profiles created for LBaaS objects will inherit settings.
+The F5 agent uses Barbican certificates to perform :term:`SSL offloading` on BIG-IP. It allows users to either create a new SSL profile, or to designate an existing `BIG-IP SSL profile`_ as the parent from which client profiles created for LBaaS objects will inherit settings.
 
-In general, SSL offloading frees up server and application capacity for handling traffic by shifting authentication processing from the target server to a designated authentication server. As shown in the diagram, once an admin user has added `secrets`_ to a Barbican container, he can use it to create a :ref:`TLS load balancer <Create a tls load balancer>`. After the certificate data is validated, the F5® agent configures the load balancer on the BIG-IP.
+In general, SSL offloading frees up server and application capacity for handling traffic by shifting authentication processing from the target server to a designated authentication server. As shown in the diagram, once an admin user has added `secrets`_ to a Barbican container, he can use it to create a :ref:`TLS load balancer <Create a tls load balancer>`. After the certificate data is validated, the F5 agent configures the load balancer on the BIG-IP.
 
 .. figure:: ../media/LBaaS_cert-mgr_with-legend.jpg
     :alt: SSL Offloading with OpenStack Barbican, Neutron LBaaSv2, and BIG-IP
@@ -107,7 +107,7 @@ Configuration
 
 4. Set the BIG-IP parent SSL profile.
 
-    - ``f5_parent_ssl_profile``: The parent SSL profile on the BIG-IP® from which the agent SSL profile should inherit settings
+    - ``f5_parent_ssl_profile``: The parent SSL profile on the BIG-IP from which the agent SSL profile should inherit settings
 
 .. topic:: Example
 
@@ -120,7 +120,7 @@ Configuration
         # protocol. You can define the parent profile for this profile by setting
         # f5_parent_ssl_profile. The profile created to support TERMINATED_HTTPS will
         # inherit settings from the parent you define. This must be an existing profile,
-        # and if it does not exist on your BIG-IP® system the agent will use the default
+        # and if it does not exist on your BIG-IP system the agent will use the default
         # profile, clientssl.
         #f5_parent_ssl_profile = clientssl
         #

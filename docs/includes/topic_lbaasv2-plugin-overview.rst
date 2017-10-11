@@ -3,7 +3,7 @@
 Overview
 --------
 
-The F5® OpenStack LBaaSv2 service provider driver and agent (also called, simply, 'F5 LBaaSv2') make it possible to provision F5 BIG-IP® `Local Traffic Manager <https://f5.com/products/modules/local-traffic-manager>`_ (LTM®) services in an OpenStack cloud.
+The F5 OpenStack LBaaSv2 service provider driver and agent (also called, simply, 'F5 LBaaSv2') make it possible to provision F5 BIG-IP `Local Traffic Manager <https://f5.com/products/modules/local-traffic-manager>`_ (LTM) services in an OpenStack cloud.
 
 
 How the plugin works

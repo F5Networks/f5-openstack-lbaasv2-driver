@@ -6,7 +6,7 @@ F5 Environment Generator
 Overview
 --------
 
-The F5® environment generator is a Python utility that creates new service provider drivers and adds them to the Neutron LBaaS configuration file (:file:`/etc/neutron/neutron_lbaas.conf`).
+The F5 environment generator is a Python utility that creates new service provider drivers and adds them to the Neutron LBaaS configuration file (:file:`/etc/neutron/neutron_lbaas.conf`).
 
 Use Case
 --------

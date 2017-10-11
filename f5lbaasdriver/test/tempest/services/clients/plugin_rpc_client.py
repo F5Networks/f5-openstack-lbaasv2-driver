@@ -1,5 +1,5 @@
 # coding=utf-8
-u"""F5 Networks® LBaaSv2 plugin_rpc client for tempest tests."""
+u"""F5 Networks LBaaSv2 plugin_rpc client for tempest tests."""
 # Copyright 2016 F5 Networks Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

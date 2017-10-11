@@ -3,7 +3,7 @@
 Upgrading the F5 LBaaSv2 Components
 ===================================
 
-If you are upgrading from an earlier version, F5® recommends that you uninstall the current version, then install the new version.
+If you are upgrading from an earlier version, F5 recommends that you uninstall the current version, then install the new version.
 
 .. warning::
 

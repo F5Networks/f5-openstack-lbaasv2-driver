@@ -1,5 +1,5 @@
 # coding=utf-8
-u"""F5 Networks® LBaaSv2 Exceptions."""
+u"""F5 Networks LBaaSv2 Exceptions."""
 # Copyright 2016 F5 Networks Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

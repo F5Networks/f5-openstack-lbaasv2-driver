@@ -8,9 +8,9 @@ Device Driver Settings / iControl Driver Settings
 Overview
 --------
 
-The Device Driver Settings in the :ref:`Agent Configuration File` provide the means of communication between the F5® agent and BIG-IP® device(s). **Do not change this setting**.
+The Device Driver Settings in the :ref:`Agent Configuration File` provide the means of communication between the F5 agent and BIG-IP device(s). **Do not change this setting**.
 
-The iControl® Driver Settings identify the BIG-IP device(s) that you want the F5 agent to manage and record the login information the agent will use to communicate with the BIG-IP(s).
+The iControl Driver Settings identify the BIG-IP device(s) that you want the F5 agent to manage and record the login information the agent will use to communicate with the BIG-IP(s).
 
 Use Case
 --------
@@ -29,7 +29,7 @@ Prerequisites
 
 - Administrator access to both BIG-IP device(s) and OpenStack cloud.
 
-- Basic understanding of `BIG-IP® system configuration <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-system-initial-configuration-12-0-0/2.html#conceptid>`_.
+- Basic understanding of `BIG-IP system configuration <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-system-initial-configuration-12-0-0/2.html#conceptid>`_.
 
 - F5 :ref:`agent <agent:home>` and :ref:`service provider driver <Install the F5 LBaaSv2 Driver>` installed on the Neutron controller and all other hosts for which you want to provision LBaaS services.
 
@@ -37,7 +37,7 @@ Prerequisites
 Caveats
 -------
 
-- vCMP® is unsupported in this release (v |release|).
+- vCMP is unsupported in this release (v |release|).
 
 
 Configuration
@@ -62,7 +62,7 @@ Configuration
         :emphasize-lines: 17, 31, 36
 
         ###############################################################################
-        #  Device Driver - iControl® Driver Setting
+        #  Device Driver - iControl Driver Setting
         ###############################################################################
         #
         # This setting can be either a single IP address or a
@@ -73,13 +73,13 @@ Configuration
         # is not standalone, all devices in the sync failover
         # device group for the hostname specified must have
         # their management IP address reachable to the agent.
-        # In order to access devices' iControl® interfaces via
+        # In order to access devices' iControl interfaces via
         # self IPs, you should specify them as a comma
         # separated list below.
         #
         icontrol_hostname = 10.190.7.232 \\ replace with the IP address(es) of your BIG-IP(s)
         #
-        # If you are using vCMP® with VLANs, you will need to configure
+        # If you are using vCMP with VLANs, you will need to configure
         # your vCMP host addresses, in addition to the guests addresses.
         # vCMP Host access is necessary for provisioning VLANs to a guest.
         # Use icontrol_hostname for vCMP guests and icontrol_vcmp_hostname
