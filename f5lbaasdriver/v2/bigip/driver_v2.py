@@ -183,35 +183,6 @@ class EntityManager(object):
 class LoadBalancerManager(EntityManager):
     """LoadBalancerManager class handles Neutron LBaaS CRUD."""
 
-    def get_bigip_ports(self, context, agent_config):
-        scheduler = self.driver.scheduler
-        agent_config_dict = \
-            scheduler.deserialize_agent_configurations(
-                agent_config)
-        endpoints = agent_config_dict.get('icontrol_endpoints', {})
-
-        ports = []
-        for ep, ep_config in endpoints.iteritems():
-
-            interfaces = ep_config.get('device_interfaces', {})
-            mac_addrs = [a for i, a in interfaces.iteritems()
-                         if i != "mgmt"]
-
-            if mac_addrs:
-                filters = {'mac_address': mac_addrs}
-                try:
-                    ep_ports = \
-                        self.driver.plugin.db._core_plugin.get_ports(
-                            context,
-                            filters=filters
-                        )
-                    ports.extend(ep_ports)
-                except Exception as e:
-                    LOG.error("Exception: get_ports: %s",
-                              e.message)
-
-        return ports
-
     @log_helpers.log_method_call
     def create(self, context, loadbalancer):
         """Create a loadbalancer."""
@@ -223,8 +194,11 @@ class LoadBalancerManager(EntityManager):
             agent_config = agent.get('configurations', {})
             LOG.debug("agent configurations: %s" % agent_config)
 
-            bigip_ports = self.get_bigip_ports(context, agent_config)
-            if not bigip_ports:
+            scheduler = self.driver.scheduler
+            agent_config_dict = \
+                scheduler.deserialize_agent_configurations(agent_config)
+
+            if not agent_config_dict.get('nova_managed', False):
                 # Update the port for the VIP to show ownership by this driver
                 port_data = {
                     'admin_state_up': True,
@@ -240,7 +214,7 @@ class LoadBalancerManager(EntityManager):
                     {'port': port_data}
                 )
             else:
-                LOG.debug("Found bigip ports: %s", bigip_ports)
+                LOG.debug("Agent devices are nova managed")
 
             driver.agent_rpc.create_loadbalancer(
                 context, loadbalancer.to_api_dict(), service, agent_host)
