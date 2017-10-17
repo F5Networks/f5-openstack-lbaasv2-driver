@@ -232,10 +232,8 @@ class LoadBalancerManager(EntityManager):
                     'status': q_const.PORT_STATUS_ACTIVE
                 }
                 port_data[portbindings.HOST_ID] = agent_host
-                port_data[portbindings.VNIC_TYPE] = "f5appliance"
-                port_data[portbindings.PROFILE] = {
-                    'agent_id': agent_host
-                }
+                port_data[portbindings.VNIC_TYPE] = "baremetal"
+                port_data[portbindings.PROFILE] = {}
                 driver.plugin.db._core_plugin.update_port(
                     context,
                     loadbalancer.vip_port_id,
