@@ -14,7 +14,6 @@ u"""RPC Callbacks for F5® LBaaSv2 Plugins."""
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import uuid
 
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
@@ -509,7 +508,9 @@ class LBaaSv2PluginCallbacksRPC(object):
     def create_port_on_subnet(self, context, subnet_id=None,
                               mac_address=None, name=None,
                               fixed_address_count=1, host=None,
-                              device_id=None, binding_profile={}):
+                              device_id=None,
+                              vnic_type=portbindings.VNIC_NORMAL,
+                              binding_profile={}):
         """Create port on subnet."""
         port = None
         if subnet_id:
@@ -527,7 +528,6 @@ class LBaaSv2PluginCallbacksRPC(object):
                         fixed_ips.append(fixed_ip)
                 else:
                     fixed_ips = [fixed_ip]
-
                 if not host:
                     host = ''
                 if not name:
@@ -539,14 +539,17 @@ class LBaaSv2PluginCallbacksRPC(object):
                     'network_id': subnet['network_id'],
                     'mac_address': mac_address,
                     'admin_state_up': True,
-                    'device_id': str(uuid.uuid5(
-                        uuid.NAMESPACE_DNS, str(host))),
                     'device_owner': 'network:f5lbaasv2',
                     'status': neutron_const.PORT_STATUS_ACTIVE,
                     'fixed_ips': fixed_ips
                 }
+
+                if device_id:
+                    port_data['device_id'] = device_id
                 port_data[portbindings.HOST_ID] = host
-                port_data[portbindings.VIF_TYPE] = constants.VIF_TYPE
+                port_data[portbindings.VNIC_TYPE] = vnic_type
+                port_data[portbindings.PROFILE] = binding_profile
+
                 if ('binding:capabilities' in
                         portbindings.EXTENDED_ATTRIBUTES_2_0['ports']):
                     port_data['binding:capabilities'] = {
@@ -564,52 +567,6 @@ class LBaaSv2PluginCallbacksRPC(object):
                 LOG.error("Exception: create_port_on_subnet: %s",
                           e.message)
 
-            return port
-
-    @log_helpers.log_method_call
-    def create_port_on_subnet_with_specific_ip(self, context, subnet_id=None,
-                                               mac_address=None, name=None,
-                                               ip_address=None, host=None):
-        """Create port on subnet with specific ip address."""
-        if subnet_id and ip_address:
-            subnet = self.driver.plugin.db._core_plugin.get_subnet(
-                context,
-                subnet_id
-            )
-            if not mac_address:
-                mac_address = attributes.ATTR_NOT_SPECIFIED
-            fixed_ip = {
-                'subnet_id': subnet['id'],
-                'ip_address': ip_address
-            }
-            if not host:
-                host = ''
-            if not name:
-                name = ''
-            port_data = {
-                'tenant_id': subnet['tenant_id'],
-                'name': name,
-                'network_id': subnet['network_id'],
-                'mac_address': mac_address,
-                'admin_state_up': True,
-                'device_id': str(uuid.uuid5(uuid.NAMESPACE_DNS, str(host))),
-                'device_owner': 'network:f5lbaasv2',
-                'status': neutron_const.PORT_STATUS_ACTIVE,
-                'fixed_ips': [fixed_ip]
-            }
-            port_data[portbindings.HOST_ID] = host
-            port_data[portbindings.VIF_TYPE] = 'f5'
-            if ('binding:capabilities' in
-                    portbindings.EXTENDED_ATTRIBUTES_2_0['ports']):
-                port_data['binding:capabilities'] = {'port_filter': False}
-            port = self.driver.plugin.db._core_plugin.create_port(
-                context, {'port': port_data})
-            # Because ML2 marks ports DOWN by default on creation
-            update_data = {
-                'status': neutron_const.PORT_STATUS_ACTIVE
-            }
-            self.driver.plugin.db._core_plugin.update_port(
-                context, port['id'], {'port': update_data})
             return port
 
     @log_helpers.log_method_call
@@ -715,7 +672,10 @@ class LBaaSv2PluginCallbacksRPC(object):
 
     @log_helpers.log_method_call
     def create_port_on_network(self, context, network_id=None,
-                               mac_address=None, name=None, host=None):
+                               mac_address=None, name=None, host=None,
+                               device_id=None,
+                               vnic_type=portbindings.VNIC_NORMAL,
+                               binding_profile={}):
         """Create a port on a network."""
         ports = []
         if network_id and name:
@@ -738,20 +698,22 @@ class LBaaSv2PluginCallbacksRPC(object):
             if not name:
                 name = ''
 
-            device_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, str(host)))
             port_data = {
                 'tenant_id': network['tenant_id'],
                 'name': name,
                 'network_id': network_id,
                 'mac_address': mac_address,
                 'admin_state_up': True,
-                'device_id': device_id,
                 'device_owner': 'network:f5lbaasv2',
                 'status': neutron_const.PORT_STATUS_ACTIVE,
                 'fixed_ips': attributes.ATTR_NOT_SPECIFIED
             }
+            if device_id:
+                port_data['device_id'] = device_id
             port_data[portbindings.HOST_ID] = host
-            port_data[portbindings.VIF_TYPE] = 'other'
+            port_data[portbindings.VNIC_TYPE] = vnic_type
+            port_data[portbindings.PROFILE] = binding_profile
+
             extended_attrs = portbindings.EXTENDED_ATTRIBUTES_2_0['ports']
             if 'binding:capabilities' in extended_attrs:
                 port_data['binding:capabilities'] = {'port_filter': False}
@@ -764,6 +726,7 @@ class LBaaSv2PluginCallbacksRPC(object):
             self.driver.plugin.db._core_plugin.update_port(
                 context, port['id'], {'port': update_data})
             return port
+
         else:
             return ports[0]
 
