@@ -1,6 +1,6 @@
--c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=stable/newton
 -e .
-git+https://github.com/openstack/neutron.git@stable/newton
+
+git+https://github.com/openstack/neutron.git@newton-eol
 git+https://github.com/F5Networks/neutron-lbaas.git@stable/newton
 git+https://github.com/F5Networks/pytest-symbols.git
 git+https://github.com/F5Networks/f5-openstack-test.git@stable/newton
@@ -12,6 +12,8 @@ f5-sdk==2.3.3
 # version.  The versions of these packages are specified at the constraints
 # URL.  If you add a version here it will be ignored, and therefore be
 # misleading to readers of this file.
+#
+# NOTE: As of OCT-26-2017, upper-constraints is still at stable/newton, not newton-eol.
 -c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=stable/newton
 
 mock==IGNORED      # See section comment
