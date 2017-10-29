@@ -55,6 +55,27 @@ def test_schedule():
     assert agent
 
 
+def test_rebind_loadbalancers():
+
+    plugin = mock.MagicMock()
+    context = mock.MagicMock()
+    sched = agent_scheduler.TenantScheduler()
+    sched.get_agents_in_env = mock.MagicMock(name='get_agents_in_env')
+    agents_in_env = [{'id': 'test_agent_2_id',
+                      'alive': True,
+                      'admin_state_up': True,
+                      'configurations': {
+                          'environment_prefix': 'prod',
+                          'environment_group_number': 2}}]
+    sched.get_agents_in_env.return_value = agents_in_env
+    return_all = [type('test', (), {})()]
+    context.session.query.all = mock.MagicMock(name='all',
+                                               return_value=return_all)
+    context.session.add = mock.MagicMock(name='add', return_value=None)
+    sched.rebind_loadbalancers(context, plugin, 'prod',
+                               2, agents_in_env[0])
+
+
 def test_get_lbaas_agent_hosting_loadbalancer_none():
     mock_plugin = mock.MagicMock(name='plugin')
     mock_plugin.db.get_agent_hosting_loadbalancer.return_value = None
@@ -92,7 +113,17 @@ def test_deserialize_agent_configurations_is_dict():
 def test_schedule_get_active_agent():
     mock_plugin = mock.MagicMock(name='plugin')
     mock_plugin.db.get_agent_hosting_loadbalancer.return_value = \
-        {'agent': {'alive': True, 'id': 'test_agent_id'}}
+        {
+            'agent': {
+                'alive': True,
+                'id': 'test_agent_id',
+                'admin_state_up': True,
+                'configurations': {
+                    'environment_prefix': 'prod',
+                    'environment_group_number': 2
+                }
+            }
+        }
     mock_cxt = mock.MagicMock(name='context')
     lb_id = 'test_lb_id'
     sched = agent_scheduler.TenantScheduler()
@@ -106,7 +137,13 @@ def test_get_lbaas_agent_hosting_loadbalancer_agent_dead():
     mock_plugin = mock.MagicMock(name='plugin')
     fake_agent = {
         'agent': {
-            'alive': False, 'id': 'test_agent_id', 'configurations': {}
+            'alive': False,
+            'id': 'test_agent_id',
+            'admin_state_up': True,
+            'configurations': {
+                'environment_prefix': 'prod',
+                'environment_group_number': 2
+            }
         }
     }
     mock_plugin.db.get_agent_hosting_loadbalancer.return_value = fake_agent
@@ -121,7 +158,11 @@ def test_get_lbaas_agent_hosting_loadbalancer_agent_dead_has_env_gn():
     mock_plugin = mock.MagicMock(name='plugin')
     fake_agent = {
         'agent': {
-            'alive': False, 'id': 'test_agent_id', 'configurations': {
+            'alive': False,
+            'id': 'test_agent_id',
+            'admin_state_up': True,
+            'configurations': {
+                'environment_prefix': 'prod',
                 'environment_group_number': 2
             }
         }
@@ -136,19 +177,24 @@ def test_get_lbaas_agent_hosting_loadbalancer_agent_dead_has_env_gn():
 
 def test_get_lbaas_agent_hosting_loadbalancer_agent_dead_env_agents_active():
     mock_plugin = mock.MagicMock(name='plugin')
-    fake_agent = {
-        'agent': {
-            'alive': False, 'id': 'test_agent_id', 'configurations': {
-                'environment_group_number': 2
-            }
-        }
-    }
+    fake_agent = {'agent': {'alive': False,
+                            'id': 'test_agent_id',
+                            'admin_state_up': True,
+                            'configurations': {'environment_prefix': 'prod',
+                                               'environment_group_number': 2}}}
     mock_plugin.db.get_agent_hosting_loadbalancer.return_value = fake_agent
     mock_cxt = mock.MagicMock(name='context')
     sched = agent_scheduler.TenantScheduler()
     sched.get_agents_in_env = mock.MagicMock(name='get_agents_in_env')
-    agents_in_env = [{'fake_agent': {}}]
+    agents_in_env = [
+        {'fake_agent': {'id': 'test_agent_2_id',
+                        'alive': True,
+                        'admin_state_up': True,
+                        'configurations': {'environment_prefix': 'prod',
+                                           'environment_group_number': 2}}}]
     sched.get_agents_in_env.return_value = agents_in_env
+    sched.rebind_loadbalancers = mock.MagicMock(name='rebind_loadbalancers')
+    sched.rebind_loadbalancers.return_value = agents_in_env[0]
     res = sched.get_lbaas_agent_hosting_loadbalancer(
         mock_plugin, mock_cxt, 'test_lb_id', env='test_env')
     assert res == {'agent': agents_in_env[0]}
