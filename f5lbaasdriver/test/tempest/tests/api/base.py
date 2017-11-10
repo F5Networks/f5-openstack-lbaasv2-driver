@@ -13,6 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import subprocess
+
+from collections import namedtuple
 from time import sleep
 
 from neutron_lbaas.tests.tempest.v2.api import base
@@ -32,7 +35,19 @@ LOG = logging.getLogger(__name__)
 class F5BaseTestCase(base.BaseTestCase):
     """This class picks non-admin credentials and run the tempest tests."""
 
+    config_file = "/tmp/tempest.bigip.cfg"
     _lbs_to_delete = []
+    ssh_cmd = \
+        str("ssh -F /home/ubuntu/testenv_symbols/testenv_ssh_config"
+            " openstack_bigip")
+    __extract_cmd = '''{} << EOF
+tmsh -c \"cd /;
+list sys folder recursive one-line" | cut -d " " -f3 |
+while read f; do echo \"====================\";
+echo \"Folder $f\"; tmsh -c "cd /$f; list\"; done;
+exit
+EOF'''.format(ssh_cmd)
+    __ucs_cmd_fmt = "{} tmsh {} /sys ucs /tmp/backup.ucs"
     try_cnt_max = 3
     sleep_seconds = 5
 
@@ -89,6 +104,79 @@ class F5BaseTestCase(base.BaseTestCase):
             assert not method(*args, **kwargs)
         cls.assert_with_retry(negative, *args, **kwargs)
 
+    @staticmethod
+    def __exec_shell(stdin, shell=False):
+        Result = namedtuple('Result', 'stdout, stdin, stderr, exit_status')
+        try:
+            stdout = subprocess.check_output(stdin, shell=shell)
+            stderr = ''
+            exit_status = 0
+        except subprocess.CalledProcessError as error:
+            stderr = str(error)
+            stdout = error.output
+            exit_status = error.returncode
+
+        return Result(stdout, stdin, stderr, exit_status)
+
+    @classmethod
+    def _get_current_bigip_cfg(cls):
+        """Get and return the current BIG-IP Config
+
+        This method will perform the action of collecting BIG-IP config data.
+        """
+        results = cls.__exec_shell(cls.__extract_cmd, shell=True)
+        if results.exit_status:
+            raise RuntimeError(
+                "Could not extract bigip data!\nstderr:'{}'"
+                ";stdout'{}' ({})".format(results.stderr, results.stdout,
+                                          results.exit_status))
+        return results.stdout
+
+    @classmethod
+    def _get_existing_bigip_cfg(cls):
+        """Extracts the BIG-IP config and stores it within instance
+
+        This method will hold a copy of the existing BIG-IP config for later
+        comparison.
+        """
+        result = cls._get_current_bigip_cfg()
+        with open(cls.config_file, 'w') as fh:
+            fh.write(result)
+
+    @classmethod
+    def _get_exiting_neutron_cfg(cls):
+        """Place holder for attaining neutron's current cfg before test"""
+        pass
+
+    @classmethod
+    def _resulting_bigip_cfg(cls):
+        result = cls._get_current_bigip_cfg()
+        with open(cls.config_file) as fh:
+            try:
+                assert result == fh.read(), \
+                    "Test was unable to clean up BIG-IP cfg"
+            except AssertionError:
+                cls.__exec_shell(cls.__ucs_cmd_fmt.format(cls.ssh_cmd, 'load'),
+                                 shell=True)
+                sleep(5)  # after nuke, BIG-IP needs a delay...
+                raise
+
+    @classmethod
+    def _resulting_neutron_db(cls):
+        """Place holder for sanity check code for pollutted neutron DB"""
+        pass
+
+    @classmethod
+    def check_resulting_cfg(cls):
+        """Check the current BIG-IP cfg agianst previous Reset upon Error
+
+        This classmethod will check the current BIG-IP config and raise if
+        there are any changes from the previous snap-shot.  Upon raise, the
+        method will attempt to clear the BIG-IP back to the previous config
+        """
+        cls._resulting_bigip_cfg()
+        cls._resulting_neutron_db()
+
     @classmethod
     def resource_setup(cls):
         """Setup the clients and fixtures for test suite.
@@ -101,6 +189,8 @@ class F5BaseTestCase(base.BaseTestCase):
         with the first address in CONF.f5_lbaasv2_driver.icontrol_hostname.
         """
         super(F5BaseTestCase, cls).resource_setup()
+        cls.__exec_shell(cls.__ucs_cmd_fmt.format(cls.ssh_cmd, 'save'), True)
+        # Where the neutron db collection between resource setups goes
 
         cls.bigip_clients = []
         for host in CONF.f5_lbaasv2_driver.icontrol_hostname.split(","):
@@ -113,6 +203,17 @@ class F5BaseTestCase(base.BaseTestCase):
         cls.plugin_rpc = (
             plugin_rpc_client.F5PluginRPCClient()
         )
+
+    def setUp(self):
+        """Performs basic teardown operations for assocaited tests"""
+        self._get_existing_bigip_cfg()
+        self._get_exiting_neutron_cfg()
+        super(F5BaseTestCase, self).setUp()
+
+    def tearDown(self):
+        """Performs basic teardown operations for assocaited tests"""
+        self.check_resulting_cfg()
+        super(F5BaseTestCase, self).tearDown()
 
 
 class F5BaseAdminTestCase(base.BaseTestCase):
