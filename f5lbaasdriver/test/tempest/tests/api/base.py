@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from time import sleep
+
 from neutron_lbaas.tests.tempest.v2.api import base
 from oslo_log import log as logging
 from tempest import config
@@ -31,6 +33,61 @@ class F5BaseTestCase(base.BaseTestCase):
     """This class picks non-admin credentials and run the tempest tests."""
 
     _lbs_to_delete = []
+    try_cnt_max = 3
+    sleep_seconds = 5
+
+    @classmethod
+    def assert_with_retry(cls, check, *args, **kwargs):
+        """A assertion try/except handler for multiple re-tries
+
+        This method will call the provided check method passing it the args
+        provided.  It will then except on AssertionError alone and retry up to
+        a maximum number of times with a time delay in between attempts.
+        """
+        try_cnt = 0
+        try_cnt_max = cls.try_cnt_max
+        sleep_seconds = cls.sleep_seconds
+        while True:
+            try:
+                check(*args, **kwargs)
+            except AssertionError:
+                if try_cnt < try_cnt_max:
+                    try_cnt += 1
+                    sleep(sleep_seconds)
+                    continue
+                raise
+            except TypeError as Err:
+                raise TypeError("{}: ({})".format(Err, args))
+            else:
+                break
+
+    @classmethod
+    def assertion_check(cls, *args, **kwargs):
+        """Looping assert check against the method and args provided
+
+        This method will take one method and a group of args and test that the
+        method, when passed provided args, returns as True.  As part of this
+        check, a loop with an iterative time delay is provided with a max retry
+        count.
+        """
+        def positive(method, *args, **kwargs):
+            """Asserts that the method call evaluates as True"""
+            assert method(*args, **kwargs)
+        cls.assert_with_retry(positive, *args, **kwargs)
+
+    @classmethod
+    def neg_assertion_check(cls, *args, **kwargs):
+        """Looping assert not check against the method and args provided
+
+        This method will take one method and a group of args and test that the
+        method, when passed provided args, returns as False.  As part of this
+        check, a loop with an iterative time delay is provided with a max retry
+        count.
+        """
+        def negative(method, *args, **kwargs):
+            """Asserts that the method call evaluates as False"""
+            assert not method(*args, **kwargs)
+        cls.assert_with_retry(negative, *args, **kwargs)
 
     @classmethod
     def resource_setup(cls):

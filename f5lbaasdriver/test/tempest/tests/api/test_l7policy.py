@@ -37,44 +37,43 @@ class L7PolicyTestJSON(base.F5BaseTestCase):
     3) Creating a L7 policy with a REDIRECT_POOL action.
     """
 
-    @classmethod
-    def resource_setup(cls):
-        super(L7PolicyTestJSON, cls).resource_setup()
+    def resource_setup(self):
+        super(L7PolicyTestJSON, self).resource_setup()
         if not test.is_extension_enabled('lbaasv2', 'network'):
             msg = "lbaas extension not enabled."
-            raise cls.skipException(msg)
+            raise self.skipException(msg)
         network_name = data_utils.rand_name('network')
-        cls.network = cls.create_network(network_name)
-        cls.subnet = cls.create_subnet(cls.network)
-        cls.create_lb_kwargs = {'tenant_id': cls.subnet['tenant_id'],
+        self.network = cls.create_network(network_name)
+        self.subnet = cls.create_subnet(cls.network)
+        self.create_lb_kwargs = {'tenant_id': cls.subnet['tenant_id'],
                                 'vip_subnet_id': cls.subnet['id']}
-        cls.load_balancer = \
+        selfload_balancer = \
             cls._create_active_load_balancer(**cls.create_lb_kwargs)
-        cls.load_balancer_id = cls.load_balancer['id']
+        self.load_balancer_id = cls.load_balancer['id']
 
         # Create listener for tests
-        cls.create_listener_kwargs = {'loadbalancer_id': cls.load_balancer_id,
+        self.create_listener_kwargs = {'loadbalancer_id': cls.load_balancer_id,
                                       'protocol': "HTTP",
                                       'protocol_port': "80"}
-        cls.listener = (
+        self.listener = (
             cls._create_listener(**cls.create_listener_kwargs))
-        cls.listener_id = cls.listener['id']
+        self.listener_id = cls.listener['id']
 
         # Create pool for tests
-        cls.create_pool_kwargs = {'listener_id': cls.listener_id,
+        self.create_pool_kwargs = {'listener_id': cls.listener_id,
                                   'protocol': "HTTP",
                                   'lb_algorithm': "ROUND_ROBIN"}
-        cls.pool = (
+        self.pool = (
             cls._create_pool(**cls.create_pool_kwargs))
-        cls.pool_id = cls.pool['id']
+        self.pool_id = cls.pool['id']
 
         # Create basic args for policy creation
-        cls.create_l7policy_kwargs = {'listener_id': cls.listener_id,
+        self.create_l7policy_kwargs = {'listener_id': cls.listener_id,
                                       'admin_state_up': "true"}
 
         # Get a client to emulate the agent's behavior.
-        cls.client = cls.plugin_rpc.get_client()
-        cls.context = cls.plugin_rpc.get_context()
+        self.client = cls.plugin_rpc.get_client()
+        self.context = cls.plugin_rpc.get_context()
 
     @classmethod
     def resource_cleanup(cls):
