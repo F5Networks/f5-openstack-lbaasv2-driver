@@ -17,7 +17,6 @@
 import datetime
 import os
 import subprocess
-
 from collections import namedtuple
 from time import sleep
 
