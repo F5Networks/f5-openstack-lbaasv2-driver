@@ -14,15 +14,16 @@
 #    under the License.
 
 import subprocess
-import os
+import uuid
 
 from collections import namedtuple
+from time import sleep
 
 """Module for test-based interactions with the BIG-IP
 
-    This module offers classes and methods that can be used to interact with the
-    BIG-IP's configuration.  As a part of this, tests can peform necessary standup
-    and teardown actions.
+    This module offers classes and methods that can be used to interact with
+    the BIG-IP's configuration.  As a part of this, tests can peform necessary
+    standup and teardown actions.
 """
 
 
@@ -34,6 +35,8 @@ class BigIpInteraction(object):
     baseline for the BIG-IP's config and recalling it from memory.
     """
     config_file = "/tmp/agent_only.bigip.cfg"
+    dirty_file = "/tmp/bigip_conf_{}.cfg"
+    diff_file = "/tmp/bigip_diff_{}.cfg"
     _lbs_to_delete = []
     __ssh_cfg = '/home/ubuntu/testenv_symbols/testenv_ssh_config'
     __ssh_cmd = \
@@ -46,7 +49,6 @@ echo \"Folder $f\"; tmsh -c "cd /$f; list\"; done;
 exit
 EOF'''.format(__ssh_cmd)
     __ucs_cmd_fmt = "{} tmsh {} /sys ucs /tmp/backup.ucs"
-
 
     @staticmethod
     def __exec_shell(stdin, shell=False):
@@ -89,17 +91,41 @@ EOF'''.format(__ssh_cmd)
             fh.write(result)
 
     @classmethod
+    def __restore_from_backup(cls):
+        cls.__exec_shell(
+            cls.__ucs_cmd_fmt.format(
+                cls.__ssh_cmd, 'load'), shell=True)
+
+    @classmethod
     def _resulting_bigip_cfg(cls):
         result = cls._get_current_bigip_cfg()
-        with open(cls.config_file) as fh:
-            try:
-                assert result == fh.read(), \
-                    "Test was unable to clean up BIG-IP cfg"
-            except AssertionError:
-                cls.__exec_shell(cls.__ucs_cmd_fmt.format(cls.__ssh_cmd, 'load'),
-                                 shell=True)
-                sleep(5)  # after nuke, BIG-IP needs a delay...
-                raise
+        try:
+            with open(cls.config_file) as fh:
+                content = fh.read()
+            assert result == content, "Test was unable to clean up BIG-IP cfg"
+        except AssertionError as err:
+            cls.__restore_from_backup()
+            diff_file = cls.__collect_diff(result, content)
+            sleep(5)  # after nuke, BIG-IP needs a delay...
+            raise AssertionError("{} (diff: {})".format(err, diff_file))
+
+    @classmethod
+    def _collect_diff(cls):
+        result = cls._get_current_bigip_cfg()
+        diff_file = cls.__collect_diff(result)
+        return diff_file
+
+    @classmethod
+    def __collect_diff(cls, result):
+        my_id = uuid.uuid4()
+        dirty_file = cls.dirty_file.format(my_id)
+        with open(dirty_file, 'w') as fh:
+            fh.write(result)
+        diff_file = cls.diff_file.format(my_id)
+        cmd = "diff -u {} {} > {}".format(
+            cls.config_file, dirty_file, diff_file)
+        result = cls.__exec_shell(cmd, True)
+        return diff_file
 
     @classmethod
     def check_resulting_cfg(cls):
@@ -120,3 +146,9 @@ EOF'''.format(__ssh_cmd)
     def store_existing(cls):
         """Performs operation to store existing config state of BIG-IP"""
         cls._get_existing_bigip_cfg()
+
+    @classmethod
+    def force_clear(cls):
+        diff_file = cls._collect_diff()
+        cls.__restore_from_backup()
+        return diff_file

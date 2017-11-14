@@ -13,11 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import subprocess
-
-from collections import namedtuple
-from time import sleep
-
 from neutron_lbaas.tests.tempest.v2.api import base
 from oslo_log import log as logging
 from tempest import config
@@ -28,6 +23,8 @@ from f5lbaasdriver.test.tempest.services.clients import \
     plugin_rpc_client
 from f5lbaasdriver.test.tempest.tests.api.bigip_interaction import \
     BigIpInteraction
+from f5lbaasdriver.test.tempest.tests.api.neutron_interaction import \
+    NeutronInteraction
 
 CONF = config.CONF
 
@@ -51,6 +48,7 @@ class F5BaseTestCase(base.BaseTestCase):
         with the first address in CONF.f5_lbaasv2_driver.icontrol_hostname.
         """
         super(F5BaseTestCase, cls).resource_setup()
+        NeutronInteraction.store_config()
         BigIpInteraction.store_config()
 
         cls.bigip_clients = []
@@ -72,6 +70,7 @@ class F5BaseTestCase(base.BaseTestCase):
 
     def tearDown(self):
         """Performs basic teardown operations for inheriting test classes"""
+        NeutronInteraction.check_config()
         BigIpInteraction.check_resulting_cfg()
         super(F5BaseTestCase, self).tearDown()
 
@@ -83,6 +82,7 @@ class F5BaseAdminTestCase(base.BaseTestCase):
     def resource_setup(cls):
         """Initialize the client objects."""
         super(F5BaseAdminTestCase, cls).resource_setup()
+        NeutronInteraction.store_config()
         BigIpInteraction.store_config()
         cls.plugin_rpc = (
             plugin_rpc_client.F5PluginRPCClient()
@@ -95,6 +95,6 @@ class F5BaseAdminTestCase(base.BaseTestCase):
 
     def tearDown(self):
         """Performs basic teardown operation for inheriting test classes"""
+        NeutronInteraction.check_config()
         BigIpInteraction.check_resulting_cfg()
         super(F5BaseAdminTestCase, self).tearDown()
-        
