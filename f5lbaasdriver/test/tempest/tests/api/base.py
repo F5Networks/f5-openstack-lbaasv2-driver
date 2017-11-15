@@ -13,11 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import subprocess
-
-from collections import namedtuple
-from time import sleep
-
 from neutron_lbaas.tests.tempest.v2.api import base
 from oslo_log import log as logging
 from tempest import config
@@ -97,4 +92,3 @@ class F5BaseAdminTestCase(base.BaseTestCase):
         """Performs basic teardown operation for inheriting test classes"""
         BigIpInteraction.check_resulting_cfg()
         super(F5BaseAdminTestCase, self).tearDown()
-        

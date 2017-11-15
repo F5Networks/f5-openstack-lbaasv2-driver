@@ -14,15 +14,15 @@
 #    under the License.
 
 import subprocess
-import os
 
 from collections import namedtuple
+from time import sleep
 
 """Module for test-based interactions with the BIG-IP
 
-    This module offers classes and methods that can be used to interact with the
-    BIG-IP's configuration.  As a part of this, tests can peform necessary standup
-    and teardown actions.
+    This module offers classes and methods that can be used to interact with
+    the BIG-IP's configuration.  As a part of this, tests can peform necessary
+    standup and teardown actions.
 """
 
 
@@ -46,7 +46,6 @@ echo \"Folder $f\"; tmsh -c "cd /$f; list\"; done;
 exit
 EOF'''.format(__ssh_cmd)
     __ucs_cmd_fmt = "{} tmsh {} /sys ucs /tmp/backup.ucs"
-
 
     @staticmethod
     def __exec_shell(stdin, shell=False):
@@ -96,8 +95,9 @@ EOF'''.format(__ssh_cmd)
                 assert result == fh.read(), \
                     "Test was unable to clean up BIG-IP cfg"
             except AssertionError:
-                cls.__exec_shell(cls.__ucs_cmd_fmt.format(cls.__ssh_cmd, 'load'),
-                                 shell=True)
+                cls.__exec_shell(
+                    cls.__ucs_cmd_fmt.format(cls.__ssh_cmd, 'load'),
+                    shell=True)
                 sleep(5)  # after nuke, BIG-IP needs a delay...
                 raise
 
