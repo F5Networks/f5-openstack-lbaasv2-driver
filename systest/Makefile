@@ -54,6 +54,7 @@ export TEMPEST_REPO := http://git.openstack.org/openstack/tempest
 export NEUTRON_LBAAS_DIR := /home/jenkins/neutron-lbaas
 export NEUTRON_LBAAS_REPO := https://github.com/F5Networks/neutron-lbaas.git
 
+# NOTE: As of OCT-26-2017, upper-constraints is still at stable/newton, not newton-eol.
 export NEUTRON_LBAAS_BRANCH := stable/newton
 export UPPER_CONSTRAINTS_FILE := https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=$(NEUTRON_LBAAS_BRANCH)
 
