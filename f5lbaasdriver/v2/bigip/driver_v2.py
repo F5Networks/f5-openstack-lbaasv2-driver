@@ -124,6 +124,10 @@ class F5DriverV2(object):
         post_fork_callback.__name__ += '_' + str(self.env)
         return post_fork_callback
 
+    def _handle_driver_error(self, context, loadbalancer,
+                             loadbalancer_id, status):
+        pass
+
 
 class EntityManager(object):
     '''Parent for all managers defined in this module.'''
