@@ -67,7 +67,7 @@ class F5BaseTestCase(base.BaseTestCase):
 
     def tearDown(self):
         """Performs basic teardown operations for inheriting test classes"""
-        BigIpInteraction.check_resulting_cfg()
+        BigIpInteraction.check_resulting_cfg(self.__name__)
         super(F5BaseTestCase, self).tearDown()
 
 
@@ -90,5 +90,5 @@ class F5BaseAdminTestCase(base.BaseTestCase):
 
     def tearDown(self):
         """Performs basic teardown operation for inheriting test classes"""
-        BigIpInteraction.check_resulting_cfg()
+        BigIpInteraction.check_resulting_cfg(self.__name__)
         super(F5BaseAdminTestCase, self).tearDown()

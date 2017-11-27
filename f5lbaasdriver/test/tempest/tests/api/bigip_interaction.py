@@ -15,6 +15,7 @@
 #
 
 import datetime
+import json
 import os
 import subprocess
 
@@ -57,16 +58,15 @@ class BigIpInteraction(object):
     dirty_file = "/tmp/tempest_bigip_{}_{}.cfg"
     diff_file = "/tmp/tempest_bigip_diff_{}_{}.cfg"
     _lbs_to_delete = []
-    __ssh_cfg = '/home/ubuntu/testenv_symbols/testenv_ssh_config'
-    __ssh_cmd = \
-        str("ssh -F {} openstack_bigip").format(__ssh_cfg)
+    __env_cfg = '{}/testenv_symbols/testenv_symbols.json'.format(
+        os.environ.get('HOME'))
     __extract_cmd = '''{} << EOF
 tmsh -c \"cd /;
 list sys folder recursive one-line" | cut -d " " -f3 |
 while read f; do echo \"====================\";
 echo \"Folder $f\"; tmsh -c "cd /$f; list\"; done;
 exit
-EOF'''.format(__ssh_cmd)
+EOF'''
     __ucs_cmd_fmt = "{} tmsh {} /sys ucs /tmp/backup.ucs"
 
     @staticmethod
@@ -84,6 +84,30 @@ EOF'''.format(__ssh_cmd)
 
         return Result(stdout, stdin, stderr, exit_status)
 
+    @classmethod
+    def __bigip(cls):
+        """An internal method"""
+        # anything more complex cls-wise should be an object instance...
+        my_host = getattr(cls, 'my_host', '')
+        my_uname = getattr(cls, 'my_uname', '')
+        if not my_host or not my_uname:
+            with open(cls.__env_cfg, 'r') as fh:
+                env = json.load(fh)
+            for key in env.keys():
+                if key.endswith('BIGIP_MGMT_IP_PUBLIC'):
+                    my_host = env[key]
+                elif key.endswith('BIGIP_SSH_USERNAME'):
+                    my_uname = env[key]
+                if my_host and my_uname:
+                    break
+            else:
+                raise EnvironmentError(
+                    "Could not derive 'BIGIP_MGMT_IP_PUBLIC$' from {}".format(
+                        cls.__env_cfg))
+            cls.my_host = my_host
+            cls.my_uname = my_uname
+        return "ssh {}@{}".format(my_uname, my_host)
+
     @staticmethod
     def __check_results(results):
         if results.exit_status:
@@ -98,7 +122,9 @@ EOF'''.format(__ssh_cmd)
 
         This method will perform the action of collecting BIG-IP config data.
         """
-        results = cls.__exec_shell(cls.__extract_cmd, shell=True)
+        bigip_ssh = cls.__bigip()
+        results = cls.__exec_shell(
+            cls.__extract_cmd.format(bigip_ssh), shell=True)
         cls.__check_results(results)
         return results.stdout
 
@@ -116,9 +142,10 @@ EOF'''.format(__ssh_cmd)
     @classmethod
     def __restore_from_backup(cls):
         """An internal method"""
+        bigip_ssh = cls.__bigip()
         cls.__exec_shell(
             cls.__ucs_cmd_fmt.format(
-                cls.__ssh_cmd, 'load'), shell=True)
+                bigip_ssh, 'load'), shell=True)
 
     @classmethod
     def _resulting_bigip_cfg(cls, test_method):
@@ -134,7 +161,7 @@ EOF'''.format(__ssh_cmd)
             with open(cls.config_file) as fh:
                 content = fh.read()
             diff_file = cls.__collect_diff(content, test_method)
-            os.path.remove(diff_file)
+            os.remove(diff_file)
         except AssertionError as err:
             cls.__restore_from_backup()
             sleep(5)  # after nuke, BIG-IP needs a delay...
@@ -184,7 +211,8 @@ EOF'''.format(__ssh_cmd)
     @classmethod
     def store_config(cls):
         """Performs a backup at the UCS level of the BIG-IP"""
-        cls.__exec_shell(cls.__ucs_cmd_fmt.format(cls.__ssh_cmd, 'save'), True)
+        bigip_ssh = cls.__bigip()
+        cls.__exec_shell(cls.__ucs_cmd_fmt.format(bigip_ssh, 'save'), True)
 
     @classmethod
     def store_existing(cls):
