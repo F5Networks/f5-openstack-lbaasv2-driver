@@ -15,7 +15,6 @@ u"""F5 Networks® LBaaSv2 L7 policy tempest tests."""
 #   limitations under the License.
 
 from tempest import config
-from tempest.lib.common.utils import data_utils
 from tempest import test
 
 from f5lbaasdriver.test.tempest.tests.api import base
@@ -40,31 +39,6 @@ class L7PolicyTestJSONBasic(base.F5BaseTestCase):
         if not test.is_extension_enabled('lbaasv2', 'network'):
             msg = "lbaas extension not enabled."
             raise cls.skipException(msg)
-        network_name = data_utils.rand_name('network')
-        cls.network = cls.create_network(network_name)
-        cls.subnet = cls.create_subnet(cls.network)
-        cls.project_tenant_id = cls.subnet['tenant_id']
-        cls.create_lb_kwargs = {'tenant_id': cls.subnet['tenant_id'],
-                                'vip_subnet_id': cls.subnet['id']}
-        cls.load_balancer = \
-            cls._create_active_load_balancer(**cls.create_lb_kwargs)
-        cls.load_balancer_id = cls.load_balancer['id']
-
-        # Create listener for tests
-        cls.create_listener_kwargs = {'loadbalancer_id': cls.load_balancer_id,
-                                      'protocol': "HTTP",
-                                      'protocol_port': "80"}
-        cls.listener = (
-            cls._create_listener(**cls.create_listener_kwargs))
-        cls.listener_id = cls.listener['id']
-
-        # Create pool for tests
-        cls.create_pool_kwargs = {'listener_id': cls.listener_id,
-                                  'protocol': "HTTP",
-                                  'lb_algorithm': "ROUND_ROBIN"}
-        cls.pool = (
-            cls._create_pool(**cls.create_pool_kwargs))
-        cls.pool_id = cls.pool['id']
 
     def _create_detached_pool(self):
         pool = {
@@ -72,24 +46,46 @@ class L7PolicyTestJSONBasic(base.F5BaseTestCase):
             'lb_algorithm': 'ROUND_ROBIN',
             'protocol': 'HTTP'
         }
-        self.detached_pool = self.pools_client.create_pool(**pool)
-        self._wait_for_load_balancer_status(self.load_balancer.get('id'))
-        self.assertTrue(self.detached_pool)
-        self.addCleanup(self._delete_pool, self.detached_pool.get('id'))
+        self.detached_pool = self.create_pool(self.load_balancer, **pool)
+        assert self.detached_pool
+
+    def _setup_layer3(self):
+        self.network = self.create_network()
+        self.subnet = self.create_subnet(self.network)
+        self.project_tenant_id = self.subnet['tenant_id']
+
+    def _setup_to_pool(self):
+        self.create_lb_kwargs = {'tenant_id': self.subnet['tenant_id'],
+                                 'vip_subnet_id': self.subnet['id']}
+        self.load_balancer = \
+            self.create_loadbalancer(**self.create_lb_kwargs)
+        self.load_balancer_id = self.load_balancer['id']
+
+        # Create listener for tests
+        self.create_listener_kwargs = {'loadbalancer_id': self.load_balancer_id,
+                                       'protocol': "HTTP",
+                                       'protocol_port': "80"}
+        self.listener = (
+            self.create_listener(loadbalancer=self.load_balancer,
+                                 **self.create_listener_kwargs))
+        self.listener_id = self.listener['id']
+
+        # Create pool for tests
+        self.create_pool_kwargs = {'listener_id': self.listener_id,
+                                   'protocol': "HTTP",
+                                   'lb_algorithm': "ROUND_ROBIN"}
+        self.pool = (
+            self.create_pool(loadbalancer=self.load_balancer,
+                             **self.create_pool_kwargs))
+        self.pool_id = self.pool['id']
 
     def setUp(self):
-        self.policies = []
-        self._create_detached_pool()
         super(L7PolicyTestJSONBasic, self).setUp()
+        self._setup_layer3()
+        self._setup_to_pool()
+        self._create_detached_pool()
 
     def tearDown(self):
-        for policy in self.policies:
-            try:
-                self._delete_l7policy(policy.get('id'))
-            except Exception as ex:
-                if 'could not be found' in str(ex):
-                    continue
-                raise
         super(L7PolicyTestJSONBasic, self).tearDown()
 
 
@@ -106,11 +102,9 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
     def test_create_l7_reject_policy(self):
         """Test the creationg of a L7 reject policy."""
         create_l7policy_kwargs = self.reject_args
-        l7policy = self._create_l7policy(
-            **create_l7policy_kwargs)
-        self.policies.append(l7policy)
+        l7policy = self.create_l7policy(
+            loadbalancer=self.load_balancer, **create_l7policy_kwargs)
         policy_name = "wrapper_policy_{}".format(self.listener_id)
-        self._wait_for_load_balancer_status(self.load_balancer_id)
 
         assert (l7policy.get('action') == "REJECT")
         for bigip_client in self.bigip_clients:
@@ -123,13 +117,14 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
     def test_policy_reject_header_ends_with(self):
         '''Reject traffic when header value ends with value.'''
 
-        l7policy = self._create_l7policy(**self.reject_args)
-        self.policies.append(l7policy)
+        l7policy = self.create_l7policy(
+            loadbalancer=self.load_balancer, **self.reject_args)
         policy_name = "wrapper_policy_{}".format(self.listener_id)
         rule_args = {'type': 'HEADER', 'compare_type': 'ENDS_WITH',
                      'key': 'X-HEADER', 'value': 'real'}
         self._wait_for_load_balancer_status(self.load_balancer_id)
-        self._create_l7rule(l7policy.get('id'), **rule_args)
+        self.create_l7rule(
+            l7policy.get('id'), loadbalancer=self.load_balancer, **rule_args)
 
         for bigip_client in self.bigip_clients:
             assert bigip_client.policy_exists(policy_name,
@@ -149,13 +144,15 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
     def test_policy_reject_header_contains(self):
         '''Reject traffic when header value ends with value.'''
 
-        l7policy = self._create_l7policy(**self.reject_args)
+        l7policy = self.create_l7policy(
+            loadbalancer=self.load_balancer, **self.reject_args)
         self.policies.append(l7policy)
         policy_name = "wrapper_policy_{}".format(self.listener_id)
         rule_args = {'type': 'HEADER', 'compare_type': 'CONTAINS',
                      'key': 'X-HEADER', 'value': 'es'}
         self._wait_for_load_balancer_status(self.load_balancer_id)
-        self._create_l7rule(l7policy.get('id'), **rule_args)
+        self.create_l7rule(
+            l7policy.get('id'), loadbalancer=self.load_balancer, **rule_args)
 
         for bigip_client in self.bigip_clients:
             assert bigip_client.policy_exists(policy_name,
@@ -173,8 +170,8 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
                                                    self.project_tenant_id)
 
     def test_policy_reject_three_rules(self):
-        l7policy = self._create_l7policy(**self.reject_args)
-        self.policies.append(l7policy)
+        l7policy = self.create_l7policy(
+            loadbalancer=self.load_balancer, **self.reject_args)
         policy_name = "wrapper_policy_{}".format(self.listener_id)
         rule1_args = {'type': 'HEADER', 'compare_type': 'CONTAINS',
                       'key': 'X-HEADER', 'value': 'es'}
@@ -183,9 +180,12 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
         rule3_args = {'type': 'HOST_NAME', 'compare_type': 'ENDS_WITH',
                       'value': 'test'}
         self._wait_for_load_balancer_status(self.load_balancer_id)
-        self.rule1 = self._create_l7rule(l7policy.get('id'), **rule1_args)
-        self.rule2 = self._create_l7rule(l7policy.get('id'), **rule2_args)
-        self.rule3 = self._create_l7rule(l7policy.get('id'), **rule3_args)
+        self.rule1 = self.create_l7rule(
+            l7policy.get('id'), loadbalancer=self.load_balancer, **rule1_args)
+        self.rule2 = self.create_l7rule(
+            l7policy.get('id'), loadbalancer=self.load_balancer, **rule2_args)
+        self.rule3 = self.create_l7rule(
+            l7policy.get('id'), loadbalancer=self.load_balancer, **rule3_args)
 
         for bigip_client in self.bigip_clients:
             assert bigip_client.policy_exists(policy_name,
@@ -253,8 +253,8 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
                                                   should_exist=False)
 
     def test_policy_reject_multi_policy_multi_rules(self):
-        l7policy1 = self._create_l7policy(**self.reject_args)
-        self.policies.append(l7policy1)
+        l7policy1 = self.create_l7policy(
+            loadbalancer=self.load_balancer, **self.reject_args)
         policy_name = "wrapper_policy_{}".format(self.listener_id)
         rule1_args = {'type': 'HEADER', 'compare_type': 'CONTAINS',
                       'key': 'X-HEADER', 'value': 'es'}
@@ -262,13 +262,16 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
                       'key': 'cook', 'value': 'real'}
 
         self._wait_for_load_balancer_status(self.load_balancer_id)
-        self.rule1 = self._create_l7rule(l7policy1.get('id'), **rule1_args)
-        self.rule2 = self._create_l7rule(l7policy1.get('id'), **rule2_args)
+        self.rule1 = self.create_l7rule(
+            l7policy1.get('id'), loadbalancer=self.load_balancer, **rule1_args)
+        self.rule2 = self.create_l7rule(
+            l7policy1.get('id'), loadbalancer=self.load_balancer, **rule2_args)
 
-        l7policy2 = self._create_l7policy(**self.reject_args)
-        self.policies.append(l7policy2)
-        self.rule3 = self._create_l7rule(l7policy2.get('id'), **rule1_args)
-        self.rule4 = self._create_l7rule(l7policy2.get('id'), **rule2_args)
+        l7policy2 = self.create_l7policy(**self.reject_args)
+        self.rule3 = self.create_l7rule(
+            l7policy2.get('id'), loadbalancer=self.load_balancer, **rule1_args)
+        self.rule4 = self.create_l7rule(
+            l7policy2.get('id'), loadbalancer=self.load_balancer, **rule2_args)
 
         self._delete_l7rule(l7policy1.get('id'), self.rule1.get('id'))
         for bigip_client in self.bigip_clients:
@@ -341,8 +344,8 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
                                                   should_exist=False)
 
     def test_policy_reject_many_rules(self):
-        l7policy = self._create_l7policy(**self.reject_args)
-        self.policies.append(l7policy)
+        l7policy = self.create_l7policy(
+            loadbalancer=self.load_balancer, **self.reject_args)
         policy_name = "wrapper_policy_{}".format(self.listener_id)
         rule1_args = {'type': 'HEADER', 'compare_type': 'CONTAINS',
                       'key': 'X-HEADER', 'value': 'es'}
@@ -359,13 +362,20 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
         rule7_args = {'type': 'PATH', 'compare_type': 'ENDS_WITH',
                       'value': 'ireal'}
         self._wait_for_load_balancer_status(self.load_balancer_id)
-        self.rule1 = self._create_l7rule(l7policy.get('id'), **rule1_args)
-        self.rule2 = self._create_l7rule(l7policy.get('id'), **rule2_args)
-        self.rule3 = self._create_l7rule(l7policy.get('id'), **rule3_args)
-        self.rule4 = self._create_l7rule(l7policy.get('id'), **rule4_args)
-        self.rule5 = self._create_l7rule(l7policy.get('id'), **rule5_args)
-        self.rule6 = self._create_l7rule(l7policy.get('id'), **rule6_args)
-        self.rule7 = self._create_l7rule(l7policy.get('id'), **rule7_args)
+        self.rule1 = self.create_l7rule(
+            l7policy.get('id'), loadbalancer=self.load_balancer, **rule1_args)
+        self.rule2 = self.create_l7rule(
+            l7policy.get('id'), loadbalancer=self.load_balancer, **rule2_args)
+        self.rule3 = self.create_l7rule(
+            l7policy.get('id'), loadbalancer=self.load_balancer, **rule3_args)
+        self.rule4 = self.create_l7rule(
+            l7policy.get('id'), loadbalancer=self.load_balancer, **rule4_args)
+        self.rule5 = self.create_l7rule(
+            l7policy.get('id'), loadbalancer=self.load_balancer, **rule5_args)
+        self.rule6 = self.create_l7rule(
+            l7policy.get('id'), loadbalancer=self.load_balancer, **rule6_args)
+        self.rule7 = self.create_l7rule(
+            l7policy.get('id'), loadbalancer=self.load_balancer, **rule7_args)
 
         for bigip_client in self.bigip_clients:
             assert bigip_client.policy_exists(policy_name,
@@ -452,19 +462,19 @@ class TestL7PolicyTestJSONRedirectToUrl(L7PolicyTestJSONBasic):
 
     def test_create_l7_redirect_to_url_policy(self):
         """Test the creationg of a L7 URL redirect policy."""
-        l7policy = self._create_l7policy(
-            **self.redirect_url_args)
-        self.policies.append(l7policy)
+        l7policy = self.create_l7policy(
+            loadbalancer=self.load_balancer, **self.redirect_url_args)
         self._wait_for_load_balancer_status(self.load_balancer_id)
 
     def test_policy_redirect_url_contains(self):
-        l7policy = self._create_l7policy(**self.redirect_url_args)
-        self.policies.append(l7policy)
+        l7policy = self.create_l7policy(
+            loadbalancer=self.load_balancer, **self.redirect_url_args)
         policy_name = "wrapper_policy_{}".format(self.listener_id)
         rule_args = {'type': 'HEADER', 'compare_type': 'CONTAINS',
                      'key': 'X-HEADER', 'value': 'es'}
         self._wait_for_load_balancer_status(self.load_balancer_id)
-        self._create_l7rule(l7policy.get('id'), **rule_args)
+        self.create_l7rule(
+            l7policy.get('id'), loadbalancer=self.load_balancer, **rule_args)
         self._wait_for_load_balancer_status(self.load_balancer_id)
 
         for bigip_client in self.bigip_clients:
@@ -496,16 +506,16 @@ class L7PolicyJSONRedirectToPool(L7PolicyTestJSONBasic):
 
     def test_create_l7_redirect_to_pool_policy_file_type_contains(self):
         """Test the creationg of a L7 pool redirect policy."""
-        l7policy = self._create_l7policy(
-            **self.redirect_pool_args)
-        self.policies.append(l7policy)
+        l7policy = self.create_l7policy(
+            loadbalancer=self.load_balancer, **self.redirect_pool_args)
         policy_name = "wrapper_policy_{}".format(self.listener_id)
 
         self._wait_for_load_balancer_status(self.load_balancer_id)
         # File type rule cannot have contains as compare type
         rule_args = {'type': 'FILE_TYPE', 'compare_type': 'EQUAL_TO',
                      'value': 'jpg'}
-        self._create_l7rule(l7policy.get('id'), **rule_args)
+        self.create_l7rule(
+            l7policy.get('id'), loadbalancer=self.load_balancer, **rule_args)
         for bigip_client in self.bigip_clients:
             assert bigip_client.policy_exists(policy_name,
                                               "Project_" +
@@ -523,15 +533,14 @@ class L7PolicyJSONRedirectToPool(L7PolicyTestJSONBasic):
 
     def test_create_l7_redirect_to_pool_policy_not_file_type(self):
         """Test the creationg of a L7 pool redirect policy."""
-        l7policy = self._create_l7policy(
-            **self.redirect_pool_args)
-        self.policies.append(l7policy)
+        l7policy = self.create_l7policy(
+            loadbalancer=self.load_balancer, **self.redirect_pool_args)
         policy_name = "wrapper_policy_{}".format(self.listener_id)
 
-        self._wait_for_load_balancer_status(self.load_balancer_id)
         rule_args = {'type': 'FILE_TYPE', 'compare_type': 'EQUAL_TO',
                      'value': 'qcow2', 'invert': True}
-        rule1 = self._create_l7rule(l7policy.get('id'), **rule_args)
+        rule1 = self.create_l7rule(
+            l7policy.get('id'), loadbalancer=self.load_balancer, **rule_args)
 
         for bigip_client in self.bigip_clients:
             assert bigip_client.policy_exists(policy_name,
@@ -556,7 +565,9 @@ class L7PolicyJSONRedirectToPool(L7PolicyTestJSONBasic):
                                                    self.project_tenant_id)
         rule_args['invert'] = False
         # Change invert to False and check if it sticks
-        self._update_l7rule(l7policy.get('id'), rule1.get('id'), **rule_args)
+        self.update_l7rule(
+            l7policy.get('id'), rule1.get('id'),
+            loadbalancer=self.load_balancer, **rule_args)
         for bigip_client in self.bigip_clients:
             assert not bigip_client.rule_has_condition(policy_name,
                                                        "redirect_to_pool_1",
