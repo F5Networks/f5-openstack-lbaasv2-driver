@@ -56,7 +56,7 @@ class BigIpInteraction(object):
     """
     config_file = "/tmp/tempest_bigip_{}.cfg"
     dirty_file = "/tmp/tempest_bigip_{}_{}.cfg"
-    diff_file = "/tmp/tempest_bigip_diff_{}_{}.cfg"
+    diff_file = "/tmp/tempest_bigip_diff_{}_{}.diff"
     _lbs_to_delete = []
     __env_cfg = '{}/testenv_symbols/testenv_symbols.json'.format(
         os.environ.get('HOME'))
@@ -136,7 +136,7 @@ EOF'''
         comparison.
         """
         result = cls._get_current_bigip_cfg()
-        with open(cls.config_file, 'w') as fh:
+        with open(cls.config_file.format(my_epoch), 'w') as fh:
             fh.write(result)
 
     @classmethod
@@ -158,10 +158,9 @@ EOF'''
             * Generate a diff file against the polluted config
         """
         try:
-            with open(cls.config_file) as fh:
+            with open(cls.config_file.format(my_epoch)) as fh:
                 content = fh.read()
             diff_file = cls.__collect_diff(content, test_method)
-            os.remove(diff_file)
         except AssertionError as err:
             cls.__restore_from_backup()
             sleep(5)  # after nuke, BIG-IP needs a delay...
@@ -191,11 +190,13 @@ EOF'''
             fh.write(result)
         diff_file = cls.diff_file.format(test_method, my_epoch)
         cmd = "diff -u {} {} > {}".format(
-            cls.config_file, dirty_file, diff_file)
+            cls.config_file.format(my_epoch), dirty_file, diff_file)
         result = cls.__exec_shell(cmd, True)
         cls.__check_results(result)
         if os.path.getsize(diff_file) > 0:
             raise AssertionError(diff_file)
+        os.remove(diff_file)
+        os.remove(dirty_file)
         return diff_file
 
     @classmethod
