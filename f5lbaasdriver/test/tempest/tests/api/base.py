@@ -147,9 +147,6 @@ class F5BaseTestCaseBuilder(object):
         return my_l7rule
 
     def delete_l7rule(self, policy_id, rule_id, loadbalancer=None):
-        import pdb
-        pdb.set_trace()
-        print("foul play!")
         self.l7rule_client.delete_l7rule(policy_id, rule_id)
         self.wait_for_lb(loadbalancer)
 
