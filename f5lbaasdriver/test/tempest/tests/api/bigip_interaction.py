@@ -160,7 +160,7 @@ EOF'''
         try:
             with open(cls.config_file.format(my_epoch)) as fh:
                 content = fh.read()
-            diff_file = cls.__collect_diff(content, test_method)
+            cls.__collect_diff(content, test_method)
         except AssertionError as err:
             cls.__restore_from_backup()
             sleep(5)  # after nuke, BIG-IP needs a delay...
