@@ -21,6 +21,8 @@ from f5lbaasdriver.test.tempest.services.clients.bigip_client \
     import BigIpClient
 from f5lbaasdriver.test.tempest.services.clients import \
     plugin_rpc_client
+from f5lbaasdriver.test.tempest.tests.api.bigip_interaction import \
+    BigIpInteraction
 
 CONF = config.CONF
 
@@ -44,6 +46,7 @@ class F5BaseTestCase(base.BaseTestCase):
         with the first address in CONF.f5_lbaasv2_driver.icontrol_hostname.
         """
         super(F5BaseTestCase, cls).resource_setup()
+        BigIpInteraction.store_config()
 
         cls.bigip_clients = []
         for host in CONF.f5_lbaasv2_driver.icontrol_hostname.split(","):
@@ -57,6 +60,16 @@ class F5BaseTestCase(base.BaseTestCase):
             plugin_rpc_client.F5PluginRPCClient()
         )
 
+    def setUp(self):
+        """Performs basic setup operations for inheriting test classes"""
+        BigIpInteraction.store_existing()
+        super(F5BaseTestCase, self).setUp()
+
+    def tearDown(self):
+        """Performs basic teardown operations for inheriting test classes"""
+        BigIpInteraction.check_resulting_cfg(self.__name__)
+        super(F5BaseTestCase, self).tearDown()
+
 
 class F5BaseAdminTestCase(base.BaseTestCase):
     """This class picks admin credentials and run the tempest tests."""
@@ -65,6 +78,17 @@ class F5BaseAdminTestCase(base.BaseTestCase):
     def resource_setup(cls):
         """Initialize the client objects."""
         super(F5BaseAdminTestCase, cls).resource_setup()
+        BigIpInteraction.store_config()
         cls.plugin_rpc = (
             plugin_rpc_client.F5PluginRPCClient()
         )
+
+    def setUp(self):
+        """Performs basic setup operation for inheriting test classes"""
+        BigIpInteraction.store_existing()
+        super(F5BaseAdminTestCase, self).setUp()
+
+    def tearDown(self):
+        """Performs basic teardown operation for inheriting test classes"""
+        BigIpInteraction.check_resulting_cfg(self.__name__)
+        super(F5BaseAdminTestCase, self).tearDown()
