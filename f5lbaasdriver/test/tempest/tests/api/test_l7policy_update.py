@@ -69,11 +69,11 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
     def resource_cleanup(cls):
         super(L7PolicyRulesTestJSON, cls).resource_cleanup()
 
-    def check_policy(self, policy='wrapper_policy'):
+    def check_policy(self, policy=None):
         for bigip_client in self.bigip_clients:
             assert bigip_client.policy_exists(policy, partition=self.partition)
 
-    def check_rule(self, rule='', policy='wrapper_policy',
+    def check_rule(self, rule='', policy=None,
                    action=None, condition=None, value=None):
         # Validate BIG-IP has rule
         for bigip_client in self.bigip_clients:
@@ -94,7 +94,8 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
         for bigip_client in self.bigip_clients:
             assert bigip_client.virtual_server_exists(vs_name, self.partition)
             assert bigip_client.virtual_server_has_policy(
-                vs_name, 'wrapper_policy', self.partition)
+                vs_name, 'wrapper_policy_{}'.format(self.listener_id),
+                self.partition)
 
     @test.attr(type='smoke')
     def test_create_policy_no_rule(self):
@@ -108,10 +109,12 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
 
         for bigip_client in self.bigip_clients:
             assert not bigip_client.policy_exists(
-                'wrapper_policy', partition=self.partition, should_exist=False)
+                'wrapper_policy_{}'.format(self.listener_id),
+                partition=self.partition, should_exist=False)
 
             assert not bigip_client.virtual_server_has_policy(
-                self.vs_name, 'wrapper_policy', self.partition)
+                self.vs_name, 'wrapper_policy_{}'.format(self.listener_id),
+                self.partition)
 
     @test.attr(type='smoke')
     def test_create_policy_one_rule(self):
@@ -128,9 +131,12 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
             policy_id, type='PATH', compare_type='STARTS_WITH', value='/api')
         self.addCleanup(self._delete_l7rule, policy_id, rule['id'])
 
-        self.check_policy()
+        self.check_policy(
+            policy="wrapper_policy_{}".format(self.listener_id))
+
         self.check_rule(
             'reject_1',
+            policy="wrapper_policy_{}".format(self.listener_id),
             action=create_l7policy_rule_kwargs['action'],
             condition='startsWith', value='/api')
         self.check_virtual_server()
@@ -157,8 +163,12 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
             policy1_id, type='PATH', compare_type='STARTS_WITH', value='/api')
         self.addCleanup(self._delete_l7rule, policy1_id, rule1['id'])
 
-        self.check_policy()
-        self.check_rule(rule='reject_1', action='REJECT',
+        self.check_policy(
+            policy="wrapper_policy_{}".format(self.listener_id))
+
+        self.check_rule(rule='reject_1',
+                        policy="wrapper_policy_{}".format(self.listener_id),
+                        action='REJECT',
                         condition='startsWith', value='/api')
         self.check_virtual_server()
 
@@ -173,8 +183,12 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
                                     value='.org')
         self.addCleanup(self._delete_l7rule, policy2_id, rule2['id'])
 
-        self.check_policy()
-        self.check_rule('redirect_to_url_2', action='REDIRECT_TO_URL',
+        self.check_policy(
+            policy="wrapper_policy_{}".format(self.listener_id))
+
+        self.check_rule('redirect_to_url_2',
+                        policy="wrapper_policy_{}".format(self.listener_id),
+                        action='REDIRECT_TO_URL',
                         condition='endsWith', value='.org')
         self.check_virtual_server()
 
@@ -200,8 +214,12 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
             policy1_id, type='PATH', compare_type='STARTS_WITH', value='/api')
         self.addCleanup(self._delete_l7rule, policy1_id, rule1['id'])
 
-        self.check_policy()
-        self.check_rule('reject_1', action='REJECT', condition='startsWith',
+        self.check_policy(
+            policy="wrapper_policy_{}".format(self.listener_id))
+
+        self.check_rule('reject_1',
+                        policy="wrapper_policy_{}".format(self.listener_id),
+                        action='REJECT', condition='startsWith',
                         value='/api')
         self.check_virtual_server()
 
@@ -214,8 +232,12 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
             policy2_id, type='PATH', compare_type='ENDS_WITH', value='.jpg')
         self.addCleanup(self._delete_l7rule, policy2_id, rule2['id'])
 
-        self.check_policy()
-        self.check_rule('redirect_to_url_2', action='REDIRECT_TO_URL',
+        self.check_policy(
+            policy="wrapper_policy_{}".format(self.listener_id))
+
+        self.check_rule('redirect_to_url_2',
+                        policy="wrapper_policy_{}".format(self.listener_id),
+                        action='REDIRECT_TO_URL',
                         condition='endsWith', value='.jpg')
         self.check_virtual_server()
 
@@ -223,10 +245,16 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
         self._update_l7policy(policy1_id, **update_rule_kwargs)
 
         # redirect should now be first
-        self.check_policy()
-        self.check_rule('redirect_to_url_1', action='REDIRECT_TO_URL',
+        self.check_policy(
+            policy="wrapper_policy_{}".format(self.listener_id))
+
+        self.check_rule('redirect_to_url_1',
+                        policy="wrapper_policy_{}".format(self.listener_id),
+                        action='REDIRECT_TO_URL',
                         condition='endsWith', value='.jpg')
-        self.check_rule('reject_2', action='REJECT', condition='startsWith',
+        self.check_rule('reject_2',
+                        policy="wrapper_policy_{}".format(self.listener_id),
+                        action='REJECT', condition='startsWith',
                         value='/api')
         self.check_virtual_server()
 
@@ -244,8 +272,12 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
             policy_id, type='PATH', compare_type='STARTS_WITH', value='/api')
         rule_id = rule['id']
 
-        self.check_policy()
-        self.check_rule('reject_1', action='REJECT', condition='startsWith',
+        self.check_policy(
+            policy="wrapper_policy_{}".format(self.listener_id))
+
+        self.check_rule('reject_1',
+                        policy="wrapper_policy_{}".format(self.listener_id),
+                        action='REJECT', condition='startsWith',
                         value='/api')
         self.check_virtual_server()
 
@@ -254,9 +286,12 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
         self._delete_l7policy(policy_id, wait=True)
         for bigip_client in self.bigip_clients:
             assert not bigip_client.policy_exists(
-                'wrapper_policy', partition=self.partition, should_exist=False)
+                'wrapper_policy_{}'.format(self.listener_id),
+                partition=self.partition, should_exist=False)
             assert not bigip_client.virtual_server_has_policy(
-                self.vs_name, 'wrapper_policy', self.partition)
+                self.vs_name,
+                'wrapper_policy_{}'.format(self.listener_id),
+                self.partition)
 
     @test.attr(type='smoke')
     def test_delete_all_rules(self):
@@ -273,8 +308,12 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
             policy_id, type='PATH', compare_type='STARTS_WITH', value='/api')
         rule_id = rule['id']
 
-        self.check_policy()
-        self.check_rule('reject_1', action='REJECT', condition='startsWith',
+        self.check_policy(
+            policy="wrapper_policy_{}".format(self.listener_id))
+
+        self.check_rule('reject_1',
+                        policy="wrapper_policy_{}".format(self.listener_id),
+                        action='REJECT', condition='startsWith',
                         value='/api')
         self.check_virtual_server()
 
@@ -282,9 +321,11 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
         self._delete_l7rule(policy_id, rule_id, wait=True)
         for bigip_client in self.bigip_clients:
             assert not bigip_client.policy_exists(
-                'wrapper_policy', partition=self.partition, should_exist=False)
+                'wrapper_policy_{}'.format(self.listener_id),
+                partition=self.partition, should_exist=False)
             assert not bigip_client.virtual_server_has_policy(
-                self.vs_name, 'wrapper_policy', self.partition)
+                self.vs_name,
+                'wrapper_policy_{}'.format(self.listener_id), self.partition)
 
     @test.attr(type='smoke')
     def test_delete_one_rule(self):
@@ -301,8 +342,12 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
             policy_id, type='PATH', compare_type='STARTS_WITH', value='/api')
         rule1_id = rule1['id']
 
-        self.check_policy()
-        self.check_rule('reject_1', action='REJECT', condition='startsWith',
+        self.check_policy(
+            policy="wrapper_policy_{}".format(self.listener_id))
+
+        self.check_rule('reject_1',
+                        policy="wrapper_policy_{}".format(self.listener_id),
+                        action='REJECT', condition='startsWith',
                         value='/api')
         self.check_virtual_server()
 
@@ -310,8 +355,12 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
             policy_id, type='PATH', compare_type='ENDS_WITH', value='/api')
         rule2_id = rule2['id']
         self.addCleanup(self._delete_l7rule, policy_id, rule2_id)
-        self.check_policy()
-        self.check_rule('reject_1', action='REJECT', condition='endsWith',
+        self.check_policy(
+            policy="wrapper_policy_{}".format(self.listener_id))
+
+        self.check_rule('reject_1',
+                        policy="wrapper_policy_{}".format(self.listener_id),
+                        action='REJECT', condition='endsWith',
                         value='/api')
         self.check_virtual_server()
 
@@ -319,6 +368,8 @@ class L7PolicyRulesTestJSON(base.F5BaseTestCase):
         self._delete_l7rule(policy_id, rule1_id, wait=True)
         for bigip_client in self.bigip_clients:
             assert bigip_client.policy_exists(
-                'wrapper_policy', partition=self.partition)
+                'wrapper_policy_{}'.format(self.listener_id),
+                partition=self.partition)
             assert bigip_client.virtual_server_has_policy(
-                self.vs_name, 'wrapper_policy', self.partition)
+                self.vs_name,
+                'wrapper_policy_{}'.format(self.listener_id), self.partition)
