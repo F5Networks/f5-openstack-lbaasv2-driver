@@ -105,9 +105,6 @@ class F5BaseTestCaseBuilder(object):
     def _delete_listener(self, *args, **kwargs):
         self._not_implemented(self._delete_listener)
 
-    def _create_pool(self, *args, **kwargs):
-        self._not_implemented(self._create_pool)
-
     def _delete_pool(self, *args, **kwargs):
         self._not_implemented(self._delete_pool)
 
