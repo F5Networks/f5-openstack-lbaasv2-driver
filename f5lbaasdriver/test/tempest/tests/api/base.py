@@ -13,8 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from collections import namedtuple
 from collections import deque
+from collections import namedtuple
 
 from neutron_lbaas.tests.tempest.v2.api import base
 from oslo_log import log as logging

@@ -62,9 +62,10 @@ class L7PolicyTestJSONBasic(base.F5BaseTestCase):
         self.load_balancer_id = self.load_balancer['id']
 
         # Create listener for tests
-        self.create_listener_kwargs = {'loadbalancer_id': self.load_balancer_id,
-                                       'protocol': "HTTP",
-                                       'protocol_port': "80"}
+        self.create_listener_kwargs = \
+            {'loadbalancer_id': self.load_balancer_id,
+             'protocol': "HTTP",
+             'protocol_port': "80"}
         self.listener = (
             self.create_listener(loadbalancer=self.load_balancer,
                                  **self.create_listener_kwargs))
@@ -109,7 +110,7 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
         assert (l7policy.get('action') == "REJECT")
         for bigip_client in self.bigip_clients:
             assert not bigip_client.policy_exists(
-                "wrapper_policy",
+                policy_name,
                 "Project_" +
                 self.project_tenant_id,
                 should_exist=False)
@@ -127,14 +128,14 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
             l7policy.get('id'), loadbalancer=self.load_balancer, **rule_args)
 
         for bigip_client in self.bigip_clients:
-            assert bigip_client.policy_exists("wrapper_policy",
+            assert bigip_client.policy_exists(policy_name,
                                               "Project_" +
                                               self.project_tenant_id)
-            assert bigip_client.rule_exists("wrapper_policy",
+            assert bigip_client.rule_exists(policy_name,
                                             "reject_1",
                                             "Project_" +
                                             self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "reject_1",
                                                    "endsWith",
                                                    "real",
@@ -154,14 +155,14 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
             l7policy.get('id'), loadbalancer=self.load_balancer, **rule_args)
 
         for bigip_client in self.bigip_clients:
-            assert bigip_client.policy_exists("wrapper_policy",
+            assert bigip_client.policy_exists(policy_name,
                                               "Project_" +
                                               self.project_tenant_id)
-            assert bigip_client.rule_exists("wrapper_policy",
+            assert bigip_client.rule_exists(policy_name,
                                             "reject_1",
                                             "Project_" +
                                             self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "reject_1",
                                                    "contains",
                                                    "es",
@@ -187,26 +188,26 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
             l7policy.get('id'), loadbalancer=self.load_balancer, **rule3_args)
 
         for bigip_client in self.bigip_clients:
-            assert bigip_client.policy_exists("wrapper_policy",
+            assert bigip_client.policy_exists(policy_name,
                                               "Project_" +
                                               self.project_tenant_id)
-            assert bigip_client.rule_exists("wrapper_policy",
+            assert bigip_client.rule_exists(policy_name,
                                             "reject_1",
                                             "Project_" +
                                             self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "reject_1",
                                                    "contains",
                                                    "es",
                                                    "Project_" +
                                                    self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "reject_1",
                                                    "startsWith",
                                                    "real",
                                                    "Project_" +
                                                    self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "reject_1",
                                                    "endsWith",
                                                    "test",
@@ -217,25 +218,25 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
             l7policy.get('id'), self.rule1.get('id'), self.load_balancer_id)
 
         for bigip_client in self.bigip_clients:
-            assert bigip_client.policy_exists("wrapper_policy",
+            assert bigip_client.policy_exists(policy_name,
                                               "Project_" +
                                               self.project_tenant_id)
             assert not \
-                bigip_client.rule_has_condition("wrapper_policy",
+                bigip_client.rule_has_condition(policy_name,
                                                 "reject_1",
                                                 "contains",
                                                 "es",
                                                 "Project_" +
                                                 self.project_tenant_id)
             assert \
-                bigip_client.rule_has_condition("wrapper_policy",
+                bigip_client.rule_has_condition(policy_name,
                                                 "reject_1",
                                                 "startsWith",
                                                 "real",
                                                 "Project_" +
                                                 self.project_tenant_id)
             assert \
-                bigip_client.rule_has_condition("wrapper_policy",
+                bigip_client.rule_has_condition(policy_name,
                                                 "reject_1",
                                                 "endsWith",
                                                 "test",
@@ -247,7 +248,7 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
         self.delete_l7rule(
             l7policy.get('id'), self.rule3.get('id'), self.load_balancer_id)
         for bigip_client in self.bigip_clients:
-            assert not bigip_client.policy_exists("wrapper_policy",
+            assert not bigip_client.policy_exists(policy_name,
                                                   "Project_" +
                                                   self.project_tenant_id,
                                                   should_exist=False)
@@ -276,36 +277,36 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
         self.delete_l7rule(
             l7policy1.get('id'), self.rule1.get('id'), self.load_balancer_id)
         for bigip_client in self.bigip_clients:
-            assert bigip_client.policy_exists("wrapper_policy",
+            assert bigip_client.policy_exists(policy_name,
                                               "Project_" +
                                               self.project_tenant_id)
-            assert bigip_client.rule_exists("wrapper_policy",
+            assert bigip_client.rule_exists(policy_name,
                                             "reject_1",
                                             "Project_" +
                                             self.project_tenant_id)
-            assert bigip_client.rule_exists("wrapper_policy",
+            assert bigip_client.rule_exists(policy_name,
                                             "reject_2",
                                             "Project_" +
                                             self.project_tenant_id)
-            assert not bigip_client.rule_has_condition("wrapper_policy",
+            assert not bigip_client.rule_has_condition(policy_name,
                                                        "reject_1",
                                                        "contains",
                                                        "es",
                                                        "Project_" +
                                                        self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "reject_1",
                                                    "startsWith",
                                                    "real",
                                                    "Project_" +
                                                    self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "reject_2",
                                                    "startsWith",
                                                    "real",
                                                    "Project_" +
                                                    self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "reject_2",
                                                    "contains",
                                                    "es",
@@ -314,24 +315,24 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
 
         self.delete_l7policy(l7policy1.get('id'), self.load_balancer_id)
         for bigip_client in self.bigip_clients:
-            assert not bigip_client.rule_exists("wrapper_policy",
+            assert not bigip_client.rule_exists(policy_name,
                                                 "reject_1",
                                                 "Project_" +
                                                 self.project_tenant_id)
-            assert bigip_client.rule_exists("wrapper_policy",
+            assert bigip_client.rule_exists(policy_name,
                                             "reject_2",
                                             "Project_" +
                                             self.project_tenant_id)
-            assert bigip_client.policy_exists("wrapper_policy",
+            assert bigip_client.policy_exists(policy_name,
                                               "Project_" +
                                               self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "reject_2",
                                                    "contains",
                                                    "es",
                                                    "Project_" +
                                                    self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "reject_2",
                                                    "startsWith",
                                                    "real",
@@ -339,7 +340,7 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
                                                    self.project_tenant_id)
         self.delete_l7policy(l7policy2.get('id'), self.load_balancer_id)
         for bigip_client in self.bigip_clients:
-            assert not bigip_client.policy_exists("wrapper_policy",
+            assert not bigip_client.policy_exists(policy_name,
                                                   "Project_" +
                                                   self.project_tenant_id,
                                                   should_exist=False)
@@ -379,50 +380,50 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
             l7policy.get('id'), loadbalancer=self.load_balancer, **rule7_args)
 
         for bigip_client in self.bigip_clients:
-            assert bigip_client.policy_exists("wrapper_policy",
+            assert bigip_client.policy_exists(policy_name,
                                               "Project_" +
                                               self.project_tenant_id)
-            assert bigip_client.rule_exists("wrapper_policy",
+            assert bigip_client.rule_exists(policy_name,
                                             "reject_1",
                                             "Project_" +
                                             self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "reject_1",
                                                    "contains",
                                                    "es",
                                                    "Project_" +
                                                    self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "reject_1",
                                                    "startsWith",
                                                    "real",
                                                    "Project_" +
                                                    self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "reject_1",
                                                    "endsWith",
                                                    "real",
                                                    "Project_" +
                                                    self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "reject_1",
                                                    "startsWith",
                                                    "re",
                                                    "Project_" +
                                                    self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "reject_1",
                                                    "contains",
                                                    "al",
                                                    "Project_" +
                                                    self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "reject_1",
                                                    "contains",
                                                    "l",
                                                    "Project_" +
                                                    self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "reject_1",
                                                    "endsWith",
                                                    "ireal",
@@ -433,7 +434,7 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
             l7policy.get('id'), self.rule1.get('id'),
             loadbalancer=self.load_balancer_id)
         for bigip_client in self.bigip_clients:
-            assert not bigip_client.rule_has_condition("wrapper_policy",
+            assert not bigip_client.rule_has_condition(policy_name,
                                                        "reject_1",
                                                        "contains",
                                                        "es",
@@ -454,11 +455,11 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
         self.delete_l7rule(
             l7policy.get('id'), self.rule6.get('id'),
             loadbalancer=self.load_balancer_id)
-        self.delete_l7rule(                           
+        self.delete_l7rule(
             l7policy.get('id'), self.rule7.get('id'),
             loadbalancer=self.load_balancer_id)
-        for bigip_client in self.bigip_clients:       
-            assert not bigip_client.policy_exists("wrapper_policy",
+        for bigip_client in self.bigip_clients:
+            assert not bigip_client.policy_exists(policy_name,
                                                   "Project_" +
                                                   self.project_tenant_id,
                                                   should_exist=False)
@@ -492,14 +493,14 @@ class TestL7PolicyTestJSONRedirectToUrl(L7PolicyTestJSONBasic):
         self._wait_for_load_balancer_status(self.load_balancer_id)
 
         for bigip_client in self.bigip_clients:
-            assert bigip_client.policy_exists("wrapper_policy",
+            assert bigip_client.policy_exists(policy_name,
                                               "Project_" +
                                               self.project_tenant_id)
-            assert bigip_client.rule_exists("wrapper_policy",
+            assert bigip_client.rule_exists(policy_name,
                                             "redirect_to_url_1",
                                             "Project_" +
                                             self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "redirect_to_url_1",
                                                    "httpHeader",
                                                    "es",
@@ -531,14 +532,14 @@ class L7PolicyJSONRedirectToPool(L7PolicyTestJSONBasic):
         self.create_l7rule(
             l7policy.get('id'), loadbalancer=self.load_balancer, **rule_args)
         for bigip_client in self.bigip_clients:
-            assert bigip_client.policy_exists("wrapper_policy",
+            assert bigip_client.policy_exists(policy_name,
                                               "Project_" +
                                               self.project_tenant_id)
-            assert bigip_client.rule_exists("wrapper_policy",
+            assert bigip_client.rule_exists(policy_name,
                                             "redirect_to_pool_1",
                                             "Project_" +
                                             self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "redirect_to_pool_1",
                                                    "extension",
                                                    "jpg",
@@ -557,21 +558,21 @@ class L7PolicyJSONRedirectToPool(L7PolicyTestJSONBasic):
             l7policy.get('id'), loadbalancer=self.load_balancer, **rule_args)
 
         for bigip_client in self.bigip_clients:
-            assert bigip_client.policy_exists("wrapper_policy",
+            assert bigip_client.policy_exists(policy_name,
                                               "Project_" +
                                               self.project_tenant_id)
-            assert bigip_client.rule_exists("wrapper_policy",
+            assert bigip_client.rule_exists(policy_name,
                                             "redirect_to_pool_1",
                                             "Project_" +
                                             self.project_tenant_id)
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "redirect_to_pool_1",
                                                    "extension",
                                                    "qcow2",
                                                    "Project_" +
                                                    self.project_tenant_id)
             # Verify same rule exists, but invert is set to True
-            assert bigip_client.rule_has_condition("wrapper_policy",
+            assert bigip_client.rule_has_condition(policy_name,
                                                    "redirect_to_pool_1",
                                                    "not_",
                                                    "qcow2",
@@ -583,7 +584,7 @@ class L7PolicyJSONRedirectToPool(L7PolicyTestJSONBasic):
             l7policy.get('id'), rule1.get('id'),
             loadbalancer=self.load_balancer, **rule_args)
         for bigip_client in self.bigip_clients:
-            assert not bigip_client.rule_has_condition("wrapper_policy",
+            assert not bigip_client.rule_has_condition(policy_name,
                                                        "redirect_to_pool_1",
                                                        "not_",
                                                        "qcow2",
