@@ -96,9 +96,6 @@ class F5BaseTestCaseBuilder(object):
     def _create_load_balancer(self, *args, **kwargs):
         self._not_implemented(self._create_load_balancer)
 
-    def _create_pool(self, *args, **kwargs):
-        self._not_implemented(self._create_pool)
-
     def _delete_loadbalancer(self, *args, **kwargs):
         self._not_implemented(self._delete_loadbalancer)
 

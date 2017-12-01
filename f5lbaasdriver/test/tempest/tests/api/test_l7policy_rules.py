@@ -146,7 +146,6 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
 
         l7policy = self.create_l7policy(
             loadbalancer=self.load_balancer, **self.reject_args)
-        self.policies.append(l7policy)
         policy_name = "wrapper_policy_{}".format(self.listener_id)
         rule_args = {'type': 'HEADER', 'compare_type': 'CONTAINS',
                      'key': 'X-HEADER', 'value': 'es'}
@@ -431,7 +430,8 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
                                                    self.project_tenant_id)
 
         self.delete_l7rule(
-            l7policy.get('id'), self.rule1.get('id'), self.load_balancer_id)
+            l7policy.get('id'), self.rule1.get('id'),
+            loadbalancer=self.load_balancer_id)
         for bigip_client in self.bigip_clients:
             assert not bigip_client.rule_has_condition("wrapper_policy",
                                                        "reject_1",
@@ -440,18 +440,24 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
                                                        "Project_" +
                                                        self.project_tenant_id)
         self.delete_l7rule(
-            l7policy.get('id'), self.rule2.get('id'), self.load_balancer_id)
+            l7policy.get('id'), self.rule2.get('id'),
+            loadbalancer=self.load_balancer_id)
         self.delete_l7rule(
-            l7policy.get('id'), self.rule3.get('id'), self.load_balancer_id)
+            l7policy.get('id'), self.rule3.get('id'),
+            loadbalancer=self.load_balancer_id)
         self.delete_l7rule(
-            l7policy.get('id'), self.rule4.get('id'), self.load_balancer_id)
+            l7policy.get('id'), self.rule4.get('id'),
+            loadbalancer=self.load_balancer_id)
         self.delete_l7rule(
-            l7policy.get('id'), self.rule5.get('id'), self.load_balancer_id)
+            l7policy.get('id'), self.rule5.get('id'),
+            loadbalancer=self.load_balancer_id)
         self.delete_l7rule(
-            l7policy.get('id'), self.rule6.get('id'), self.load_balancer_id)
-        self.delete_l7rule(
-            l7policy.get('id'), self.rule7.get('id'), self.load_balancer_id)
-        for bigip_client in self.bigip_clients:
+            l7policy.get('id'), self.rule6.get('id'),
+            loadbalancer=self.load_balancer_id)
+        self.delete_l7rule(                           
+            l7policy.get('id'), self.rule7.get('id'),
+            loadbalancer=self.load_balancer_id)
+        for bigip_client in self.bigip_clients:       
             assert not bigip_client.policy_exists("wrapper_policy",
                                                   "Project_" +
                                                   self.project_tenant_id,
