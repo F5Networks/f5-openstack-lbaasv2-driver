@@ -14,6 +14,8 @@ u"""F5 Networks® LBaaSv2 L7 policy tempest tests."""
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import pytest
+
 from tempest import config
 from tempest import test
 
@@ -475,11 +477,14 @@ class TestL7PolicyTestJSONRedirectToUrl(L7PolicyTestJSONBasic):
             'listener_id': self.listener.get('id'), 'admin_state_up': 'true',
             'action': 'REDIRECT_TO_URL', 'redirect_url': 'http://www.cdc.gov'}
 
+    @pytest.mark.skip(reason=str("40ac765cec41927c9310f91243b113d4de789583 has"
+                                 " a complete removal of fn() here"))
     def test_create_l7_redirect_to_url_policy(self):
         """Test the creationg of a L7 URL redirect policy."""
-        l7policy = self.create_l7policy(
-            loadbalancer=self.load_balancer, **self.redirect_url_args)
-        self._wait_for_load_balancer_status(self.load_balancer_id)
+        # l7policy = self.create_l7policy(
+        #     loadbalancer=self.load_balancer, **self.redirect_url_args)
+        # self._wait_for_load_balancer_status(self.load_balancer_id)
+        pass
 
     def test_policy_redirect_url_contains(self):
         l7policy = self.create_l7policy(
