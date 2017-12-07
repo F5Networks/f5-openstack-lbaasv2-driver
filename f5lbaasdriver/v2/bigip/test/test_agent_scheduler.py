@@ -22,6 +22,38 @@ from neutron_lbaas.services.loadbalancer import data_models
 from f5lbaasdriver.v2.bigip import agent_scheduler
 
 
+@pytest.fixture
+def agents_in_env():
+    agents_in_env = [
+        {'id': 'test_agent_1_id',
+         'alive': True,
+         'admin_state_up': True,
+         'configurations': {
+             'environment_prefix': 'test',
+             'environment_group_number': 2}},
+        {'id': 'test_agent_2_id',
+         'alive': True,
+         'admin_state_up': True,
+         'configurations': {
+             'environment_prefix': 'test',
+             'environment_group_number': 2}},
+        {'id': 'test_agent_3_id',
+         'alive': False,
+         'admin_state_up': True,
+         'configurations': {
+             'environment_prefix': 'test',
+             'environment_group_number': 2}},
+        {'id': 'test_agent_4_id',
+         'alive': True,
+         'admin_state_up': False,
+         'configurations': {
+             'environment_prefix': 'test',
+             'environment_group_number': 2}},
+    ]
+
+    return agents_in_env
+
+
 def test_get_capacity():
 
     sched = agent_scheduler.TenantScheduler()
@@ -44,6 +76,72 @@ def test_get_lbaas_agent_hosting_loadbalancer():
     assert agent
 
 
+def test_get_lbaas_agent_hosting_loadbalancer_agent_up(agents_in_env):
+
+    context = mock.MagicMock()
+    loadbalancer_id = 'uuid_1234'
+
+    sched = agent_scheduler.TenantScheduler()
+    sched.get_agents_in_env = mock.MagicMock(name='get_agents_in_env')
+    sched.get_agents_in_env.return_value = agents_in_env
+
+    sched.rebind_loadbalancers = mock.MagicMock(name='rebind_loadbalancers')
+
+    mock_plugin = mock.MagicMock(name='plugin')
+    mock_plugin.db.get_agent_hosting_loadbalancer.return_value = {
+        'agent': agents_in_env[0]}
+
+    agent_dict = sched.get_lbaas_agent_hosting_loadbalancer(
+        mock_plugin, context, loadbalancer_id, 'test')
+
+    assert agent_dict['agent'] == agents_in_env[0]
+    assert not sched.rebind_loadbalancers.called
+
+
+def test_get_lbaas_agent_hosting_loadbalancer_agent_down(agents_in_env):
+
+    context = mock.MagicMock()
+    loadbalancer_id = 'uuid_1234'
+
+    sched = agent_scheduler.TenantScheduler()
+    sched.get_agents_in_env = mock.MagicMock(name='get_agents_in_env')
+    sched.get_agents_in_env.return_value = agents_in_env
+
+    sched.rebind_loadbalancers = mock.MagicMock(name='rebind_loadbalancers')
+    sched.rebind_loadbalancers.return_value = agents_in_env[0]
+
+    mock_plugin = mock.MagicMock(name='plugin')
+    mock_plugin.db.get_agent_hosting_loadbalancer.return_value = {
+        'agent': agents_in_env[3]}
+
+    agent_dict = sched.get_lbaas_agent_hosting_loadbalancer(
+        mock_plugin, context, loadbalancer_id, 'test')
+
+    assert agent_dict['agent'] == agents_in_env[0]
+
+
+def test_get_lbaas_agent_hosting_loadbalancer_agent_dead(agents_in_env):
+
+    context = mock.MagicMock()
+    loadbalancer_id = 'uuid_1234'
+
+    sched = agent_scheduler.TenantScheduler()
+    sched.get_agents_in_env = mock.MagicMock(name='get_agents_in_env')
+    sched.get_agents_in_env.return_value = agents_in_env
+
+    sched.rebind_loadbalancers = mock.MagicMock(name='rebind_loadbalancers')
+    sched.rebind_loadbalancers.return_value = agents_in_env[0]
+
+    mock_plugin = mock.MagicMock(name='plugin')
+    mock_plugin.db.get_agent_hosting_loadbalancer.return_value = {
+        'agent': agents_in_env[2]}
+
+    agent_dict = sched.get_lbaas_agent_hosting_loadbalancer(
+        mock_plugin, context, loadbalancer_id, 'test')
+
+    assert agent_dict['agent'] == agents_in_env[0]
+
+
 def test_schedule():
 
     plugin = mock.MagicMock()
@@ -55,25 +153,39 @@ def test_schedule():
     assert agent
 
 
-def test_rebind_loadbalancers():
+def test_rebind_loadbalancers_no_agents(agents_in_env):
 
     plugin = mock.MagicMock()
     context = mock.MagicMock()
     sched = agent_scheduler.TenantScheduler()
     sched.get_agents_in_env = mock.MagicMock(name='get_agents_in_env')
-    agents_in_env = [{'id': 'test_agent_2_id',
-                      'alive': True,
-                      'admin_state_up': True,
-                      'configurations': {
-                          'environment_prefix': 'prod',
-                          'environment_group_number': 2}}]
-    sched.get_agents_in_env.return_value = agents_in_env
+    sched.get_agents_in_env.return_value = []
     return_all = [type('test', (), {})()]
     context.session.query.all = mock.MagicMock(name='all',
                                                return_value=return_all)
     context.session.add = mock.MagicMock(name='add', return_value=None)
-    sched.rebind_loadbalancers(context, plugin, 'prod',
-                               2, agents_in_env[0])
+    result = sched.rebind_loadbalancers(context, plugin, 'prod',
+                                        2, agents_in_env[0])
+    assert result is None
+
+
+def test_rebind_loadbalancers(agents_in_env):
+
+    plugin = mock.MagicMock()
+    context = mock.MagicMock()
+    sched = agent_scheduler.TenantScheduler()
+    sched.get_agents_in_env = mock.MagicMock(name='get_agents_in_env')
+    sched.get_agents_in_env.return_value = agents_in_env
+
+    return_all = [type('test', (), {})()]
+    context.session.query.all = mock.MagicMock(name='all',
+                                               return_value=return_all)
+    context.session.add = mock.MagicMock(name='add', return_value=None)
+
+    result = sched.rebind_loadbalancers(context, plugin, 'prod',
+                                        2, agents_in_env[0])
+
+    assert result == agents_in_env[0]
 
 
 def test_get_lbaas_agent_hosting_loadbalancer_none():
@@ -133,7 +245,7 @@ def test_schedule_get_active_agent():
     assert agent['id'] == 'test_agent_id'
 
 
-def test_get_lbaas_agent_hosting_loadbalancer_agent_dead():
+def test_get_lbaas_agent_hosting_loadbalancer_agent_dead_2():
     mock_plugin = mock.MagicMock(name='plugin')
     fake_agent = {
         'agent': {
