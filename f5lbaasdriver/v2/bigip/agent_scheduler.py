@@ -100,8 +100,10 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                                             active=None)
 
         for agent in all_agents:
+
             if not plugin.db.is_eligible_agent(active=True, agent=agent):
-                if not agent['admin_state_up']:
+                agent_dead = plugin.db.is_agent_down(agent['heartbeat_timestamp'])
+                if not agent['admin_state_up'] or agent_dead:
                     return_agents.append(agent)
         return return_agents
 
