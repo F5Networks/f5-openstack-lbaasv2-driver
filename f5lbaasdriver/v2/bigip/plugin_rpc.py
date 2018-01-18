@@ -787,6 +787,18 @@ class LBaaSv2PluginCallbacksRPC(object):
                     pool_status[poolid] = 'Unknown'
         return pool_status
 
+    @log_helpers.log_method_call
+    def get_pools_members(self, context, pools, host=None):
+        pools_members = dict()
+        for poolid in pools:
+            members = self.driver.plugin.db.get_pool_members(
+                context,
+                filters={'pool_id': [poolid]}
+            )
+            pools_members[poolid] = [member.to_dict(pool=False)
+                                     for member in members]
+        return pools_members
+
     # validate a list of listeners id - assure they are not deleted
     @log_helpers.log_method_call
     def validate_listeners_state(self, context, listeners, host=None):
