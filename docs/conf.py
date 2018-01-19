@@ -369,18 +369,36 @@ rst_epilog = '''
     <a class="btn btn-info" href="https://github.com/F5Networks/f5-openstack-lbaasv2-driver/releases/download/v%(version)s/f5-openstack-lbaasv2-driver-%(version)s-1.el7.noarch.rpm">RPM package</a>
 .. |release-notes| raw:: html
 
-    <a class="btn btn-success" href="https://github.com/F5Networks/f5-openstack-lbaasv2-driver/releases/tag/v%(version)s/">Release Notes</a>
+    <a class="btn btn-success" href="%(base_url)s/products/openstack/lbaasv2-driver/v%(version)s/">Release Notes</a>
 .. |agent-long| replace:: F5 Agent for OpenStack Neutron
 .. |agent| replace:: :code:`f5-openstack-agent`
 .. |driver| replace:: :code:`f5-openstack-lbaasv2-driver`
 .. |driver-long| replace:: F5 Driver for OpenStack LBaaSv2
 .. |agent-url| raw:: html
     
-    <a target="_blank" href="http://clouddocs.f5.com/products/openstack/agent/%(openstack_release)s">F5 Agent for OpenStack Neutron</a>
+    <a target="_blank" href="%(base_url)s/products/openstack/agent/%(openstack_release)s">F5 Agent for OpenStack Neutron</a>
 .. |driver-short| replace:: F5 driver
+.. _OpenStack Neutron: https://docs.openstack.org/neutron/%(openstack_release_l)s/
+.. _F5 Agent for OpenStack Neutron: %(base_url)s/products/openstack/%(version)s/agent/
+.. _user documentation: %(base_url)s/cloud/openstack/latest/lbaas
+.. _Neutron LBaaS API: https://wiki.openstack.org/wiki/Neutron/LBaaS/API_2.0
+.. _available F5 agent: %(base_url)s/products/openstack/%(version)s/agent/
+.. _F5 Service Provider Package: %(base_url)s/cloud/openstack/latest/lbaas-prep
+.. _Download the latest debian package: |f5_lbaasv2_driver_deb_url|
+.. _Download the latest rpm package: |f5_lbaasv2_driver_rpm_url|
+.. _Partners: %(base_url)s/cloud/openstack/latest/support/partners.html
+.. _Configure and start the F5 Agent: %(base_url)s/products/openstack/%(version)s/agent/index.html#configure-the-agent-long
+.. _Capacity-based Scale out: %(base_url)s/cloud/openstack/v1/lbaas/lbaas-differentiated-service-environments.html
+.. _Differentiated Service Environments: %(base_url)s/cloud/openstack/v1/lbaas/lbaas-capacity-based-scaleout.html
 ''' % {
   'openstack_release': openstack_release,
   'openstack_release_l': openstack_release.lower(),
   'f5_lbaasv2_driver_shim_url': f5_lbaasv2_driver_shim_url,
-  'version': version
+  'version': version,
+   'base_url': 'http://clouddocs.f5.com'
 }
+
+# Links to external sites (i.e., outside of clouddocs)
+# Use: :issues:`287` would transform to "issue 287" and link to issue #287 in GitHub
+extlinks = {'issues': ('https://github.com/F5Networks/f5-openstack-lbaasv2-driver/issues/%s',
+                          'issue ')}
