@@ -30,5 +30,3 @@ See the `Differentiated Service Environments`_ documentation for more informatio
 
 See `Capacity-Based Scale Out`_ to learn about agent redundancy and scale out for differentiated service environments.
 
-.. _Capacity-based Scale out: /cloud/openstack/v1/lbaas/lbaas-differentiated-service-environments.html
-.. _Differentiated Service Environments: /cloud/openstack/v1/lbaas/lbaas-capacity-based-scaleout.html
