@@ -37,7 +37,7 @@ The |agent-long| uses iControl REST API calls to apply the desired configuration
 Guides
 ------
 
-See the `F5 Driver for OpenStack LBaaSv2 user documentation`_.
+See the |driver-long| `user documentation`_.
 
 .. index::
    triple: lbaasv2-driver; downloads; debian
@@ -148,7 +148,7 @@ Take the steps below to tell Neutron to use the F5 service provider driver and t
 
 #. Add 'F5Networks' to the ``service_providers`` section of the Neutron LBaaS config file: :file:`/etc/neutron/neutron_lbaas.conf` as shown below.
 
-   .. code-block:: text
+   .. code-block:: console
       :emphasize-lines: 4
 
       $ vim /etc/neutron/neutron_lbaas.conf
@@ -159,7 +159,7 @@ Take the steps below to tell Neutron to use the F5 service provider driver and t
 
 #. Add the LBaaSv2 service plugin to the ``[DEFAULT]`` section of the Neutron config file: :file:`/etc/neutron/neutron.conf`.
 
-   .. code-block:: text
+   .. code-block:: console
 
       $ vi /etc/neutron/neutron.conf
       ...
@@ -175,7 +175,7 @@ Take the steps below to tell Neutron to use the F5 service provider driver and t
 
 #. Restart Neutron
 
-   .. code-block:: text
+   .. code-block:: console
 
       $ sudo service neutron-server restart    \\ Ubuntu
       $ sudo systemctl restart neutron-server  \\ CentOS
@@ -184,25 +184,9 @@ Take the steps below to tell Neutron to use the F5 service provider driver and t
 What's Next
 -----------
 
-`Configure and start`_ the |agent-long|.
-
-.. seealso::
-
-   `F5 Driver for OpenStack LBaaSv2 user documentation`_
-
+`Configure and start the F5 Agent`_.
 
 .. |Build Status| image:: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=stable/newton
     :target: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver
     :alt: Build Status
 
-
-.. _OpenStack Neutron: https://docs.openstack.org/neutron/latest/
-.. _F5 Agent for OpenStack Neutron: /products/openstack/latest/agent/
-.. _F5 Driver for OpenStack LBaaSv2 user documentation: /cloud/openstack/latest/lbaas
-.. _Neutron LBaaS API: https://wiki.openstack.org/wiki/Neutron/LBaaS/API_2.0
-.. _available F5 agent: /products/openstack/latest/agent/
-.. _F5 Service Provider Package: /cloud/openstack/latest/lbaas-prep
-.. _Download the latest debian package: |f5_lbaasv2_driver_deb_url|
-.. _Download the latest rpm package: |f5_lbaasv2_driver_rpm_url|
-.. _Partners: /cloud/openstack/latest/support/partners.html
-.. _Configure and start: /products/openstack/latest/agent/index.html#configure-the-agent-long
