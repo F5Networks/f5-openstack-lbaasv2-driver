@@ -64,7 +64,7 @@ deploy:
       python: 2.7
     skip_cleanup: true
   # deploy docs to s3
-  # if this is not a tagged release, the docs will deploy to /products/openstack/lbaasv2-driver/$TRAVIS_BRANCH/
+  # if this is not a tagged release, the docs will deploy to /products/openstack/lbaasv2-driver/newton/
   - provider: script
     skip_cleanup: true
     on:
@@ -73,11 +73,11 @@ deploy:
       condition: $TRAVIS_TAG = ""
     script:
     - ./docs/scripts/deploy-docs.sh publish-product-docs-to-prod openstack/lbaasv2-driver newton
-   # if this is a tagged release, the docs go to /products/openstack/lbaasv2-driver/$TRAVIS_BRANCH/vX.Y
+   # if this is a tagged release, the docs go to /products/openstack/lbaasv2-driver/newton/vX.Y
   - provider: script
     skip_cleanup: true
     on:
       tags: true
       repo: F5Networks/f5-openstack-lbaasv2-driver
     script:
-    - ./docs/scripts/deploy-docs.sh publish-product-docs-to-prod openstack/lbaasv2-driver/$TRAVIS_BRANCH $RELEASE_TAG
+    - ./docs/scripts/deploy-docs.sh publish-product-docs-to-prod openstack/lbaasv2-driver/newton $RELEASE_TAG
