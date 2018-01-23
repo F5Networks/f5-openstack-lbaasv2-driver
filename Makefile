@@ -5,6 +5,7 @@
 help:
 	@echo "  docker-preview     to build live preview of docs using sphinx-autobuild in a docker container"
 	@echo "  docker-test        to build and test docs in a docker container"
+	@echo "  docker-html        one-time HTML build in a docker container"
 
 # Build live preview docs in a docker container
 .PHONY: docker-preview
@@ -18,3 +19,9 @@ docker-preview:
 docker-test:
 	make -C docs clean
 	./docs/scripts/docker-docs.sh ./docs/scripts/test-docs.sh
+
+# build HTML docs in a docker container
+.PHONY: docker-html
+docker-html:
+	make -C docs clean
+	./docs/scripts/docker-docs.sh make -C docs/ html
