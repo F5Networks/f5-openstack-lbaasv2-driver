@@ -16,12 +16,13 @@ F5 Driver for OpenStack LBaaSv2
    :titlesonly:
    :hidden:
 
+   RELEASE-NOTES
    environment-generator
 
-version |release|
+version |version|
 -----------------
 
-|release-notes|
+:ref:`Release Notes`
 
 The |driver-long| is a Neutron LBaaSv2 service provider driver (``f5lbaasdriver``) that runs within the `OpenStack Neutron`_ controller.
 The |driver-short| is an alternative to the default Neutron LBaaS service provider driver.
