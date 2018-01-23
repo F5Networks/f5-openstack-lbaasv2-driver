@@ -1,7 +1,9 @@
-:orphan: true
+.. index:: Release Notes; |version|
 
-Release Notes for F5 Driver for OpenStack LBaaS
-===============================================
+.. _Release Notes:
+
+Release Notes
+=============
 
 v10.2.0 (Newton)
 ----------------

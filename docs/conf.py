@@ -77,9 +77,6 @@ author = u'F5 Networks'
 version = VERSION
 release = VERSION
 
-# The short X.Y version.
-vxy = "(VERSION | cut -d . -f 1,2)"
-
 # OpenStack release
 openstack_release = "Newton"
 
@@ -361,9 +358,6 @@ rst_epilog = '''
 .. |rpm-download| raw:: html
     
     <a class="btn btn-info" href="https://github.com/F5Networks/f5-openstack-lbaasv2-driver/releases/download/v%(version)s/f5-openstack-lbaasv2-driver-%(version)s-1.el7.noarch.rpm">RPM package</a>
-.. |release-notes| raw:: html
-
-    <a class="btn btn-success" href="%(base_url)s/products/openstack/lbaasv2-driver/%(openstack_release_l)s/v%(vx-y)s/">Release Notes</a>
 .. |agent-long| replace:: F5 Agent for OpenStack Neutron
 .. |agent| replace:: :code:`f5-openstack-agent`
 .. |driver| replace:: :code:`f5-openstack-lbaasv2-driver`
@@ -389,7 +383,6 @@ rst_epilog = '''
   'openstack_release_l': openstack_release.lower(),
   'f5_lbaasv2_driver_shim_url': f5_lbaasv2_driver_shim_url,
   'version': version,
-  'vx-y': release,
   'base_url': 'http://clouddocs.f5.com'
 }
 
