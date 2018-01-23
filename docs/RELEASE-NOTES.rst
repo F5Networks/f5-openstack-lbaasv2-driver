@@ -1,4 +1,4 @@
-.. index:: Release Notes; |version|
+.. index:: Release Notes
 
 .. _Release Notes:
 
