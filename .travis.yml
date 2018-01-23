@@ -69,16 +69,8 @@ deploy:
   - provider: script
     skip_cleanup: true
     on:
-      branch: mitaka
+      branch: v9.5.0-release
       repo: F5Networks/f5-openstack-lbaasv2-driver
       condition: $TRAVIS_TAG = ""
     script:
-    - ./docs/scripts/deploy-docs.sh publish-product-docs-to-prod openstack/lbaasv2-driver mitaka
-   # if this is a tagged release, the docs deploy to /products/openstack/lbaasv2-driver/mitaka/vX.Y
-  - provider: script
-    skip_cleanup: true
-    on:
-      tags: true
-      repo: F5Networks/f5-openstack-lbaasv2-driver
-    script:
-    - ./docs/scripts/deploy-docs.sh publish-product-docs-to-prod openstack/lbaasv2-driver/mitaka $RELEASE_TAG
+    - ./docs/scripts/deploy-docs.sh publish-product-docs-to-prod openstack/lbaasv2-driver/mitaka v9.5
