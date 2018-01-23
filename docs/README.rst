@@ -18,7 +18,7 @@ F5 Driver for OpenStack LBaaSv2
 
    environment-generator
 
-version |release|
+version |version|
 -----------------
 
 |release-notes|
