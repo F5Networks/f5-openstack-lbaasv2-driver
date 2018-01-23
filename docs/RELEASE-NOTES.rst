@@ -1,7 +1,9 @@
-:orphan: true
+.. index:: Release Notes
 
-Release Notes for F5 Driver for OpenStack LBaaSv2
-=================================================
+.. _Release Notes:
+
+Release Notes
+=============
 
 v9.5.0 (Mitaka)
 ---------------
