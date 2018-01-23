@@ -9,8 +9,7 @@ echo "Building docs with Sphinx"
 make -C docs html
 
 echo "Checking grammar and style"
-write-good `find ./docs -not \( -path ./docs/drafts -prune \) -name '*.rst'` --passive --so --no-illusion --thereIs --cliches || true
+write-good `find ./docs -not \( -path ./docs/drafts -prune \) -name '*.rst'` --passive --so --no-illusion --thereIs --cliches
 
 echo "Checking links"
-make -C docs linkcheck | grep "broken" || true
-
+make -C docs linkcheck
