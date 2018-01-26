@@ -836,7 +836,7 @@ class LBaaSv2PluginCallbacksRPC(object):
             l7policy_db = self.driver.plugin.db.get_l7policies(context)
         except Exception as error:
             LOG.exception("Exception: plugin.db.get_l7policies({}): "
-                          "({})".format(content, error))
+                          "({})".format(listeners, error))
             return {}
         LOG.debug("({}) = get_l7policies({})".format(l7policy_db, context))
         for listener_id in listeners:
