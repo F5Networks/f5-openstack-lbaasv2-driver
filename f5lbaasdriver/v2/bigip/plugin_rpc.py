@@ -815,8 +815,7 @@ class LBaaSv2PluginCallbacksRPC(object):
 
     # validate a list of l7policys id - assure they are not deleted
     @log_helpers.log_method_call
-    def validate_l7policys_state_by_listener(self, context, listeners,
-                                             host=None):
+    def validate_l7policys_state_by_listener(self, context, listeners):
         """Performs a validation against l7policies with a list of listeners
 
         This method will attempt to check the Neutron DB for a list of
