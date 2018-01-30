@@ -816,3 +816,46 @@ class LBaaSv2PluginCallbacksRPC(object):
                               e.message)
                     listener_status[listener_id] = 'Unknown'
         return listener_status
+
+    # validate a list of l7policys id - assure they are not deleted
+    @log_helpers.log_method_call
+    def validate_l7policys_state_by_listener(self, context, listeners):
+        """Performs a validation against l7policies with a list of listeners
+
+        This method will attempt to check the Neutron DB for a list of
+        l7policies that reference the given list of listener_id's.
+
+        This will return a dict of:
+            {listener_id_0: bool,
+             ...
+            }
+        The bool will indicate that true: there are l7policies here, false:
+        there are none on this listener.
+        """
+        has_l7policy = {}
+        try:
+            # NOTE: neutron_lbaas has a deprecated code filter for queries
+            # that appears to silence filter queries for 'listener_id'
+            l7policy_db = self.driver.plugin.db.get_l7policies(context)
+        except Exception as error:
+            LOG.exception("Exception: plugin.db.get_l7policies({}): "
+                          "({})".format(listeners, error))
+            return {}
+        LOG.debug("({}) = get_l7policies({})".format(l7policy_db, context))
+        for listener_id in listeners:
+            # Given filter limitations, double-loop iterator results
+            result = False
+            if l7policy_db:
+                if isinstance(l7policy_db, list):
+                    for l7policy in l7policy_db:
+                        if l7policy.listener_id == listener_id:
+                            result = True
+                            break
+                else:
+                    if l7policy_db.listener_id == listener_id:
+                        result = True
+            else:
+                result = False
+            has_l7policy[listener_id] = result
+        LOG.debug("has_l7policy: ({})".format(has_l7policy))
+        return has_l7policy
