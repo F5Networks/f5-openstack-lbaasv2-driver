@@ -15,19 +15,21 @@ u"""RPC Callbacks for F5® LBaaSv2 Plugins."""
 # limitations under the License.
 #
 
-from oslo_log import helpers as log_helpers
-from oslo_log import log as logging
+from f5lbaasdriver.v2.bigip import constants_v2 as constants
 
-from neutron.api.v2 import attributes
 from neutron.common import rpc as neutron_rpc
 from neutron.db import agents_db
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as plugin_constants
+
 from neutron_lbaas.db.loadbalancer import models
 from neutron_lbaas.services.loadbalancer import constants as nlb_constant
+
 from neutron_lib import constants as neutron_const
 
-from f5lbaasdriver.v2.bigip import constants_v2 as constants
+from oslo_log import helpers as log_helpers
+from oslo_log import log as logging
+
 
 LOG = logging.getLogger(__name__)
 
@@ -510,7 +512,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                     subnet_id
                 )
                 if not mac_address:
-                    mac_address = attributes.ATTR_NOT_SPECIFIED
+                    mac_address = neutron_const.ATTR_NOT_SPECIFIED
                 fixed_ip = {'subnet_id': subnet['id']}
                 if fixed_address_count > 1:
                     fixed_ips = []
@@ -678,7 +680,7 @@ class LBaaSv2PluginCallbacksRPC(object):
             )
 
             if not mac_address:
-                mac_address = attributes.ATTR_NOT_SPECIFIED
+                mac_address = neutron_const.ATTR_NOT_SPECIFIED
             if not host:
                 host = ''
             if not name:
@@ -692,7 +694,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                 'admin_state_up': True,
                 'device_owner': 'network:f5lbaasv2',
                 'status': neutron_const.PORT_STATUS_ACTIVE,
-                'fixed_ips': attributes.ATTR_NOT_SPECIFIED
+                'fixed_ips': neutron_const.ATTR_NOT_SPECIFIED
             }
             if device_id:
                 port_data['device_id'] = device_id
