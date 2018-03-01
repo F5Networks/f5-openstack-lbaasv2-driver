@@ -25,7 +25,7 @@ from oslo_utils import importutils
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.extensions import portbindings
+from neutron_lib.api.definitions import portbindings
 from neutron.plugins.common import constants as plugin_constants
 from neutron_lib import constants as q_const
 
