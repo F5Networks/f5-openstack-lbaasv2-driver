@@ -19,6 +19,7 @@ from f5lbaasdriver.v2.bigip import constants_v2 as constants
 
 from neutron.common import rpc as neutron_rpc
 from neutron.db import agents_db
+from neutron.db.models import agent as agents_model
 from neutron.plugins.common import constants as plugin_constants
 
 from neutron_lbaas.db.loadbalancer import models
@@ -63,11 +64,11 @@ class LBaaSv2PluginCallbacksRPC(object):
             LOG.error('tried to set agent admin_state_up without host')
             return False
         with context.session.begin(subtransactions=True):
-            query = context.session.query(agents_db.Agent)
+            query = context.session.query(agents_model.Agent)
             query = query.filter(
-                agents_db.Agent.agent_type ==
+                agents_model.Agent.agent_type ==
                 nlb_constant.AGENT_TYPE_LOADBALANCERV2,
-                agents_db.Agent.host == host)
+                agents_model.Agent.host == host)
             try:
                 agent = query.one()
                 if not agent.admin_state_up == admin_state_up:
