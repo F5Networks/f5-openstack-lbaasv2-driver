@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 2014 F5 Networks Inc.
+# Copyright (c) 2014-2018, F5 Networks, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ NEUTRON_LBAASCONF_BAK_PATH =\
 ENVMODULETEMPLATE = '''\
 #!/usr/bin/env python
 
-# Copyright 2014-2016 F5 Networks Inc.
+# Copyright (c) 2014-2018, F5 Networks, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

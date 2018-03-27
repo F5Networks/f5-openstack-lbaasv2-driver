@@ -1,7 +1,7 @@
 .. raw:: html
 
    <!--
-   Copyright 2016-2017 F5 Networks Inc.
+   Copyright (c) 2016-2018, F5 Networks, Inc.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ See `Contributing <CONTRIBUTING.md>`_.
 Copyright
 ---------
 
-Copyright 2015-2017 F5 Networks Inc.
+Copyright (c) 2015-2018, F5 Networks, Inc.
 
 Support
 -------
