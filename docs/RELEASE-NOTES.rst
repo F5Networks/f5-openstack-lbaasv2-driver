@@ -5,7 +5,7 @@
 Release Notes
 =============
 
-v10.2.0 (Newton)
+v10.2.0
 ----------------
 
 Added Functionality
