@@ -343,7 +343,7 @@ rst_epilog = '''
    <a href="https://github.com/F5Networks/f5-openstack-lbaasv2-driver/blob/%(openstack_release_l)s/README.rst">README</a>
 .. |f5_agent_readme| raw:: html
 
-   <a href="https://github.com/F5Networks/f5-openstack-agent/blob/%(openstack_release_l)s/README.rst">README</a>
+   <a href="https://github.com/F5Networks/f5-openstack-agent/blob/latest/README.rst">README</a>
 .. |f5_lbaasv2_driver_pip_url| replace:: git+https:\//github.com/F5Networks/f5-openstack-lbaasv2-driver@v%(version)s
 .. |f5_lbaasv2_driver_pip_url_branch| replace:: git+https:\//github.com/F5Networks/f5-openstack-lbaasv2-driver@%(openstack_release_l)s
 .. |f5_lbaasv2_driver_deb_url| replace:: \https://github.com/F5Networks/f5-openstack-lbaasv2-driver/releases/download/v%(version)s/python-f5-openstack-lbaasv2-driver_%(version)s-1_1404_all.deb
@@ -364,20 +364,20 @@ rst_epilog = '''
 .. |driver-long| replace:: F5 Driver for OpenStack LBaaSv2
 .. |agent-url| raw:: html
     
-    <a target="_blank" href="%(base_url)s/products/openstack/agent/%(openstack_release)s">F5 Agent for OpenStack Neutron</a>
+    <a target="_blank" href="%(base_url)s/products/openstack/agent/latest">F5 Agent for OpenStack Neutron</a>
 .. |driver-short| replace:: F5 driver
 .. _OpenStack Neutron: https://docs.openstack.org/neutron/%(openstack_release_l)s/
-.. _F5 Agent for OpenStack Neutron: %(base_url)s/products/openstack/agent/%(openstack_release_l)s
+.. _F5 Agent for OpenStack Neutron: %(base_url)s/products/openstack/agent/latest
 .. _user documentation: %(base_url)s/cloud/openstack/latest/lbaas
 .. _Neutron LBaaS API: https://wiki.openstack.org/wiki/Neutron/LBaaS/API_2.0
-.. _available F5 agent: %(base_url)s/products/openstack/agent/%(openstack_release_l)s
+.. _available F5 agent: %(base_url)s/products/openstack/agent/latest
 .. _F5 Service Provider Package: %(base_url)s/cloud/openstack/latest/lbaas-prep
 .. _Download the latest debian package: |f5_lbaasv2_driver_deb_url|
 .. _Download the latest rpm package: |f5_lbaasv2_driver_rpm_url|
 .. _Partners: %(base_url)s/cloud/openstack/latest/support/partners.html
-.. _Configure and start the F5 Agent: %(base_url)s/products/openstack/agent/%(openstack_release_l)s/#configure-the-f5-agent
-.. _Capacity-based Scale out: %(base_url)s/cloud/openstack/v1/lbaas/differentiated-service-environments.html
-.. _Differentiated Service Environments: %(base_url)s/cloud/openstack/v1/lbaas/capacity-based-scaleout.html
+.. _Configure and start the F5 Agent: %(base_url)s/products/openstack/agent/latest/#configure-the-f5-agent
+.. _Capacity-based Scale out: %(base_url)s/cloud/openstack/v1/lbaas/capacity-based-scaleout.html
+.. _Differentiated Service Environments: %(base_url)s/cloud/openstack/v1/lbaas/differentiated-service-environments.html
 ''' % {
   'openstack_release': openstack_release,
   'openstack_release_l': openstack_release.lower(),
