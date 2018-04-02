@@ -79,7 +79,7 @@ version = VERSION
 release = VERSION
 
 # OpenStack release
-openstack_release = "Newton"
+openstack_release = "Pike"
 
 #rst_prolog = '''
 #'''
