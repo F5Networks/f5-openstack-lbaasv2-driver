@@ -4,6 +4,19 @@
 
 Release Notes
 =============
+v9.6.0 (Mitaka)
+---------------
+Added Functionality
+```````````````````
+* Enhanced F5 Agent L7 policy.
+
+Bug Fixes
+`````````
+* See the `changelog <https://github.com/F5Networks/f5-openstack-lbaasv2-driver/compare/v9.5.0...v9.6.0>`_ for the full list of changes in this release.
+
+Limitations
+```````````
+* None noted.
 
 v9.5.0 (Mitaka)
 ---------------
