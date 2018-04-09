@@ -4,6 +4,15 @@
 
 Release Notes
 =============
+v9.6.0 (Mitaka)
+---------------
+Added Functionality
+```````````````````
+* Enhanced F5 Driver L7 policy.
+
+Limitations
+```````````
+* None noted.
 
 v9.5.0 (Mitaka)
 ---------------
