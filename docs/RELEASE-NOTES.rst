@@ -5,6 +5,17 @@
 Release Notes
 =============
 
+v10.3.0 (Newton)
+----------------
+
+Added Functionality
+```````````````````
+* Enhanced F5 Driver L7 policy.
+
+Limitations
+```````````
+* None noted.
+
 v10.2.0 (Newton)
 ----------------
 
