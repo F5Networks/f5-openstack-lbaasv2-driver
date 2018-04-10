@@ -64,21 +64,20 @@ deploy:
       python: 2.7
     skip_cleanup: true
   # deploy docs to s3
-  # docs on master only deploy to /products/openstack/lbaasv2-driver/master/
   - provider: script
     skip_cleanup: true
     on:
-      branch: master
+      branch: stable/ocata
       repo: F5Networks/f5-openstack-lbaasv2-driver
       condition: $TRAVIS_TAG = ""
     script:
-    - ./docs/scripts/deploy-docs.sh publish-product-docs-to-prod openstack/lbaasv2-driver master
+    - ./docs/scripts/deploy-docs.sh publish-product-docs-to-prod openstack/lbaasv2-driver ocata
   # For tagged releases, the docs publish at /products/openstack/lbaasv2-driver/<branch-name>/vX.Y
   # This section is commented out on the master branch because we don't need to publish tagged releases to /master
-  #- provider: script
-  #  skip_cleanup: true
-  #  on:
-  #    tags: true
-  #    repo: F5Networks/f5-openstack-lbaasv2-driver
-  #  script:
-  #  - ./docs/scripts/deploy-docs.sh publish-product-docs-to-prod openstack/lbaasv2-driver/master $RELEASE_TAG
+  - provider: script
+    skip_cleanup: true
+    on:
+      tags: true
+      repo: F5Networks/f5-openstack-lbaasv2-driver
+    script:
+    - ./docs/scripts/deploy-docs.sh publish-product-docs-to-prod openstack/lbaasv2-driver/ocata $RELEASE_TAG
