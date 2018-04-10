@@ -58,7 +58,7 @@ deploy:
   - provider: pypi
     user: $PYPI_USER
     password: $PYPI_PASSWORD
-    server: https://pypi.python.org/pypi
+    server: https://upload.pypi.org/legacy/
     on:
       all_branches: true
       tags: true
