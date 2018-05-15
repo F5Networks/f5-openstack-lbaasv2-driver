@@ -777,3 +777,108 @@ class LBaaSv2PluginCallbacksRPC(object):
                 except Exception as exc:
                     LOG.error('could not remove allowed address pair: %s'
                               % exc.message)
+
+    # validate a list of loadbalancer id - assure they are not deleted
+    @log_helpers.log_method_call
+    def validate_loadbalancers_state(self, context, loadbalancers, host=None):
+        lb_status = {}
+        for lbid in loadbalancers:
+            with context.session.begin(subtransactions=True):
+                try:
+                    lb_db = self.driver.plugin.db.get_loadbalancer(context,
+                                                                   lbid)
+                    lb_status[lbid] = lb_db.provisioning_status
+
+                except Exception as e:
+                    LOG.error('Exception: get_loadbalancer: %s',
+                              e.message)
+                    lb_status[lbid] = 'Unknown'
+        return lb_status
+
+    # validate a list of pools id - assure they are not deleted
+    @log_helpers.log_method_call
+    def validate_pools_state(self, context, pools, host=None):
+        pool_status = {}
+        for poolid in pools:
+            with context.session.begin(subtransactions=True):
+                try:
+                    pool_db = self.driver.plugin.db.get_pool(context, poolid)
+                    pool_status[poolid] = pool_db.provisioning_status
+                except Exception as e:
+                    LOG.error('Exception: get_pool: %s',
+                              e.message)
+                    pool_status[poolid] = 'Unknown'
+        return pool_status
+
+    @log_helpers.log_method_call
+    def get_pools_members(self, context, pools, host=None):
+        pools_members = dict()
+        for poolid in pools:
+            members = self.driver.plugin.db.get_pool_members(
+                context,
+                filters={'pool_id': [poolid]}
+            )
+            pools_members[poolid] = [member.to_dict(pool=False)
+                                     for member in members]
+        return pools_members
+
+    # validate a list of listeners id - assure they are not deleted
+    @log_helpers.log_method_call
+    def validate_listeners_state(self, context, listeners, host=None):
+        listener_status = {}
+        for listener_id in listeners:
+            with context.session.begin(subtransactions=True):
+                try:
+                    listener_db = \
+                        self.driver.plugin.db.get_listener(context,
+                                                           listener_id)
+                    listener_status[listener_id] = \
+                        listener_db.provisioning_status
+                except Exception as e:
+                    LOG.error('Exception: get_listener: %s',
+                              e.message)
+                    listener_status[listener_id] = 'Unknown'
+        return listener_status
+
+    # validate a list of l7policys id - assure they are not deleted
+    @log_helpers.log_method_call
+    def validate_l7policys_state_by_listener(self, context, listeners):
+        """Performs a validation against l7policies with a list of listeners
+
+        This method will attempt to check the Neutron DB for a list of
+        l7policies that reference the given list of listener_id's.
+
+        This will return a dict of:
+            {listener_id_0: bool,
+             ...
+            }
+        The bool will indicate that true: there are l7policies here, false:
+        there are none on this listener.
+        """
+        has_l7policy = {}
+        try:
+            # NOTE: neutron_lbaas has a deprecated code filter for queries
+            # that appears to silence filter queries for 'listener_id'
+            l7policy_db = self.driver.plugin.db.get_l7policies(context)
+        except Exception as error:
+            LOG.exception("Exception: plugin.db.get_l7policies({}): "
+                          "({})".format(listeners, error))
+            return {}
+        LOG.debug("({}) = get_l7policies({})".format(l7policy_db, context))
+        for listener_id in listeners:
+            # Given filter limitations, double-loop iterator results
+            result = False
+            if l7policy_db:
+                if isinstance(l7policy_db, list):
+                    for l7policy in l7policy_db:
+                        if l7policy.listener_id == listener_id:
+                            result = True
+                            break
+                else:
+                    if l7policy_db.listener_id == listener_id:
+                        result = True
+            else:
+                result = False
+            has_l7policy[listener_id] = result
+        LOG.debug("has_l7policy: ({})".format(has_l7policy))
+        return has_l7policy
