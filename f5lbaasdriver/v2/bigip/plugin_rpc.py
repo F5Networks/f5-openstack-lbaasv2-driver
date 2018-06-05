@@ -15,6 +15,8 @@ u"""RPC Callbacks for F5® LBaaSv2 Plugins."""
 # limitations under the License.
 #
 
+import uuid
+
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 
@@ -536,6 +538,9 @@ class LBaaSv2PluginCallbacksRPC(object):
 
                 if device_id:
                     port_data['device_id'] = device_id
+                else:
+                    port_data['device_id'] = str(uuid.uuid5(
+                        uuid.NAMESPACE_DNS, str(host)))
                 port_data[portbindings.HOST_ID] = host
                 port_data[portbindings.VNIC_TYPE] = vnic_type
                 port_data[portbindings.PROFILE] = binding_profile
@@ -700,6 +705,9 @@ class LBaaSv2PluginCallbacksRPC(object):
             }
             if device_id:
                 port_data['device_id'] = device_id
+            else:
+                port_data['device_id'] = str(uuid.uuid5(
+                    uuid.NAMESPACE_DNS, str(host)))
             port_data[portbindings.HOST_ID] = host
             port_data[portbindings.VNIC_TYPE] = vnic_type
             port_data[portbindings.PROFILE] = binding_profile
