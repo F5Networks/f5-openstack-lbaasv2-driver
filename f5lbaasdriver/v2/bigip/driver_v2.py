@@ -220,6 +220,8 @@ class LoadBalancerManager(EntityManager):
                 models.LoadBalancer,
                 loadbalancer.id,
                 plugin_constants.ERROR)
+            # ccloud: exit with exception in case scheduling failed
+            raise
         except Exception as e:
             LOG.error("Exception: loadbalancer create: %s" % e.message)
             raise e

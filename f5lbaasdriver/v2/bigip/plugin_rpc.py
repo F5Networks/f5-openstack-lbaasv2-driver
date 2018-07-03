@@ -28,6 +28,7 @@ from neutron.plugins.common import constants as plugin_constants
 from neutron_lbaas.db.loadbalancer import models
 from neutron_lbaas import agent_scheduler
 from neutron_lbaas.services.loadbalancer import data_models
+from neutron_lbaas.extensions import loadbalancerv2
 
 
 from f5lbaasdriver.v2.bigip import constants_v2 as constants
@@ -116,8 +117,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                                                             lb,
                                                             agent)
             except Exception as e:
-                LOG.error("Exception: get_service_by_loadbalancer_id: %s",
-                          e.message)
+                LOG.exception("ccloud Exception: get_service_by_loadbalancer_id:", e)
 
             return service
 
@@ -788,11 +788,16 @@ class LBaaSv2PluginCallbacksRPC(object):
                     lb_db = self.driver.plugin.db.get_loadbalancer(context,
                                                                    lbid)
                     lb_status[lbid] = lb_db.provisioning_status
-
+                # ccloud: distinguish betwwen REAL not founds and any other kind of errors to avoid
+                # treating the object as orphan in case of general db errors, ...
+                except loadbalancerv2.EntityNotFound as enf:
+                    LOG.error('Exception: get_loadbalancer: %s',
+                              enf.message)
+                    lb_status[lbid] = 'Unknown'
                 except Exception as e:
                     LOG.error('Exception: get_loadbalancer: %s',
                               e.message)
-                    lb_status[lbid] = 'Unknown'
+                    lb_status[lbid] = 'Indefinite'
         return lb_status
 
     # validate a list of pools id - assure they are not deleted
@@ -804,10 +809,16 @@ class LBaaSv2PluginCallbacksRPC(object):
                 try:
                     pool_db = self.driver.plugin.db.get_pool(context, poolid)
                     pool_status[poolid] = pool_db.provisioning_status
+                # ccloud: distinguish betwwen REAL not founds and any other kind of errors to avoid
+                # treating the object as orphan in case of general db errors, ...
+                except loadbalancerv2.EntityNotFound as enf:
+                    LOG.error('Exception: get_pool: %s',
+                              enf.message)
+                    pool_status[poolid] = 'Unknown'
                 except Exception as e:
                     LOG.error('Exception: get_pool: %s',
                               e.message)
-                    pool_status[poolid] = 'Unknown'
+                    pool_status[poolid] = 'Indefinite'
         return pool_status
 
     @log_helpers.log_method_call
@@ -834,10 +845,16 @@ class LBaaSv2PluginCallbacksRPC(object):
                                                            listener_id)
                     listener_status[listener_id] = \
                         listener_db.provisioning_status
+                # ccloud: distinguish betwwen REAL not founds and any other kind of errors to avoid
+                # treating the object as orphan in case of general db errors, ...
+                except loadbalancerv2.EntityNotFound as enf:
+                    LOG.error('Exception: get_listener: %s',
+                              enf.message)
+                    listener_status[listener_id] = 'Unknown'
                 except Exception as e:
                     LOG.error('Exception: get_listener: %s',
                               e.message)
-                    listener_status[listener_id] = 'Unknown'
+                    listener_status[listener_id] = 'Indefinite'
         return listener_status
 
     # validate a list of l7policys id - assure they are not deleted

@@ -159,6 +159,22 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                 active=True
             )
 
+            # ccloud: If no active agent can be found, get all non active ones to assign at least an agent to the LB.
+            # Otherwise the LB will be left in nirvana because it's already defined in neutron LB but without
+            # any assigned agent, so LB will never be scheduled to an agent and created on F5
+
+            if not candidates:
+                candidates = self.get_agents_in_env(
+                    context,
+                    plugin,
+                    env,
+                    active=False
+                )
+                if not candidates:
+                    LOG.error('ccloud: No f5 lbaas agents are active. No agent could be found for env %s' % env)
+                else:
+                    LOG.error('ccloud: No f5 lbaas agents are active. Using a non active one for env %s' % env)
+
             LOG.debug("candidate agents: %s", candidates)
             if len(candidates) == 0:
                 LOG.error('No f5 lbaas agents are active for env %s' % env)
@@ -235,6 +251,7 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                 LOG.warn('No capacity left on any agents in env: %s' % env)
                 LOG.warn('Group capacity in environment %s were %s.'
                          % (env, capacity_by_group))
+                LOG.error('ccloud: Aborting loadbalancer scheduling')
                 raise lbaas_agentschedulerv2.NoEligibleLbaasAgent(
                     loadbalancer_id=loadbalancer.id)
 

@@ -15,6 +15,7 @@ u"""Service Module for F5 LBaaSv2."""
 # limitations under the License.
 #
 import datetime
+import time
 import json
 
 from oslo_log import helpers as log_helpers
@@ -47,7 +48,7 @@ class LBaaSv2ServiceBuilder(object):
 
         self.net_cache = {}
         self.subnet_cache = {}
-        self.last_cache_update = datetime.datetime.fromtimestamp(0)
+        self.last_cache_update = datetime.datetime.now() #fromtimestamp(0)
         self.plugin = self.driver.plugin
         self.disconnected_service = DisconnectedService()
         self.q_client = q_client.F5NetworksNeutronClient(self.plugin)
@@ -55,10 +56,10 @@ class LBaaSv2ServiceBuilder(object):
     def build(self, context, loadbalancer, agent):
         """Get full service definition from loadbalancer ID."""
         # Invalidate cache if it is too old
-        if ((datetime.datetime.now() - self.last_cache_update).seconds >
-                constants_v2.NET_CACHE_SECONDS):
+        if ((datetime.datetime.now() - self.last_cache_update).seconds > constants_v2.NET_CACHE_SECONDS):
             self.net_cache = {}
             self.subnet_cache = {}
+            self.last_cache_update = datetime.datetime.now()
 
         service = {}
         with context.session.begin(subtransactions=True):
@@ -85,68 +86,68 @@ class LBaaSv2ServiceBuilder(object):
             vip_port = service['loadbalancer']['vip_port']
             network_id = vip_port['network_id']
             service['loadbalancer']['network_id'] = network_id
-            network = self._get_network_cached(
-                context,
-                network_id
-            )
             # Override the segmentation ID and network type for this network
             # if we are running in disconnected service mode
             agent_config = self.deserialize_agent_configurations(
                 agent['configurations'])
-            segment_data = self.disconnected_service.get_network_segment(
-                context, agent_config, network)
-            if segment_data:
-                network['provider:segmentation_id'] = \
-                    segment_data.get('segmentation_id', None)
-                network['provider:network_type'] = \
-                    segment_data.get('network_type', None)
-                network['provider:physical_network'] = \
-                    segment_data.get('physical_network', None)
-            network_map[network_id] = network
 
-            # Check if the tenant can create a loadbalancer on the network.
-            if (agent and not self._valid_tenant_ids(network,
-                                                     loadbalancer.tenant_id,
-                                                     agent)):
-                LOG.error("Creating a loadbalancer %s for tenant %s on a"
-                          "  non-shared network %s owned by %s." % (
-                              loadbalancer.id,
-                              loadbalancer.tenant_id,
-                              network['id'],
-                              network['tenant_id']))
+            try:
+                network = self._get_network_cached(
+                    context,
+                    network_id,
+                    agent_config
+                )
 
-            # Get the network VTEPs if the network provider type is
-            # either gre or vxlan.
-            if 'provider:network_type' in network:
-                net_type = network['provider:network_type']
-                if net_type == 'vxlan' or net_type == 'gre':
-                    self._populate_loadbalancer_network_vteps(
-                        context,
-                        service['loadbalancer'],
-                        net_type
-                    )
+                network_map[network_id] = network
 
-            # Get listeners and pools.
-            service['listeners'] = self._get_listeners(context, loadbalancer)
+                # Check if the tenant can create a loadbalancer on the network.
+                if (agent and not self._valid_tenant_ids(network,
+                                                         loadbalancer.tenant_id,
+                                                         agent)):
+                    LOG.error("Creating a loadbalancer %s for tenant %s on a"
+                              "  non-shared network %s owned by %s." % (
+                                  loadbalancer.id,
+                                  loadbalancer.tenant_id,
+                                  network['id'],
+                                  network['tenant_id']))
 
-            service['pools'], service['healthmonitors'] = \
-                self._get_pools_and_healthmonitors(context, loadbalancer)
+                # Get the network VTEPs if the network provider type is
+                # either gre or vxlan.
+                if 'provider:network_type' in network:
+                    net_type = network['provider:network_type']
+                    if net_type == 'vxlan' or net_type == 'gre':
+                        self._populate_loadbalancer_network_vteps(
+                            context,
+                            service['loadbalancer'],
+                            net_type
+                        )
 
-            service['members'] = self._get_members(
-                context, service['pools'], subnet_map, network_map)
+                # Get listeners and pools.
+                service['listeners'] = self._get_listeners(context, loadbalancer)
 
-            service['subnets'] = subnet_map
-            service['networks'] = network_map
+                service['pools'], service['healthmonitors'] = \
+                    self._get_pools_and_healthmonitors(context, loadbalancer)
 
-            service['l7policies'] = self._get_l7policies(
-                context, service['listeners'])
-            service['l7policy_rules'] = self._get_l7policy_rules(
-                context, service['l7policies'])
+                service['members'] = self._get_members(
+                    context, service['pools'], subnet_map, network_map, agent_config)
 
-        return service
+                service['subnets'] = subnet_map
+                service['networks'] = network_map
+
+                service['l7policies'] = self._get_l7policies(
+                    context, service['listeners'])
+                service['l7policy_rules'] = self._get_l7policy_rules(
+                    context, service['l7policies'])
+
+                return service
+
+            # Return nothing in case network retrieval failed
+            except Exception as e:
+                LOG.exception("ccloud: Build service for loadbalancer failed. Aborting with exception ", e)
+                raise
 
     @log_helpers.log_method_call
-    def _get_extended_member(self, context, member):
+    def _get_extended_member(self, context, member, agent_config):
         """Get extended member attributes and member networking."""
         member_dict = member.to_dict(pool=False)
         subnet_id = member.subnet_id
@@ -157,7 +158,8 @@ class LBaaSv2ServiceBuilder(object):
         network_id = subnet['network_id']
         network = self._get_network_cached(
             context,
-            network_id
+            network_id,
+            agent_config
         )
 
         member_dict['network_id'] = network_id
@@ -206,20 +208,70 @@ class LBaaSv2ServiceBuilder(object):
         return self.subnet_cache[subnet_id]
 
     @log_helpers.log_method_call
-    def _get_network_cached(self, context, network_id):
+    def _get_network_cached(self, context, network_id, agent_config):
         """Retrieve network from cache or from Neutron."""
+        network = None
+        # read network if not cached
         if network_id not in self.net_cache:
-            network = self.plugin.db._core_plugin.get_network(
-                context,
-                network_id
-            )
-            if 'provider:network_type' not in network:
-                network['provider:network_type'] = 'undefined'
-            if 'provider:segmentation_id' not in network:
-                network['provider:segmentation_id'] = 0
-            self.net_cache[network_id] = network
+            count = 0
+            # try 3 times
+            while count < 3:
+                count += 1
+                try:
+                    if not network:
+                        network = self.plugin.db._core_plugin.get_network(
+                            context,
+                            network_id)
+                    # stop if found
+                    if network:
+                        break
+                    else:
+                        LOG.error("ccloud: Network ID %s NOT FOUND. Will try again in some seconds." % network_id)
+                        time.sleep(3)
+                except Exception as e:
+                    LOG.exception("ccloud: Exception in network retrieval for Network ID %s. Will try again in some seconds." % network_id)
+                    time.sleep(3)
 
-        return self.net_cache[network_id]
+            # abort if network not found (not sure what to do in this case)
+            if not network:
+                LOG.error("ccloud: Network ID %s NOT FOUND. Aborting with Exception." % network_id)
+                raise Exception("ccloud: Network ID %s NOT FOUND. Aborting with Exception." % network_id)
+
+            # try to get segment data for network 3 times
+            segment_data = None
+            while count < 3:
+                try:
+                    segment_data = self.disconnected_service.get_network_segment(
+                        context, agent_config, network)
+                    # stop if found (means an id is given)
+                    if segment_data.get('segmentation_id', None):
+                        break
+                    else:
+                        LOG.warning("ccloud: Segment Data for network ID %s NOT FOUND #1. Will try again in some seconds." % network_id)
+                        time.sleep(3)
+                except Exception as e:
+                    LOG.exception("ccloud: Segment Data for network ID %s NOT FOUND #2. Will try again in some seconds.", network_id)
+                    time.sleep(3)
+
+
+            network['provider:segmentation_id'] = \
+                segment_data.get('segmentation_id', None)
+            network['provider:network_type'] = \
+                segment_data.get('network_type', None)
+            network['provider:physical_network'] = \
+                segment_data.get('physical_network', None)
+
+            if segment_data.get('segmentation_id', None):
+                self.net_cache[network_id] = network
+                LOG.debug("ccloud: Network ID %s and Segment %s FOUND. Added to the cache." % (network_id, segment_data))
+            else:
+                LOG.error("ccloud: Segment Data for network ID %s NOT FOUND. Returning dummy segment %s" % (network_id, segment_data))
+
+        else:
+            network = self.net_cache[network_id]
+            LOG.debug("ccloud: Network ID %s found and served from cache" % (network_id))
+
+        return network
 
     @log_helpers.log_method_call
     def _get_listener(self, context, listener_id):
@@ -235,18 +287,7 @@ class LBaaSv2ServiceBuilder(object):
         member['vxlan_vteps'] = []
         member['gre_vteps'] = []
 
-        agent_config = {}
-        segment_data = self.disconnected_service.get_network_segment(
-            context, agent_config, network)
-        if segment_data:
-            network['provider:segmentation_id'] = \
-                segment_data.get('segmentation_id', None)
-            network['provider:network_type'] = \
-                segment_data.get('network_type', None)
-            network['provider:physical_network'] = \
-                segment_data.get('physical_network', None)
-
-        net_type = network.get('provider:network_type', "undefined")
+        net_type = network['provider:network_type']
         if net_type == 'vxlan':
             if 'binding:host_id' in member['port']:
                 host = member['port']['binding:host_id']
@@ -257,10 +298,6 @@ class LBaaSv2ServiceBuilder(object):
                 host = member['port']['binding:host_id']
                 member['gre_vteps'] = self._get_endpoints(
                     context, 'gre', host)
-        if 'provider:network_type' not in network:
-            network['provider:network_type'] = 'undefined'
-        if 'provider:segmentation_id' not in network:
-            network['provider:segmentation_id'] = 0
 
     @log_helpers.log_method_call
     def _populate_loadbalancer_network_vteps(
@@ -452,7 +489,7 @@ class LBaaSv2ServiceBuilder(object):
         return pools, healthmonitors
 
     @log_helpers.log_method_call
-    def _get_members(self, context, pools, subnet_map, network_map):
+    def _get_members(self, context, pools, subnet_map, network_map, agent_config):
         pool_members = []
         if pools:
             members = self.plugin.db.get_pool_members(
@@ -463,7 +500,7 @@ class LBaaSv2ServiceBuilder(object):
             for member in members:
                 # Get extended member attributes, network, and subnet.
                 member_dict, subnet, network = (
-                    self._get_extended_member(context, member)
+                    self._get_extended_member(context, member, agent_config)
                 )
 
                 subnet_map[subnet['id']] = subnet
