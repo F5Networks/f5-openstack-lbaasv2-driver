@@ -167,8 +167,7 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                 candidates = self.get_agents_in_env(
                     context,
                     plugin,
-                    env,
-                    active=False
+                    env
                 )
                 if not candidates:
                     LOG.error('ccloud: No f5 lbaas agents are active. No agent could be found for env %s' % env)

@@ -60,6 +60,7 @@ class LBaaSv2ServiceBuilder(object):
             self.net_cache = {}
             self.subnet_cache = {}
             self.last_cache_update = datetime.datetime.now()
+            LOG.debug('ccloud: Network cache regulary cleared after %s seconds' % constants_v2.NET_CACHE_SECONDS)
 
         service = {}
         with context.session.begin(subtransactions=True):
@@ -211,8 +212,9 @@ class LBaaSv2ServiceBuilder(object):
     def _get_network_cached(self, context, network_id, agent_config):
         """Retrieve network from cache or from Neutron."""
         network = None
-        # read network if not cached
-        if network_id not in self.net_cache:
+        # read network if not cached or no segment id given
+        if (network_id not in self.net_cache) or (network_id in self.net_cache and not self.net_cache[network_id]['provider:segmentation_id']):
+            LOG.debug("ccloud: Network ID %s NOT CACHED" % (network_id))
             count = 0
             # try 3 times
             while count < 3:
@@ -239,7 +241,9 @@ class LBaaSv2ServiceBuilder(object):
 
             # try to get segment data for network 3 times
             segment_data = None
+            count = 0
             while count < 3:
+                count += 1
                 try:
                     segment_data = self.disconnected_service.get_network_segment(
                         context, agent_config, network)
@@ -248,9 +252,9 @@ class LBaaSv2ServiceBuilder(object):
                         break
                     else:
                         LOG.warning("ccloud: Segment Data for network ID %s NOT FOUND #1. Will try again in some seconds." % network_id)
-                        time.sleep(3)
+                        time.sleep(10)
                 except Exception as e:
-                    LOG.exception("ccloud: Segment Data for network ID %s NOT FOUND #2. Will try again in some seconds.", network_id)
+                    LOG.exception("ccloud: Segment Data for network ID %s NOT FOUND #2. Will try again in some seconds." % network_id)
                     time.sleep(3)
 
 
@@ -263,13 +267,13 @@ class LBaaSv2ServiceBuilder(object):
 
             if segment_data.get('segmentation_id', None):
                 self.net_cache[network_id] = network
-                LOG.debug("ccloud: Network ID %s and Segment %s FOUND. Added to the cache." % (network_id, segment_data))
+                LOG.debug("ccloud: Network ID %s and Segment %s FOUND. Added to the cache, Cache: " % (network_id, segment_data))
             else:
-                LOG.error("ccloud: Segment Data for network ID %s NOT FOUND. Returning dummy segment %s" % (network_id, segment_data))
+                LOG.error("ccloud: Segment Data for network ID %s NOT FOUND. Returning dummy segment %s " % (network_id, segment_data))
 
         else:
             network = self.net_cache[network_id]
-            LOG.debug("ccloud: Network ID %s found and served from cache" % (network_id))
+            LOG.debug("ccloud: Network ID %s found and served from cache, Cache: " % (network_id))
 
         return network
 
