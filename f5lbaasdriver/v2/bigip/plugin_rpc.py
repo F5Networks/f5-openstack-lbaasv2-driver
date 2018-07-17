@@ -117,7 +117,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                                                             lb,
                                                             agent)
             except Exception as e:
-                LOG.error("ccloud Error in get_service_by_loadbalancer_id. ID = %s. Message %s " % (loadbalancer_id, e))
+                LOG.warning("ccloud Error in get_service_by_loadbalancer_id. ID = %s. Message %s " % (loadbalancer_id, e))
 
             return service
 
