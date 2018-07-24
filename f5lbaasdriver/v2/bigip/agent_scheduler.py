@@ -215,11 +215,16 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                         chosen_agent = candidate
                         break
 
+                # ccloud: schedule to an overloaded agent because we can't split partitions across F5 devicess
                 if chosen_agent:
                     # Does the agent which had tenants assigned
                     # to it still have capacity?
                     if group_capacity >= 1.0:
-                        chosen_agent = None
+                        LOG.error('ccloud: scheduling loadbalancer %s to an overloaded agent with capcity %s because '
+                                  'tenant is already assigned to this agent!'
+                                  % (loadbalancer_id, group_capacity))
+                        break
+                        #chosen_agent = None
                     else:
                         break
 
