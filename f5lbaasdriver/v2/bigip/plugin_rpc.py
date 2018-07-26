@@ -42,6 +42,7 @@ class LBaaSv2PluginCallbacksRPC(object):
     def __init__(self, driver=None):
         """LBaaSv2PluginCallbacksRPC constructor."""
         self.driver = driver
+        self.cluster_wide_agents = {}
 
     def create_rpc_listener(self):
         topic = constants.TOPIC_PROCESS_ON_HOST_V2
@@ -88,6 +89,19 @@ class LBaaSv2PluginCallbacksRPC(object):
             for lb in lbs:
                 active_lb_ids.add(lb.id)
             return active_lb_ids
+
+    # ccloud: get a list of loadbalancer without binding to an agent
+    @log_helpers.log_method_call
+    def get_loadbalancers_without_agent_binding(self, context, env, group):
+
+        agents = self.driver.scheduler.get_agents_in_env(
+            context,
+            self.driver.plugin,
+            env,
+            group)
+
+        return self. self._list_loadbalancers_without_lbaas_agent_binding(context, agents)
+
 
     @log_helpers.log_method_call
     def get_service_by_loadbalancer_id(
@@ -268,8 +282,6 @@ class LBaaSv2PluginCallbacksRPC(object):
 
 
     def _list_loadbalancers_on_lbaas_agent(self, context, id):
-        query = context.session.query(models.LoadBalancer)
-
 
         query = context.session.query(agent_scheduler.LoadbalancerAgentBinding.loadbalancer_id)
         query = query.filter_by(agent_id=id)
@@ -281,7 +293,24 @@ class LBaaSv2PluginCallbacksRPC(object):
 
         return []
 
+    def _list_loadbalancers_without_lbaas_agent_binding(self, context, agents):
 
+        all_lbs = self.driver.plugin.db._get_resources(context, models.LoadBalancer)
+        all_bindings = self.driver.plugin.db._get_resources(context, agent_scheduler.LoadbalancerAgentBinding)
+        agent_ids = [agent.id for agent in agents]
+
+        bound_ids = []
+        for bind in all_bindings:
+            if bind['loadbalancer_id']:
+                if bind['agent_id'] and bind['agent_id'] in agent_ids:
+                    bound_ids.append(bind['loadbalancer_id'])
+
+        unbound_lbs = []
+        for lb in all_lbs:
+            if lb['id'] not in bound_ids:
+                unbound_lbs.append(lb)
+
+        return unbound_lbs
 
     @log_helpers.log_method_call
     def update_loadbalancer_stats(self,
@@ -899,3 +928,34 @@ class LBaaSv2PluginCallbacksRPC(object):
             has_l7policy[listener_id] = result
         LOG.debug("has_l7policy: ({})".format(has_l7policy))
         return has_l7policy
+
+    # ccloud: Not used at the moment
+    #
+    # return a single active agent to implement cluster wide changes
+    # which can not efficiently mapped back to a particulare agent
+    @log_helpers.log_method_call
+    def get_clusterwide_agent(self, context, env, group, host=None):
+        """Get an agent to perform clusterwide tasks."""
+        LOG.debug('getting agent to perform clusterwide tasks')
+        with context.session.begin(subtransactions=True):
+            if (env, group) in self.cluster_wide_agents:
+                known_agent = self.cluster_wide_agents[(env, group)]
+                if self.driver.plugin.db.is_eligible_agent(active=True,
+                                                           agent=known_agent):
+                    return known_agent
+                else:
+                    del(self.cluster_wide_agents[(env, group)])
+            try:
+                agents = \
+                    self.driver.scheduler.get_agents_in_env(context,
+                                                            self.driver.plugin,
+                                                            env, group, True)
+                if agents:
+                    self.cluster_wide_agents[(env, group)] = agents[0]
+                    return agents[0]
+                else:
+                    LOG.error('no active agents available for clusterwide ',
+                              ' tasks %s group number %s' % (env, group))
+            except Exception as exc:
+                LOG.error('clusterwide agent exception: %s' % str(exc))
+        return {}
