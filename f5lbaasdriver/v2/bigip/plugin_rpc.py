@@ -100,7 +100,7 @@ class LBaaSv2PluginCallbacksRPC(object):
             env,
             group)
 
-        return self. self._list_loadbalancers_without_lbaas_agent_binding(context, agents)
+        return self._list_loadbalancers_without_lbaas_agent_binding(context, agents)
 
 
     @log_helpers.log_method_call
