@@ -93,8 +93,10 @@ class LBaaSv2ServiceBuilder(object):
             # if we are running in disconnected service mode
             agent_config = self.deserialize_agent_configurations(
                 agent['configurations'])
+            # segment_data = self.disconnected_service.get_segment_id(
+            #     context, service['loadbalancer']['vip_port_id'], agent_hosts)
             segment_data = self.disconnected_service.get_segment_id(
-                context, service['loadbalancer']['vip_port_id'], agent_hosts)
+                context.session, service['loadbalancer']['vip_port_id'], agent_hosts)
             if segment_data:
                 network['provider:segmentation_id'] = \
                     segment_data.get('segmentation_id', None)
@@ -234,7 +236,7 @@ class LBaaSv2ServiceBuilder(object):
             if port:
                 port_id = port[0]['id']
                 segment_data = self.disconnected_service.get_segment_id(
-                    context, port_id, agent_hosts)
+                    context.session, port_id, agent_hosts)
                 LOG.debug('member segment data: %s' % segment_data)
                 if segment_data:
                     network['provider:segmentation_id'] = \

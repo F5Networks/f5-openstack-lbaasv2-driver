@@ -14,8 +14,8 @@ u"""F5 Networks® LBaaSv2 Exceptions."""
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from neutron_lib import exceptions as q_exc
-
+# from neutron_lib import exceptions as q_exc
+from neutron.common import exceptions as q_exc
 
 class F5LBaaSv2DriverException(q_exc.NeutronException):
     """General F5 LBaaSv2 Driver Exception."""

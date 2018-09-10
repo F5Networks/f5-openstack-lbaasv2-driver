@@ -27,8 +27,8 @@ from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as plugin_constants
-from neutron_lib import constants as q_const
-
+# from neutron_lib import constants as q_const
+from neutron.common import constants as q_const
 from neutron_lbaas.db.loadbalancer import models
 from neutron_lbaas.extensions import lbaas_agentschedulerv2
 
@@ -36,7 +36,8 @@ from f5lbaasdriver.v2.bigip import agent_rpc
 from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 from f5lbaasdriver.v2.bigip import neutron_client
 from f5lbaasdriver.v2.bigip import plugin_rpc
-from neutron_lib import constants as neutron_const
+# from neutron_lib import constants as neutron_const
+from neutron.api.v2 import attributes as attrs
 
 LOG = logging.getLogger(__name__)
 
@@ -99,6 +100,7 @@ class F5DriverV2(object):
 
         self.agent_rpc = agent_rpc.LBaaSv2AgentRPC(self)
         self.plugin_rpc = plugin_rpc.LBaaSv2PluginCallbacksRPC(self)
+        self.plugin_rpc.create_rpc_listener()
 
         self.q_client = \
             neutron_client.F5NetworksNeutronClient(self.plugin)
@@ -120,7 +122,7 @@ class F5DriverV2(object):
             LOG.debug("F5DriverV2 with env %s received post neutron child "
                       "fork notification pid(%d) print trigger(%s)" % (
                           self.env, os.getpid(), trigger))
-            self.plugin_rpc.create_rpc_listener()
+            # self.plugin_rpc.create_rpc_listener()
 
         post_fork_callback.__name__ += '_' + str(self.env)
         return post_fork_callback
@@ -434,8 +436,8 @@ class MemberManager(EntityManager):
             'port': {
                 'tenant_id': subnet['tenant_id'],
                 'network_id': subnet['network_id'],
-                'mac_address': neutron_const.ATTR_NOT_SPECIFIED,
-                'fixed_ips': neutron_const.ATTR_NOT_SPECIFIED,
+                'mac_address': attrs.ATTR_NOT_SPECIFIED,
+                'fixed_ips': attrs.ATTR_NOT_SPECIFIED,
                 'device_id': member.id,
                 'device_owner': 'network:f5lbaasv2',
                 'admin_state_up': member.admin_state_up,

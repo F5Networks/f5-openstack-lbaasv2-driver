@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 
-from neutron.db import segments_db
+# from neutron.db import segments_db
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import models
 
@@ -52,8 +52,10 @@ class DisconnectedService(object):
             agent_configuration.get('tunnel_types', [])
         ]
         # look up segment details in the ml2_network_segments table
-        segments = segments_db.get_network_segments(context, network['id'],
-                                                    filter_dynamic=None)
+        segments = db.get_network_segments(context, network['id'],
+                                           filter_dynamic=None)
+        # segments = segments_db.get_network_segments(context, network['id'],
+        #                                             filter_dynamic=None)
 
         for segment in segments:
             LOG.debug("F5 disconnected service check segment: %s" % segment)
@@ -93,7 +95,7 @@ class DisconnectedService(object):
                     if levels:
                         LOG.debug('XXXX levels: %s binding host_id: %s' % (levels, host_id))
                         for level in levels:
-                            segment = segments_db.get_segment_by_id(context, level.segment_id)
+                            segment = db.get_segment_by_id(context, level.segment_id)
                             LOG.debug('XXXX vlanx to vlan segment id %s: segment %s'
                                       % (level.segment_id, segment))
                             if segment:
