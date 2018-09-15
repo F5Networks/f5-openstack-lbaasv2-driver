@@ -431,7 +431,13 @@ class MemberManager(EntityManager):
         self.loadbalancer = member.pool.loadbalancer
         driver = self.driver
         subnet = driver.plugin.db._core_plugin.get_subnet(context, member.subnet_id)
-        agent_host, service = self._setup_crud(context, member)
+        agent = self.driver.scheduler.schedule(
+            self.driver.plugin,
+            context,
+            self.loadbalancer.id,
+            self.driver.env
+        )
+        agent_host = agent['host']
         driver.plugin.db._core_plugin.create_port(context, {
             'port': {
                 'tenant_id': subnet['tenant_id'],
@@ -450,10 +456,10 @@ class MemberManager(EntityManager):
         port = driver.plugin.db._core_plugin.get_ports(context, filters)
         if port:
             port_id = port[0]['id']
-            LOG.debug('BBBBBBBBBBBBB:%s' % port_id)
+            LOG.debug('XXXX fake member port id:%s' % port_id)
         if port_id:
             driver.plugin.db._core_plugin.delete_port(context, port_id)
-            LOG.debug('XXXXXX delete port: %s' % port_id)
+            LOG.debug('XXXX delete fake member port: %s' % port_id)
 
     @log_helpers.log_method_call
     def update(self, context, old_member, member):

@@ -96,10 +96,11 @@ class DisconnectedService(object):
                         LOG.debug('XXXX levels: %s binding host_id: %s' % (levels, host_id))
                         for level in levels:
                             segment = db.get_segment_by_id(context, level.segment_id)
-                            LOG.debug('XXXX vlanx to vlan segment id %s: segment %s'
-                                      % (level.segment_id, segment))
-                            if segment:
+                            if segment.get('network_type', None) == "vlan":
+                                LOG.debug('XXXX hpb port id: %s, segment: %s' % (port_id, segment))
                                 break
+                            else:
+                                LOG.debug('XXXX hpb port id: %s, network type is vxlan: %s' % (port_id, segment))
             return segment
         except Exception as exc:
             LOG.error(
