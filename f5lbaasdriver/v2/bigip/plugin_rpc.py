@@ -28,6 +28,7 @@ from neutron.plugins.common import constants as plugin_constants
 from neutron_lbaas.db.loadbalancer import models
 from neutron_lbaas.services.loadbalancer import constants as nlb_constant
 from neutron_lib import constants as neutron_const
+from neutron_lib import exceptions as q_exc
 
 from f5lbaasdriver.v2.bigip import constants_v2 as constants
 
@@ -770,10 +771,17 @@ class LBaaSv2PluginCallbacksRPC(object):
                                                                    lbid)
                     lb_status[lbid] = lb_db.provisioning_status
 
+                except q_exc.NotFound:
+                    lb_status[lbid] = 'Unknown'
+
                 except Exception as e:
                     LOG.error('Exception: get_loadbalancer: %s',
                               e.message)
-                    lb_status[lbid] = 'Unknown'
+                    if 'could not be found' in e.message:
+                        lb_status[lbid] = 'Unknown'
+                    else:
+                        lb_status[lbid] = ''
+
         return lb_status
 
     # validate a list of pools id - assure they are not deleted
@@ -785,10 +793,17 @@ class LBaaSv2PluginCallbacksRPC(object):
                 try:
                     pool_db = self.driver.plugin.db.get_pool(context, poolid)
                     pool_status[poolid] = pool_db.provisioning_status
+
+                except q_exc.NotFound:
+                    pool_status[poolid] = 'Unknown'
+
                 except Exception as e:
                     LOG.error('Exception: get_pool: %s',
                               e.message)
-                    pool_status[poolid] = 'Unknown'
+                    if 'could not be found' in e.message:
+                        pool_status[poolid] = 'Unknown'
+                    else:
+                        pool_status[poolid] = ''
         return pool_status
 
     @log_helpers.log_method_call
@@ -815,10 +830,17 @@ class LBaaSv2PluginCallbacksRPC(object):
                                                            listener_id)
                     listener_status[listener_id] = \
                         listener_db.provisioning_status
+
+                except q_exc.NotFound:
+                    listener_status[listener_id] = 'Unknown'
+
                 except Exception as e:
                     LOG.error('Exception: get_listener: %s',
                               e.message)
-                    listener_status[listener_id] = 'Unknown'
+                    if 'could not be found' in e.message:
+                        listener_status[listener_id] = 'Unknown'
+                    else:
+                        listener_status[listener_id] = ''
         return listener_status
 
     # validate a list of l7policys id - assure they are not deleted
