@@ -17,7 +17,8 @@ u"""Service Module for F5® LBaaSv2."""
 
 from neutron.extensions import portbindings
 
-from neutron_lib import constants as neutron_const
+from neutron.api.v2 import attributes as attrs
+from neutron.common import constants as neutron_const
 
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
@@ -38,7 +39,7 @@ class F5NetworksNeutronClient(object):
         port = None
 
         if not mac_address:
-            mac_address = neutron_const.ATTR_NOT_SPECIFIED
+            mac_address = attrs.ATTR_NOT_SPECIFIED
 
         if subnet_id:
             try:
