@@ -23,7 +23,7 @@ from neutron_lbaas.extensions import lbaas_agentschedulerv2
 
 
 class FakeNoEligibleAgentExc(lbaas_agentschedulerv2.NoEligibleLbaasAgent):
-    msg = 'test exception'
+    message = 'test exception'
 
 
 class FakeLB(object):
