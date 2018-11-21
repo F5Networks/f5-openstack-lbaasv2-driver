@@ -55,6 +55,11 @@ OPTS = [
             'f5lbaasdriver.v2.bigip.service_builder.LBaaSv2ServiceBuilder'
         ),
         help=('Default class to use for building a service object.')
+    ),
+    cfg.StrOpt(
+        'unlegacy_setting_placeholder_driver_side',
+        default=None,
+        help=('to be added.')
     )
 ]
 
@@ -89,6 +94,9 @@ class F5DriverV2(object):
         self.healthmonitor = HealthMonitorManager(self)
         self.l7policy = L7PolicyManager(self)
         self.l7rule = L7RuleManager(self)
+
+        self.unlegacy_setting_placeholder_driver_side = \
+            cfg.CONF.unlegacy_setting_placeholder_driver_side
 
         # what scheduler to use for pool selection
         self.scheduler = importutils.import_object(
@@ -180,13 +188,15 @@ class EntityManager(object):
             self.loadbalancer.id,
             self.driver.env
         )
-        agent_hosts = self.driver.scheduler.get_agents_hosts_in_env(
-            context,
-            self.driver.plugin,
-            self.driver.env
-        )
+        # agent_hosts = self.driver.scheduler.get_agents_hosts_in_env(
+        #     context,
+        #     self.driver.plugin,
+        #     self.driver.env
+        # )
+        # service = self.driver.service_builder.build(
+        #     context, self.loadbalancer, agent, agent_hosts)
         service = self.driver.service_builder.build(
-            context, self.loadbalancer, agent, agent_hosts)
+            context, self.loadbalancer, agent)
         return agent, service
 
 
@@ -216,14 +226,23 @@ class LoadBalancerManager(EntityManager):
                     'status': q_const.PORT_STATUS_ACTIVE
                 }
                 port_data[portbindings.HOST_ID] = agent_host
-                port_data[portbindings.VNIC_TYPE] = "normal"
+                if driver.unlegacy_setting_placeholder_driver_side:
+                    LOG.debug('setting to normal')
+                    port_data[portbindings.VNIC_TYPE] = "normal"
+                else:
+                    LOG.debug('setting to baremetal')
+                    port_data[portbindings.VNIC_TYPE] = "baremetal"
                 port_data[portbindings.PROFILE] = {}
                 driver.plugin.db._core_plugin.update_port(
                     context,
                     loadbalancer.vip_port_id,
                     {'port': port_data}
                 )
-                agent, service = self._schedule_agent_create_service(context)
+                # agent, service = self._schedule_agent_create_service(context)
+                if driver.unlegacy_setting_placeholder_driver_side:
+                    LOG.debug('calling extra build():')
+                    service = self.driver.service_builder.build(
+                        context, self.loadbalancer, agent)
             else:
                 LOG.debug("Agent devices are nova managed")
 
@@ -427,31 +446,37 @@ class MemberManager(EntityManager):
         """Create a member."""
 
         self.loadbalancer = member.pool.loadbalancer
-        driver = self.driver
-        subnet = driver.plugin.db._core_plugin.get_subnet(context, member.subnet_id)
-        agent_host, service = self._setup_crud(context, member)
-        driver.plugin.db._core_plugin.create_port(context, {
-            'port': {
-                'tenant_id': subnet['tenant_id'],
-                'network_id': subnet['network_id'],
-                'mac_address': attributes.ATTR_NOT_SPECIFIED,
-                'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
-                'device_id': member.id,
-                'device_owner': 'network:f5lbaasv2',
-                'admin_state_up': member.admin_state_up,
-                'name': 'fake_pool_port_' + member.id,
-                portbindings.HOST_ID: agent_host}})
+
+        if self.driver.unlegacy_setting_placeholder_driver_side:
+            LOG.debug('running un-legacy way for member create p1:')
+            driver = self.driver
+            subnet = driver.plugin.db._core_plugin.get_subnet(context, member.subnet_id)
+            agent_host, service = self._setup_crud(context, member)
+            driver.plugin.db._core_plugin.create_port(context, {
+                'port': {
+                    'tenant_id': subnet['tenant_id'],
+                    'network_id': subnet['network_id'],
+                    'mac_address': attributes.ATTR_NOT_SPECIFIED,
+                    'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+                    'device_id': member.id,
+                    'device_owner': 'network:f5lbaasv2',
+                    'admin_state_up': member.admin_state_up,
+                    'name': 'fake_pool_port_' + member.id,
+                    portbindings.HOST_ID: agent_host}})
         self.api_dict = member.to_dict(pool=False)
         self._call_rpc(context, member, 'create_member')
-        filters = {'device_id': [member.id]}
-        port_id = None
-        port = driver.plugin.db._core_plugin.get_ports(context, filters)
-        if port:
-            port_id = port[0]['id']
-            LOG.debug('BBBBBBBBBBBBB:%s' % port_id)
-        if port_id:
-            driver.plugin.db._core_plugin.delete_port(context, port_id)
-            LOG.debug('XXXXXX delete port: %s' % port_id)
+
+        if self.driver.unlegacy_setting_placeholder_driver_side:
+            LOG.debug('running un-legacy way for member create p2:')
+            filters = {'device_id': [member.id]}
+            port_id = None
+            port = driver.plugin.db._core_plugin.get_ports(context, filters)
+            if port:
+                port_id = port[0]['id']
+                LOG.debug('BBBBBBBBBBBBB:%s' % port_id)
+            if port_id:
+                driver.plugin.db._core_plugin.delete_port(context, port_id)
+                LOG.debug('XXXXXX delete port: %s' % port_id)
 
     @log_helpers.log_method_call
     def update(self, context, old_member, member):

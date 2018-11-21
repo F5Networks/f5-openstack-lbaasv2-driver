@@ -52,7 +52,7 @@ class LBaaSv2ServiceBuilder(object):
         self.disconnected_service = DisconnectedService()
         self.q_client = q_client.F5NetworksNeutronClient(self.plugin)
 
-    def build(self, context, loadbalancer, agent, agent_hosts=None):
+    def build(self, context, loadbalancer, agent):
         """Get full service definition from loadbalancer ID."""
         # Invalidate cache if it is too old
         if ((datetime.datetime.now() - self.last_cache_update).seconds >
@@ -93,8 +93,25 @@ class LBaaSv2ServiceBuilder(object):
             # if we are running in disconnected service mode
             agent_config = self.deserialize_agent_configurations(
                 agent['configurations'])
-            segment_data = self.disconnected_service.get_segment_id(
-                context, service['loadbalancer']['vip_port_id'], agent_hosts)
+            if self.driver.unlegacy_setting_placeholder_driver_side:
+                LOG.debug('not legacy way of populating member:')
+                agent_hosts = self.driver.scheduler.get_agents_hosts_in_env(
+                    context, self.driver.plugin, self.driver.env
+                )
+                LOG.debug('agent_hosts details:')
+                LOG.debug(agent_hosts)
+
+                segment_data = self.disconnected_service.get_segment_id(
+                    context, service['loadbalancer']['vip_port_id'], agent_hosts
+                )
+                LOG.debug('segment_data obtained from get_segment_id is:')
+                LOG.debug(segment_data)
+            else:
+                segment_data = self.disconnected_service.get_network_segment(
+                    context, agent_config, network
+                )
+                LOG.debug('segment_data obtained from get_network_segment is:')
+                LOG.debug(segment_data)
             if segment_data:
                 network['provider:segmentation_id'] = \
                     segment_data.get('segmentation_id', None)
@@ -133,7 +150,7 @@ class LBaaSv2ServiceBuilder(object):
                 self._get_pools_and_healthmonitors(context, loadbalancer)
 
             service['members'] = self._get_members(
-                context, service['pools'], subnet_map, network_map, agent_hosts)
+                context, service['pools'], subnet_map, network_map)
 
             service['subnets'] = subnet_map
             service['networks'] = network_map
@@ -146,7 +163,7 @@ class LBaaSv2ServiceBuilder(object):
         return service
 
     @log_helpers.log_method_call
-    def _get_extended_member(self, context, member, agent_hosts=None):
+    def _get_extended_member(self, context, member):
         """Get extended member attributes and member networking."""
         member_dict = member.to_dict(pool=False)
         subnet_id = member.subnet_id
@@ -173,9 +190,9 @@ class LBaaSv2ServiceBuilder(object):
         # we no longer support member port creation
         if len(ports) == 1:
             member_dict['port'] = ports[0]
-            self._populate_member_network(context, member_dict, network, agent_hosts)
+            self._populate_member_network(context, member_dict, network)
         elif len(ports) == 0:
-            self._populate_member_network(context, member_dict, network, agent_hosts)
+            self._populate_member_network(context, member_dict, network)
             LOG.warning("Lbaas member %s has no associated neutron port"
                         % member.address)
         elif len(ports) > 1:
@@ -222,28 +239,48 @@ class LBaaSv2ServiceBuilder(object):
 
         return self.net_cache[network_id]
 
-    def _populate_member_network(self, context, member, network, agent_hosts=None):
+    def _populate_member_network(self, context, member, network):
         """Add vtep networking info to pool member and update the network."""
         member['vxlan_vteps'] = []
         member['gre_vteps'] = []
 
-        for host_id in agent_hosts:
-            filters = {'device_owner': ['network:f5lbaasv2'], 'fixed_ips': {'subnet_id': [member['subnet_id']]},
-                       'binding:host_id': [host_id]}
-            port = self.plugin.db._core_plugin.get_ports(context, filters)
-            if port:
-                port_id = port[0]['id']
-                segment_data = self.disconnected_service.get_segment_id(
-                    context, port_id, agent_hosts)
-                LOG.debug('member segment data: %s' % segment_data)
-                if segment_data:
-                    network['provider:segmentation_id'] = \
-                        segment_data.get('segmentation_id', None)
-                    network['provider:network_type'] = \
-                        segment_data.get('network_type', None)
-                    network['provider:physical_network'] = \
-                        segment_data.get('physical_network', None)
-                    break
+        if not self.driver.unlegacy_setting_placeholder_driver_side:
+            LOG.debug('legacy way of populating member:')
+            agent_config = {}
+            segment_data = self.disconnected_service.get_network_segment(
+                context, agent_config, network)
+            if segment_data:
+                network['provider:segmentation_id'] = \
+                    segment_data.get('segmentation_id', None)
+                network['provider:network_type'] = \
+                    segment_data.get('network_type', None)
+                network['provider:physical_network'] = \
+                    segment_data.get('physical_network', None)
+        else:
+            LOG.debug('not legacy way of populating member:')
+            agent_hosts = self.driver.scheduler.get_agents_hosts_in_env(
+                context, self.driver.plugin, self.driver.env
+            )
+            LOG.debug('agent_hosts details:')
+            LOG.debug(agent_hosts)
+
+            for host_id in agent_hosts:
+                filters = {'device_owner': ['network:f5lbaasv2'], 'fixed_ips': {'subnet_id': [member['subnet_id']]},
+                        'binding:host_id': [host_id]}
+                port = self.plugin.db._core_plugin.get_ports(context, filters)
+                if port:
+                    port_id = port[0]['id']
+                    segment_data = self.disconnected_service.get_segment_id(
+                        context, port_id, agent_hosts)
+                    LOG.debug('member segment data: %s' % segment_data)
+                    if segment_data:
+                        network['provider:segmentation_id'] = \
+                            segment_data.get('segmentation_id', None)
+                        network['provider:network_type'] = \
+                            segment_data.get('network_type', None)
+                        network['provider:physical_network'] = \
+                            segment_data.get('physical_network', None)
+                        break
 
         net_type = network.get('provider:network_type', "undefined")
         if net_type == 'vxlan':
@@ -469,7 +506,7 @@ class LBaaSv2ServiceBuilder(object):
         return pools, healthmonitors
 
     @log_helpers.log_method_call
-    def _get_members(self, context, pools, subnet_map, network_map, agent_hosts=None):
+    def _get_members(self, context, pools, subnet_map, network_map):
         pool_members = []
         if pools:
             members = self.plugin.db.get_pool_members(
@@ -480,7 +517,7 @@ class LBaaSv2ServiceBuilder(object):
             for member in members:
                 # Get extended member attributes, network, and subnet.
                 member_dict, subnet, network = (
-                    self._get_extended_member(context, member, agent_hosts)
+                    self._get_extended_member(context, member)
                 )
 
                 subnet_map[subnet['id']] = subnet

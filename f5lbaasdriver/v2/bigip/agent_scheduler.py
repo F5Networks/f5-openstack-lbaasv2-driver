@@ -143,6 +143,8 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
     def get_agents_hosts_in_env(
             self, context, plugin, env):
         """Get an active agents in the specified environment."""
+        # TODO: xie
+        # maybe replace： get_agent-id-hosting-the-lb
         return_agents_hosts = []
 
         with context.session.begin(subtransactions=True):
@@ -159,6 +161,9 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                 if 'environment_prefix' in ac:
                     if ac['environment_prefix'] == env:
                         return_agents_hosts.append(candidate['host'])
+                        # is this host the form of: ci-124167.novalocal:69b4d55e-b186-5801-9fbe-2a721f878d61,
+                        # the above form is saved into agents table for host column;
+                        # this form: ci-124167.novalocal(this form is saved into binding_levels for ovs driver,)
         return return_agents_hosts
 
     def get_capacity(self, configurations):

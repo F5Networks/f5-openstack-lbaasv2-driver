@@ -106,16 +106,11 @@ class LBaaSv2PluginCallbacksRPC(object):
                     context,
                     loadbalancer_id
                 )
-                agent_hosts = self.driver.scheduler.get_agents_hosts_in_env(
-                    context,
-                    self.driver.plugin,
-                    self.driver.env
-                )
                 # the preceeding get call returns a nested dict, unwind
                 # one level if necessary
                 agent = (agent['agent'] if 'agent' in agent else agent)
                 service = self.driver.service_builder.build(
-                    context, lb, agent, agent_hosts)
+                    context, lb, agent)
             except Exception as e:
                 LOG.error("Exception: get_service_by_loadbalancer_id: %s",
                           e.message)
@@ -540,7 +535,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                     if device_id:
                         port_data['device_id'] = device_id
                     port_data[portbindings.HOST_ID] = host
-                    port_data[portbindings.VNIC_TYPE] = 'normal'
+                    port_data[portbindings.VNIC_TYPE] = vnic_type
                     port_data[portbindings.PROFILE] = binding_profile
 
                     if ('binding:capabilities' in
@@ -710,7 +705,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                 if device_id:
                     port_data['device_id'] = device_id
                 port_data[portbindings.HOST_ID] = host
-                port_data[portbindings.VNIC_TYPE] = 'normal'
+                port_data[portbindings.VNIC_TYPE] = vnic_type
                 port_data[portbindings.PROFILE] = binding_profile
 
                 extended_attrs = portbindings.EXTENDED_ATTRIBUTES_2_0['ports']
