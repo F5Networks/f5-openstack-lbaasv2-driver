@@ -67,10 +67,15 @@ class FakePool(FakeBaseObj):
 
 
 class FakeMember(FakeBaseObj):
-    def __init__(self, id='test_obj_id', attached_to_lb=True):
+    def __init__(
+        self, id='test_obj_id', attached_to_lb=True,
+        subnet_id='test_sub_id', admin_state_up='test_state'
+    ):
         super(FakeMember, self).__init__(id=id, attached_to_lb=attached_to_lb)
         self.id = id
         self.pool = FakePool()
+        self.subnet_id = subnet_id
+        self.admin_state_up = admin_state_up
 
 
 class FakeHM(FakeBaseObj):
