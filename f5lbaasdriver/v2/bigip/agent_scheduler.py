@@ -143,6 +143,8 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
     def get_agents_hosts_in_env(
             self, context, plugin, env):
         """Get an active agents in the specified environment."""
+        # TODO(xie)
+        # maybe replace： get_agent-id-hosting-the-lb
         return_agents_hosts = []
 
         with context.session.begin(subtransactions=True):
@@ -159,6 +161,7 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                 if 'environment_prefix' in ac:
                     if ac['environment_prefix'] == env:
                         return_agents_hosts.append(candidate['host'])
+                        # TODO(xie) check form here later.
         return return_agents_hosts
 
     def get_capacity(self, configurations):
