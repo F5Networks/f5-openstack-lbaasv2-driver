@@ -16,6 +16,7 @@ u"""F5 Networks® LBaaSv2 Driver Implementation."""
 
 import os
 import sys
+import f5lbaasdriver
 
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
@@ -54,6 +55,13 @@ OPTS = [
             'f5lbaasdriver.v2.bigip.service_builder.LBaaSv2ServiceBuilder'
         ),
         help=('Default class to use for building a service object.')
+    ),
+    cfg.StrOpt(
+        'f5_loadbalancer_entity_managers_module',
+        default=(
+            'f5lbaasdriver.v2.bigip.driver_v2'
+        ),
+        help=('Default class to use for creating entity managers.')
     )
 ]
 
@@ -81,13 +89,28 @@ class F5DriverV2(object):
         self.plugin = plugin
         self.env = env
 
-        self.loadbalancer = LoadBalancerManager(self)
-        self.listener = ListenerManager(self)
-        self.pool = PoolManager(self)
-        self.member = MemberManager(self)
-        self.healthmonitor = HealthMonitorManager(self)
-        self.l7policy = L7PolicyManager(self)
-        self.l7rule = L7RuleManager(self)
+        # make the entity managers selectable, so that vendors can customize
+        # their own lbaasdriver logic.
+        # the configuration is placed in
+        #   /etc/neutron/neutron_lbaas.conf, session: [Default]
+        try:
+            emgr_modl = importutils.import_any(
+                cfg.CONF.f5_loadbalancer_entity_managers_module
+            )
+        except Exception as e:
+            LOG.error("Failed to import module '%s', fall back to '%s'"\
+            % (cfg.CONF.f5_loadbalancer_entity_managers_module,
+                f5lbaasdriver.v2.bigip.driver_v2.__name__)
+            )
+            emgr_modl = f5lbaasdriver.v2.bigip.driver_v2
+
+        self.loadbalancer = emgr_modl.LoadBalancerManager(self)
+        self.listener = emgr_modl.ListenerManager(self)
+        self.pool = emgr_modl.PoolManager(self)
+        self.member = emgr_modl.MemberManager(self)
+        self.healthmonitor = emgr_modl.HealthMonitorManager(self)
+        self.l7policy = emgr_modl.L7PolicyManager(self)
+        self.l7rule = emgr_modl.L7RuleManager(self)
 
         # what scheduler to use for pool selection
         self.scheduler = importutils.import_object(

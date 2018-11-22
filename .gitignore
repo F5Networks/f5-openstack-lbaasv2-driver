@@ -113,3 +113,5 @@ systest/test_results
 .pydevproject
 .settings/
 
+# VS code
+.vscode
