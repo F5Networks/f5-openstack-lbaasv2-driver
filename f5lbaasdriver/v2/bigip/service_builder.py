@@ -93,8 +93,14 @@ class LBaaSv2ServiceBuilder(object):
             # if we are running in disconnected service mode
             agent_config = self.deserialize_agent_configurations(
                 agent['configurations'])
-            segment_data = self.disconnected_service.get_network_segment(
-                context, agent_config, network)
+
+            agent_hosts = self.driver.scheduler.get_agents_hosts_in_env(
+                context,
+                self.driver.plugin,
+                self.driver.env
+            )
+            segment_data = self.disconnected_service.get_segment_id(
+                context, service['loadbalancer']['vip_port_id'], agent_hosts)
             if segment_data:
                 network['provider:segmentation_id'] = \
                     segment_data.get('segmentation_id', None)
@@ -224,19 +230,38 @@ class LBaaSv2ServiceBuilder(object):
 
     def _populate_member_network(self, context, member, network):
         """Add vtep networking info to pool member and update the network."""
+
         member['vxlan_vteps'] = []
         member['gre_vteps'] = []
 
-        agent_config = {}
-        segment_data = self.disconnected_service.get_network_segment(
-            context, agent_config, network)
-        if segment_data:
-            network['provider:segmentation_id'] = \
-                segment_data.get('segmentation_id', None)
-            network['provider:network_type'] = \
-                segment_data.get('network_type', None)
-            network['provider:physical_network'] = \
-                segment_data.get('physical_network', None)
+        agent_hosts = self.driver.scheduler.get_agents_hosts_in_env(
+            context,
+            self.driver.plugin,
+            self.driver.env
+        )
+
+        for host_id in agent_hosts:
+            filters = {
+                'device_owner': ['network:f5lbaasv2'], 
+                'fixed_ips': {
+                    'subnet_id': [member['subnet_id']]
+                },
+                'binding:host_id': [host_id]
+            }
+            port = self.plugin.db._core_plugin.get_ports(context, filters)
+            if port:
+                port_id = port[0]['id']
+                segment_data = self.disconnected_service.get_segment_id(
+                    context, port_id, agent_hosts)
+                LOG.debug('member segment data: %s' % segment_data)
+                if segment_data:
+                    network['provider:segmentation_id'] = \
+                        segment_data.get('segmentation_id', None)
+                    network['provider:network_type'] = \
+                        segment_data.get('network_type', None)
+                    network['provider:physical_network'] = \
+                        segment_data.get('physical_network', None)
+                    break
 
         net_type = network.get('provider:network_type', "undefined")
         if net_type == 'vxlan':

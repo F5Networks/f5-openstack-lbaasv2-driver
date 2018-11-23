@@ -23,6 +23,7 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import importutils
 
+from neutron.api.v2 import attributes
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
@@ -77,6 +78,13 @@ class F5NoAttachedLoadbalancerException(f5_exc.F5LBaaSv2DriverException):
         return self.message
 
 
+class DriverSpec(object):
+    """DriverSpec for f5driverv2"""
+    def __init__(self, driver):
+        # add driver specific setting/customization here.
+        self.driver = driver
+
+
 class F5DriverV2(object):
     u"""F5 Networks® LBaaSv2 Driver."""
 
@@ -112,6 +120,8 @@ class F5DriverV2(object):
         self.l7policy = emgr_modl.L7PolicyManager(self)
         self.l7rule = emgr_modl.L7RuleManager(self)
 
+        self.driverspec = emgr_modl.DriverSpec(self)
+
         # what scheduler to use for pool selection
         self.scheduler = importutils.import_object(
             cfg.CONF.f5_loadbalancer_pool_scheduler_driver_v2)
@@ -133,6 +143,12 @@ class F5DriverV2(object):
         registry.subscribe(self._bindRegistryCallback(),
                            resources.PROCESS,
                            events.AFTER_CREATE)
+
+    def get_driver_vnic_type(self, vnic_type):
+        try:
+            return self.driverspec.port_binding_vnic_type
+        except Exception: 
+            return vnic_type
 
     def _bindRegistryCallback(self):
         # Defines a callback function with name tied to driver env. Need to
@@ -233,13 +249,15 @@ class LoadBalancerManager(EntityManager):
                     'status': q_const.PORT_STATUS_ACTIVE
                 }
                 port_data[portbindings.HOST_ID] = agent_host
-                port_data[portbindings.VNIC_TYPE] = "baremetal"
+                port_data[portbindings.VNIC_TYPE] = \
+                        self.driver.get_driver_vnic_type("baremetal")
                 port_data[portbindings.PROFILE] = {}
                 driver.plugin.db._core_plugin.update_port(
                     context,
                     loadbalancer.vip_port_id,
                     {'port': port_data}
                 )
+                agent, service = self._schedule_agent_create_service(context)
             else:
                 LOG.debug("Agent devices are nova managed")
 

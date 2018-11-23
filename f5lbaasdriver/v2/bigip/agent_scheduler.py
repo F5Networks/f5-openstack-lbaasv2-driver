@@ -140,6 +140,19 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
 
         return return_agents
 
+    def get_agents_hosts_in_env(
+            self, context, plugin, env):
+        """Get an active agents in the specified environment."""
+        
+        return_agents_hosts = []
+        agents = self.get_agents_in_env(context, plugin, env,
+                                        group=None, active=None)
+        
+        for agent in agents:
+            return_agents_hosts.append(agent['host'])
+            
+        return return_agents_hosts
+
     def get_capacity(self, configurations):
         """Get environment capacity."""
         if 'environment_capacity_score' in configurations:

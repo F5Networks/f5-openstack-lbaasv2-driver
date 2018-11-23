@@ -535,7 +535,8 @@ class LBaaSv2PluginCallbacksRPC(object):
                     if device_id:
                         port_data['device_id'] = device_id
                     port_data[portbindings.HOST_ID] = host
-                    port_data[portbindings.VNIC_TYPE] = vnic_type
+                    port_data[portbindings.VNIC_TYPE] = \
+                                    self.driver.get_driver_vnic_type(vnic_type)
                     port_data[portbindings.PROFILE] = binding_profile
 
                     if ('binding:capabilities' in
@@ -705,7 +706,8 @@ class LBaaSv2PluginCallbacksRPC(object):
                 if device_id:
                     port_data['device_id'] = device_id
                 port_data[portbindings.HOST_ID] = host
-                port_data[portbindings.VNIC_TYPE] = vnic_type
+                port_data[portbindings.VNIC_TYPE] = \
+                                self.driver.get_driver_vnic_type(vnic_type)
                 port_data[portbindings.PROFILE] = binding_profile
 
                 extended_attrs = portbindings.EXTENDED_ATTRIBUTES_2_0['ports']

@@ -34,76 +34,69 @@ from f5lbaasdriver.v2.bigip import plugin_rpc
 
 LOG = logging.getLogger(__name__)
 
+
+class DriverSpec(driver_v2.DriverSpec):
+    """DriverSpec for driver"""
+
+    def __init__(self, driver):
+        super(DriverSpec, self).__init__(driver)
+        self.port_binding_vnic_type = "normal"
+
+    def func_example_to_do_some_job(self):
+        pass
+
+
 class LoadBalancerManager(driver_v2.LoadBalancerManager):
     """LoadBalancerManager class handles Neutron LBaaS CRUD."""
-
-    @log_helpers.log_method_call
-    def create(self, context, loadbalancer):
-        """Create a loadbalancer."""
-        driver = self.driver
-        self.loadbalancer = loadbalancer
-        try:
-            agent, service = self._schedule_agent_create_service(context)
-            agent_host = agent['host']
-            agent_config = agent.get('configurations', {})
-            LOG.debug("agent configurations: %s" % agent_config)
-
-            scheduler = self.driver.scheduler
-            agent_config_dict = \
-                scheduler.deserialize_agent_configurations(agent_config)
-
-            if not agent_config_dict.get('nova_managed', False):
-                # Update the port for the VIP to show ownership by this driver
-                port_data = {
-                    'admin_state_up': True,
-                    'device_owner': 'network:f5lbaasv2',
-                    'status': q_const.PORT_STATUS_ACTIVE
-                }
-                port_data[portbindings.HOST_ID] = agent_host
-                port_data[portbindings.VNIC_TYPE] = "normal"
-                port_data[portbindings.PROFILE] = {}
-                driver.plugin.db._core_plugin.update_port(
-                    context,
-                    loadbalancer.vip_port_id,
-                    {'port': port_data}
-                )
-            else:
-                LOG.debug("Agent devices are nova managed")
-
-            driver.agent_rpc.create_loadbalancer(
-                context, loadbalancer.to_api_dict(), service, agent_host)
-
-        except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
-                lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
-            LOG.error("Exception: loadbalancer create: %s" % e)
-            driver.plugin.db.update_status(
-                context,
-                models.LoadBalancer,
-                loadbalancer.id,
-                plugin_constants.ERROR)
-        except Exception as e:
-            LOG.error("Exception: loadbalancer create: %s" % e.message)
-            raise e
+    pass
 
 
 class ListenerManager(driver_v2.ListenerManager):
     """ListenerManager class handles Neutron LBaaS listener CRUD."""
 
-    def __init__(self, plugin=None, env=None):
-        super(ListenerManager, self).__init__(plugin, env)
+    def __init__(self, driver):
+        # example of __init__
+        super(ListenerManager, self).__init__(driver)
         LOG.info("Do customized initializing.")
 
 
-class ListenerManager(driver_v2.ListenerManager):
-    pass
-
-
 class PoolManager(driver_v2.PoolManager):
+    """PoolManager class handles Neutron LBaaS pool CRUD."""
     pass
 
 
 class MemberManager(driver_v2.MemberManager):
-    pass
+    """MemberManager class handles Neutron LBaaS pool member CRUD."""
+
+    def create(self, context, member):
+        """Create a member."""
+
+        self.loadbalancer = member.pool.loadbalancer
+        driver = self.driver
+        subnet = driver.plugin.db._core_plugin.get_subnet(context, member.subnet_id)
+        agent_host, service = self._setup_crud(context, member)
+        driver.plugin.db._core_plugin.create_port(context, {
+            'port': {
+                'tenant_id': subnet['tenant_id'],
+                'network_id': subnet['network_id'],
+                'mac_address': attributes.ATTR_NOT_SPECIFIED,
+                'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+                'device_id': member.id,
+                'device_owner': 'network:f5lbaasv2',
+                'admin_state_up': member.admin_state_up,
+                'name': 'fake_pool_port_' + member.id,
+                portbindings.HOST_ID: agent_host}})
+        self.api_dict = member.to_dict(pool=False)
+        self._call_rpc(context, member, 'create_member')
+        filters = {'device_id': [member.id]}
+        port_id = None
+        port = driver.plugin.db._core_plugin.get_ports(context, filters)
+        if port:
+            port_id = port[0]['id']
+            LOG.debug('BBBBBBBBBBBBB:%s' % port_id)
+        if port_id:
+            driver.plugin.db._core_plugin.delete_port(context, port_id)
+            LOG.debug('XXXXXX delete port: %s' % port_id)
 
 
 class HealthMonitorManager(driver_v2.HealthMonitorManager):
