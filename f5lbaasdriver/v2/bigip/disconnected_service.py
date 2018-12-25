@@ -94,13 +94,17 @@ class DisconnectedService(object):
                         LOG.debug('levels: %s binding host_id: %s' % (
                             levels, host_id))
                         for level in levels:
-                            segment = segments_db.get_segment_by_id(
-                                context, level.segment_id
-                            )
-                            LOG.debug('vxlan to vlan seg id %s: segment %s'
-                                      % (level.segment_id, segment))
-                            if segment:
-                                break
+                            if level.driver in ('f5networks', 'huawei_ac_ml2'):
+                                LOG.debug('level with driver f5networks')
+                                segment = segments_db.get_segment_by_id(
+                                    context, level.segment_id
+                                )
+                                LOG.debug(
+                                    'vxlan 2 vlan seg id %s: segment %s'
+                                    % (level.segment_id, segment)
+                                )
+                                if segment:
+                                    break
             return segment
         except Exception as exc:
             LOG.error(
