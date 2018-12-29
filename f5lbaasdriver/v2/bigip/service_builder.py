@@ -51,8 +51,11 @@ class LBaaSv2ServiceBuilder(object):
         self.plugin = self.driver.plugin
         self.disconnected_service = DisconnectedService()
         self.q_client = q_client.F5NetworksNeutronClient(self.plugin)
+        self.resource = None
+        self.target = None
 
-    def build(self, context, loadbalancer, agent):
+    def build(self, context, loadbalancer,
+              agent, target=None, resource=None):
         """Get full service definition from loadbalancer ID."""
         # Invalidate cache if it is too old
         if ((datetime.datetime.now() - self.last_cache_update).seconds >
@@ -61,6 +64,8 @@ class LBaaSv2ServiceBuilder(object):
             self.subnet_cache = {}
 
         service = {}
+        self.resource = resource
+        self.target = target
         with context.session.begin(subtransactions=True):
             LOG.debug('Building service definition entry for %s'
                       % loadbalancer.id)
@@ -126,22 +131,45 @@ class LBaaSv2ServiceBuilder(object):
                         net_type
                     )
 
-            # Get listeners and pools.
-            service['listeners'] = self._get_listeners(context, loadbalancer)
-
-            service['pools'], service['healthmonitors'] = \
-                self._get_pools_and_healthmonitors(context, loadbalancer)
-
-            service['members'] = self._get_members(
-                context, service['pools'], subnet_map, network_map)
-
+            if self.resource == constants_v2.LISTENER:
+                # pzhang(HACK) init a listener
+                service['listeners'] = self._get_listeners(context,
+                                                           loadbalancer)
+            elif self.resource in (constants_v2.L7POLICY, constants_v2.POOL):
+                # pzhang(HACK): all the info of one bigip vs (listener) is
+                #               required
+                service['listeners'] = self._get_listeners(context,
+                                                           loadbalancer)
+                service['l7policies'] = self._get_l7policies(
+                    context, service['listeners'])
+                service['l7policy_rules'] = self._get_l7policy_rules(
+                    context, service['l7policies'])
+                service['pools'], service['healthmonitors'] = \
+                    self._get_pools_and_healthmonitors(context, loadbalancer)
+                service['members'] = self._get_members(
+                    context, service['pools'], subnet_map, network_map)
+            elif self.resource in (constants_v2.MEMBER,
+                                   constants_v2.HEALTHMONITOR):
+                # pzhang(HACK): all the info of one bigip pool is
+                #               required
+                service['pools'], service['healthmonitors'] = \
+                    self._get_pools_and_healthmonitors(context, loadbalancer)
+                service['members'] = self._get_members(
+                    context, service['pools'], subnet_map, network_map)
+            else:
+                # pzhang(HACK): did not change code for sync
+                service['listeners'] = self._get_listeners(context,
+                                                           loadbalancer)
+                service['pools'], service['healthmonitors'] = \
+                    self._get_pools_and_healthmonitors(context, loadbalancer)
+                service['members'] = self._get_members(
+                    context, service['pools'], subnet_map, network_map)
+                service['l7policies'] = self._get_l7policies(
+                    context, service['listeners'])
+                service['l7policy_rules'] = self._get_l7policy_rules(
+                    context, service['l7policies'])
             service['subnets'] = subnet_map
             service['networks'] = network_map
-
-            service['l7policies'] = self._get_l7policies(
-                context, service['listeners'])
-            service['l7policy_rules'] = self._get_l7policy_rules(
-                context, service['l7policies'])
 
         return service
 
@@ -414,10 +442,27 @@ class LBaaSv2ServiceBuilder(object):
     @log_helpers.log_method_call
     def _get_listeners(self, context, loadbalancer):
         listeners = []
-        db_listeners = self.plugin.db.get_listeners(
-            context,
-            filters={'loadbalancer_id': [loadbalancer.id]}
-        )
+        if self.target is not None:
+            if self.resource == constants_v2.LISTENER:
+                db_listeners = self.plugin.db.get_listeners(
+                    context,
+                    filters={'id': [self.target["id"]]}
+                )
+            if self.resource == constants_v2.L7POLICY:
+                db_listeners = self.plugin.db.get_listeners(
+                    context,
+                    filters={'id': [self.target["listener_id"]]}
+                )
+            if self.resource == constants_v2.POOL:
+                db_listeners = self.plugin.db.get_listeners(
+                    context,
+                    filters={'default_pool_id': [self.target["id"]]}
+                )
+        else:
+            db_listeners = self.plugin.db.get_listeners(
+                context,
+                filters={'loadbalancer_id': [loadbalancer.id]}
+            )
 
         for listener in db_listeners:
             listener_dict = listener.to_dict(
@@ -441,10 +486,32 @@ class LBaaSv2ServiceBuilder(object):
         pools = []
 
         if loadbalancer and loadbalancer.id:
-            db_pools = self.plugin.db.get_pools(
-                context,
-                filters={'loadbalancer_id': [loadbalancer.id]}
-            )
+            if self.target is not None:
+                if self.resource == constants_v2.POOL:
+                    # pzhang(HACK): listener + pool data is required
+                    db_pools = self.plugin.db.get_pools(
+                        context,
+                        filters={"id": [self.target["id"]]})
+                if self.resource == constants_v2.HEALTHMONITOR:
+                    db_pools = self.plugin.db.get_pools(
+                        context,
+                        filters={"healthmonitor_id": [self.target["id"]]}
+                    )
+                if self.resource == constants_v2.MEMBER:
+                    db_pools = self.plugin.db.get_pools(
+                        context,
+                        filters={"id": [self.target["pool_id"]]}
+                    )
+                if self.resource == constants_v2.L7POLICY:
+                    db_pools = self.plugin.db.get_pools(
+                        context,
+                        filters={"listener_id": [self.target["listener_id"]]}
+                    )
+            else:
+                db_pools = self.plugin.db.get_pools(
+                    context,
+                    filters={'loadbalancer_id': [loadbalancer.id]}
+                )
 
             for pool in db_pools:
                 pools.append(self._pool_to_dict(pool))
