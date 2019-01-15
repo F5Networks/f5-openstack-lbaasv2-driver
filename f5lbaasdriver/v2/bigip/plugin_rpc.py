@@ -29,6 +29,7 @@ from neutron_lbaas.db.loadbalancer import models
 from neutron_lbaas import agent_scheduler
 from neutron_lbaas.services.loadbalancer import data_models
 from neutron_lbaas.extensions import loadbalancerv2
+from neutron_lbaas.services.loadbalancer import constants as nlb_constant
 
 
 from f5lbaasdriver.v2.bigip import constants_v2 as constants
@@ -56,6 +57,45 @@ class LBaaSv2PluginCallbacksRPC(object):
              agents_db.AgentExtRpcCallback(self.driver.plugin.db)],
             fanout=False)
         self.conn.consume_in_threads()
+
+    # change the admin_state_up of the an agent
+    @log_helpers.log_method_call
+    def set_agent_admin_state(self, context, admin_state_up, host=None):
+        """Set the admin_up_state of an agent."""
+        if not host:
+            LOG.error('tried to set agent admin_state_up without host')
+            return False
+        with context.session.begin(subtransactions=True):
+            query = context.session.query(agents_db.Agent)
+            query = query.filter(
+                agents_db.Agent.agent_type ==
+                nlb_constant.AGENT_TYPE_LOADBALANCERV2,
+                agents_db.Agent.host == host)
+            try:
+                agent = query.one()
+                if not agent.admin_state_up == admin_state_up:
+                    agent.admin_state_up = admin_state_up
+                    context.session.add(agent)
+            except Exception as exc:
+                LOG.error('query for agent produced: %s' % str(exc))
+                return False
+        return True
+
+    # change the admin_state_up of the an agent
+    @log_helpers.log_method_call
+    def scrub_dead_agents(self, context, env, group, host=None):
+        """Remove all non-alive or admin down agents."""
+        LOG.debug('scrubbing dead agent bindings for group %s' % group)
+        with context.session.begin(subtransactions=True):
+            try:
+                # don't set group because otherwise only agent of same group could initiate scrubbing.
+                # scrub method get's group out of a dead agent to find another agent inside same group
+                self.driver.scheduler.scrub_dead_agents(
+                    context, self.driver.plugin, env, group=None)
+            except Exception as exc:
+                LOG.error('scub dead agents exception: %s' % str(exc))
+                return False
+        return True
 
     # get a list of loadbalancer ids which are active on this agent host
     @log_helpers.log_method_call
@@ -105,10 +145,7 @@ class LBaaSv2PluginCallbacksRPC(object):
 
     @log_helpers.log_method_call
     def get_service_by_loadbalancer_id(
-            self,
-            context,
-            loadbalancer_id=None,
-            host=None):
+            self, context, loadbalancer_id=None, host=None):
         """Get the complete service definition by loadbalancer_id."""
         service = {}
         with context.session.begin(subtransactions=True):
@@ -127,9 +164,8 @@ class LBaaSv2PluginCallbacksRPC(object):
                 # the preceeding get call returns a nested dict, unwind
                 # one level if necessary
                 agent = (agent['agent'] if 'agent' in agent else agent)
-                service = self.driver.service_builder.build(context,
-                                                            lb,
-                                                            agent)
+                service = self.driver.service_builder.build(
+                    context, lb, agent)
             except Exception as e:
                 LOG.warning("ccloud Error in get_service_by_loadbalancer_id. ID = %s. Message %s " % (loadbalancer_id, e))
 
@@ -142,12 +178,10 @@ class LBaaSv2PluginCallbacksRPC(object):
         plugin = self.driver.plugin
 
         with context.session.begin(subtransactions=True):
+            self.driver.scheduler.scrub_dead_agents(
+                context, plugin, env, group)
             agents = self.driver.scheduler.get_agents_in_env(
-                context,
-                self.driver.plugin,
-                env,
-                group)
-
+                context, plugin, env, group, active=None)
             for agent in agents:
                 agent_lbs =  self._list_loadbalancers_on_lbaas_agent(
                     context,
@@ -168,19 +202,15 @@ class LBaaSv2PluginCallbacksRPC(object):
 
     @log_helpers.log_method_call
     def get_active_loadbalancers(self, context, env, group=None, host=None):
-        """Get all loadbalancers for this group in this env."""
+        """Get active loadbalancers for this group in this env."""
         loadbalancers = []
         plugin = self.driver.plugin
 
         with context.session.begin(subtransactions=True):
+            self.driver.scheduler.scrub_dead_agents(
+                context, plugin, env, group)
             agents = self.driver.scheduler.get_agents_in_env(
-                context,
-                self.driver.plugin,
-                env,
-                group=group,
-                active=True
-            )
-
+                context, plugin, env, group, active=None)
             for agent in agents:
                 agent_lbs =  self._list_loadbalancers_on_lbaas_agent(
                     context,
@@ -204,17 +234,15 @@ class LBaaSv2PluginCallbacksRPC(object):
 
     @log_helpers.log_method_call
     def get_pending_loadbalancers(self, context, env, group=None, host=None):
-        """Get all loadbalancers for this group in this env."""
+        """Get pending loadbalancers for this group in this env."""
         loadbalancers = []
         plugin = self.driver.plugin
 
         with context.session.begin(subtransactions=True):
+            self.driver.scheduler.scrub_dead_agents(
+                context, plugin, env, group)
             agents = self.driver.scheduler.get_agents_in_env(
-                context,
-                self.driver.plugin,
-                env,
-                group)
-
+                context, plugin, env, group, active=None)
             for agent in agents:
                 agent_lbs =  self._list_loadbalancers_on_lbaas_agent(
                     context,
@@ -232,6 +260,35 @@ class LBaaSv2PluginCallbacksRPC(object):
                             }
                         )
 
+        if host:
+            return [lb for lb in loadbalancers if lb['agent_host'] == host]
+        else:
+            return loadbalancers
+
+    @log_helpers.log_method_call
+    def get_errored_loadbalancers(self, context, env, group=None, host=None):
+        """Get pending loadbalancers for this group in this env."""
+        loadbalancers = []
+        plugin = self.driver.plugin
+        with context.session.begin(subtransactions=True):
+            self.driver.scheduler.scrub_dead_agents(
+                context, plugin, env, group)
+            agents = self.driver.scheduler.get_agents_in_env(
+                context, plugin, env, group, active=None)
+            for agent in agents:
+                agent_lbs = self._list_loadbalancers_on_lbaas_agent(
+                    context,
+                    agent.id
+                )
+                for lb in agent_lbs:
+                    if (lb.provisioning_status == plugin_constants.ERROR):
+                        loadbalancers.append(
+                            {
+                                'agent_host': agent['host'],
+                                'lb_id': lb.id,
+                                'tenant_id': lb.tenant_id
+                            }
+                        )
         if host:
             return [lb for lb in loadbalancers if lb['agent_host'] == host]
         else:

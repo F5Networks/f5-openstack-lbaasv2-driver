@@ -33,26 +33,29 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
         """Initialze with the ChanceScheduler base class."""
         super(TenantScheduler, self).__init__()
 
+    # ccloud: this method should work with rebinding.
+    # it only rebinds an agent of the same envGrp so no changes on BIGIPs will be made
     def get_lbaas_agent_hosting_loadbalancer(self, plugin, context,
                                              loadbalancer_id, env=None):
         """Return the agent that is hosting the loadbalancer."""
         LOG.debug('Getting agent for loadbalancer %s with env %s' %
                   (loadbalancer_id, env))
 
-        lbaas_agent = None
         with context.session.begin(subtransactions=True):
+            lbaas_agent = None
             # returns {'agent': agent_dict}
             lbaas_agent = plugin.db.get_agent_hosting_loadbalancer(
                 context,
                 loadbalancer_id
             )
             # if the agent bound to this loadbalancer is alive, return it
-            if lbaas_agent is not None:
-
-                if not lbaas_agent['agent']['alive'] and env is not None:
-                    # The agent bound to this loadbalancer is not live;
-                    # find another agent in the same environment
-                    # which environment group is the agent in
+            if lbaas_agent:
+                if (not lbaas_agent['agent']['alive'] or
+                        not lbaas_agent['agent']['admin_state_up']) and \
+                        env is not None:
+                    # The agent bound to this loadbalancer is not live
+                    # or is not active. Find another agent in the same
+                    # environment and environment group if possible
                     ac = self.deserialize_agent_configurations(
                         lbaas_agent['agent']['configurations']
                     )
@@ -61,24 +64,81 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                         gn = ac['environment_group_number']
                     else:
                         gn = 1
-
-                    # find all active agents matching the environment
-                    # and group number.
-                    env_agents = self.get_agents_in_env(
-                        context,
-                        plugin,
-                        env,
-                        group=gn,
-                        active=True
-                    )
-                    LOG.debug("Primary lbaas agent is dead, env_agents: %s",
-                              env_agents)
-                    if env_agents:
-                        # return the first active agent in the
-                        # group to process this task
-                        lbaas_agent = {'agent': env_agents[0]}
+                    LOG.debug("ccloud: scrubbing - Loadbalancer_id %s from EnvGroup %s will be rebound to agent %s" %
+                              (loadbalancer_id, gn, lbaas_agent['agent']))
+                    reassigned_agent = self.rebind_loadbalancers(
+                        context, plugin, env, gn, lbaas_agent['agent'])
+                    if reassigned_agent:
+                        lbaas_agent = {'agent': reassigned_agent}
 
             return lbaas_agent
+
+    def rebind_loadbalancers(
+            self, context, plugin, env, group, current_agent):
+        # wtn: check if this works
+        env_agents = self.get_agents_in_env(context, plugin, env,
+                                            group=group, active=True)
+        if env_agents:
+            reassigned_agent = env_agents[0]
+            bindings = \
+                context.session.query(
+                    agent_scheduler.LoadbalancerAgentBinding).filter_by(
+                        agent_id=current_agent['id']).all()
+
+            # wtn: disabled until tested
+            # for binding in bindings:
+            #     binding.agent_id = reassigned_agent['id']
+            #     context.session.add(binding)
+            LOG.debug("ccloud: TESTRUN scrubbing: %s Loadbalancers from EnvGroup %s bound to agent %s now bound to %s" %
+                      (len(bindings),
+                       group,
+                       current_agent['id'],
+                       reassigned_agent['id']))
+
+            return reassigned_agent
+        else:
+            LOG.debug("ccloud: scrubbing - No active agent found for envGrp %s. Rebinding skipped for agent %s" %
+                      (group, current_agent['id']))
+            return None
+
+    def get_dead_agents_in_env(
+            self, context, plugin, env, group=None):
+        return_agents = []
+        all_agents = self.get_agents_in_env(context,
+                                            plugin,
+                                            env,
+                                            group,
+                                            active=None)
+
+        for agent in all_agents:
+            if not plugin.db.is_eligible_agent(active=True, agent=agent):
+                agent_dead = plugin.db.is_agent_down(
+                    agent['heartbeat_timestamp'])
+                if not agent['admin_state_up'] or agent_dead:
+                    return_agents.append(agent)
+        return return_agents
+
+    def scrub_dead_agents(self, context, plugin, env, group=None):
+        dead_agents = self.get_dead_agents_in_env(context, plugin, env, group)
+        for agent in dead_agents:
+            ag = None
+            if group is None:
+                LOG.info("ccloud: scrubbing agents across EnvGroups. Dead agent: {}".format(agent))
+                ac = self.deserialize_agent_configurations(
+                    agent['configurations']
+                )
+                if 'environment_group_number' in ac:
+                    ag = ac['environment_group_number']
+                LOG.info("ccloud: torsten found group for dead agent. EnvGroup: {}".format(ag))
+            else:
+                LOG.info("ccloud: scrubbing agents for ONE EnvGroup number %s. Dead agent: %s" % (ag, agent))
+                ag = group
+            if ag:
+                LOG.debug("ccloud: scrubbing - Dead agent found in EnvGroup %s . Agent: %s: " % (ag, agent))
+                self.rebind_loadbalancers(context, plugin, env, ag, agent)
+            else:
+                LOG.debug("ccloud: scrubbing - Dead agent found without EnvGroup. Skipping scrubbing")
+
 
     def get_agents_in_env(
             self, context, plugin, env, group=None, active=None):
@@ -268,4 +328,5 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                        'lbaas agent %(agent_id)s'),
                       {'loadbalancer_id': loadbalancer.id,
                        'agent_id': chosen_agent['id']})
+
             return chosen_agent
