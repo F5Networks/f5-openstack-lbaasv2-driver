@@ -543,6 +543,8 @@ class LBaaSv2PluginCallbacksRPC(object):
                 port_data[portbindings.VNIC_TYPE] = vnic_type
                 port_data[portbindings.PROFILE] = binding_profile
 
+                # TODO(xie): several lines different between 9.6
+                # and master. check if it's needed in master later
                 port = self.driver.plugin.db._core_plugin.create_port(
                     context, {'port': port_data})
                 # Because ML2 marks ports DOWN by default on creation
