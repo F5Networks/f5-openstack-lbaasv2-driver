@@ -140,6 +140,30 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
 
         return return_agents
 
+    def get_agents_hosts_in_env(
+            self, context, plugin, env):
+        """Get an active agents in the specified environment."""
+        # TODO(xie)
+        # maybe replace： get_agent-id-hosting-the-lb
+        return_agents_hosts = []
+
+        with context.session.begin(subtransactions=True):
+            candidates = []
+            try:
+                candidates = plugin.db.get_lbaas_agents(context)
+            except Exception as ex:
+                LOG.error("Exception retrieving agent candidates for "
+                          "scheduling: {}".format(ex))
+
+            for candidate in candidates:
+                ac = self.deserialize_agent_configurations(
+                    candidate['configurations'])
+                if 'environment_prefix' in ac:
+                    if ac['environment_prefix'] == env:
+                        return_agents_hosts.append(candidate['host'])
+                        # TODO(xie) check form here later.
+        return return_agents_hosts
+
     def get_capacity(self, configurations):
         """Get environment capacity."""
         if 'environment_capacity_score' in configurations:
