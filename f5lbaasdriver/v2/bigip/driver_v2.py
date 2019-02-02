@@ -22,11 +22,11 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import importutils
 
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.plugins.common import constants as plugin_constants
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants as q_const
 
 from neutron_lbaas.db.loadbalancer import models
