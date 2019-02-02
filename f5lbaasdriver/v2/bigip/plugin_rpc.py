@@ -20,7 +20,7 @@ from f5lbaasdriver.v2.bigip import constants_v2 as constants
 from neutron.common import rpc as neutron_rpc
 from neutron.db import agents_db
 from neutron.db.models import agent as agents_model
-from neutron.plugins.common import constants as plugin_constants
+from neutron_lib import constants as plugin_constants
 
 from neutron_lbaas.db.loadbalancer import models
 from neutron_lbaas.services.loadbalancer import constants as nlb_constant
