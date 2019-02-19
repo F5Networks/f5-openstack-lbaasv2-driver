@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 
+from neutron.db import segments_db
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import models
 from oslo_log import log as logging
@@ -97,7 +98,7 @@ class DisconnectedService(object):
                             if level.driver in ('f5networks', 'huawei_ac_ml2'):
                                 LOG.debug('level with driver f5networks')
                                 segment = segments_db.get_segment_by_id(
-                                    context, level.segment_id
+                                    context.session, level.segment_id
                                 )
                                 LOG.debug(
                                     'vxlan 2 vlan seg id %s: segment %s'
