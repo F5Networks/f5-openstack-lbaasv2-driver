@@ -96,8 +96,8 @@ class DisconnectedService(object):
                         for level in levels:
                             if level.driver in ('f5networks', 'huawei_ac_ml2'):
                                 LOG.debug('level with driver f5networks')
-                                segment = segments_db.get_segment_by_id(
-                                    context, level.segment_id
+                                segment = db.get_segment_by_id(
+                                    context.session, level.segment_id
                                 )
                                 LOG.debug(
                                     'vxlan 2 vlan seg id %s: segment %s'
