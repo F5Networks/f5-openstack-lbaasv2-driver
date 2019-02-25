@@ -33,7 +33,6 @@ from neutron_lbaas.db.loadbalancer import models
 from neutron_lbaas.extensions import lbaas_agentschedulerv2
 
 from f5lbaasdriver.v2.bigip import agent_rpc
-from f5lbaasdriver.v2.bigip import constants_v2
 from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 from f5lbaasdriver.v2.bigip import neutron_client
 from f5lbaasdriver.v2.bigip import plugin_rpc
@@ -147,7 +146,6 @@ class EntityManager(object):
         self.driver = driver
         self.api_dict = None
         self.loadbalancer = None
-        self.resource = None
 
     def _call_rpc(self, context, entity, rpc_method):
         '''Perform operations common to create and delete for managers.'''
@@ -178,7 +176,6 @@ class EntityManager(object):
 
         raise F5NoAttachedLoadbalancerException()
 
-    @log_helpers.log_method_call
     def _schedule_agent_create_service(self, context):
         '''Schedule agent and build service--used for most managers.
 
@@ -192,18 +189,13 @@ class EntityManager(object):
             self.loadbalancer.id,
             self.driver.env
         )
-        # pzhang(NOTE): be caution: self.api_dict set implicitily
         service = self.driver.service_builder.build(
-            context, self.loadbalancer, agent,
-            target=self.api_dict, resource=self.resource)
+            context, self.loadbalancer, agent)
         return agent, service
 
 
 class LoadBalancerManager(EntityManager):
     """LoadBalancerManager class handles Neutron LBaaS CRUD."""
-    def __init__(self, driver):
-        super(LoadBalancerManager, self).__init__(driver)
-        self.resource = constants_v2.LOADBALANCER
 
     @log_helpers.log_method_call
     def create(self, context, loadbalancer):
@@ -348,9 +340,6 @@ class LoadBalancerManager(EntityManager):
 
 class ListenerManager(EntityManager):
     """ListenerManager class handles Neutron LBaaS listener CRUD."""
-    def __init__(self, driver):
-        super(ListenerManager, self).__init__(driver)
-        self.resource = constants_v2.LISTENER
 
     @log_helpers.log_method_call
     def create(self, context, listener):
@@ -367,15 +356,13 @@ class ListenerManager(EntityManager):
 
         driver = self.driver
         self.loadbalancer = listener.loadbalancer
-        self.api_dict = listener.to_dict(
-            loadbalancer=False, default_pool=False)
         try:
             agent_host, service = self._setup_crud(context, listener)
             driver.agent_rpc.update_listener(
                 context,
                 old_listener.to_dict(loadbalancer=False,
                                      default_pool=False),
-                self.api_dict,
+                listener.to_dict(loadbalancer=False, default_pool=False),
                 service,
                 agent_host
             )
@@ -395,9 +382,6 @@ class ListenerManager(EntityManager):
 
 class PoolManager(EntityManager):
     """PoolManager class handles Neutron LBaaS pool CRUD."""
-    def __init__(self, driver):
-        super(PoolManager, self).__init__(driver)
-        self.resource = constants_v2.POOL
 
     def _get_pool_dict(self, pool):
         pool_dict = pool.to_dict(
@@ -417,8 +401,6 @@ class PoolManager(EntityManager):
         """Create a pool."""
 
         self.loadbalancer = pool.loadbalancer
-        # pzhang(HACK): set self.api_dict here, but it is used
-        #               in method _schedule_agent_create_service
         self.api_dict = self._get_pool_dict(pool)
         self._call_rpc(context, pool, 'create_pool')
 
@@ -452,9 +434,6 @@ class PoolManager(EntityManager):
 
 class MemberManager(EntityManager):
     """MemberManager class handles Neutron LBaaS pool member CRUD."""
-    def __init__(self, driver):
-        super(MemberManager, self).__init__(driver)
-        self.resource = constants_v2.MEMBER
 
     @log_helpers.log_method_call
     def create(self, context, member):
@@ -531,9 +510,6 @@ class MemberManager(EntityManager):
 
 class HealthMonitorManager(EntityManager):
     """HealthMonitorManager class handles Neutron LBaaS monitor CRUD."""
-    def __init__(self, driver):
-        super(HealthMonitorManager, self).__init__(driver)
-        self.resource = constants_v2.HEALTHMONITOR
 
     @log_helpers.log_method_call
     def create(self, context, health_monitor):
@@ -573,9 +549,6 @@ class HealthMonitorManager(EntityManager):
 
 class L7PolicyManager(EntityManager):
     """L7PolicyManager class handles Neutron LBaaS L7 Policy CRUD."""
-    def __init__(self, driver):
-        super(L7PolicyManager, self).__init__(driver)
-        self.resource = constants_v2.L7POLICY
 
     @log_helpers.log_method_call
     def create(self, context, policy):
@@ -615,9 +588,6 @@ class L7PolicyManager(EntityManager):
 
 class L7RuleManager(EntityManager):
     """L7RuleManager class handles Neutron LBaaS L7 Rule CRUD."""
-    def __init__(self, driver):
-        super(L7RuleManager, self).__init__(driver)
-        self.resource = constants_v2.L7RULE
 
     @log_helpers.log_method_call
     def create(self, context, rule):

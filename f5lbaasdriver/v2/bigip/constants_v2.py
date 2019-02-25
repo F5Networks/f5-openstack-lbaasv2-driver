@@ -32,11 +32,3 @@ NET_CACHE_SECONDS = 1800
 
 # SUPPORTED PROVIDERNET TUNNEL NETWORK TYPES
 TUNNEL_TYPES = ['vxlan', 'gre']
-
-LOADBALANCER = "loadbalancer"
-LISTENER = "listener"
-POOL = "pool"
-MEMBER = "member"
-HEALTHMONITOR = "healthmonitor"
-L7POLICY = "l7policy"
-L7RULE = "l7rule"
