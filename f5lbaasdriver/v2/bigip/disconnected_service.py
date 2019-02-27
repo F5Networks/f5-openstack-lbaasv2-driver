@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 
+from neutron.db import segments_db
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import models
 from oslo_log import log as logging
@@ -81,3 +82,32 @@ class DisconnectedService(object):
                 data['physical_network'] = network['provider:physical_network']
 
         return data
+
+    def get_segment_id(self, context, port_id, agent_hosts):
+        try:
+            segment = None
+            if agent_hosts:
+                for host_id in agent_hosts:
+                    levels = db.get_binding_levels(
+                        context, port_id, host_id
+                    )
+                    if levels:
+                        LOG.debug('levels: %s binding host_id: %s' % (
+                            levels, host_id))
+                        for level in levels:
+                            if level.driver in ('f5networks', 'huawei_ac_ml2'):
+                                LOG.debug('level with driver f5networks')
+                                segment = segments_db.get_segment_by_id(
+                                    context.session, level.segment_id
+                                )
+                                LOG.debug(
+                                    'vxlan 2 vlan seg id %s: segment %s'
+                                    % (level.segment_id, segment)
+                                )
+                                if segment:
+                                    break
+            return segment
+        except Exception as exc:
+            LOG.error(
+                "could not get segment id by port %s and host %s, %s" % (
+                    port_id, agent_hosts, exc.message))
