@@ -49,7 +49,7 @@ class LBaaSv2PluginCallbacksRPC(object):
         if self.driver.env:
             topic = topic + "_" + self.driver.env
 
-        self.conn = neutron_rpc.create_connection()
+        self.conn = neutron_rpc.Connection()
 
         self.conn.create_consumer(
             topic,
