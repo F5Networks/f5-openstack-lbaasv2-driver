@@ -67,11 +67,11 @@ deploy:
   - provider: script
     skip_cleanup: true
     on:
-      branch: stable/pike
+      branch: stable/queens
       repo: F5Networks/f5-openstack-lbaasv2-driver
       condition: $TRAVIS_TAG = ""
     script:
-    - ./docs/scripts/deploy-docs.sh publish-product-docs-to-prod openstack/lbaasv2-driver pike
+    - ./docs/scripts/deploy-docs.sh publish-product-docs-to-prod openstack/lbaasv2-driver queens
   # For tagged releases, the docs publish at /products/openstack/lbaasv2-driver/<branch-name>/vX.Y
   # This section is commented out on the master branch because we don't need to publish tagged releases to /master
   - provider: script
@@ -80,4 +80,4 @@ deploy:
       tags: true
       repo: F5Networks/f5-openstack-lbaasv2-driver
     script:
-    - ./docs/scripts/deploy-docs.sh publish-product-docs-to-prod openstack/lbaasv2-driver/pike $RELEASE_TAG
+    - ./docs/scripts/deploy-docs.sh publish-product-docs-to-prod openstack/lbaasv2-driver/queens $RELEASE_TAG
