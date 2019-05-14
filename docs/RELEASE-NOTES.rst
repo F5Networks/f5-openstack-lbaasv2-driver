@@ -5,16 +5,18 @@
 Release Notes
 =============
 
-v12.0.0 (Pike)
---------------
+v13.0.0 (Queens)
+----------------
 
 Added Functionality
 ```````````````````
-* Added Pike support to F5 Driver.
+* Added Queens support to F5 Driver.
+* Added some HPB code to F5 Driver
 
 
 Bug Fixes
 `````````
+* Fix Unknown state set in error
 
 
 Limitations
