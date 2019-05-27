@@ -1,4 +1,4 @@
--c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=mitaka-eol
+-c https://opendev.org/openstack/requirements/raw/tag/mitaka-eol/upper-constraints.txt
 -e .
 git+https://github.com/openstack/neutron.git@mitaka-eol
 git+https://github.com/F5Networks/neutron-lbaas.git@stable/mitaka
@@ -14,7 +14,8 @@ pytest-cov==2.2.1
 # version.  The versions of these packages are specified at the constraints
 # URL.  If you add a version here it will be ignored, and therefore be
 # misleading to readers of this file.
--c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=mitaka-eol
+
+-c https://opendev.org/openstack/requirements/raw/tag/mitaka-eol/upper-constraints.txt
 
 mock==IGNORED      # See section comment
 decorator==IGNORED # See section comment
