@@ -173,7 +173,7 @@ class LBaaSv2ServiceBuilder(object):
             subnet_id
         )
         network_id = subnet['network_id']
-        network = self._get_network_cached(
+        network = self._get_member_network_cached(
             context,
             network_id
         )
@@ -236,6 +236,30 @@ class LBaaSv2ServiceBuilder(object):
                 network['provider:network_type'] = 'undefined'
             if 'provider:segmentation_id' not in network:
                 network['provider:segmentation_id'] = 0
+            self.net_cache[network_id] = network
+
+        return self.net_cache[network_id]
+
+    @log_helpers.log_method_call
+    def _get_member_network_cached(self, context, network_id):
+        """Retrieve network from cache or from Neutron."""
+        if network_id not in self.net_cache:
+            network = self.plugin.db._core_plugin.get_network(
+                context,
+                network_id
+            )
+            if 'provider:network_type' not in network:
+                network['provider:network_type'] = 'undefined'
+            if 'provider:segmentation_id' not in network:
+                network['provider:segmentation_id'] = 0
+            if 'segments' in network:
+                LOG.info("afred Begin net_dict is %s.", network)
+                for segment in network['segments']:
+                    if segment['provider:network_type'] == 'vlan':
+                        network['provider:network_type'] = 'vlan'
+                        network['provider:segmentation_id'] = segment['provider:segmentation_id']
+                        network['provider:physical_network'] = segment['provider:physical_network']
+                LOG.info("afred End net_dict is %s.", network)
             self.net_cache[network_id] = network
 
         return self.net_cache[network_id]
