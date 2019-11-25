@@ -36,8 +36,8 @@ setup(name='f5-openstack-lbaasv2-driver',
 
       # Runtime dependencies.
       install_requires=[],
-
-      packages=find_packages(),
+	
+      packages=find_packages(exclude=('test',)),
       classifiers=['Development Status :: 5 - Production/Stable',
                    'License :: OSI Approved :: Apache Software License',
                    'Operating System :: OS Independent',
