@@ -17,7 +17,7 @@ before_install:
 - git config --global user.name "Travis F5 Openstack"
 - docker pull f5devcentral/containthedocs:latest
 install:
-- pip install hacking pytest coverage
+- pip install hacking==1.1.0 pytest coverage
 - pip install -r requirements.test.txt
 script:
 - flake8 ./f5lbaasdriver
