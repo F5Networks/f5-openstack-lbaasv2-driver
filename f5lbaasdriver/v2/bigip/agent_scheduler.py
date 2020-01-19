@@ -1,6 +1,6 @@
 # coding=utf-8
 """Schedule agent to bind to a load balancer."""
-# Copyright 2016 F5 Networks Inc.
+# Copyright (c) 2016-2018, F5 Networks, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,12 +18,23 @@ from collections import defaultdict
 import json
 import random
 
+from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron_lbaas import agent_scheduler
 from neutron_lbaas.extensions import lbaas_agentschedulerv2
 
 LOG = logging.getLogger(__name__)
+
+OPTS = [
+    cfg.IntOpt(
+        'f5_agent_group_number',
+        default=1,
+        help='F5 LBaaS Agent group number'
+    )
+]
+
+cfg.CONF.register_opts(OPTS)
 
 
 class TenantScheduler(agent_scheduler.ChanceScheduler):
@@ -184,7 +195,6 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
 
     def schedule(self, plugin, context, loadbalancer_id, env=None):
         """Schedule the loadbalancer to an active loadbalancer agent.
-
         If there is no enabled agent hosting it.
         """
 
@@ -205,6 +215,27 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                           % (lbaas_agent['id']))
                 return lbaas_agent
 
+            if cfg.CONF.f5_agent_group_number <= 1:
+                group = None
+            else:
+                # If driver configuration explicitly declares two or more agent groups,
+                # the driver will attempts to assign request to a specific agent group
+                # according to the hash value of router id.
+                subnet = plugin.db._core_plugin.get_subnet(context, loadbalancer.vip_subnet_id)
+                filters = {
+                    'device_owner': ['network:router_interface'],
+                    'network_id': [subnet['network_id']]
+                }
+                ports = plugin.db._core_plugin.get_ports(context, filters)
+                # Assuming only one router is associated with a network
+                if ports and ports[0]['device_id']:
+                    group = ord(ports[0]['device_id'][-1]) % cfg.CONF.f5_agent_group_number + 1
+                    LOG.debug('Schedule agent in group %d', group)
+                else:
+                    LOG.error('Cannot find a router for subnet %s' % loadbalancer.vip_subnet_id)
+                    raise lbaas_agentschedulerv2.NoActiveLbaasAgent(
+                        loadbalancer_id=loadbalancer.id)
+
             # There is no existing loadbalancer agent binding.
             # Find all active agent candidates in this env.
             # We use environment_prefix to find F5® agents
@@ -213,6 +244,7 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                 context,
                 plugin,
                 env,
+                group=group,
                 active=True
             )
 
