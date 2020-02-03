@@ -5,12 +5,12 @@
 Release Notes
 =============
 
-v12.1.0 (Pike)
+v12.2.0 (Pike)
 --------------
 
 Added Functionality
 ```````````````````
-* Added some HPB code to F5 Driver.
+* Added bulk_create and bulk_delete pool member.
 
 
 Bug Fixes
