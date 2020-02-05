@@ -21,6 +21,7 @@ from oslo_config import cfg
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import importutils
+from oslo_concurrency import lockutils
 
 from neutron.callbacks import events
 from neutron.callbacks import registry
@@ -198,10 +199,14 @@ class LoadBalancerManager(EntityManager):
     """LoadBalancerManager class handles Neutron LBaaS CRUD."""
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('create', external=True)
     def create(self, context, loadbalancer):
         """Create a loadbalancer."""
         driver = self.driver
         self.loadbalancer = loadbalancer
+
+        LOG.debug('Object %s creates loadbalancer %s ' % (self,
+                                                          self.loadbalancer))
         try:
             agent, service = self._schedule_agent_create_service(context)
             agent_host = agent['host']
@@ -256,6 +261,7 @@ class LoadBalancerManager(EntityManager):
             raise e
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('update', external=True)
     def update(self, context, old_loadbalancer, loadbalancer):
         """Update a loadbalancer."""
         driver = self.driver
@@ -283,6 +289,7 @@ class LoadBalancerManager(EntityManager):
             raise e
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('delete', external=True)
     def delete(self, context, loadbalancer):
         """Delete a loadbalancer."""
         driver = self.driver
@@ -303,11 +310,13 @@ class LoadBalancerManager(EntityManager):
             raise e
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('refresh', external=True)
     def refresh(self, context, loadbalancer):
         """Refresh a loadbalancer."""
         pass
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('stats', external=True)
     def stats(self, context, loadbalancer):
         driver = self.driver
         try:
@@ -342,6 +351,7 @@ class ListenerManager(EntityManager):
     """ListenerManager class handles Neutron LBaaS listener CRUD."""
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('create', external=True)
     def create(self, context, listener):
         """Create a listener."""
 
@@ -351,6 +361,7 @@ class ListenerManager(EntityManager):
         self._call_rpc(context, listener, 'create_listener')
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('update', external=True)
     def update(self, context, old_listener, listener):
         """Update a listener."""
 
@@ -371,6 +382,7 @@ class ListenerManager(EntityManager):
             raise e
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('delete', external=True)
     def delete(self, context, listener):
         """Delete a listener."""
 
@@ -397,6 +409,7 @@ class PoolManager(EntityManager):
         return pool_dict
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('create', external=True)
     def create(self, context, pool):
         """Create a pool."""
 
@@ -405,6 +418,7 @@ class PoolManager(EntityManager):
         self._call_rpc(context, pool, 'create_pool')
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('update', external=True)
     def update(self, context, old_pool, pool):
         """Update a pool."""
 
@@ -424,6 +438,7 @@ class PoolManager(EntityManager):
             raise e
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('delete', external=True)
     def delete(self, context, pool):
         """Delete a pool."""
 
@@ -436,6 +451,7 @@ class MemberManager(EntityManager):
     """MemberManager class handles Neutron LBaaS pool member CRUD."""
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('create', external=True)
     def create(self, context, member):
         """Create a member."""
 
@@ -475,6 +491,7 @@ class MemberManager(EntityManager):
                 LOG.error('port_id seems none')
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('update', external=True)
     def update(self, context, old_member, member):
         """Update a member."""
 
@@ -494,6 +511,7 @@ class MemberManager(EntityManager):
             raise e
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('delete', external=True)
     def delete(self, context, member):
         """Delete a member."""
         self.loadbalancer = member.pool.loadbalancer
@@ -512,6 +530,7 @@ class HealthMonitorManager(EntityManager):
     """HealthMonitorManager class handles Neutron LBaaS monitor CRUD."""
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('create', external=True)
     def create(self, context, health_monitor):
         """Create a health monitor."""
 
@@ -520,6 +539,7 @@ class HealthMonitorManager(EntityManager):
         self._call_rpc(context, health_monitor, 'create_health_monitor')
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('update', external=True)
     def update(self, context, old_health_monitor, health_monitor):
         """Update a health monitor."""
 
@@ -539,6 +559,7 @@ class HealthMonitorManager(EntityManager):
             raise e
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('delete', external=True)
     def delete(self, context, health_monitor):
         """Delete a health monitor."""
 
@@ -551,6 +572,7 @@ class L7PolicyManager(EntityManager):
     """L7PolicyManager class handles Neutron LBaaS L7 Policy CRUD."""
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('create', external=True)
     def create(self, context, policy):
         """Create an L7 policy."""
 
@@ -559,6 +581,7 @@ class L7PolicyManager(EntityManager):
         self._call_rpc(context, policy, 'create_l7policy')
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('update', external=True)
     def update(self, context, old_policy, policy):
         """Update a policy."""
 
@@ -578,6 +601,7 @@ class L7PolicyManager(EntityManager):
             raise e
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('delete', external=True)
     def delete(self, context, policy):
         """Delete a policy."""
 
@@ -590,6 +614,7 @@ class L7RuleManager(EntityManager):
     """L7RuleManager class handles Neutron LBaaS L7 Rule CRUD."""
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('create', external=True)
     def create(self, context, rule):
         """Create an L7 rule."""
 
@@ -598,6 +623,7 @@ class L7RuleManager(EntityManager):
         self._call_rpc(context, rule, 'create_l7rule')
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('update', external=True)
     def update(self, context, old_rule, rule):
         """Update a rule."""
 
@@ -617,6 +643,7 @@ class L7RuleManager(EntityManager):
             raise e
 
     @log_helpers.log_method_call
+    @lockutils.synchronized('delete', external=True)
     def delete(self, context, rule):
         """Delete a rule."""
 
