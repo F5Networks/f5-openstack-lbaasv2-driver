@@ -195,7 +195,8 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
 
     def schedule(self, plugin, context, loadbalancer_id, env=None):
         """Schedule the loadbalancer to an active loadbalancer agent.
-        If there is no enabled agent hosting it.
+
+        if there is no enabled agent hosting it.
         """
 
         with context.session.begin(subtransactions=True):
@@ -218,10 +219,14 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
             if cfg.CONF.f5_agent_group_number <= 1:
                 group = None
             else:
-                # If driver configuration explicitly declares two or more agent groups,
-                # the driver will attempts to assign request to a specific agent group
+                # If driver configuration explicitly
+                # declares two or more agent groups,
+                # the driver will attempts to assign
+                # request to a specific agent group
                 # according to the hash value of router id.
-                subnet = plugin.db._core_plugin.get_subnet(context, loadbalancer.vip_subnet_id)
+                subnet = plugin.db._core_plugin.get_subnet(
+                    context,
+                    loadbalancer.vip_subnet_id)
                 filters = {
                     'device_owner': ['network:router_interface'],
                     'network_id': [subnet['network_id']]
@@ -229,10 +234,12 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                 ports = plugin.db._core_plugin.get_ports(context, filters)
                 # Assuming only one router is associated with a network
                 if ports and ports[0]['device_id']:
-                    group = ord(ports[0]['device_id'][-1]) % cfg.CONF.f5_agent_group_number + 1
+                    group = ord(ports[0]['device_id'][-1]
+                                ) % cfg.CONF.f5_agent_group_number + 1
                     LOG.debug('Schedule agent in group %d', group)
                 else:
-                    LOG.error('Cannot find a router for subnet %s' % loadbalancer.vip_subnet_id)
+                    LOG.error('Cannot find a router for subnet %s' %
+                              loadbalancer.vip_subnet_id)
                     raise lbaas_agentschedulerv2.NoActiveLbaasAgent(
                         loadbalancer_id=loadbalancer.id)
 

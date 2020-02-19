@@ -257,8 +257,10 @@ class LBaaSv2ServiceBuilder(object):
                 for segment in network['segments']:
                     if segment['provider:network_type'] == 'vlan':
                         network['provider:network_type'] = 'vlan'
-                        network['provider:segmentation_id'] = segment['provider:segmentation_id']
-                        network['provider:physical_network'] = segment['provider:physical_network']
+                        network['provider:segmentation_id'] = segment[
+                            'provider:segmentation_id']
+                        network['provider:physical_network'] = segment[
+                            'provider:physical_network']
                 LOG.info("afred End net_dict is %s.", network)
             self.net_cache[network_id] = network
 
