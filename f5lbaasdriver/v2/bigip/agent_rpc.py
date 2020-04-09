@@ -19,7 +19,7 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 import oslo_messaging as messaging
 
-from neutron.common import rpc
+from neutron_lib import rpc
 
 from f5lbaasdriver.v2.bigip import constants_v2 as constants
 

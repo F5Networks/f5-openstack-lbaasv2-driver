@@ -17,7 +17,7 @@ u"""RPC Callbacks for F5® LBaaSv2 Plugins."""
 
 from f5lbaasdriver.v2.bigip import constants_v2 as constants
 
-from neutron.common import rpc as neutron_rpc
+from neutron_lib import rpc as neutron_rpc
 from neutron.db import agents_db
 from neutron.db.models import agent as agents_model
 from neutron_lib import constants as plugin_constants
