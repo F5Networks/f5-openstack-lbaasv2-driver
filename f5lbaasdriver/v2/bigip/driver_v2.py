@@ -148,11 +148,11 @@ class EntityManager(object):
         self.api_dict = None
         self.loadbalancer = None
 
-    def _call_rpc(self, context, entity, rpc_method):
+    def _call_rpc(self, context, entity, rpc_method, **kwargs):
         '''Perform operations common to create and delete for managers.'''
 
         try:
-            agent_host, service = self._setup_crud(context, entity)
+            agent_host, service = self._setup_crud(context, entity, **kwargs)
             rpc_callable = getattr(self.driver.agent_rpc, rpc_method)
             rpc_callable(context, self.api_dict, service, agent_host)
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
@@ -162,7 +162,7 @@ class EntityManager(object):
             LOG.error("Exception: %s: %s" % (rpc_method, e))
             raise e
 
-    def _setup_crud(self, context, entity):
+    def _setup_crud(self, context, entity, **kwargs):
         '''Setup CRUD operations for managers to make calls to agent.
 
         :param context: auth context for performing CRUD operation
@@ -172,12 +172,12 @@ class EntityManager(object):
         '''
 
         if entity.attached_to_loadbalancer() and self.loadbalancer:
-            (agent, service) = self._schedule_agent_create_service(context)
+            (agent, service) = self._schedule_agent_create_service(context, entity, **kwargs)
             return agent['host'], service
 
         raise F5NoAttachedLoadbalancerException()
 
-    def _schedule_agent_create_service(self, context):
+    def _schedule_agent_create_service(self, context, entity=None, **kwargs):
         '''Schedule agent and build service--used for most managers.
 
         :param context: auth context for performing crud operation
@@ -191,7 +191,7 @@ class EntityManager(object):
             self.driver.env
         )
         service = self.driver.service_builder.build(
-            context, self.loadbalancer, agent)
+            context, self.loadbalancer, agent, **kwargs)
         return agent, service
 
 
@@ -349,7 +349,17 @@ class ListenerManager(EntityManager):
         self.loadbalancer = listener.loadbalancer
         self.api_dict = listener.to_dict(
             loadbalancer=False, default_pool=False)
-        self._call_rpc(context, listener, 'create_listener')
+
+        def append_listeners(context, loadbalancer, service):
+            self._append_listeners(context, service, listener)
+
+        # Only need listener info
+        self._call_rpc(context, listener, 'create_listener',
+            append_listeners=append_listeners,
+            append_pools_monitors=lambda *args: None,
+            append_members=lambda *args: None,
+            append_l7policies=lambda *args: None
+        )
 
     @log_helpers.log_method_call
     def update(self, context, old_listener, listener):
@@ -378,7 +388,25 @@ class ListenerManager(EntityManager):
         self.loadbalancer = listener.loadbalancer
         self.api_dict = listener.to_dict(
             loadbalancer=False, default_pool=False)
-        self._call_rpc(context, listener, 'delete_listener')
+
+        def append_listeners(context, loadbalancer, service):
+            self._append_listeners(context, service, listener)
+
+        # Only need listener info
+        self._call_rpc(context, listener, 'delete_listener',
+            append_listeners=append_listeners,
+            append_pools_monitors=lambda *args: None,
+            append_members=lambda *args: None,
+            append_l7policies=lambda *args: None
+        )
+
+    def _append_listeners(self, context, service, listener):
+        listener_dict = listener.to_dict(
+            loadbalancer=False,
+            default_pool=False,
+            l7_policies=False
+        )
+        service['listeners'] = [listener_dict]
 
 
 class PoolManager(EntityManager):
