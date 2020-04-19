@@ -97,7 +97,8 @@ class DisconnectedService(object):
                             levels, host_id))
                         for level in levels:
                             if level.driver in ('f5networks', 'huawei_ac_ml2'):
-                                LOG.debug('level with driver f5networks')
+                                LOG.info('level with driver:')
+                                LOG.info(level.driver)
                                 segment = segments_db.get_segment_by_id(
                                     context, level.segment_id
                                 )
@@ -108,6 +109,30 @@ class DisconnectedService(object):
                                 if segment:
                                     break
             return segment
+        except Exception as exc:
+            LOG.error(
+                "could not get segment id by port %s and host %s, %s" % (
+                    port_id, agent_hosts, exc.message))
+
+    def get_zte_segment(self, context, network):
+        try:
+            zte_segment = None
+
+            LOG.info('inside of get_zte_segment')
+            LOG.info('to get the segment')
+            network_segments = segments_db.get_network_segments(
+                context, network['id'], filter_dynamic=True
+            )
+            LOG.info('network_segments from db is:')
+            LOG.info(network_segments)
+
+            for each_seg in network_segments:
+                if each_seg['network_type'].lower() == 'vlan':
+                    zte_segment = each_seg
+                    break
+
+            return zte_segment
+
         except Exception as exc:
             LOG.error(
                 "could not get segment id by port %s and host %s, %s" % (

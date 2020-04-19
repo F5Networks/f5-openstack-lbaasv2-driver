@@ -95,17 +95,11 @@ class LBaaSv2ServiceBuilder(object):
                 agent['configurations'])
             if self.driver.unlegacy_setting_placeholder_driver_side:
                 LOG.debug('not legacy way of populating member:')
-                agent_hosts = self.driver.scheduler.get_agents_hosts_in_env(
-                    context, self.driver.plugin, self.driver.env
-                )
-                LOG.debug('agent_hosts details:')
-                LOG.debug(agent_hosts)
 
-                segment_data = self.disconnected_service.get_segment_id(
-                    context, service['loadbalancer']['vip_port_id'],
-                    agent_hosts
+                segment_data = self.disconnected_service.get_zte_segment(
+                    context, network
                 )
-                LOG.debug('segment_data obtained from get_segment_id is:')
+                LOG.debug('segment_data obtained is:')
                 LOG.debug(segment_data)
             else:
                 segment_data = self.disconnected_service.get_network_segment(
@@ -260,33 +254,20 @@ class LBaaSv2ServiceBuilder(object):
                     segment_data.get('physical_network', None)
         else:
             LOG.debug('not legacy way of populating member:')
-            agent_hosts = self.driver.scheduler.get_agents_hosts_in_env(
-                context, self.driver.plugin, self.driver.env
+            segment_data = self.disconnected_service.get_zte_segment(
+                context, network
             )
-            LOG.debug('agent_hosts details:')
-            LOG.debug(agent_hosts)
+            LOG.debug('segment_data obtained for member:')
+            LOG.debug(segment_data)
 
-            for host_id in agent_hosts:
-                filters = {
-                    'device_owner': ['network:f5lbaasv2'],
-                    'fixed_ips': {'subnet_id': [member['subnet_id']]},
-                    'binding:host_id': [host_id]
-                    }
-                port = self.plugin.db._core_plugin.get_ports(context, filters)
-                if port:
-                    port_id = port[0]['id']
-                    segment_data = self.disconnected_service.get_segment_id(
-                        context, port_id, agent_hosts)
-                    LOG.debug('member segment data: %s' % segment_data)
-                    if segment_data:
-                        LOG.debug('unlegacy segment_data: %s' % segment_data)
-                        network['provider:segmentation_id'] = \
-                            segment_data.get('segmentation_id', None)
-                        network['provider:network_type'] = \
-                            segment_data.get('network_type', None)
-                        network['provider:physical_network'] = \
-                            segment_data.get('physical_network', None)
-                        break
+            if segment_data:
+                LOG.debug('unlegacy segment_data: %s' % segment_data)
+                network['provider:segmentation_id'] = \
+                    segment_data.get('segmentation_id', None)
+                network['provider:network_type'] = \
+                    segment_data.get('network_type', None)
+                network['provider:physical_network'] = \
+                    segment_data.get('physical_network', None)
 
         net_type = network.get('provider:network_type', "undefined")
         if net_type == 'vxlan':

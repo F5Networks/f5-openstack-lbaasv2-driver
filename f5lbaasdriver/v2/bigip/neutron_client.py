@@ -58,7 +58,7 @@ class F5NetworksNeutronClient(object):
                     'mac_address': mac_address,
                     'admin_state_up': True,
                     'device_id': "",
-                    'device_owner': 'network:f5lbaasv2',
+                    'device_owner': 'F5:lbaasv2',
                     'status': neutron_const.PORT_STATUS_ACTIVE,
                     'fixed_ips': fixed_ips
                 }

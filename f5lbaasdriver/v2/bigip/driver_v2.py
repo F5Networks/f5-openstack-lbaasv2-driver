@@ -60,7 +60,7 @@ OPTS = [
     ),
     cfg.StrOpt(
         'unlegacy_setting_placeholder_driver_side',
-        default=None,
+        default='special_driver_side',
         help=('used in certain hpb cases to differenciate legacy scenarios')
     )
 ]
@@ -130,6 +130,7 @@ class F5DriverV2(object):
             LOG.debug("F5DriverV2 with env %s received post neutron child "
                       "fork notification pid(%d) print trigger(%s)" % (
                           self.env, os.getpid(), trigger))
+            # check this later
             self.plugin_rpc.create_rpc_listener()
 
         post_fork_callback.__name__ += '_' + str(self.env)
@@ -217,7 +218,7 @@ class LoadBalancerManager(EntityManager):
                 # Update the port for the VIP to show ownership by this driver
                 port_data = {
                     'admin_state_up': True,
-                    'device_owner': 'network:f5lbaasv2',
+                    'device_owner': 'F5:lbaasv2',
                     'status': q_const.PORT_STATUS_ACTIVE
                 }
                 port_data[portbindings.HOST_ID] = agent_host
@@ -456,7 +457,7 @@ class MemberManager(EntityManager):
                     'mac_address': n_const.ATTR_NOT_SPECIFIED,
                     'fixed_ips': n_const.ATTR_NOT_SPECIFIED,
                     'device_id': member.id,
-                    'device_owner': 'network:f5lbaasv2',
+                    'device_owner': 'F5:lbaasv2',
                     'admin_state_up': member.admin_state_up,
                     'name': 'fake_pool_port_' + member.id,
                     portbindings.HOST_ID: agent_host}})
@@ -515,7 +516,7 @@ class MemberManager(EntityManager):
                         'mac_address': n_const.ATTR_NOT_SPECIFIED,
                         'fixed_ips': n_const.ATTR_NOT_SPECIFIED,
                         'device_id': member.id,
-                        'device_owner': 'network:f5lbaasv2',
+                        'device_owner': 'F5:lbaasv2',
                         'admin_state_up': member.admin_state_up,
                         'name': 'fake_pool_port_' + member.id,
                         portbindings.HOST_ID: agent_host}})

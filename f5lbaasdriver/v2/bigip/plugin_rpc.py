@@ -51,6 +51,7 @@ class LBaaSv2PluginCallbacksRPC(object):
 
         self.conn = neutron_rpc.create_connection()
 
+        # check this later
         self.conn.create_consumer(
             topic,
             [self, agents_db.AgentExtRpcCallback(self.driver.plugin.db)],
@@ -533,7 +534,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                     'network_id': subnet['network_id'],
                     'mac_address': mac_address,
                     'admin_state_up': True,
-                    'device_owner': 'network:f5lbaasv2',
+                    'device_owner': 'F5:lbaasv2',
                     'status': neutron_const.PORT_STATUS_ACTIVE,
                     'fixed_ips': fixed_ips
                 }
@@ -696,7 +697,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                 'network_id': network_id,
                 'mac_address': mac_address,
                 'admin_state_up': True,
-                'device_owner': 'network:f5lbaasv2',
+                'device_owner': 'F5:lbaasv2',
                 'status': neutron_const.PORT_STATUS_ACTIVE,
                 'fixed_ips': neutron_const.ATTR_NOT_SPECIFIED
             }
