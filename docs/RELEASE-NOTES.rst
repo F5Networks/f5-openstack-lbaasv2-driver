@@ -5,17 +5,17 @@
 Release Notes
 =============
 
-v12.1.0 (Pike)
+v112.2.0 (Pike)
 --------------
 
 Added Functionality
 ```````````````````
-* Added some HPB code to F5 Driver.
+* Added bulk creation and deletion.
 
 
 Bug Fixes
 `````````
-* Fix Unknown state set in error
+* None noted.
 
 
 Limitations
