@@ -117,12 +117,13 @@ def subnet():
 def test_get_l7policies(listeners, l7policies):
     """Test that get_l7policies returns valid list of dict"""
     context = mock.MagicMock()
+    lb = mock.MagicMock()
     driver = mock.MagicMock()
 
     service_builder = LBaaSv2ServiceBuilder(driver)
     service_builder.driver.plugin.db.get_l7policies = \
         mock.MagicMock(return_value=l7policies)
-    policies = service_builder._get_l7policies(context, listeners)
+    policies = service_builder._get_l7policies(context, lb, listeners)
 
     assert len(policies) > 0
     assert policies[0] is l7policies[0]
@@ -131,13 +132,14 @@ def test_get_l7policies(listeners, l7policies):
 def test_get_l7policies_filter(listeners):
     """Test that get_l7policies() is called with filter of listener IDs"""
     context = mock.MagicMock()
+    lb = mock.MagicMock()
     driver = mock.MagicMock()
 
     # construct an equivalent filter to what service_builder should use
     filters = {'listener_id': [l['id'] for l in listeners]}
 
     service_builder = LBaaSv2ServiceBuilder(driver)
-    service_builder._get_l7policies(context, listeners)
+    service_builder._get_l7policies(context, lb, listeners)
 
     # assert that the expected filter was used
     service_builder.driver.plugin.db.get_l7policies.assert_called_with(
@@ -147,11 +149,12 @@ def test_get_l7policies_filter(listeners):
 def test_get_l7policies_no_listeners():
     """Test that an empty listener list input returns an empty policy list."""
     context = mock.MagicMock()
+    lb = mock.MagicMock()
     driver = mock.MagicMock()
     listeners = []
 
     service_builder = LBaaSv2ServiceBuilder(driver)
-    l7policies = service_builder._get_l7policies(context, listeners)
+    l7policies = service_builder._get_l7policies(context, lb, listeners)
 
     assert not l7policies
 
@@ -159,13 +162,14 @@ def test_get_l7policies_no_listeners():
 def test_get_l7policy_rules(l7policies, l7rules):
     """Test that get_l7policies returns valid list of dict"""
     context = mock.MagicMock()
+    lb = mock.MagicMock()
     driver = mock.MagicMock()
 
     service_builder = LBaaSv2ServiceBuilder(driver)
     service_builder.driver.plugin.db.get_l7policy_rules = mock.MagicMock(
         return_value=l7rules)
 
-    rules = service_builder._get_l7policy_rules(context, l7policies)
+    rules = service_builder._get_l7policy_rules(context, lb, l7policies)
 
     assert len(rules) > 0
     assert rules[0] is l7rules[0].to_api_dict()
@@ -174,10 +178,11 @@ def test_get_l7policy_rules(l7policies, l7rules):
 def test_get_l7policy_rules_filter(l7policies):
     """Test that get_l7policy_rules() is called with filter of l7policy IDs"""
     context = mock.MagicMock()
+    lb = mock.MagicMock()
     driver = mock.MagicMock()
 
     service_builder = LBaaSv2ServiceBuilder(driver)
-    service_builder._get_l7policy_rules(context, l7policies)
+    service_builder._get_l7policy_rules(context, lb, l7policies)
 
     assert service_builder.driver.plugin.db.get_l7policy_rules.call_args_list \
         == [mock.call(context, l7policies[0]['id']),
@@ -187,11 +192,12 @@ def test_get_l7policy_rules_filter(l7policies):
 def test_get_l7policy_rules_no_policies():
     """Test that an empty policies input list returns an empty rule list."""
     context = mock.MagicMock()
+    lb = mock.MagicMock()
     driver = mock.MagicMock()
     l7policies = []
 
     service_builder = LBaaSv2ServiceBuilder(driver)
-    rules = service_builder._get_l7policy_rules(context, l7policies)
+    rules = service_builder._get_l7policy_rules(context, lb, l7policies)
 
     assert not rules
 
@@ -200,6 +206,7 @@ def test_get_l7policies_more_than_one_listener_error(
         listeners, two_listener_l7policies):
     """Exception is raised when > 1 listener for a policy."""
     context = mock.MagicMock()
+    lb = mock.MagicMock()
     driver = mock.MagicMock()
 
     service_builder = LBaaSv2ServiceBuilder(driver)
@@ -207,7 +214,7 @@ def test_get_l7policies_more_than_one_listener_error(
         return_value=two_listener_l7policies)
 
     with pytest.raises(f5_exc.PolicyHasMoreThanOneListener) as ex:
-        service_builder._get_l7policies(context, listeners)
+        service_builder._get_l7policies(context, lb, listeners)
     assert 'A policy should have only one listener, but found 2 for policy ' +\
         two_listener_l7policies[0].id in ex.value.message
 
@@ -216,6 +223,7 @@ def test_get_l7policy_rules_more_than_one_policy(
         l7policies, two_policy_l7rules):
     """Exception is raised when > 1 policy for a rule."""
     context = mock.MagicMock()
+    lb = mock.MagicMock()
     driver = mock.MagicMock()
 
     service_builder = LBaaSv2ServiceBuilder(driver)
@@ -223,7 +231,7 @@ def test_get_l7policy_rules_more_than_one_policy(
         return_value=two_policy_l7rules)
 
     with pytest.raises(f5_exc.RuleHasMoreThanOnePolicy) as ex:
-        service_builder._get_l7policy_rules(context, l7policies)
+        service_builder._get_l7policy_rules(context, lb, l7policies)
     assert 'A rule should have only one policy, but found 2 for rule ' + \
            two_policy_l7rules[0].id in ex.value.message
 
@@ -261,6 +269,7 @@ def test_get_pools(loadbalancer, pools, monitors):
 
 def test_get_members(pools, members):
     context = mock.MagicMock()
+    lb = mock.MagicMock()
     driver = mock.MagicMock()
     subnet_map = mock.MagicMock()
     network_map = mock.MagicMock()
@@ -269,7 +278,7 @@ def test_get_members(pools, members):
     service_builder.driver.plugin.db._get_members = \
         mock.MagicMock(return_value=members)
 
-    test_members = service_builder._get_members(context, pools,
+    test_members = service_builder._get_members(context, lb, pools,
                                                 subnet_map, network_map)
 
     for test_member, member in zip(test_members, members):

@@ -43,6 +43,11 @@ from time import time
 LOG = logging.getLogger(__name__)
 
 OPTS = [
+    cfg.IntOpt(
+        'f5_driver_perf_mode',
+        default=0,
+        help=('switch driver performance mode from 0 to 3')
+    ),
     cfg.StrOpt(
         'f5_loadbalancer_pool_scheduler_driver_v2',
         default=(
