@@ -5,12 +5,12 @@
 Release Notes
 =============
 
-v12.2.0 (Pike)
+v312.2.0 (Pike)
 --------------
 
 Added Functionality
 ```````````````````
-* Added bulk_create and bulk_delete pool member.
+* zte integrations
 
 
 Bug Fixes

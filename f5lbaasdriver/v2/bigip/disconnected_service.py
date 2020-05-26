@@ -135,5 +135,4 @@ class DisconnectedService(object):
 
         except Exception as exc:
             LOG.error(
-                "could not get segment id by port %s and host %s, %s" % (
-                    port_id, agent_hosts, exc.message))
+                "could not get segment id, %s" % (exc.message))
