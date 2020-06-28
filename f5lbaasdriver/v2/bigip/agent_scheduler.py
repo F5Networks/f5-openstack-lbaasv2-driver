@@ -18,12 +18,23 @@ from collections import defaultdict
 import json
 import random
 
+from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron_lbaas import agent_scheduler
 from neutron_lbaas.extensions import lbaas_agentschedulerv2
 
 LOG = logging.getLogger(__name__)
+
+OPTS = [
+    cfg.IntOpt(
+        'f5_agent_group_number',
+        default=1,
+        help='F5 LBaaS Agent group number'
+    )
+]
+
+cfg.CONF.register_opts(OPTS)
 
 
 class TenantScheduler(agent_scheduler.ChanceScheduler):
@@ -305,4 +316,149 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                       {'loadbalancer_id': loadbalancer.id,
                        'agent_id': chosen_agent['id']})
 
+            return chosen_agent
+
+
+class MultiAgentScheduler(TenantScheduler):
+
+    def __init__(self):
+        super(MultiAgentScheduler, self).__init__()
+
+    def schedule(self, plugin, context, loadbalancer_id, env=None):
+        with context.session.begin(subtransactions=True):
+            loadbalancer = plugin.db.get_loadbalancer(context, loadbalancer_id)
+            # If the loadbalancer is hosted on an active agent
+            # already, return that agent or one in its env
+            lbaas_agent = self.get_lbaas_agent_hosting_loadbalancer(
+                plugin,
+                context,
+                loadbalancer.id,
+                env
+            )
+            if lbaas_agent:
+                lbaas_agent = lbaas_agent['agent']
+                LOG.debug(' Assigning task to agent %s.'
+                          % (lbaas_agent['id']))
+                return lbaas_agent
+
+            if cfg.CONF.f5_agent_group_number <= 1:
+                group = None
+            else:
+                # If driver configuration explicitly
+                # declares two or more agent groups,
+                # the driver will attempts to assign
+                # request to a specific agent group
+                # according to the hash value of router id.
+                subnet = plugin.db._core_plugin.get_subnet(
+                    context,
+                    loadbalancer.vip_subnet_id
+                )
+                filters = {
+                    'device_owner': ['network:router_interface'],
+                    'network_id': [subnet['network_id']]
+                }
+                ports = plugin.db._core_plugin.get_ports(context, filters)
+                # Assuming only one router is associated with a network
+                if ports and ports[0]['device_id']:
+                    group = ord(
+                        ports[0]['device_id'][-1]
+                    ) % cfg.CONF.f5_agent_group_number + 1
+                    LOG.debug('Schedule agent in group %d', group)
+                else:
+                    LOG.error(
+                        'Cannot find a router for subnet %s' %
+                        loadbalancer.vip_subnet_id)
+                    raise lbaas_agentschedulerv2.NoActiveLbaasAgent(
+                        loadbalancer_id=loadbalancer.id)
+
+            # There is no existing loadbalancer agent binding.
+            # Find all active agent candidates in this env.
+            # We use environment_prefix to find F5® agents
+            # rather then map to the agent binary name.
+            candidates = self.get_agents_in_env(
+                context,
+                plugin,
+                env,
+                group=group,
+                active=True
+            )
+
+            LOG.debug("candidate agents: %s", candidates)
+            if len(candidates) == 0:
+                LOG.error('No f5 lbaas agents are active for env %s' % env)
+                raise lbaas_agentschedulerv2.NoActiveLbaasAgent(
+                    loadbalancer_id=loadbalancer.id)
+            # We have active candidates to choose from.
+            # Qualify them by tenant affinity and then capacity.
+            chosen_agent = None
+            agents_by_group = defaultdict(list)
+            capacity_by_group = {}
+            for candidate in candidates:
+                # Organize agents by their environment group
+                # and collect each group's max capacity.
+                ac = self.deserialize_agent_configurations(
+                    candidate['configurations']
+                )
+                gn = 1
+                if 'environment_group_number' in ac:
+                    gn = ac['environment_group_number']
+                agents_by_group[gn].append(candidate)
+                # populate each group's capacity
+                group_capacity = self.get_capacity(ac)
+                if gn not in capacity_by_group:
+                    capacity_by_group[gn] = group_capacity
+                else:
+                    if group_capacity > capacity_by_group[gn]:
+                        capacity_by_group[gn] = group_capacity
+                # Do we already have this tenant assigned to this
+                # agent candidate? If we do and it has capacity
+                # then assign this loadbalancer to this agent.
+                assigned_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
+                    context, candidate['id'])
+                for assigned_lb in assigned_lbs:
+                    if loadbalancer.tenant_id == assigned_lb.tenant_id:
+                        chosen_agent = candidate
+                        break
+                if chosen_agent:
+                    # Does the agent which had tenants assigned
+                    # to it still have capacity?
+                    if group_capacity >= 1.0:
+                        chosen_agent = None
+                    else:
+                        break
+            # If we don't have an agent with capacity associated
+            # with our tenant_id, let's pick an agent based on
+            # the group with the lowest capacity score.
+            if not chosen_agent:
+                # lets get an agent from the group with the
+                # lowest capacity score
+                lowest_utilization = 1.0
+                selected_group = 1
+                for group, capacity in capacity_by_group.items():
+                    if capacity < lowest_utilization:
+                        lowest_utilization = capacity
+                        selected_group = group
+                LOG.debug('%s group %s scheduled with capacity %s'
+                          % (env, selected_group, lowest_utilization))
+                if lowest_utilization < 1.0:
+                    # Choose a agent in the env group for this
+                    # tenant at random.
+                    chosen_agent = random.choice(
+                        agents_by_group[selected_group]
+                    )
+            # If there are no agents with available capacity, raise exception
+            if not chosen_agent:
+                LOG.warn('No capacity left on any agents in env: %s' % env)
+                LOG.warn('Group capacity in environment %s were %s.'
+                         % (env, capacity_by_group))
+                raise lbaas_agentschedulerv2.NoEligibleLbaasAgent(
+                    loadbalancer_id=loadbalancer.id)
+            binding = agent_scheduler.LoadbalancerAgentBinding()
+            binding.agent = chosen_agent
+            binding.loadbalancer_id = loadbalancer.id
+            context.session.add(binding)
+            LOG.debug(('Loadbalancer %(loadbalancer_id)s is scheduled to '
+                       'lbaas agent %(agent_id)s'),
+                      {'loadbalancer_id': loadbalancer.id,
+                       'agent_id': chosen_agent['id']})
             return chosen_agent
