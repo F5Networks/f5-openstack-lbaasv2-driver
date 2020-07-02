@@ -134,12 +134,12 @@ class LBaaSv2ServiceBuilder(object):
             if (agent and not self._valid_tenant_ids(network,
                                                      loadbalancer.tenant_id,
                                                      agent)):
-                LOG.error("Creating a loadbalancer %s for tenant %s on a"
-                          "  non-shared network %s owned by %s." % (
-                              loadbalancer.id,
-                              loadbalancer.tenant_id,
-                              network['id'],
-                              network['tenant_id']))
+                LOG.warning("Creating a loadbalancer %s for tenant %s on a"
+                            "  non-shared network %s owned by %s." % (
+                                loadbalancer.id,
+                                loadbalancer.tenant_id,
+                                network['id'],
+                                network['tenant_id']))
 
             # Get the network VTEPs if the network provider type is
             # either gre or vxlan.
@@ -219,7 +219,7 @@ class LBaaSv2ServiceBuilder(object):
             return project.qos
 
         except Exception as e:
-            LOG.error('Exception: Get keystone project: %s', e.message)
+            LOG.warning('Exception: Get keystone project: %s', e.message)
             return ''
 
     @log_helpers.log_method_call
@@ -278,8 +278,10 @@ class LBaaSv2ServiceBuilder(object):
                 for segment in network['segments']:
                     if segment['provider:network_type'] == 'vlan':
                         network['provider:network_type'] = 'vlan'
-                        network['provider:segmentation_id'] = segment['provider:segmentation_id']
-                        network['provider:physical_network'] = segment['provider:physical_network']
+                        network['provider:segmentation_id'] = segment[
+                            'provider:segmentation_id']
+                        network['provider:physical_network'] = segment[
+                            'provider:physical_network']
                 LOG.info("afred End net_dict is %s.", network)
             self.net_cache[network_id] = network
 
