@@ -136,7 +136,7 @@ def test_get_l7policies_filter(listeners):
     driver = mock.MagicMock()
 
     # construct an equivalent filter to what service_builder should use
-    filters = {'listener_id': [l['id'] for l in listeners]}
+    filters = {'listener_id': [listener['id'] for listener in listeners]}
 
     service_builder = LBaaSv2ServiceBuilder(driver)
     service_builder._get_l7policies(context, lb, listeners)
