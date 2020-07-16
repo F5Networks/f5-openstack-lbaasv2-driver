@@ -55,7 +55,7 @@ class LBaaSv2ServiceBuilder(object):
         self.disconnected_service = DisconnectedService()
         self.q_client = q_client.F5NetworksNeutronClient(self.plugin)
 
-    def build(self, context, loadbalancer, agent):
+    def build(self, context, loadbalancer, agent, **kwargs):
         """Get full service definition from loadbalancer ID."""
         # Invalidate cache if it is too old
         if ((datetime.datetime.now() - self.last_cache_update).seconds >
@@ -153,24 +153,45 @@ class LBaaSv2ServiceBuilder(object):
                     )
 
             # Get listeners and pools.
-            service['listeners'] = self._get_listeners(context, loadbalancer)
+            append_listeners = kwargs.get(
+                "append_listeners", self._append_listeners)
+            append_pools_monitors = kwargs.get(
+                "append_pools_monitors", self._append_pools_monitors)
+            append_members = kwargs.get("append_members", self._append_members)
+            append_l7policies_rules = kwargs.get(
+                "append_l7policies_rules", self._append_l7policies_rules)
 
-            service['pools'], service['healthmonitors'] = \
-                self._get_pools_and_healthmonitors(context, loadbalancer)
-
-            service['members'] = self._get_members(
-                context, loadbalancer, service['pools'],
-                subnet_map, network_map)
-
-            service['subnets'] = subnet_map
-            service['networks'] = network_map
-
-            service['l7policies'] = self._get_l7policies(
-                context, loadbalancer, service['listeners'])
-            service['l7policy_rules'] = self._get_l7policy_rules(
-                context, loadbalancer, service['l7policies'])
+            append_listeners(context, loadbalancer, service)
+            append_pools_monitors(context, loadbalancer, service)
+            append_members(
+                context, loadbalancer, service, network_map, subnet_map)
+            append_l7policies_rules(context, loadbalancer, service)
 
         return service
+
+    @log_helpers.log_method_call
+    def _append_listeners(self, context, loadbalancer, service):
+        service['listeners'] = self._get_listeners(context, loadbalancer)
+
+    @log_helpers.log_method_call
+    def _append_pools_monitors(self, context, loadbalancer, service):
+        service['pools'], service['healthmonitors'] = \
+            self._get_pools_and_healthmonitors(context, loadbalancer)
+
+    @log_helpers.log_method_call
+    def _append_members(self, context, loadbalancer, service,
+                        network_map, subnet_map):
+        service['members'] = self._get_members(
+            context, loadbalancer, service['pools'], subnet_map, network_map)
+        service['subnets'] = subnet_map
+        service['networks'] = network_map
+
+    @log_helpers.log_method_call
+    def _append_l7policies_rules(self, context, loadbalancer, service):
+        service['l7policies'] = self._get_l7policies(
+            context, loadbalancer, service['listeners'])
+        service['l7policy_rules'] = self._get_l7policy_rules(
+            context, loadbalancer, service['l7policies'])
 
     @log_helpers.log_method_call
     def _get_extended_member(self, context, member):
@@ -464,7 +485,7 @@ class LBaaSv2ServiceBuilder(object):
         """Get l7 policies filtered by listeners."""
         l7policies = []
         if listeners:
-            listener_ids = [l['id'] for l in listeners]
+            listener_ids = [listener['id'] for listener in listeners]
 
             def get_db_policies():
                 if cfg.CONF.f5_driver_perf_mode in (1, 3):
@@ -505,8 +526,8 @@ class LBaaSv2ServiceBuilder(object):
 
                 def get_db_rules():
                     if cfg.CONF.f5_driver_perf_mode in (1, 3):
-                        for l in loadbalancer.listeners:
-                            for policy in l.l7_policies:
+                        for listener in loadbalancer.listeners:
+                            for policy in listener.l7_policies:
                                 if policy.id == pol_id:
                                     return policy.rules
                     else:
