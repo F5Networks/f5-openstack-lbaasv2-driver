@@ -459,7 +459,7 @@ class LBaaSv2ServiceBuilder(object):
         """Get l7 policies filtered by listeners."""
         l7policies = []
         if listeners:
-            listener_ids = [l['id'] for l in listeners]
+            listener_ids = [listener['id'] for listener in listeners]
 
             def get_db_policies():
                 if cfg.CONF.f5_driver_perf_mode in (1, 3):
@@ -500,8 +500,8 @@ class LBaaSv2ServiceBuilder(object):
 
                 def get_db_rules():
                     if cfg.CONF.f5_driver_perf_mode in (1, 3):
-                        for l in loadbalancer.listeners:
-                            for policy in l.l7_policies:
+                        for listener in loadbalancer.listeners:
+                            for policy in listener.l7_policies:
                                 if policy.id == pol_id:
                                     return policy.rules
                     else:
