@@ -64,6 +64,11 @@ OPTS = [
         help=('Default class to use for building a service object.')
     ),
     cfg.StrOpt(
+        'bwc_profile',
+        default=None,
+        help='bwc_profile name which is configured in bigip side'
+    ),
+    cfg.StrOpt(
         'unlegacy_setting_placeholder_driver_side',
         default=None,
         help=('used in certain hpb cases to differenciate legacy scenarios')
