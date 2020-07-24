@@ -43,6 +43,11 @@ from time import time
 LOG = logging.getLogger(__name__)
 
 OPTS = [
+    cfg.IntOpt(
+        'f5_driver_perf_mode',
+        default=0,
+        help=('switch driver performance mode from 0 to 3')
+    ),
     cfg.StrOpt(
         'f5_loadbalancer_pool_scheduler_driver_v2',
         default=(
@@ -59,20 +64,13 @@ OPTS = [
         help=('Default class to use for building a service object.')
     ),
     cfg.StrOpt(
-        'port_normal_or_baremetal',
-        default='baremetal',
-        help=('port type needed in certain hpb cases')
-    ),
-    cfg.BoolOpt(
-        'to_delete_last_port',
-        default=False,
-        help=("By default, it deletes every fake port,"
-              "if set to False, then it leaves one fake "
-              "un-deleted ")
+        'bwc_profile',
+        default=None,
+        help='bwc_profile name which is configured in bigip side'
     ),
     cfg.StrOpt(
         'unlegacy_setting_placeholder_driver_side',
-        default='special_driver_side',
+        default=None,
         help=('used in certain hpb cases to differenciate legacy scenarios')
     )
 ]
@@ -111,14 +109,6 @@ class F5DriverV2(object):
 
         self.unlegacy_setting_placeholder_driver_side = \
             cfg.CONF.unlegacy_setting_placeholder_driver_side
-
-        self.port_normal_or_baremetal = \
-            cfg.CONF.port_normal_or_baremetal
-
-        self.to_delete_last_port = \
-            cfg.CONF.to_delete_last_port
-        LOG.debug('self.to_delete_last_port:')
-        LOG.debug(self.to_delete_last_port)
 
         # what scheduler to use for pool selection
         self.scheduler = importutils.import_object(
@@ -241,10 +231,7 @@ class LoadBalancerManager(EntityManager):
                     'status': q_const.PORT_STATUS_ACTIVE
                 }
                 port_data[portbindings.HOST_ID] = agent_host
-
-                LOG.debug('driver.port_normal_or_baremetal')
-                LOG.debug(driver.port_normal_or_baremetal)
-                if driver.port_normal_or_baremetal == "normal":
+                if driver.unlegacy_setting_placeholder_driver_side:
                     LOG.debug('setting to normal')
                     port_data[portbindings.VNIC_TYPE] = "normal"
                 else:
@@ -472,13 +459,6 @@ class MemberManager(EntityManager):
                 context, member.subnet_id
             )
             agent_host, service = self._setup_crud(context, member)
-
-            if self.driver.port_normal_or_baremetal == "normal":
-                LOG.debug('setting port to normal')
-                port_type = "normal"
-            else:
-                LOG.debug('setting port to baremetal')
-                port_type = "baremetal"
             p = driver.plugin.db._core_plugin.create_port(context, {
                 'port': {
                     'tenant_id': subnet['tenant_id'],
@@ -488,7 +468,6 @@ class MemberManager(EntityManager):
                     'device_id': member.id,
                     'device_owner': 'network:f5lbaasv2',
                     'admin_state_up': member.admin_state_up,
-                    portbindings.VNIC_TYPE: port_type,
                     'name': 'fake_pool_port_' + member.id,
                     portbindings.HOST_ID: agent_host}})
             LOG.debug('the port created here is: %s' % p)
@@ -497,24 +476,6 @@ class MemberManager(EntityManager):
 
         if self.driver.unlegacy_setting_placeholder_driver_side:
             LOG.debug('running un-legacy way for member create p2:')
-
-            if not self.driver.to_delete_last_port:
-                filters = {
-                    'device_owner': ['network:f5lbaasv2'],
-                    # 'binding:host_id': [agent_host],
-                    'fixed_ips': {'subnet_id': [member.subnet_id]}
-                }
-                LOG.debug('fetching certain ports details:')
-                all_ports = driver.plugin.db._core_plugin.get_ports(
-                    context, filters
-                )
-                LOG.debug("all_ports details: %s" % all_ports)
-
-                if len(all_ports) < 2:
-                    LOG.warn('Skip last port deletion process on purpose!')
-                    return
-
-            LOG.debug('start deleting the port')
             port_id = None
             if p.get('id'):
                 port_id = p['id']
@@ -524,6 +485,7 @@ class MemberManager(EntityManager):
             else:
                 LOG.error('port_id seems none')
 
+    # only for MIGU
     @log_helpers.log_method_call
     def create_bulk(self, context, members):
         """Create members."""
@@ -614,6 +576,7 @@ class MemberManager(EntityManager):
             LOG.error("Exception: member delete: %s" % e.message)
             raise e
 
+    # only for MIGU
     @log_helpers.log_method_call
     def delete_bulk(self, context, members_list):
         """Delete members."""

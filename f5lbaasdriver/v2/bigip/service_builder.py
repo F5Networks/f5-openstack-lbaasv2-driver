@@ -17,17 +17,19 @@ u"""Service Module for F5® LBaaSv2."""
 import datetime
 import json
 
+from neutron_lbaas.common import keystone
+from oslo_config import cfg
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
-from neutron_lbaas.common import keystone
 
 from f5lbaasdriver.v2.bigip import constants_v2
 from f5lbaasdriver.v2.bigip.disconnected_service import DisconnectedService
 from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 from f5lbaasdriver.v2.bigip import neutron_client as q_client
-from keystoneclient.v3 import client 
+from keystoneclient.v3 import client
 
 LOG = logging.getLogger(__name__)
+
 
 class LBaaSv2ServiceBuilder(object):
     """The class creates a service definition from neutron database.
@@ -72,10 +74,21 @@ class LBaaSv2ServiceBuilder(object):
                 loadbalancer
             )
 
-            service['qos'] = self._get_extended_qos(
+            bwc_profile = self._get_extended_qos(
                 context,
                 loadbalancer
             )
+
+            if bwc_profile.strip():
+                bwc_profile = '/Common/' + bwc_profile
+            elif cfg.CONF.bwc_profile:
+                bwc_profile = '/Common/' + cfg.CONF.bwc_profile
+                LOG.debug(" bwc profile from configure file %s " % bwc_profile)
+            else:
+                bwc_profile = 'None'
+
+            LOG.debug("bwc profile is %s " % bwc_profile)
+            service['qos'] = bwc_profile
 
             # Get the subnet network associated with the VIP.
             subnet_map = {}
@@ -132,12 +145,12 @@ class LBaaSv2ServiceBuilder(object):
             if (agent and not self._valid_tenant_ids(network,
                                                      loadbalancer.tenant_id,
                                                      agent)):
-                LOG.error("Creating a loadbalancer %s for tenant %s on a"
-                          "  non-shared network %s owned by %s." % (
-                              loadbalancer.id,
-                              loadbalancer.tenant_id,
-                              network['id'],
-                              network['tenant_id']))
+                LOG.warning("Creating a loadbalancer %s for tenant %s on a"
+                            "  non-shared network %s owned by %s." % (
+                                loadbalancer.id,
+                                loadbalancer.tenant_id,
+                                network['id'],
+                                network['tenant_id']))
 
             # Get the network VTEPs if the network provider type is
             # either gre or vxlan.
@@ -157,15 +170,16 @@ class LBaaSv2ServiceBuilder(object):
                 self._get_pools_and_healthmonitors(context, loadbalancer)
 
             service['members'] = self._get_members(
-                context, service['pools'], subnet_map, network_map)
+                context, loadbalancer, service['pools'],
+                subnet_map, network_map)
 
             service['subnets'] = subnet_map
             service['networks'] = network_map
 
             service['l7policies'] = self._get_l7policies(
-                context, service['listeners'])
+                context, loadbalancer, service['listeners'])
             service['l7policy_rules'] = self._get_l7policy_rules(
-                context, service['l7policies'])
+                context, loadbalancer, service['l7policies'])
 
         return service
 
@@ -179,7 +193,7 @@ class LBaaSv2ServiceBuilder(object):
             subnet_id
         )
         network_id = subnet['network_id']
-        network = self._get_network_cached(
+        network = self._get_member_network_cached(
             context,
             network_id
         )
@@ -209,17 +223,16 @@ class LBaaSv2ServiceBuilder(object):
 
     @log_helpers.log_method_call
     def _get_extended_qos(self, context, loadbalancer):
-	try:
-	    sess = keystone.get_session()	
-	    client_sess = client.Client(session=sess)
-	    project = client_sess.projects.get(project=loadbalancer.tenant_id)
-	    return project.qos
+        try:
+            sess = keystone.get_session()
+            client_sess = client.Client(session=sess)
+            project = client_sess.projects.get(project=loadbalancer.tenant_id)
+            return project.qos
 
         except Exception as e:
-            LOG.error('Exception: Get keystone project: %s',
-                      e.message)
-	    return ''
-    	
+            LOG.warning('Exception: Get keystone project: %s', e.message)
+            return ''
+
     @log_helpers.log_method_call
     def _get_extended_loadbalancer(self, context, loadbalancer):
         """Get loadbalancer dictionary and add extended data(e.g. VIP)."""
@@ -255,6 +268,32 @@ class LBaaSv2ServiceBuilder(object):
                 network['provider:network_type'] = 'undefined'
             if 'provider:segmentation_id' not in network:
                 network['provider:segmentation_id'] = 0
+            self.net_cache[network_id] = network
+
+        return self.net_cache[network_id]
+
+    @log_helpers.log_method_call
+    def _get_member_network_cached(self, context, network_id):
+        """Retrieve network from cache or from Neutron."""
+        if network_id not in self.net_cache:
+            network = self.plugin.db._core_plugin.get_network(
+                context,
+                network_id
+            )
+            if 'provider:network_type' not in network:
+                network['provider:network_type'] = 'undefined'
+            if 'provider:segmentation_id' not in network:
+                network['provider:segmentation_id'] = 0
+            if 'segments' in network:
+                LOG.info("afred Begin net_dict is %s.", network)
+                for segment in network['segments']:
+                    if segment['provider:network_type'] == 'vlan':
+                        network['provider:network_type'] = 'vlan'
+                        network['provider:segmentation_id'] = segment[
+                            'provider:segmentation_id']
+                        network['provider:physical_network'] = segment[
+                            'provider:physical_network']
+                LOG.info("afred End net_dict is %s.", network)
             self.net_cache[network_id] = network
 
         return self.net_cache[network_id]
@@ -432,13 +471,25 @@ class LBaaSv2ServiceBuilder(object):
         )
 
     @log_helpers.log_method_call
-    def _get_l7policies(self, context, listeners):
+    def _get_l7policies(self, context, loadbalancer, listeners):
         """Get l7 policies filtered by listeners."""
         l7policies = []
         if listeners:
             listener_ids = [l['id'] for l in listeners]
-            policies = self.plugin.db.get_l7policies(
-                context, filters={'listener_id': listener_ids})
+
+            def get_db_policies():
+                if cfg.CONF.f5_driver_perf_mode in (1, 3):
+                    db_policies = []
+                    for l1 in loadbalancer.listeners:
+                        for l2 in listeners:
+                            if l1.id == l2['id']:
+                                db_policies.extend(l1.l7_policies)
+                    return db_policies
+                else:
+                    return self.plugin.db.get_l7policies(
+                        context, filters={'listener_id': listener_ids})
+
+            policies = get_db_policies()
             l7policies.extend(self._l7policy_to_dict(p) for p in policies)
 
         for index, pol in enumerate(l7policies):
@@ -456,15 +507,26 @@ class LBaaSv2ServiceBuilder(object):
         return l7policies
 
     @log_helpers.log_method_call
-    def _get_l7policy_rules(self, context, l7policies):
+    def _get_l7policy_rules(self, context, loadbalancer, l7policies):
         """Get l7 policy rules filtered by l7 policies."""
         l7policy_rules = []
         if l7policies:
             policy_ids = [p['id'] for p in l7policies]
             for pol_id in policy_ids:
-                rules = self.plugin.db.get_l7policy_rules(context, pol_id)
+
+                def get_db_rules():
+                    if cfg.CONF.f5_driver_perf_mode in (1, 3):
+                        for l in loadbalancer.listeners:
+                            for policy in l.l7_policies:
+                                if policy.id == pol_id:
+                                    return policy.rules
+                    else:
+                        return self.plugin.db.get_l7policy_rules(
+                            context, pol_id)
+
+                rules = get_db_rules()
                 l7policy_rules.extend(
-                    self._l7rule_to_dict(rule) for rule in rules)
+                    self._l7rule_to_dict(rule, pol_id) for rule in rules)
 
         for index, rule in enumerate(l7policy_rules):
             try:
@@ -483,10 +545,17 @@ class LBaaSv2ServiceBuilder(object):
     @log_helpers.log_method_call
     def _get_listeners(self, context, loadbalancer):
         listeners = []
-        db_listeners = self.plugin.db.get_listeners(
-            context,
-            filters={'loadbalancer_id': [loadbalancer.id]}
-        )
+
+        def get_db_listeners():
+            if cfg.CONF.f5_driver_perf_mode in (1, 3):
+                return loadbalancer.listeners
+            else:
+                return self.plugin.db.get_listeners(
+                    context,
+                    filters={'loadbalancer_id': [loadbalancer.id]}
+                )
+
+        db_listeners = get_db_listeners()
 
         for listener in db_listeners:
             listener_dict = listener.to_dict(
@@ -509,20 +578,33 @@ class LBaaSv2ServiceBuilder(object):
         healthmonitors = []
         pools = []
 
+        def get_db_pools():
+            if cfg.CONF.f5_driver_perf_mode in (1, 3):
+                return loadbalancer.pools
+            else:
+                return self.plugin.db.get_pools(
+                    context,
+                    filters={'loadbalancer_id': [loadbalancer.id]}
+                )
+
         if loadbalancer and loadbalancer.id:
-            db_pools = self.plugin.db.get_pools(
-                context,
-                filters={'loadbalancer_id': [loadbalancer.id]}
-            )
+            db_pools = get_db_pools()
 
             for pool in db_pools:
                 pools.append(self._pool_to_dict(pool))
                 pool_id = pool.id
                 healthmonitor_id = pool.healthmonitor_id
+
+                def get_db_healthmonitor():
+                    if cfg.CONF.f5_driver_perf_mode in (1, 3):
+                        return pool.healthmonitor
+                    else:
+                        return self.plugin.db.get_healthmonitor(
+                            context,
+                            healthmonitor_id)
+
                 if healthmonitor_id:
-                    healthmonitor = self.plugin.db.get_healthmonitor(
-                        context,
-                        healthmonitor_id)
+                    healthmonitor = get_db_healthmonitor()
                     if healthmonitor:
                         healthmonitor_dict = healthmonitor.to_dict(pool=False)
                         healthmonitor_dict['pool_id'] = pool_id
@@ -531,13 +613,26 @@ class LBaaSv2ServiceBuilder(object):
         return pools, healthmonitors
 
     @log_helpers.log_method_call
-    def _get_members(self, context, pools, subnet_map, network_map):
+    def _get_members(self, context, loadbalancer, pools,
+                     subnet_map, network_map):
         pool_members = []
+
+        def get_db_members():
+            if cfg.CONF.f5_driver_perf_mode in (1, 3):
+                members = []
+                for p1 in loadbalancer.pools:
+                    for p2 in pools:
+                        if p1.id == p2['id']:
+                            members.extend([m for m in p1.members])
+                return members
+            else:
+                return self.plugin.db.get_pool_members(
+                    context,
+                    filters={'pool_id': [p['id'] for p in pools]}
+                )
+
         if pools:
-            members = self.plugin.db.get_pool_members(
-                context,
-                filters={'pool_id': [p['id'] for p in pools]}
-            )
+            members = get_db_members()
 
             for member in members:
                 # Get extended member attributes, network, and subnet.
@@ -583,13 +678,31 @@ class LBaaSv2ServiceBuilder(object):
         """
         l7policy_dict = l7policy.to_api_dict()
         l7policy_dict['provisioning_status'] = l7policy.provisioning_status
+
+        # Listener attribte of policy fetched from loadbalancer object may be
+        # None. However, l7policy.to_api_dict() assumes it is not None. So we
+        # append its listener id.
+        if cfg.CONF.f5_driver_perf_mode in (1, 3) \
+                and l7policy_dict['listener_id'] \
+                and len(l7policy_dict['listeners']) == 0:
+            l7policy_dict['listeners'].append(
+                {'id': l7policy_dict['listener_id']})
+
         return l7policy_dict
 
-    def _l7rule_to_dict(self, l7rule):
+    def _l7rule_to_dict(self, l7rule, l7policy_id):
         """Convert l7Policy rule to dict.
 
         Adds provisioning_status to dict from to_api_dict()
         """
         l7rule_dict = l7rule.to_api_dict()
         l7rule_dict['provisioning_status'] = l7rule.provisioning_status
+
+        # Policy attribte of rule fetched from loadbalancer object may be
+        # None. However, l7rule.to_api_dict() assumes it is not None. So we
+        # append its policy id.
+        if cfg.CONF.f5_driver_perf_mode in (1, 3) and l7policy_id \
+                and len(l7rule_dict['policies']) == 0:
+            l7rule_dict['policies'].append({'id': l7policy_id})
+
         return l7rule_dict
