@@ -73,11 +73,21 @@ class LBaaSv2ServiceBuilder(object):
                 context,
                 loadbalancer
             )
-
-            service['qos'] = self._get_extended_qos(
+            bwc_profile = self._get_extended_qos(
                 context,
                 loadbalancer
             )
+
+            if bwc_profile.strip():
+                bwc_profile = '/Common/' + bwc_profile
+            elif cfg.CONF.bwc_profile:
+                bwc_profile = '/Common/' + cfg.CONF.bwc_profile
+                LOG.debug(" bwc profile from configure file %s " % bwc_profile)
+            else:
+                bwc_profile = 'None'
+
+            LOG.debug("bwc profile is %s " % bwc_profile)
+            service['qos'] = bwc_profile
 
             # Get the subnet network associated with the VIP.
             subnet_map = {}
