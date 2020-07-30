@@ -171,16 +171,16 @@ class EntityManager(object):
     def __init__(self, driver):
         self.driver = driver
         self.api_dict = None
-        self.loadbalancer = None
 
     def _log_entity(self, entity):
         LOG.debug("Log the entity: %s", entity.to_api_dict())
 
-    def _call_rpc(self, context, entity, rpc_method, **kwargs):
+    def _call_rpc(self, context, loadbalancer, entity, rpc_method, **kwargs):
         '''Perform operations common to create and delete for managers.'''
 
         try:
-            agent_host, service = self._setup_crud(context, entity, **kwargs)
+            agent_host, service = self._setup_crud(
+                context, loadbalancer, entity, **kwargs)
             rpc_callable = getattr(self.driver.agent_rpc, rpc_method)
             rpc_callable(context, self.api_dict, service, agent_host)
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
@@ -190,7 +190,7 @@ class EntityManager(object):
             LOG.error("Exception: %s: %s" % (rpc_method, e))
             raise e
 
-    def _setup_crud(self, context, entity, **kwargs):
+    def _setup_crud(self, context, loadbalancer, entity, **kwargs):
         '''Setup CRUD operations for managers to make calls to agent.
 
         :param context: auth context for performing CRUD operation
@@ -199,14 +199,15 @@ class EntityManager(object):
         :raises: F5NoAttachedLoadbalancerException
         '''
 
-        if entity.attached_to_loadbalancer() and self.loadbalancer:
+        if entity.attached_to_loadbalancer() and loadbalancer:
             (agent, service) = self._schedule_agent_create_service(
-                context, entity, **kwargs)
+                context, loadbalancer, entity, **kwargs)
             return agent['host'], service
 
         raise F5NoAttachedLoadbalancerException()
 
-    def _schedule_agent_create_service(self, context, entity=None, **kwargs):
+    def _schedule_agent_create_service(self, context, loadbalancer,
+                                       entity=None, **kwargs):
         '''Schedule agent and build service--used for most managers.
 
         :param context: auth context for performing crud operation
@@ -216,11 +217,11 @@ class EntityManager(object):
         agent = self.driver.scheduler.schedule(
             self.driver.plugin,
             context,
-            self.loadbalancer.id,
+            loadbalancer.id,
             self.driver.env
         )
         service = self.driver.service_builder.build(
-            context, self.loadbalancer, agent, **kwargs)
+            context, loadbalancer, agent, **kwargs)
         return agent, service
 
     @log_helpers.log_method_call
@@ -324,9 +325,9 @@ class LoadBalancerManager(EntityManager):
         self._log_entity(loadbalancer)
 
         driver = self.driver
-        self.loadbalancer = loadbalancer
         try:
-            agent, service = self._schedule_agent_create_service(context)
+            agent, service = self._schedule_agent_create_service(
+                context, loadbalancer)
             agent_host = agent['host']
             agent_config = agent.get('configurations', {})
             LOG.debug("agent configurations: %s" % agent_config)
@@ -362,7 +363,7 @@ class LoadBalancerManager(EntityManager):
                 if driver.unlegacy_setting_placeholder_driver_side:
                     LOG.debug('calling extra build():')
                     service = self.driver.service_builder.build(
-                        context, self.loadbalancer, agent)
+                        context, loadbalancer, agent)
             else:
                 LOG.debug("Agent devices are nova managed")
 
@@ -389,9 +390,9 @@ class LoadBalancerManager(EntityManager):
         self._log_entity(loadbalancer)
 
         driver = self.driver
-        self.loadbalancer = loadbalancer
         try:
-            agent, service = self._schedule_agent_create_service(context)
+            agent, service = self._schedule_agent_create_service(
+                context, loadbalancer)
             agent_host = agent['host']
 
             driver.agent_rpc.update_loadbalancer(
@@ -419,9 +420,9 @@ class LoadBalancerManager(EntityManager):
         self._log_entity(loadbalancer)
 
         driver = self.driver
-        self.loadbalancer = loadbalancer
         try:
-            agent, service = self._schedule_agent_create_service(context)
+            agent, service = self._schedule_agent_create_service(
+                context, loadbalancer)
             agent_host = agent['host']
 
             # becuase the api calls is synchronized, here we try to
@@ -501,7 +502,7 @@ class ListenerManager(EntityManager):
 
         self._log_entity(listener)
 
-        self.loadbalancer = listener.loadbalancer
+        lb = listener.loadbalancer
         self.api_dict = listener.to_dict(
             loadbalancer=False, default_pool=False)
 
@@ -511,14 +512,14 @@ class ListenerManager(EntityManager):
         if cfg.CONF.f5_driver_perf_mode in (2, 3):
             # Listener does not have default pool or l7policies.
             self._call_rpc(
-                context, listener, 'create_listener',
+                context, lb, listener, 'create_listener',
                 append_listeners=append_listeners,
                 append_pools_monitors=lambda *args: None,
                 append_members=lambda *args: None,
                 append_l7policies_rules=lambda *args: None
             )
         else:
-            self._call_rpc(context, listener, 'create_listener')
+            self._call_rpc(context, lb, listener, 'create_listener')
 
     @log_helpers.log_method_call
     def update(self, context, old_listener, listener):
@@ -528,9 +529,9 @@ class ListenerManager(EntityManager):
         self._log_entity(listener)
 
         driver = self.driver
-        self.loadbalancer = listener.loadbalancer
+        lb = listener.loadbalancer
         try:
-            agent_host, service = self._setup_crud(context, listener)
+            agent_host, service = self._setup_crud(context, lb, listener)
             driver.agent_rpc.update_listener(
                 context,
                 old_listener.to_dict(loadbalancer=False,
@@ -549,25 +550,25 @@ class ListenerManager(EntityManager):
 
         self._log_entity(listener)
 
-        self.loadbalancer = listener.loadbalancer
+        lb = listener.loadbalancer
         self.api_dict = listener.to_dict(
             loadbalancer=False, default_pool=False)
 
-        def append_listeners(context, loadbalancer, service):
+        def append_listeners(context, lb, service):
             self._append_listeners(context, service, listener)
 
         if cfg.CONF.f5_driver_perf_mode in (2, 3):
             # L7policy should already be deleted.
             # Needn't modify pool.
             self._call_rpc(
-                context, listener, 'delete_listener',
+                context, lb, listener, 'delete_listener',
                 append_listeners=append_listeners,
                 append_pools_monitors=lambda *args: None,
                 append_members=lambda *args: None,
                 append_l7policies_rules=lambda *args: None
             )
         else:
-            self._call_rpc(context, listener, 'delete_listener')
+            self._call_rpc(context, lb, listener, 'delete_listener')
 
 
 class PoolManager(EntityManager):
@@ -592,7 +593,7 @@ class PoolManager(EntityManager):
 
         self._log_entity(pool)
 
-        self.loadbalancer = pool.loadbalancer
+        lb = pool.loadbalancer
         self.api_dict = self._get_pool_dict(pool)
 
         def append_listeners(context, loadbalancer, service):
@@ -612,13 +613,13 @@ class PoolManager(EntityManager):
             # Pool has no members
             # Listener may have l7policies. Utilize default behavior.
             self._call_rpc(
-                context, pool, 'create_pool',
+                context, lb, pool, 'create_pool',
                 append_listeners=append_listeners,
                 append_pools_monitors=append_pools_monitors,
                 append_members=lambda *args: None
             )
         else:
-            self._call_rpc(context, pool, 'create_pool')
+            self._call_rpc(context, lb, pool, 'create_pool')
 
     @log_helpers.log_method_call
     def update(self, context, old_pool, pool):
@@ -628,9 +629,9 @@ class PoolManager(EntityManager):
         self._log_entity(pool)
 
         driver = self.driver
-        self.loadbalancer = pool.loadbalancer
+        lb = pool.loadbalancer
         try:
-            agent_host, service = self._setup_crud(context, pool)
+            agent_host, service = self._setup_crud(context, lb, pool)
             driver.agent_rpc.update_pool(
                 context,
                 self._get_pool_dict(old_pool),
@@ -648,7 +649,7 @@ class PoolManager(EntityManager):
 
         self._log_entity(pool)
 
-        self.loadbalancer = pool.loadbalancer
+        lb = pool.loadbalancer
         self.api_dict = self._get_pool_dict(pool)
 
         def append_listeners(context, loadbalancer, service):
@@ -666,12 +667,12 @@ class PoolManager(EntityManager):
             # Pool may be associated with a listener
             # Utilize default behavior to load member, l7policy and rule
             self._call_rpc(
-                context, pool, 'delete_pool',
+                context, lb, pool, 'delete_pool',
                 append_listeners=append_listeners,
                 append_pools_monitors=append_pools_monitors
             )
         else:
-            self._call_rpc(context, pool, 'delete_pool')
+            self._call_rpc(context, lb, pool, 'delete_pool')
 
 
 class MemberManager(EntityManager):
@@ -683,7 +684,7 @@ class MemberManager(EntityManager):
 
         self._log_entity(member)
 
-        self.loadbalancer = member.pool.loadbalancer
+        lb = member.pool.loadbalancer
 
         if self.driver.unlegacy_setting_placeholder_driver_side:
             LOG.debug('running un-legacy way for member create p1:')
@@ -694,12 +695,12 @@ class MemberManager(EntityManager):
             # agent_host, service = self._setup_crud(context, member)
             agent_host = 'temp'
             LOG.info('running here')
-            if member.attached_to_loadbalancer() and self.loadbalancer:
+            if member.attached_to_loadbalancer() and lb:
                 LOG.info('scheduing here instead')
                 this_agent = self.driver.scheduler.schedule(
                     self.driver.plugin,
                     context,
-                    self.loadbalancer.id,
+                    lb.id,
                     self.driver.env
                 )
                 LOG.info(this_agent)
@@ -733,13 +734,13 @@ class MemberManager(EntityManager):
         if cfg.CONF.f5_driver_perf_mode in (2, 3):
             # Utilize default behavior to append all members
             self._call_rpc(
-                context, member, 'create_member',
+                context, lb, member, 'create_member',
                 append_listeners=lambda *args: None,
                 append_pools_monitors=append_pools_monitors,
                 append_l7policies_rules=lambda *args: None
             )
         else:
-            self._call_rpc(context, member, 'create_member')
+            self._call_rpc(context, lb, member, 'create_member')
 
         if self.driver.unlegacy_setting_placeholder_driver_side:
             LOG.debug('running un-legacy way for member create p2:')
@@ -785,7 +786,7 @@ class MemberManager(EntityManager):
 
         for member in members:
             if member.subnet_id not in subnets:
-                self.loadbalancer = member.pool.loadbalancer
+                lb = member.pool.loadbalancer
                 driver = self.driver
                 subnet = driver.plugin.db._core_plugin.get_subnet(
                     context, member.subnet_id
@@ -794,9 +795,7 @@ class MemberManager(EntityManager):
                 LOG.info("time for subnet  %.5f secs" % (time() - start_time))
 
                 agent = self.driver.scheduler.schedule(
-                    self.driver.plugin, context,
-                    self.loadbalancer.id,
-                    self.driver.env
+                    self.driver.plugin, context, lb.id, self.driver.env
                 )
                 LOG.info("time for agent  %.5f secs" % (time() - start_time))
                 LOG.info(agent)
@@ -835,9 +834,9 @@ class MemberManager(EntityManager):
         self._log_entity(member)
 
         driver = self.driver
-        self.loadbalancer = member.pool.loadbalancer
+        lb = member.pool.loadbalancer
         try:
-            agent_host, service = self._setup_crud(context, member)
+            agent_host, service = self._setup_crud(context, lb, member)
             driver.agent_rpc.update_member(
                 context,
                 old_member.to_dict(pool=False),
@@ -855,7 +854,7 @@ class MemberManager(EntityManager):
 
         self._log_entity(member)
 
-        self.loadbalancer = member.pool.loadbalancer
+        lb = member.pool.loadbalancer
         driver = self.driver
         try:
             def append_pools_monitors(context, loadbalancer, service):
@@ -864,13 +863,13 @@ class MemberManager(EntityManager):
             if cfg.CONF.f5_driver_perf_mode in (2, 3):
                 # Utilize default behavior to append all members
                 agent_host, service = self._setup_crud(
-                    context, member,
+                    context, lb, member,
                     append_listeners=lambda *args: None,
                     append_pools_monitors=append_pools_monitors,
                     append_l7policies_rules=lambda *args: None
                 )
             else:
-                agent_host, service = self._setup_crud(context, member)
+                agent_host, service = self._setup_crud(context, lb, member)
 
             driver.agent_rpc.delete_member(
                 context, member.to_dict(pool=False), service, agent_host)
@@ -889,11 +888,11 @@ class MemberManager(EntityManager):
 
         member = members_list[0]
 
-        self.loadbalancer = member.pool.loadbalancer
+        lb = member.pool.loadbalancer
         driver = self.driver
 
         try:
-            agent_host, service = self._setup_crud(context, member)
+            agent_host, service = self._setup_crud(context, lb, member)
 
             driver.agent_rpc.delete_member(
                 context, member.to_dict(pool=False), service, agent_host)
@@ -913,7 +912,7 @@ class HealthMonitorManager(EntityManager):
 
         self._log_entity(health_monitor)
 
-        self.loadbalancer = health_monitor.pool.loadbalancer
+        lb = health_monitor.pool.loadbalancer
         self.api_dict = health_monitor.to_dict(pool=False)
 
         def append_pools_monitors(context, loadbalancer, service):
@@ -922,13 +921,14 @@ class HealthMonitorManager(EntityManager):
         if cfg.CONF.f5_driver_perf_mode in (2, 3):
             # Utilize default behavior to append all members
             self._call_rpc(
-                context, health_monitor, 'create_health_monitor',
+                context, lb, health_monitor, 'create_health_monitor',
                 append_listeners=lambda *args: None,
                 append_pools_monitors=append_pools_monitors,
                 append_l7policies_rules=lambda *args: None
             )
         else:
-            self._call_rpc(context, health_monitor, 'create_health_monitor')
+            self._call_rpc(context, lb, health_monitor,
+                           'create_health_monitor')
 
     @log_helpers.log_method_call
     def update(self, context, old_health_monitor, health_monitor):
@@ -938,9 +938,9 @@ class HealthMonitorManager(EntityManager):
         self._log_entity(health_monitor)
 
         driver = self.driver
-        self.loadbalancer = health_monitor.pool.loadbalancer
+        lb = health_monitor.pool.loadbalancer
         try:
-            agent_host, service = self._setup_crud(context, health_monitor)
+            agent_host, service = self._setup_crud(context, lb, health_monitor)
             driver.agent_rpc.update_health_monitor(
                 context,
                 old_health_monitor.to_dict(pool=False),
@@ -958,7 +958,7 @@ class HealthMonitorManager(EntityManager):
 
         self._log_entity(health_monitor)
 
-        self.loadbalancer = health_monitor.pool.loadbalancer
+        lb = health_monitor.pool.loadbalancer
         self.api_dict = health_monitor.to_dict(pool=False)
 
         def append_pools_monitors(context, loadbalancer, service):
@@ -967,13 +967,14 @@ class HealthMonitorManager(EntityManager):
         if cfg.CONF.f5_driver_perf_mode in (2, 3):
             # Utilize default behavior to append all members
             self._call_rpc(
-                context, health_monitor, 'delete_health_monitor',
+                context, lb, health_monitor, 'delete_health_monitor',
                 append_listeners=lambda *args: None,
                 append_pools_monitors=append_pools_monitors,
                 append_l7policies_rules=lambda *args: None
             )
         else:
-            self._call_rpc(context, health_monitor, 'delete_health_monitor')
+            self._call_rpc(context, lb, health_monitor,
+                           'delete_health_monitor')
 
 
 class L7PolicyManager(EntityManager):
@@ -985,7 +986,7 @@ class L7PolicyManager(EntityManager):
 
         self._log_entity(policy)
 
-        self.loadbalancer = policy.listener.loadbalancer
+        lb = policy.listener.loadbalancer
         self.api_dict = policy.to_dict(listener=False, rules=False)
 
         def append_listeners(context, loadbalancer, service):
@@ -1000,12 +1001,12 @@ class L7PolicyManager(EntityManager):
             # Listener may have default pool
             # Utilize default behavior to load members
             self._call_rpc(
-                context, policy, 'create_l7policy',
+                context, lb, policy, 'create_l7policy',
                 append_listeners=append_listeners,
                 append_pools_monitors=append_pools_monitors
             )
         else:
-            self._call_rpc(context, policy, 'create_l7policy')
+            self._call_rpc(context, lb, policy, 'create_l7policy')
 
     @log_helpers.log_method_call
     def update(self, context, old_policy, policy):
@@ -1015,9 +1016,9 @@ class L7PolicyManager(EntityManager):
         self._log_entity(policy)
 
         driver = self.driver
-        self.loadbalancer = policy.listener.loadbalancer
+        lb = policy.listener.loadbalancer
         try:
-            agent_host, service = self._setup_crud(context, policy)
+            agent_host, service = self._setup_crud(context, lb, policy)
             driver.agent_rpc.update_l7policy(
                 context,
                 old_policy.to_dict(listener=False),
@@ -1035,7 +1036,7 @@ class L7PolicyManager(EntityManager):
 
         self._log_entity(policy)
 
-        self.loadbalancer = policy.listener.loadbalancer
+        lb = policy.listener.loadbalancer
         self.api_dict = policy.to_dict(listener=False, rules=False)
 
         def append_listeners(context, loadbalancer, service):
@@ -1050,12 +1051,12 @@ class L7PolicyManager(EntityManager):
             # Listener may have default pool
             # Utilize default behavior to load members
             self._call_rpc(
-                context, policy, 'delete_l7policy',
+                context, lb, policy, 'delete_l7policy',
                 append_listeners=append_listeners,
                 append_pools_monitors=append_pools_monitors
             )
         else:
-            self._call_rpc(context, policy, 'delete_l7policy')
+            self._call_rpc(context, lb, policy, 'delete_l7policy')
 
 
 class L7RuleManager(EntityManager):
@@ -1067,7 +1068,7 @@ class L7RuleManager(EntityManager):
 
         self._log_entity(rule)
 
-        self.loadbalancer = rule.policy.listener.loadbalancer
+        lb = rule.policy.listener.loadbalancer
         self.api_dict = rule.to_dict(policy=False)
 
         def append_listeners(context, loadbalancer, service):
@@ -1082,12 +1083,12 @@ class L7RuleManager(EntityManager):
             # Listener may have default pool
             # Utilize default behavior to load members
             self._call_rpc(
-                context, rule, 'create_l7rule',
+                context, lb, rule, 'create_l7rule',
                 append_listeners=append_listeners,
                 append_pools_monitors=append_pools_monitors
             )
         else:
-            self._call_rpc(context, rule, 'create_l7rule')
+            self._call_rpc(context, lb, rule, 'create_l7rule')
 
     @log_helpers.log_method_call
     def update(self, context, old_rule, rule):
@@ -1097,9 +1098,9 @@ class L7RuleManager(EntityManager):
         self._log_entity(rule)
 
         driver = self.driver
-        self.loadbalancer = rule.policy.listener.loadbalancer
+        lb = rule.policy.listener.loadbalancer
         try:
-            agent_host, service = self._setup_crud(context, rule)
+            agent_host, service = self._setup_crud(context, lb, rule)
             driver.agent_rpc.update_l7rule(
                 context,
                 old_rule.to_dict(policy=False),
@@ -1117,7 +1118,7 @@ class L7RuleManager(EntityManager):
 
         self._log_entity(rule)
 
-        self.loadbalancer = rule.policy.listener.loadbalancer
+        lb = rule.policy.listener.loadbalancer
         self.api_dict = rule.to_dict(policy=False)
 
         def append_listeners(context, loadbalancer, service):
@@ -1132,9 +1133,9 @@ class L7RuleManager(EntityManager):
             # Listener may have default pool
             # Utilize default behavior to load members
             self._call_rpc(
-                context, rule, 'delete_l7rule',
+                context, lb, rule, 'delete_l7rule',
                 append_listeners=append_listeners,
                 append_pools_monitors=append_pools_monitors
             )
         else:
-            self._call_rpc(context, rule, 'delete_l7rule')
+            self._call_rpc(context, lb, rule, 'delete_l7rule')
