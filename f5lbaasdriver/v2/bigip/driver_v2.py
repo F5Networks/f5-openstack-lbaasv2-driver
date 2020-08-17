@@ -164,7 +164,10 @@ class EntityManager(object):
             agent_host, service = self._setup_crud(
                 context, loadbalancer, entity, **kwargs)
             rpc_callable = getattr(self.driver.agent_rpc, rpc_method)
-            rpc_callable(context, self.api_dict, service, agent_host)
+            rpc_callable(
+                context, self.api_dict, service, agent_host,
+                **kwargs
+            )
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
                 lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
             LOG.error("Exception: %s: %s" % (rpc_method, e))
@@ -602,9 +605,20 @@ class MemberManager(EntityManager):
 
         lb = member.pool.loadbalancer
 
-        if self.driver.unlegacy_setting_placeholder_driver_side:
-            LOG.debug('running un-legacy way for member create p1:')
-            driver = self.driver
+        the_port_id = None
+        driver = self.driver
+
+        filters = {
+            'device_owner': ['network:f5lbaasv2'],
+            'fixed_ips': {'subnet_id': [member.subnet_id]}
+        }
+        LOG.debug('fetching certain ports details:')
+        all_ports = driver.plugin.db._core_plugin.get_ports(
+            context, filters
+        )
+        LOG.debug("all_ports details: %s" % all_ports)
+
+        if len(all_ports) < 1:
             subnet = driver.plugin.db._core_plugin.get_subnet(
                 context, member.subnet_id
             )
@@ -618,9 +632,11 @@ class MemberManager(EntityManager):
                     'device_id': member.id,
                     'device_owner': 'network:f5lbaasv2',
                     'admin_state_up': member.admin_state_up,
-                    'name': 'fake_pool_port_' + member.id,
+                    'name': 'pool_port_' + member.id,
                     portbindings.HOST_ID: agent_host}})
             LOG.debug('the port created here is: %s' % p)
+            the_port_id = p['id']
+
         self.api_dict = member.to_dict(pool=False)
 
         def append_pools_monitors(context, loadbalancer, service):
@@ -632,21 +648,14 @@ class MemberManager(EntityManager):
                 context, lb, member, 'create_member',
                 append_listeners=lambda *args: None,
                 append_pools_monitors=append_pools_monitors,
-                append_l7policies_rules=lambda *args: None
+                append_l7policies_rules=lambda *args: None,
+                the_port_id=the_port_id
             )
         else:
-            self._call_rpc(context, lb, member, 'create_member')
-
-        if self.driver.unlegacy_setting_placeholder_driver_side:
-            LOG.debug('running un-legacy way for member create p2:')
-            port_id = None
-            if p.get('id'):
-                port_id = p['id']
-            if port_id:
-                driver.plugin.db._core_plugin.delete_port(context, port_id)
-                LOG.debug('XXXXXX delete port: %s' % port_id)
-            else:
-                LOG.error('port_id seems none')
+            self._call_rpc(
+                context, lb, member, 'create_member',
+                the_port_id=the_port_id
+            )
 
     # only for MIGU
     @log_helpers.log_method_call
