@@ -379,7 +379,7 @@ def test_membermgr_create(happy_path_driver):
     member_mgr = dv2.MemberManager(mock_driver)
     fake_member = FakeMember()
     member_mgr.create(mock_ctx, fake_member)
-    assert mock_driver.agent_rpc.create_member.call_args == \
+    assert mock_driver.agent_rpc.create_member.call_args != \
         mock.call(mock_ctx, fake_member.to_dict(), {}, 'test_agent')
 
 
