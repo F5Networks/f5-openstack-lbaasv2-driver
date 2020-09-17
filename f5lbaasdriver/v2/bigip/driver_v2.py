@@ -449,7 +449,21 @@ class MemberManager(EntityManager):
             subnet = driver.plugin.db._core_plugin.get_subnet(
                 context, member.subnet_id
             )
-            agent_host, service = self._setup_crud(context, member)
+            # agent_host, service = self._setup_crud(context, member)
+            agent_host = 'temp'
+            LOG.info('running here')
+            if member.attached_to_loadbalancer() and self.loadbalancer:
+                LOG.info('scheduing here instead')
+                this_agent = self.driver.scheduler.schedule(
+                    self.driver.plugin,
+                    context,
+                    self.loadbalancer.id,
+                    self.driver.env
+                )
+                LOG.info(this_agent)
+                agent_host = this_agent.get('host')
+                LOG.info(agent_host)
+
             p = driver.plugin.db._core_plugin.create_port(context, {
                 'port': {
                     'tenant_id': subnet['tenant_id'],
