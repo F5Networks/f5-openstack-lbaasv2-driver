@@ -484,7 +484,7 @@ class MemberManager(EntityManager):
                 )
                 LOG.info(this_agent)
                 agent_host = this_agent.get('host')
-                LOG.info(agent_host)
+            LOG.info(agent_host)
 
             if self.driver.port_normal_or_baremetal == "normal":
                 LOG.debug('setting port to normal')
