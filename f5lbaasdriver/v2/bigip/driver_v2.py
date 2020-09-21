@@ -462,7 +462,7 @@ class MemberManager(EntityManager):
                 )
                 LOG.info(this_agent)
                 agent_host = this_agent.get('host')
-                LOG.info(agent_host)
+            LOG.info(agent_host)
 
             p = driver.plugin.db._core_plugin.create_port(context, {
                 'port': {

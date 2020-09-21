@@ -254,17 +254,23 @@ class LBaaSv2PluginCallbacksRPC(object):
 
     @log_helpers.log_method_call
     def update_loadbalancer_status(self, context, loadbalancer_id=None,
-                                   status=None, operating_status=None):
+                                   status=None, operating_status=None,
+                                   lb_name=None):
         """Agent confirmation hook to update loadbalancer status."""
+        pref_list = ['419-name-', 'for-one-time-name-', 'name-only-temp-']
+
         with context.session.begin(subtransactions=True):
             try:
-                lb_db = self.driver.plugin.db.get_loadbalancer(
-                    context,
-                    loadbalancer_id
-                )
-                if (lb_db.provisioning_status ==
-                        plugin_constants.PENDING_DELETE):
-                    status = plugin_constants.PENDING_DELETE
+                if lb_name and lb_name.startswith(tuple(pref_list)):
+                    LOG.warn('there comes lb name, u SHOULD modify it later')
+                else:
+                    lb_db = self.driver.plugin.db.get_loadbalancer(
+                        context,
+                        loadbalancer_id
+                    )
+                    if (lb_db.provisioning_status ==
+                            plugin_constants.PENDING_DELETE):
+                        status = plugin_constants.PENDING_DELETE
 
                 self.driver.plugin.db.update_status(
                     context,
