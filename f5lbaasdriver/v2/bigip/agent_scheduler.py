@@ -189,7 +189,9 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
         """
 
         with context.session.begin(subtransactions=True):
+            LOG.info('get_loadbalancer start')
             loadbalancer = plugin.db.get_loadbalancer(context, loadbalancer_id)
+            LOG.info('get_loadbalancer end')
             # If the loadbalancer is hosted on an active agent
             # already, return that agent or one in its env
             lbaas_agent = self.get_lbaas_agent_hosting_loadbalancer(
