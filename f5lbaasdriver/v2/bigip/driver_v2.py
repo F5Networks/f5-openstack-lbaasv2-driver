@@ -223,6 +223,7 @@ class EntityManager(object):
     def _append_listeners(self, context, service, listener):
 
         if not listener:
+            service['listeners'] = []
             return
 
         def get_db_listener():
