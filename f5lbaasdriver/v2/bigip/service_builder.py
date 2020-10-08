@@ -165,6 +165,10 @@ class LBaaSv2ServiceBuilder(object):
             append_pools_monitors(context, loadbalancer, service)
             append_members(
                 context, loadbalancer, service, network_map, subnet_map)
+            if not service.get('subnets'):
+                service['subnets'] = subnet_map
+            if not service.get('networks'):
+                service['networks'] = network_map
             append_l7policies_rules(context, loadbalancer, service)
 
         return service
