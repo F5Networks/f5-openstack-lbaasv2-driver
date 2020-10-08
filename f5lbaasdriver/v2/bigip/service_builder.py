@@ -145,6 +145,14 @@ class LBaaSv2ServiceBuilder(object):
                         net_type
                     )
 
+            # Assign default values
+            service['listeners'] = []
+            service['pools'] = []
+            service['healthmonitors'] = []
+            service['members'] = []
+            service['l7policies'] = []
+            service['l7policy_rules'] = []
+
             # Get listeners and pools.
             append_listeners = kwargs.get(
                 "append_listeners", self._append_listeners)
