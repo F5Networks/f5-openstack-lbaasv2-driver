@@ -152,6 +152,14 @@ class LBaaSv2ServiceBuilder(object):
                         net_type
                     )
 
+            # Assign default values
+            service['listeners'] = []
+            service['pools'] = []
+            service['healthmonitors'] = []
+            service['members'] = []
+            service['l7policies'] = []
+            service['l7policy_rules'] = []
+
             # Get listeners and pools.
             append_listeners = kwargs.get(
                 "append_listeners", self._append_listeners)
@@ -165,6 +173,10 @@ class LBaaSv2ServiceBuilder(object):
             append_pools_monitors(context, loadbalancer, service)
             append_members(
                 context, loadbalancer, service, network_map, subnet_map)
+            if not service.get('subnets'):
+                service['subnets'] = subnet_map
+            if not service.get('networks'):
+                service['networks'] = network_map
             append_l7policies_rules(context, loadbalancer, service)
 
         return service
