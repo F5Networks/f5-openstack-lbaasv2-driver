@@ -201,10 +201,10 @@ class EntityManager(object):
             context, loadbalancer, agent, **kwargs)
         return agent, service
 
+    @log_helpers.log_method_call
     def _append_listeners(self, context, service, listener):
 
         if not listener:
-            service['listeners'] = []
             return
 
         def get_db_listener():
@@ -226,8 +226,11 @@ class EntityManager(object):
             [{'id': l7_policy.id} for l7_policy in listener.l7_policies]
         if listener.default_pool:
             listener_dict['default_pool_id'] = listener.default_pool.id
-        service['listeners'] = [listener_dict]
 
+        LOG.debug("append listener %s", listener_dict)
+        service['listeners'].append(listener_dict)
+
+    @log_helpers.log_method_call
     def _append_pools_monitors(self, context, service, pool):
 
         if not pool:
@@ -262,6 +265,7 @@ class EntityManager(object):
                 pool.session_persistence.to_api_dict()
             )
 
+        LOG.debug("append pool %s", pool_dict)
         service['pools'] = [pool_dict]
 
         # Place an empty member list as the initial value.
@@ -284,6 +288,7 @@ class EntityManager(object):
         healthmonitor_dict = healthmonitor.to_dict(pool=False)
         healthmonitor_dict['pool_id'] = pool.id
 
+        LOG.debug("append healthmonitor_dict %s", healthmonitor_dict)
         service['healthmonitors'] = [healthmonitor_dict]
 
 
@@ -526,7 +531,12 @@ class PoolManager(EntityManager):
         self.api_dict = self._get_pool_dict(pool)
 
         def append_listeners(context, loadbalancer, service):
-            self._append_listeners(context, service, pool.listener)
+            for listener in loadbalancer.listeners:
+                if listener.default_pool:
+                    if listener.default_pool.id == pool.id:
+                        LOG.debug("listener %s has default pool %s",
+                                  listener.id, pool.id)
+                        self._append_listeners(context, service, listener)
 
         def append_pools_monitors(context, loadbalancer, service):
             self._append_pools_monitors(context, service, pool)
@@ -572,7 +582,12 @@ class PoolManager(EntityManager):
         self.api_dict = self._get_pool_dict(pool)
 
         def append_listeners(context, loadbalancer, service):
-            self._append_listeners(context, service, pool.listener)
+            for listener in loadbalancer.listeners:
+                if listener.default_pool:
+                    if listener.default_pool.id == pool.id:
+                        LOG.debug("listener %s has default pool %s",
+                                  listener.id, pool.id)
+                        self._append_listeners(context, service, listener)
 
         def append_pools_monitors(context, loadbalancer, service):
             self._append_pools_monitors(context, service, pool)
