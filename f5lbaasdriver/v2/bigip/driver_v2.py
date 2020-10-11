@@ -173,6 +173,9 @@ class EntityManager(object):
         self.api_dict = None
         self.loadbalancer = None
 
+    def _log_entity(self, entity):
+        LOG.debug("Log the entity: %s", entity.to_api_dict())
+
     def _call_rpc(self, context, entity, rpc_method, **kwargs):
         '''Perform operations common to create and delete for managers.'''
 
@@ -220,10 +223,10 @@ class EntityManager(object):
             context, self.loadbalancer, agent, **kwargs)
         return agent, service
 
+    @log_helpers.log_method_call
     def _append_listeners(self, context, service, listener):
 
         if not listener:
-            service['listeners'] = []
             return
 
         def get_db_listener():
@@ -245,8 +248,11 @@ class EntityManager(object):
             [{'id': l7_policy.id} for l7_policy in listener.l7_policies]
         if listener.default_pool:
             listener_dict['default_pool_id'] = listener.default_pool.id
-        service['listeners'] = [listener_dict]
 
+        LOG.debug("append listener %s", listener_dict)
+        service['listeners'].append(listener_dict)
+
+    @log_helpers.log_method_call
     def _append_pools_monitors(self, context, service, pool):
 
         if not pool:
@@ -281,6 +287,7 @@ class EntityManager(object):
                 pool.session_persistence.to_api_dict()
             )
 
+        LOG.debug("append pool %s", pool_dict)
         service['pools'] = [pool_dict]
 
         # Place an empty member list as the initial value.
@@ -303,6 +310,7 @@ class EntityManager(object):
         healthmonitor_dict = healthmonitor.to_dict(pool=False)
         healthmonitor_dict['pool_id'] = pool.id
 
+        LOG.debug("append healthmonitor_dict %s", healthmonitor_dict)
         service['healthmonitors'] = [healthmonitor_dict]
 
 
@@ -312,6 +320,9 @@ class LoadBalancerManager(EntityManager):
     @log_helpers.log_method_call
     def create(self, context, loadbalancer):
         """Create a loadbalancer."""
+
+        self._log_entity(loadbalancer)
+
         driver = self.driver
         self.loadbalancer = loadbalancer
         try:
@@ -373,6 +384,10 @@ class LoadBalancerManager(EntityManager):
     @log_helpers.log_method_call
     def update(self, context, old_loadbalancer, loadbalancer):
         """Update a loadbalancer."""
+
+        self._log_entity(old_loadbalancer)
+        self._log_entity(loadbalancer)
+
         driver = self.driver
         self.loadbalancer = loadbalancer
         try:
@@ -400,6 +415,9 @@ class LoadBalancerManager(EntityManager):
     @log_helpers.log_method_call
     def delete(self, context, loadbalancer):
         """Delete a loadbalancer."""
+
+        self._log_entity(loadbalancer)
+
         driver = self.driver
         self.loadbalancer = loadbalancer
         try:
@@ -481,6 +499,8 @@ class ListenerManager(EntityManager):
     def create(self, context, listener):
         """Create a listener."""
 
+        self._log_entity(listener)
+
         self.loadbalancer = listener.loadbalancer
         self.api_dict = listener.to_dict(
             loadbalancer=False, default_pool=False)
@@ -504,6 +524,9 @@ class ListenerManager(EntityManager):
     def update(self, context, old_listener, listener):
         """Update a listener."""
 
+        self._log_entity(old_listener)
+        self._log_entity(listener)
+
         driver = self.driver
         self.loadbalancer = listener.loadbalancer
         try:
@@ -523,6 +546,8 @@ class ListenerManager(EntityManager):
     @log_helpers.log_method_call
     def delete(self, context, listener):
         """Delete a listener."""
+
+        self._log_entity(listener)
 
         self.loadbalancer = listener.loadbalancer
         self.api_dict = listener.to_dict(
@@ -565,11 +590,18 @@ class PoolManager(EntityManager):
     def create(self, context, pool):
         """Create a pool."""
 
+        self._log_entity(pool)
+
         self.loadbalancer = pool.loadbalancer
         self.api_dict = self._get_pool_dict(pool)
 
         def append_listeners(context, loadbalancer, service):
-            self._append_listeners(context, service, pool.listener)
+            for listener in loadbalancer.listeners:
+                if listener.default_pool:
+                    if listener.default_pool.id == pool.id:
+                        LOG.debug("listener %s has default pool %s",
+                                  listener.id, pool.id)
+                        self._append_listeners(context, service, listener)
 
         def append_pools_monitors(context, loadbalancer, service):
             self._append_pools_monitors(context, service, pool)
@@ -592,6 +624,9 @@ class PoolManager(EntityManager):
     def update(self, context, old_pool, pool):
         """Update a pool."""
 
+        self._log_entity(old_pool)
+        self._log_entity(pool)
+
         driver = self.driver
         self.loadbalancer = pool.loadbalancer
         try:
@@ -611,11 +646,18 @@ class PoolManager(EntityManager):
     def delete(self, context, pool):
         """Delete a pool."""
 
+        self._log_entity(pool)
+
         self.loadbalancer = pool.loadbalancer
         self.api_dict = self._get_pool_dict(pool)
 
         def append_listeners(context, loadbalancer, service):
-            self._append_listeners(context, service, pool.listener)
+            for listener in loadbalancer.listeners:
+                if listener.default_pool:
+                    if listener.default_pool.id == pool.id:
+                        LOG.debug("listener %s has default pool %s",
+                                  listener.id, pool.id)
+                        self._append_listeners(context, service, listener)
 
         def append_pools_monitors(context, loadbalancer, service):
             self._append_pools_monitors(context, service, pool)
@@ -638,6 +680,8 @@ class MemberManager(EntityManager):
     @log_helpers.log_method_call
     def create(self, context, member):
         """Create a member."""
+
+        self._log_entity(member)
 
         self.loadbalancer = member.pool.loadbalancer
 
@@ -787,6 +831,9 @@ class MemberManager(EntityManager):
     def update(self, context, old_member, member):
         """Update a member."""
 
+        self._log_entity(old_member)
+        self._log_entity(member)
+
         driver = self.driver
         self.loadbalancer = member.pool.loadbalancer
         try:
@@ -805,6 +852,9 @@ class MemberManager(EntityManager):
     @log_helpers.log_method_call
     def delete(self, context, member):
         """Delete a member."""
+
+        self._log_entity(member)
+
         self.loadbalancer = member.pool.loadbalancer
         driver = self.driver
         try:
@@ -861,6 +911,8 @@ class HealthMonitorManager(EntityManager):
     def create(self, context, health_monitor):
         """Create a health monitor."""
 
+        self._log_entity(health_monitor)
+
         self.loadbalancer = health_monitor.pool.loadbalancer
         self.api_dict = health_monitor.to_dict(pool=False)
 
@@ -882,6 +934,9 @@ class HealthMonitorManager(EntityManager):
     def update(self, context, old_health_monitor, health_monitor):
         """Update a health monitor."""
 
+        self._log_entity(old_health_monitor)
+        self._log_entity(health_monitor)
+
         driver = self.driver
         self.loadbalancer = health_monitor.pool.loadbalancer
         try:
@@ -900,6 +955,8 @@ class HealthMonitorManager(EntityManager):
     @log_helpers.log_method_call
     def delete(self, context, health_monitor):
         """Delete a health monitor."""
+
+        self._log_entity(health_monitor)
 
         self.loadbalancer = health_monitor.pool.loadbalancer
         self.api_dict = health_monitor.to_dict(pool=False)
@@ -925,6 +982,8 @@ class L7PolicyManager(EntityManager):
     @log_helpers.log_method_call
     def create(self, context, policy):
         """Create an L7 policy."""
+
+        self._log_entity(policy)
 
         self.loadbalancer = policy.listener.loadbalancer
         self.api_dict = policy.to_dict(listener=False, rules=False)
@@ -952,6 +1011,9 @@ class L7PolicyManager(EntityManager):
     def update(self, context, old_policy, policy):
         """Update a policy."""
 
+        self._log_entity(old_policy)
+        self._log_entity(policy)
+
         driver = self.driver
         self.loadbalancer = policy.listener.loadbalancer
         try:
@@ -970,6 +1032,8 @@ class L7PolicyManager(EntityManager):
     @log_helpers.log_method_call
     def delete(self, context, policy):
         """Delete a policy."""
+
+        self._log_entity(policy)
 
         self.loadbalancer = policy.listener.loadbalancer
         self.api_dict = policy.to_dict(listener=False, rules=False)
@@ -1001,6 +1065,8 @@ class L7RuleManager(EntityManager):
     def create(self, context, rule):
         """Create an L7 rule."""
 
+        self._log_entity(rule)
+
         self.loadbalancer = rule.policy.listener.loadbalancer
         self.api_dict = rule.to_dict(policy=False)
 
@@ -1027,6 +1093,9 @@ class L7RuleManager(EntityManager):
     def update(self, context, old_rule, rule):
         """Update a rule."""
 
+        self._log_entity(old_rule)
+        self._log_entity(rule)
+
         driver = self.driver
         self.loadbalancer = rule.policy.listener.loadbalancer
         try:
@@ -1045,6 +1114,8 @@ class L7RuleManager(EntityManager):
     @log_helpers.log_method_call
     def delete(self, context, rule):
         """Delete a rule."""
+
+        self._log_entity(rule)
 
         self.loadbalancer = rule.policy.listener.loadbalancer
         self.api_dict = rule.to_dict(policy=False)
