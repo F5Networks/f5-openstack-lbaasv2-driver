@@ -47,6 +47,9 @@ class FakeBaseObj(object):
     def to_dict(self, **kwargs):
         return self.__dict__
 
+    def to_api_dict(self):
+        return self.to_dict()
+
 
 class FakeListener(FakeBaseObj):
     def __init__(self, id='test_obj_id', attached_to_lb=True):
