@@ -237,7 +237,6 @@ class EntityManager(object):
     def _append_pools_monitors(self, context, service, pool):
 
         if not pool:
-            service['pools'] = []
             return
 
         def get_db_pool():
@@ -269,11 +268,7 @@ class EntityManager(object):
             )
 
         LOG.debug("append pool %s", pool_dict)
-        service['pools'] = [pool_dict]
-
-        # Place an empty member list as the initial value.
-        # Append_members() can be called later to change this value.
-        service['members'] = []
+        service['pools'].append(pool_dict)
 
         if not pool.healthmonitor:
             return
@@ -292,7 +287,7 @@ class EntityManager(object):
         healthmonitor_dict['pool_id'] = pool.id
 
         LOG.debug("append healthmonitor_dict %s", healthmonitor_dict)
-        service['healthmonitors'] = [healthmonitor_dict]
+        service['healthmonitors'].append(healthmonitor_dict)
 
 
 class LoadBalancerManager(EntityManager):
@@ -465,13 +460,21 @@ class ListenerManager(EntityManager):
         def append_listeners(context, loadbalancer, service):
             self._append_listeners(context, service, listener)
 
+        def append_pools_monitors(context, loadbalancer, service):
+            if listener.default_pool:
+                for pool in loadbalancer.pools:
+                    if pool.id == listener.default_pool.id:
+                        self._append_pools_monitors(context, service, pool)
+                        break
+
         if cfg.CONF.f5_driver_perf_mode in (2, 3):
-            # Listener does not have default pool or l7policies.
+            # Listener may have default pool who are already created.
+            # Utilize default behavior to append members
+            # Listener does not have l7policies.
             self._call_rpc(
                 context, lb, listener, 'create_listener',
                 append_listeners=append_listeners,
-                append_pools_monitors=lambda *args: None,
-                append_members=lambda *args: None,
+                append_pools_monitors=append_pools_monitors,
                 append_l7policies_rules=lambda *args: None
             )
         else:
