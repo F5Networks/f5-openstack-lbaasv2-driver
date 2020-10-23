@@ -431,14 +431,14 @@ class LoadBalancerManager(EntityManager):
 
             lbs = driver.plugin.db.get_loadbalancers(
                 context,
-                {"project_id": [self.loadbalancer.tenant_id]}
+                {"project_id": [loadbalancer.tenant_id]}
             )
 
             lb_dict = loadbalancer.to_api_dict()
             lb_dict["last_one"] = True
 
             for lb in lbs:
-                if lb.id != self.loadbalancer.id:
+                if lb.id != loadbalancer.id:
                     if lb.provisioning_status in [
                         "ACTIVE", "ERROR",
                         "PENDING_CREATE", "PENDING_UPDATE"
