@@ -5,6 +5,17 @@
 Release Notes
 =============
 
+v212.4.0 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* Add some time before and after db operation.
+
+Bug Fixes
+`````````
+* Remove unexpected keyword argument.
+
 v212.3.0 (Pike)
 --------------
 
