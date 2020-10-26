@@ -167,10 +167,18 @@ class EntityManager(object):
             agent_host, service = self._setup_crud(
                 context, loadbalancer, entity, **kwargs)
             rpc_callable = getattr(self.driver.agent_rpc, rpc_method)
-            rpc_callable(
-                context, api_dict, service, agent_host,
-                **kwargs
-            )
+
+            the_port = kwargs.get("the_port_id", None)
+            LOG.info(the_port)
+            if the_port:
+                LOG.info('the_port is not None')
+                rpc_callable(
+                    context, api_dict, service,
+                    agent_host, the_port_id=the_port
+                )
+            else:
+                LOG.info('the_port is None')
+                rpc_callable(context, api_dict, service, agent_host)
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
                 lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
             LOG.error("Exception: %s: %s" % (rpc_method, e))
@@ -727,6 +735,9 @@ class MemberManager(EntityManager):
 
         def append_pools_monitors(context, loadbalancer, service):
             self._append_pools_monitors(context, service, member.pool)
+
+        LOG.info('the_port_id is:')
+        LOG.info(the_port_id)
 
         if cfg.CONF.f5_driver_perf_mode in (2, 3):
             # Utilize default behavior to append all members
