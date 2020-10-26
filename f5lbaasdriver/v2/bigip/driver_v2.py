@@ -773,7 +773,8 @@ class MemberManager(EntityManager):
                 api_dict = member.to_dict(pool=False)
                 subnets.append(member.subnet_id)
 
-        self._call_rpc(context, lb, member, api_dict, 'create_member')
+        self._call_rpc(context, lb, member, api_dict, 'create_member',
+                       multiple=True)
 
         for port in p_list:
             LOG.info('p_list details: %s' % p_list)
@@ -848,7 +849,8 @@ class MemberManager(EntityManager):
         driver = self.driver
 
         try:
-            agent_host, service = self._setup_crud(context, lb, member)
+            agent_host, service = self._setup_crud(context, lb, member,
+                                                   multiple=True)
 
             driver.agent_rpc.delete_member(
                 context, member.to_dict(pool=False), service, agent_host)
