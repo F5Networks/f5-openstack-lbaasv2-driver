@@ -17,6 +17,7 @@ u"""Service Module for F5® LBaaSv2."""
 import datetime
 import json
 
+from neutron.plugins.common import constants as plugin_constants
 from neutron_lbaas.common import keystone
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
@@ -474,7 +475,7 @@ class LBaaSv2ServiceBuilder(object):
             listener_ids = [listener['id'] for listener in listeners]
 
             def get_db_policies():
-                if cfg.CONF.f5_driver_perf_mode in (1, 3):
+                if cfg.CONF.f5_driver_perf_mode in (1, 3, 4):
                     db_policies = []
                     for l1 in loadbalancer.listeners:
                         for l2 in listeners:
@@ -511,7 +512,7 @@ class LBaaSv2ServiceBuilder(object):
             for pol_id in policy_ids:
 
                 def get_db_rules():
-                    if cfg.CONF.f5_driver_perf_mode in (1, 3):
+                    if cfg.CONF.f5_driver_perf_mode in (1, 3, 4):
                         for listener in loadbalancer.listeners:
                             for policy in listener.l7_policies:
                                 if policy.id == pol_id:
@@ -543,7 +544,7 @@ class LBaaSv2ServiceBuilder(object):
         listeners = []
 
         def get_db_listeners():
-            if cfg.CONF.f5_driver_perf_mode in (1, 3):
+            if cfg.CONF.f5_driver_perf_mode in (1, 3, 4):
                 return loadbalancer.listeners
             else:
                 return self.plugin.db.get_listeners(
@@ -575,7 +576,7 @@ class LBaaSv2ServiceBuilder(object):
         pools = []
 
         def get_db_pools():
-            if cfg.CONF.f5_driver_perf_mode in (1, 3):
+            if cfg.CONF.f5_driver_perf_mode in (1, 3, 4):
                 return loadbalancer.pools
             else:
                 return self.plugin.db.get_pools(
@@ -592,7 +593,7 @@ class LBaaSv2ServiceBuilder(object):
                 healthmonitor_id = pool.healthmonitor_id
 
                 def get_db_healthmonitor():
-                    if cfg.CONF.f5_driver_perf_mode in (1, 3):
+                    if cfg.CONF.f5_driver_perf_mode in (1, 3, 4):
                         return pool.healthmonitor
                     else:
                         return self.plugin.db.get_healthmonitor(
@@ -614,12 +615,20 @@ class LBaaSv2ServiceBuilder(object):
         pool_members = []
 
         def get_db_members():
-            if cfg.CONF.f5_driver_perf_mode in (1, 3):
+            if cfg.CONF.f5_driver_perf_mode in (1, 3, 4):
                 members = []
                 for p1 in loadbalancer.pools:
                     for p2 in pools:
                         if p1.id == p2['id']:
-                            members.extend([m for m in p1.members])
+                            if cfg.CONF.f5_driver_perf_mode != 4:
+                                members.extend([m for m in p1.members])
+                            else:
+                                for m in p1.members:
+                                    if m.provisioning_status in (
+                                       plugin_constants.PENDING_CREATE,
+                                       plugin_constants.PENDING_UPDATE,
+                                       plugin_constants.PENDING_DELETE):
+                                        members.append(m)
                 return members
             else:
                 return self.plugin.db.get_pool_members(
@@ -678,7 +687,7 @@ class LBaaSv2ServiceBuilder(object):
         # Listener attribte of policy fetched from loadbalancer object may be
         # None. However, l7policy.to_api_dict() assumes it is not None. So we
         # append its listener id.
-        if cfg.CONF.f5_driver_perf_mode in (1, 3) \
+        if cfg.CONF.f5_driver_perf_mode in (1, 3, 4) \
                 and l7policy_dict['listener_id'] \
                 and len(l7policy_dict['listeners']) == 0:
             l7policy_dict['listeners'].append(
@@ -697,7 +706,7 @@ class LBaaSv2ServiceBuilder(object):
         # Policy attribte of rule fetched from loadbalancer object may be
         # None. However, l7rule.to_api_dict() assumes it is not None. So we
         # append its policy id.
-        if cfg.CONF.f5_driver_perf_mode in (1, 3) and l7policy_id \
+        if cfg.CONF.f5_driver_perf_mode in (1, 3, 4) and l7policy_id \
                 and len(l7rule_dict['policies']) == 0:
             l7rule_dict['policies'].append({'id': l7policy_id})
 
