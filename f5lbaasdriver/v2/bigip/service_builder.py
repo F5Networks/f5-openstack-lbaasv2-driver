@@ -179,6 +179,11 @@ class LBaaSv2ServiceBuilder(object):
                 service['networks'] = network_map
             append_l7policies_rules(context, loadbalancer, service)
 
+            # create member in batch mode
+            member_bulk = kwargs.get("multiple", False)
+            if member_bulk is True:
+                service['multiple'] = True
+
         return service
 
     @log_helpers.log_method_call
