@@ -194,12 +194,22 @@ class EntityManager(object):
         :returns: tuple -- (agent object, service dict)
         '''
 
-        agent = self.driver.scheduler.schedule(
-            self.driver.plugin,
-            context,
-            loadbalancer.id,
-            self.driver.env
-        )
+        if cfg.CONF.f5_driver_perf_mode in (1, 3):
+            agent = self.driver.scheduler.schedule(
+                self.driver.plugin,
+                context,
+                loadbalancer.id,
+                self.driver.env,
+                loadbalancer=loadbalancer
+            )
+        else:
+            agent = self.driver.scheduler.schedule(
+                self.driver.plugin,
+                context,
+                loadbalancer.id,
+                self.driver.env
+            )
+
         service = self.driver.service_builder.build(
             context, loadbalancer, agent, **kwargs)
         return agent, service
@@ -417,12 +427,22 @@ class LoadBalancerManager(EntityManager):
     def stats(self, context, loadbalancer):
         driver = self.driver
         try:
-            agent = driver.scheduler.schedule(
-                driver.plugin,
-                context,
-                loadbalancer.id,
-                driver.env
-            )
+            if cfg.CONF.f5_driver_perf_mode in (1, 3):
+                agent = driver.scheduler.schedule(
+                    driver.plugin,
+                    context,
+                    loadbalancer.id,
+                    driver.env,
+                    loadbalancer=loadbalancer
+                )
+            else:
+                agent = driver.scheduler.schedule(
+                    driver.plugin,
+                    context,
+                    loadbalancer.id,
+                    driver.env
+                )
+
             service = driver.service_builder.build(context,
                                                    loadbalancer,
                                                    agent)
@@ -713,9 +733,15 @@ class MemberManager(EntityManager):
 
                 LOG.info("time for subnet  %.5f secs" % (time() - start_time))
 
-                agent = self.driver.scheduler.schedule(
-                    self.driver.plugin, context, lb.id, self.driver.env
-                )
+                if cfg.CONF.f5_driver_perf_mode in (1, 3):
+                    agent = self.driver.scheduler.schedule(
+                        self.driver.plugin, context, lb.id, self.driver.env,
+                        loadbalancer=lb
+                    )
+                else:
+                    agent = self.driver.scheduler.schedule(
+                        self.driver.plugin, context, lb.id, self.driver.env
+                    )
                 LOG.info("time for agent  %.5f secs" % (time() - start_time))
                 LOG.info(agent)
 
