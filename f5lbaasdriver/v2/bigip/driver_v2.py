@@ -213,12 +213,22 @@ class EntityManager(object):
         :returns: tuple -- (agent object, service dict)
         '''
 
-        agent = self.driver.scheduler.schedule(
-            self.driver.plugin,
-            context,
-            loadbalancer.id,
-            self.driver.env
-        )
+        if cfg.CONF.f5_driver_perf_mode in (1, 3):
+            agent = self.driver.scheduler.schedule(
+                self.driver.plugin,
+                context,
+                loadbalancer.id,
+                self.driver.env,
+                loadbalancer=loadbalancer
+            )
+        else:
+            agent = self.driver.scheduler.schedule(
+                self.driver.plugin,
+                context,
+                loadbalancer.id,
+                self.driver.env
+            )
+
         service = self.driver.service_builder.build(
             context, loadbalancer, agent, **kwargs)
         return agent, service
@@ -439,12 +449,22 @@ class LoadBalancerManager(EntityManager):
     def stats(self, context, loadbalancer):
         driver = self.driver
         try:
-            agent = driver.scheduler.schedule(
-                driver.plugin,
-                context,
-                loadbalancer.id,
-                driver.env
-            )
+            if cfg.CONF.f5_driver_perf_mode in (1, 3):
+                agent = driver.scheduler.schedule(
+                    driver.plugin,
+                    context,
+                    loadbalancer.id,
+                    driver.env,
+                    loadbalancer=loadbalancer
+                )
+            else:
+                agent = driver.scheduler.schedule(
+                    driver.plugin,
+                    context,
+                    loadbalancer.id,
+                    driver.env
+                )
+
             service = driver.service_builder.build(context,
                                                    loadbalancer,
                                                    agent)
@@ -676,12 +696,21 @@ class MemberManager(EntityManager):
             LOG.info('running here')
             if member.attached_to_loadbalancer() and lb:
                 LOG.info('scheduing here instead')
-                this_agent = self.driver.scheduler.schedule(
-                    self.driver.plugin,
-                    context,
-                    lb.id,
-                    self.driver.env
-                )
+                if cfg.CONF.f5_driver_perf_mode in (1, 3):
+                    this_agent = self.driver.scheduler.schedule(
+                        self.driver.plugin,
+                        context,
+                        lb.id,
+                        self.driver.env,
+                        loadbalancer=lb
+                    )
+                else:
+                    this_agent = self.driver.scheduler.schedule(
+                        self.driver.plugin,
+                        context,
+                        lb.id,
+                        self.driver.env
+                    )
                 LOG.info(this_agent)
                 agent_host = this_agent.get('host')
             LOG.info(agent_host)
@@ -784,9 +813,16 @@ class MemberManager(EntityManager):
 
                     LOG.info("end getting subnet")
 
-                    agent = self.driver.scheduler.schedule(
-                        self.driver.plugin, context, lb.id, self.driver.env
-                    )
+                    if cfg.CONF.f5_driver_perf_mode in (1, 3):
+                        agent = self.driver.scheduler.schedule(
+                            self.driver.plugin, context, lb.id, self.driver.env,
+                            loadbalancer=lb
+                        )
+                    else:
+                        agent = self.driver.scheduler.schedule(
+                            self.driver.plugin, context, lb.id, self.driver.env
+                        )
+
                     LOG.info("end scheduling agent")
                     LOG.info(agent)
 
