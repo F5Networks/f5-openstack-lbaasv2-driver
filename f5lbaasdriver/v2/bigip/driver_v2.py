@@ -413,8 +413,33 @@ class LoadBalancerManager(EntityManager):
                 context, loadbalancer)
             agent_host = agent['host']
 
+            # becuase the api calls is synchronized, here we try to
+            # tell if the lb is the last lb in the project.
+            # then we can delete partition and routedomain
+
+            # from the cherry pick
+            # there is no self.loadbalancer anymore, so modify this
+            lbs = driver.plugin.db.get_loadbalancers(
+                context,
+                {"project_id": [loadbalancer.tenant_id]}
+            )
+
+            lb_dict = loadbalancer.to_api_dict()
+            lb_dict["last_one"] = True
+
+            for lb in lbs:
+                # from the cherry pick
+                # there is no self.loadbalancer anymore, so modify this
+                if lb.id != loadbalancer.id:
+                    if lb.provisioning_status in [
+                        "ACTIVE", "ERROR",
+                        "PENDING_CREATE", "PENDING_UPDATE"
+                    ]:
+                        lb_dict["last_one"] = False
+                        break
+
             driver.agent_rpc.delete_loadbalancer(
-                context, loadbalancer.to_api_dict(), service, agent_host)
+                context, lb_dict, service, agent_host)
 
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
                 lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
