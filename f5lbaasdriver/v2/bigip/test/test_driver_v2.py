@@ -27,9 +27,8 @@ class FakeNoEligibleAgentExc(lbaas_agentschedulerv2.NoEligibleLbaasAgent):
 
 
 class FakeLB(object):
-    def __init__(self, id='test_lb_id', tenant_id='test-tenant-id'):
+    def __init__(self, id='test_lb_id'):
         self.id = id
-        self.tenant_id = tenant_id
         self.vip_port_id = 'test_vip_port_id'
 
     def to_api_dict(self):
@@ -245,7 +244,7 @@ def test_lbmgr_update_no_eligible_agent_exception(mock_log):
 def test_lbmgr_delete(happy_path_driver):
     mock_driver, mock_ctx = happy_path_driver
     lb_mgr = dv2.LoadBalancerManager(mock_driver)
-    fake_lb = FakeLB(tenant_id="test-tenant-id")
+    fake_lb = FakeLB()
     lb_mgr.delete(mock_ctx, fake_lb)
     assert mock_driver.agent_rpc.delete_loadbalancer.call_args == \
         mock.call(mock_ctx, fake_lb.to_api_dict(), {}, 'test_agent')
@@ -259,12 +258,13 @@ def test_lbmgr_delete_no_eligible_agent_exception(mock_log):
     lb_mgr = dv2.LoadBalancerManager(mock_driver)
     mock_ctx = mock.MagicMock(name='mock_context')
     fake_lb = FakeLB(id='test_lb')
-    fake_lb = FakeLB(tenant_id="test-tenant-id")
     lb_mgr.delete(mock_ctx, fake_lb)
     assert mock_log.error.call_args == mock.call(
         'Exception: loadbalancer delete: No eligible agent found for '
         'loadbalancer test_lb.'
     )
+    assert mock_driver.plugin.db.delete_loadbalancer.call_args == \
+        mock.call(mock_ctx, 'test_lb')
 
 
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
