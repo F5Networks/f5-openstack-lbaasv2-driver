@@ -442,7 +442,7 @@ class LoadBalancerManager(EntityManager):
                         break
 
             driver.agent_rpc.delete_loadbalancer(
-                context, lb_dict, service, agent_host)
+                context, loadbalancer.to_api_dict(), service, agent_host)
 
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
                 lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
