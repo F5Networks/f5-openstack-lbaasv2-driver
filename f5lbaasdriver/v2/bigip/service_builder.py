@@ -606,7 +606,11 @@ class LBaaSv2ServiceBuilder(object):
                 for p1 in loadbalancer.pools:
                     for p2 in pools:
                         if p1.id == p2['id']:
+                            LOG.info('pool id here:')
+                            LOG.info(p1.id)
                             members.extend([m for m in p1.members])
+                LOG.info('members right here:')
+                LOG.info(members)
                 return members
             else:
                 return self.plugin.db.get_pool_members(
@@ -615,7 +619,12 @@ class LBaaSv2ServiceBuilder(object):
                 )
 
         if pools:
+            # TODO(niklaus): might have to modify if SY don't.
+            # in that case seems we have to fetch them
+            # using db.get_pool_members, which is not desired.
             members = get_db_members()
+            LOG.info('these are the members:')
+            LOG.info(members)
 
             for member in members:
                 # Get extended member attributes, network, and subnet.
@@ -646,6 +655,8 @@ class LBaaSv2ServiceBuilder(object):
                                  session_persistence=False)
 
         pool_dict['members'] = [{'id': member.id} for member in pool.members]
+        LOG.info('the members of pool_dict here is:')
+        LOG.info(pool_dict['members'])
         pool_dict['l7_policies'] = [{'id': l7_policy.id}
                                     for l7_policy in pool.l7_policies]
         if pool.session_persistence:
