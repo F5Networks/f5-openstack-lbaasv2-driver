@@ -620,7 +620,9 @@ class LBaaSv2ServiceBuilder(object):
         pool_members = []
 
         def get_db_members():
-            if cfg.CONF.f5_driver_perf_mode in (1, 3):
+            if cfg.CONF.f5_driver_perf_mode in (1, 3) \
+                    and not cfg.CONF.fetch_fresh_db_members:
+                LOG.debug('inside this logic')
                 members = []
                 for p1 in loadbalancer.pools:
                     for p2 in pools:
@@ -632,6 +634,7 @@ class LBaaSv2ServiceBuilder(object):
                 LOG.info(members)
                 return members
             else:
+                LOG.debug('getting the db members')
                 return self.plugin.db.get_pool_members(
                     context,
                     filters={'pool_id': [p['id'] for p in pools]}
