@@ -642,14 +642,24 @@ class MemberManager(EntityManager):
         self._log_entity(member)
 
         lb = member.pool.loadbalancer
+        the_port_id = None
+        driver = self.driver
 
-        if self.driver.unlegacy_setting_placeholder_driver_side:
-            LOG.debug('running un-legacy way for member create p1:')
-            driver = self.driver
+        filters = {
+            'device_owner': ['F5:lbaasv2'],
+            'fixed_ips': {'subnet_id': [member.subnet_id]}
+        }
+        LOG.debug('fetching certain ports details:')
+        all_ports = driver.plugin.db._core_plugin.get_ports(
+            context, filters
+        )
+        LOG.debug("all_ports details: %s" % all_ports)
+
+        if len(all_ports) < 1:
             subnet = driver.plugin.db._core_plugin.get_subnet(
                 context, member.subnet_id
             )
-            # agent_host, service = self._setup_crud(context, member)
+
             agent_host = 'temp'
             LOG.info('running here')
             if member.attached_to_loadbalancer() and lb:
@@ -673,13 +683,19 @@ class MemberManager(EntityManager):
                     'device_id': member.id,
                     'device_owner': 'F5:lbaasv2',
                     'admin_state_up': member.admin_state_up,
+                    portbindings.VNIC_TYPE: "normal",
                     'name': 'fake_pool_port_' + member.id,
                     portbindings.HOST_ID: agent_host}})
             LOG.debug('the port created here is: %s' % p)
+            the_port_id = p['id']
+
         api_dict = member.to_dict(pool=False)
 
         def append_pools_monitors(context, loadbalancer, service):
             self._append_pools_monitors(context, service, member.pool)
+
+        LOG.info('the_port_id is:')
+        LOG.info(the_port_id)
 
         if cfg.CONF.f5_driver_perf_mode in (2, 3):
             # Utilize default behavior to append all members
@@ -687,23 +703,15 @@ class MemberManager(EntityManager):
                 context, lb, member, api_dict, 'create_member',
                 append_listeners=lambda *args: None,
                 append_pools_monitors=append_pools_monitors,
-                append_l7policies_rules=lambda *args: None
+                append_l7policies_rules=lambda *args: None,
+                the_port_id=the_port_id
             )
         else:
-            self._call_rpc(context, lb, member, api_dict, 'create_member')
+            self._call_rpc(
+                context, lb, member, api_dict, 'create_member',
+                the_port_id=the_port_id
+            )
 
-        if self.driver.unlegacy_setting_placeholder_driver_side:
-            LOG.debug('running un-legacy way for member create p2:')
-            port_id = None
-            if p.get('id'):
-                port_id = p['id']
-            if port_id:
-                driver.plugin.db._core_plugin.delete_port(context, port_id)
-                LOG.debug('XXXXXX delete port: %s' % port_id)
-            else:
-                LOG.error('port_id seems none')
-
-    # only for MIGU
     @log_helpers.log_method_call
     def create_bulk(self, context, members):
         """Create members."""
