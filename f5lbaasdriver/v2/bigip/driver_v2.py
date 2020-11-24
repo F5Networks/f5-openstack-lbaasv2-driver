@@ -162,7 +162,18 @@ class EntityManager(object):
             agent_host, service = self._setup_crud(
                 context, loadbalancer, entity, **kwargs)
             rpc_callable = getattr(self.driver.agent_rpc, rpc_method)
-            rpc_callable(context, api_dict, service, agent_host)
+
+            the_port = kwargs.get("the_port_id", None)
+            LOG.info(the_port)
+            if the_port:
+                LOG.info('the_port is not None')
+                rpc_callable(
+                    context, api_dict, service,
+                    agent_host, the_port_id=the_port
+                )
+            else:
+                LOG.info('the_port is None')
+                rpc_callable(context, api_dict, service, agent_host)
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
                 lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
             LOG.error("Exception: %s: %s" % (rpc_method, e))

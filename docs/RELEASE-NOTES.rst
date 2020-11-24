@@ -5,12 +5,12 @@
 Release Notes
 =============
 
-v312.3.0 (Pike)
+v312.4.0 (Pike)
 --------------
 
 Added Functionality
 ```````````````````
-* member bulk creation
+* member creation
 * performance improvement
 
 
