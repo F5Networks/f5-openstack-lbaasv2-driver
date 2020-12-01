@@ -265,15 +265,19 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                     if group_capacity > capacity_by_group[gn]:
                         capacity_by_group[gn] = group_capacity
 
+                # ---------------------------------------------------------
+                # NOTE(qzhao): Skip to evaluate tenant affinity, because it
+                # cost much time to load loadbalancers from neutron db.
+                # ---------------------------------------------------------
                 # Do we already have this tenant assigned to this
                 # agent candidate? If we do and it has capacity
                 # then assign this loadbalancer to this agent.
-                assigned_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
-                    context, candidate['id'])
-                for assigned_lb in assigned_lbs:
-                    if loadbalancer.tenant_id == assigned_lb.tenant_id:
-                        chosen_agent = candidate
-                        break
+                # assigned_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
+                #     context, candidate['id'])
+                # for assigned_lb in assigned_lbs:
+                #     if loadbalancer.tenant_id == assigned_lb.tenant_id:
+                #         chosen_agent = candidate
+                #         break
 
                 if chosen_agent:
                     # Does the agent which had tenants assigned
@@ -417,15 +421,21 @@ class MultiAgentScheduler(TenantScheduler):
                 else:
                     if group_capacity > capacity_by_group[gn]:
                         capacity_by_group[gn] = group_capacity
+
+                # ---------------------------------------------------------
+                # NOTE(qzhao): Skip to evaluate tenant affinity, because it
+                # cost much time to load loadbalancers from neutron db.
+                # ---------------------------------------------------------
                 # Do we already have this tenant assigned to this
                 # agent candidate? If we do and it has capacity
                 # then assign this loadbalancer to this agent.
-                assigned_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
-                    context, candidate['id'])
-                for assigned_lb in assigned_lbs:
-                    if loadbalancer.tenant_id == assigned_lb.tenant_id:
-                        chosen_agent = candidate
-                        break
+                # assigned_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
+                #     context, candidate['id'])
+                # for assigned_lb in assigned_lbs:
+                #     if loadbalancer.tenant_id == assigned_lb.tenant_id:
+                #         chosen_agent = candidate
+                #         break
+
                 if chosen_agent:
                     # Does the agent which had tenants assigned
                     # to it still have capacity?
