@@ -49,8 +49,8 @@ OPTS = [
     ),
     cfg.BoolOpt(
         'to_speedup_populate_logic',
-        default=True,
-        help=("By default, uses new fast populate logic,"
+        default=False,
+        help=("If True, uses new fast populate logic,"
               "if set to False, then revert to old behavior "
               "just in case.")
     ),

@@ -5,6 +5,24 @@
 Release Notes
 =============
 
+v112.5.3 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* performance improvement for member population
+
+Bug Fixes
+`````````
+* None noted.
+
+
+Limitations
+```````````
+* None noted.
+`````````
+
+
 v112.5.2 (Pike)
 --------------
 
