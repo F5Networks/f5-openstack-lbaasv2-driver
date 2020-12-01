@@ -416,7 +416,7 @@ def test_schedule_already_assigned_agent():
                    '{"environment_prefix": "Project", \
                     "environment_group_number": 4, \
                     "environment_capacity_score": 1.5}'}
-    agent2_conf = {'id': 34, 'configurations':
+    agent2_conf = {'id': 35, 'configurations':
                    '{"environment_prefix": "Project", \
                     "environment_group_number": 4, \
                     "environment_capacity_score": 0.8}'}
@@ -424,6 +424,7 @@ def test_schedule_already_assigned_agent():
     mock_ctx = mock.MagicMock(name='context')
     sched = agent_scheduler.TenantScheduler()
     sched.get_lbaas_agent_hosting_loadbalancer = mock.MagicMock(
-        name='get_lbaas_agent_hosting_loadbalancer', return_value=None)
+        name='get_lbaas_agent_hosting_loadbalancer',
+        return_value={'agent': {'id': 35}})
     res = sched.schedule(mock_plugin, mock_ctx, 'test_lb_id', 'Project')
-    assert res == agent2_conf
+    assert res['id'] == agent2_conf['id']
