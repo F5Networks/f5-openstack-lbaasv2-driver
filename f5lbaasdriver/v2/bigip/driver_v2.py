@@ -46,7 +46,7 @@ OPTS = [
     cfg.IntOpt(
         'f5_driver_perf_mode',
         default=0,
-        help=('switch driver performance mode from 0 to 3')
+        help=('switch driver performance mode from 0 to 4')
     ),
     cfg.StrOpt(
         'f5_loadbalancer_pool_scheduler_driver_v2',
@@ -211,7 +211,7 @@ class EntityManager(object):
             return
 
         def get_db_listener():
-            if cfg.CONF.f5_driver_perf_mode == 3:
+            if cfg.CONF.f5_driver_perf_mode in (3, 4):
                 return listener
             else:
                 return self.driver.plugin.db.get_listener(
@@ -240,7 +240,7 @@ class EntityManager(object):
             return
 
         def get_db_pool():
-            if cfg.CONF.f5_driver_perf_mode == 3:
+            if cfg.CONF.f5_driver_perf_mode == (3, 4):
                 return pool
             else:
                 return self.driver.plugin.db.get_pool(
@@ -274,7 +274,7 @@ class EntityManager(object):
             return
 
         def get_db_healthmonitor():
-            if cfg.CONF.f5_driver_perf_mode == 3:
+            if cfg.CONF.f5_driver_perf_mode in (3, 4):
                 return pool.healthmonitor
             else:
                 return self.driver.plugin.db.get_healthmonitor(
@@ -466,7 +466,7 @@ class ListenerManager(EntityManager):
                         self._append_pools_monitors(context, service, pool)
                         break
 
-        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+        if cfg.CONF.f5_driver_perf_mode in (2, 3, 4):
             # Listener may have default pool who are already created.
             # Utilize default behavior to append members
             # Listener does not have l7policies.
@@ -514,7 +514,7 @@ class ListenerManager(EntityManager):
         def append_listeners(context, lb, service):
             self._append_listeners(context, service, listener)
 
-        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+        if cfg.CONF.f5_driver_perf_mode in (2, 3, 4):
             # L7policy should already be deleted.
             # Needn't modify pool.
             self._call_rpc(
@@ -564,7 +564,7 @@ class PoolManager(EntityManager):
         def append_pools_monitors(context, loadbalancer, service):
             self._append_pools_monitors(context, service, pool)
 
-        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+        if cfg.CONF.f5_driver_perf_mode in (2, 3, 4):
             # Pool and l7plicies ???
             # Pool may be associated with listener, maybe not.
             # Pool has no members
@@ -620,7 +620,7 @@ class PoolManager(EntityManager):
         def append_pools_monitors(context, loadbalancer, service):
             self._append_pools_monitors(context, service, pool)
 
-        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+        if cfg.CONF.f5_driver_perf_mode in (2, 3, 4):
             # Pool may be associated with a listener
             # Utilize default behavior to load member, l7policy and rule
             self._call_rpc(
@@ -667,8 +667,9 @@ class MemberManager(EntityManager):
         def append_pools_monitors(context, loadbalancer, service):
             self._append_pools_monitors(context, service, member.pool)
 
-        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+        if cfg.CONF.f5_driver_perf_mode in (2, 3, 4):
             # Utilize default behavior to append all members
+            # In mode 4, it will only include one pool member.
             self._call_rpc(
                 context, lb, member, api_dict, 'create_member',
                 append_listeners=lambda *args: None,
@@ -780,8 +781,9 @@ class MemberManager(EntityManager):
             def append_pools_monitors(context, loadbalancer, service):
                 self._append_pools_monitors(context, service, member.pool)
 
-            if cfg.CONF.f5_driver_perf_mode in (2, 3):
+            if cfg.CONF.f5_driver_perf_mode in (2, 3, 4):
                 # Utilize default behavior to append all members
+                # In mode 4, it will only include one pool member.
                 agent_host, service = self._setup_crud(
                     context, lb, member,
                     append_listeners=lambda *args: None,
@@ -840,7 +842,7 @@ class HealthMonitorManager(EntityManager):
         def append_pools_monitors(context, loadbalancer, service):
             self._append_pools_monitors(context, service, health_monitor.pool)
 
-        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+        if cfg.CONF.f5_driver_perf_mode in (2, 3, 4):
             # Utilize default behavior to append all members
             self._call_rpc(
                 context, lb, health_monitor, api_dict, 'create_health_monitor',
@@ -886,7 +888,7 @@ class HealthMonitorManager(EntityManager):
         def append_pools_monitors(context, loadbalancer, service):
             self._append_pools_monitors(context, service, health_monitor.pool)
 
-        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+        if cfg.CONF.f5_driver_perf_mode in (2, 3, 4):
             # Utilize default behavior to append all members
             self._call_rpc(
                 context, lb, health_monitor, api_dict, 'delete_health_monitor',
@@ -918,7 +920,7 @@ class L7PolicyManager(EntityManager):
             self._append_pools_monitors(
                 context, service, policy.listener.default_pool)
 
-        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+        if cfg.CONF.f5_driver_perf_mode in (2, 3, 4):
             # Utilize default behavior to load policies and rules
             # Listener may have default pool
             # Utilize default behavior to load members
@@ -968,7 +970,7 @@ class L7PolicyManager(EntityManager):
             self._append_pools_monitors(
                 context, service, policy.listener.default_pool)
 
-        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+        if cfg.CONF.f5_driver_perf_mode in (2, 3, 4):
             # Utilize default behavior to load policies and rules
             # Listener may have default pool
             # Utilize default behavior to load members
@@ -1000,7 +1002,7 @@ class L7RuleManager(EntityManager):
             self._append_pools_monitors(
                 context, service, rule.policy.listener.default_pool)
 
-        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+        if cfg.CONF.f5_driver_perf_mode in (2, 3, 4):
             # Utilize default behavior to load policies and rules
             # Listener may have default pool
             # Utilize default behavior to load members
@@ -1050,7 +1052,7 @@ class L7RuleManager(EntityManager):
             self._append_pools_monitors(
                 context, service, rule.policy.listener.default_pool)
 
-        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+        if cfg.CONF.f5_driver_perf_mode in (2, 3, 4):
             # Utilize default behavior to load policies and rules
             # Listener may have default pool
             # Utilize default behavior to load members
