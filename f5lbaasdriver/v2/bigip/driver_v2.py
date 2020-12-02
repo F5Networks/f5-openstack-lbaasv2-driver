@@ -47,6 +47,12 @@ OPTS = [
         default=0,
         help=('switch driver performance mode from 0 to 3')
     ),
+    cfg.BoolOpt(
+        'fetch_fresh_db_members',
+        default=True,
+        help=('If True, fetch fresh members from db in _get_members,'
+              'if set to False, skip the fetch')
+    ),
     cfg.StrOpt(
         'f5_loadbalancer_pool_scheduler_driver_v2',
         default=(
