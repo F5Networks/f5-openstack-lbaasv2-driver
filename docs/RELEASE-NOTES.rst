@@ -5,13 +5,15 @@
 Release Notes
 =============
 
-v312.4.0 (Pike)
+v312.4.1 (Pike)
 --------------
 
 Added Functionality
 ```````````````````
 * member creation
 * performance improvement
+* refresh agent
+* pass port id argument
 
 
 Bug Fixes
