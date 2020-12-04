@@ -38,11 +38,15 @@ from f5lbaasdriver.v2.bigip import neutron_client
 from f5lbaasdriver.v2.bigip import plugin_rpc
 # from neutron.api.v2 import attributes
 from neutron_lib import constants as n_const
-from time import time
 
 LOG = logging.getLogger(__name__)
 
 OPTS = [
+    cfg.IntOpt(
+        'f5_driver_perf_mode',
+        default=0,
+        help=('switch driver performance mode from 0 to 3')
+    ),
     cfg.StrOpt(
         'f5_loadbalancer_pool_scheduler_driver_v2',
         default=(
@@ -146,16 +150,30 @@ class EntityManager(object):
 
     def __init__(self, driver):
         self.driver = driver
-        self.api_dict = None
-        self.loadbalancer = None
 
-    def _call_rpc(self, context, entity, rpc_method):
+    def _log_entity(self, entity):
+        LOG.debug("Log the entity: %s", entity.to_api_dict())
+
+    def _call_rpc(self, context, loadbalancer, entity, api_dict,
+                  rpc_method, **kwargs):
         '''Perform operations common to create and delete for managers.'''
 
         try:
-            agent_host, service = self._setup_crud(context, entity)
+            agent_host, service = self._setup_crud(
+                context, loadbalancer, entity, **kwargs)
             rpc_callable = getattr(self.driver.agent_rpc, rpc_method)
-            rpc_callable(context, self.api_dict, service, agent_host)
+
+            the_port = kwargs.get("the_port_id", None)
+            LOG.info(the_port)
+            if the_port:
+                LOG.info('the_port is not None')
+                rpc_callable(
+                    context, api_dict, service,
+                    agent_host, the_port_id=the_port
+                )
+            else:
+                LOG.info('the_port is None')
+                rpc_callable(context, api_dict, service, agent_host)
         except (lbaas_agentschedulerv2.NoEligibleLbaasAgent,
                 lbaas_agentschedulerv2.NoActiveLbaasAgent) as e:
             LOG.error("Exception: %s: %s" % (rpc_method, e))
@@ -163,7 +181,7 @@ class EntityManager(object):
             LOG.error("Exception: %s: %s" % (rpc_method, e))
             raise e
 
-    def _setup_crud(self, context, entity):
+    def _setup_crud(self, context, loadbalancer, entity, **kwargs):
         '''Setup CRUD operations for managers to make calls to agent.
 
         :param context: auth context for performing CRUD operation
@@ -172,13 +190,15 @@ class EntityManager(object):
         :raises: F5NoAttachedLoadbalancerException
         '''
 
-        if entity.attached_to_loadbalancer() and self.loadbalancer:
-            (agent, service) = self._schedule_agent_create_service(context)
+        if entity.attached_to_loadbalancer() and loadbalancer:
+            (agent, service) = self._schedule_agent_create_service(
+                context, loadbalancer, entity, **kwargs)
             return agent['host'], service
 
         raise F5NoAttachedLoadbalancerException()
 
-    def _schedule_agent_create_service(self, context):
+    def _schedule_agent_create_service(self, context, loadbalancer,
+                                       entity=None, **kwargs):
         '''Schedule agent and build service--used for most managers.
 
         :param context: auth context for performing crud operation
@@ -188,12 +208,97 @@ class EntityManager(object):
         agent = self.driver.scheduler.schedule(
             self.driver.plugin,
             context,
-            self.loadbalancer.id,
+            loadbalancer.id,
             self.driver.env
         )
         service = self.driver.service_builder.build(
-            context, self.loadbalancer, agent)
+            context, loadbalancer, agent, **kwargs)
         return agent, service
+
+    @log_helpers.log_method_call
+    def _append_listeners(self, context, service, listener):
+
+        if not listener:
+            return
+
+        def get_db_listener():
+            if cfg.CONF.f5_driver_perf_mode == 3:
+                return listener
+            else:
+                return self.driver.plugin.db.get_listener(
+                    context, listener.id)
+
+        db_listener = get_db_listener()
+        listener_dict = db_listener.to_dict(
+            loadbalancer=False,
+            default_pool=False,
+            l7_policies=False
+        )
+
+        # Listener may have l7policies or default pool
+        listener_dict['l7_policies'] = \
+            [{'id': l7_policy.id} for l7_policy in listener.l7_policies]
+        if listener.default_pool:
+            listener_dict['default_pool_id'] = listener.default_pool.id
+
+        LOG.debug("append listener %s", listener_dict)
+        service['listeners'].append(listener_dict)
+
+    @log_helpers.log_method_call
+    def _append_pools_monitors(self, context, service, pool):
+
+        if not pool:
+            return
+
+        def get_db_pool():
+            if cfg.CONF.f5_driver_perf_mode == 3:
+                return pool
+            else:
+                return self.driver.plugin.db.get_pool(
+                    context, pool.id)
+
+        db_pool = get_db_pool()
+
+        pool_dict = db_pool.to_dict(
+            healthmonitor=False,
+            listener=False,
+            listeners=False,
+            loadbalancer=False,
+            l7_policies=False,
+            members=False,
+            session_persistence=False
+        )
+
+        pool_dict['members'] = [{'id': member.id} for member in pool.members]
+        pool_dict['l7_policies'] = [
+            {'id': l7_policy.id} for l7_policy in pool.l7_policies]
+
+        if pool.session_persistence:
+            pool_dict['session_persistence'] = (
+                pool.session_persistence.to_api_dict()
+            )
+
+        LOG.debug("append pool %s", pool_dict)
+        service['pools'].append(pool_dict)
+
+        if not pool.healthmonitor:
+            return
+
+        def get_db_healthmonitor():
+            if cfg.CONF.f5_driver_perf_mode == 3:
+                return pool.healthmonitor
+            else:
+                return self.driver.plugin.db.get_healthmonitor(
+                    context,
+                    pool.healthmonitor.id
+                )
+
+        healthmonitor = get_db_healthmonitor()
+        healthmonitor_dict = healthmonitor.to_dict(pool=False)
+        healthmonitor_dict['pool_id'] = pool.id
+
+        LOG.debug("append healthmonitor_dict %s", healthmonitor_dict)
+        service['healthmonitors'].append(healthmonitor_dict)
 
 
 class LoadBalancerManager(EntityManager):
@@ -202,10 +307,13 @@ class LoadBalancerManager(EntityManager):
     @log_helpers.log_method_call
     def create(self, context, loadbalancer):
         """Create a loadbalancer."""
+
+        self._log_entity(loadbalancer)
+
         driver = self.driver
-        self.loadbalancer = loadbalancer
         try:
-            agent, service = self._schedule_agent_create_service(context)
+            agent, service = self._schedule_agent_create_service(
+                context, loadbalancer)
             agent_host = agent['host']
             agent_config = agent.get('configurations', {})
             LOG.debug("agent configurations: %s" % agent_config)
@@ -213,6 +321,11 @@ class LoadBalancerManager(EntityManager):
             scheduler = self.driver.scheduler
             agent_config_dict = \
                 scheduler.deserialize_agent_configurations(agent_config)
+
+            if agent in context.session:
+                LOG.info('inside here')
+                context.session.expire(agent, ['heartbeat_timestamp'])
+                LOG.info(agent)
 
             if not agent_config_dict.get('nova_managed', False):
                 # Update the port for the VIP to show ownership by this driver
@@ -238,7 +351,7 @@ class LoadBalancerManager(EntityManager):
                 if driver.unlegacy_setting_placeholder_driver_side:
                     LOG.debug('calling extra build():')
                     service = self.driver.service_builder.build(
-                        context, self.loadbalancer, agent)
+                        context, loadbalancer, agent)
             else:
                 LOG.debug("Agent devices are nova managed")
 
@@ -260,10 +373,14 @@ class LoadBalancerManager(EntityManager):
     @log_helpers.log_method_call
     def update(self, context, old_loadbalancer, loadbalancer):
         """Update a loadbalancer."""
+
+        self._log_entity(old_loadbalancer)
+        self._log_entity(loadbalancer)
+
         driver = self.driver
-        self.loadbalancer = loadbalancer
         try:
-            agent, service = self._schedule_agent_create_service(context)
+            agent, service = self._schedule_agent_create_service(
+                context, loadbalancer)
             agent_host = agent['host']
 
             driver.agent_rpc.update_loadbalancer(
@@ -287,10 +404,13 @@ class LoadBalancerManager(EntityManager):
     @log_helpers.log_method_call
     def delete(self, context, loadbalancer):
         """Delete a loadbalancer."""
+
+        self._log_entity(loadbalancer)
+
         driver = self.driver
-        self.loadbalancer = loadbalancer
         try:
-            agent, service = self._schedule_agent_create_service(context)
+            agent, service = self._schedule_agent_create_service(
+                context, loadbalancer)
             agent_host = agent['host']
 
             driver.agent_rpc.delete_loadbalancer(
@@ -347,19 +467,45 @@ class ListenerManager(EntityManager):
     def create(self, context, listener):
         """Create a listener."""
 
-        self.loadbalancer = listener.loadbalancer
-        self.api_dict = listener.to_dict(
-            loadbalancer=False, default_pool=False)
-        self._call_rpc(context, listener, 'create_listener')
+        self._log_entity(listener)
+
+        lb = listener.loadbalancer
+        api_dict = listener.to_dict(loadbalancer=False, default_pool=False)
+
+        def append_listeners(context, loadbalancer, service):
+            self._append_listeners(context, service, listener)
+
+        def append_pools_monitors(context, loadbalancer, service):
+            if listener.default_pool:
+                for pool in loadbalancer.pools:
+                    if pool.id == listener.default_pool.id:
+                        self._append_pools_monitors(context, service, pool)
+                        break
+
+        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+            # Listener may have default pool who are already created.
+            # Utilize default behavior to append members
+            # Listener does not have l7policies.
+            self._call_rpc(
+                context, lb, listener, api_dict, 'create_listener',
+                append_listeners=append_listeners,
+                append_pools_monitors=append_pools_monitors,
+                append_l7policies_rules=lambda *args: None
+            )
+        else:
+            self._call_rpc(context, lb, listener, api_dict, 'create_listener')
 
     @log_helpers.log_method_call
     def update(self, context, old_listener, listener):
         """Update a listener."""
 
+        self._log_entity(old_listener)
+        self._log_entity(listener)
+
         driver = self.driver
-        self.loadbalancer = listener.loadbalancer
+        lb = listener.loadbalancer
         try:
-            agent_host, service = self._setup_crud(context, listener)
+            agent_host, service = self._setup_crud(context, lb, listener)
             driver.agent_rpc.update_listener(
                 context,
                 old_listener.to_dict(loadbalancer=False,
@@ -376,10 +522,26 @@ class ListenerManager(EntityManager):
     def delete(self, context, listener):
         """Delete a listener."""
 
-        self.loadbalancer = listener.loadbalancer
-        self.api_dict = listener.to_dict(
-            loadbalancer=False, default_pool=False)
-        self._call_rpc(context, listener, 'delete_listener')
+        self._log_entity(listener)
+
+        lb = listener.loadbalancer
+        api_dict = listener.to_dict(loadbalancer=False, default_pool=False)
+
+        def append_listeners(context, lb, service):
+            self._append_listeners(context, service, listener)
+
+        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+            # L7policy should already be deleted.
+            # Needn't modify pool.
+            self._call_rpc(
+                context, lb, listener, api_dict, 'delete_listener',
+                append_listeners=append_listeners,
+                append_pools_monitors=lambda *args: None,
+                append_members=lambda *args: None,
+                append_l7policies_rules=lambda *args: None
+            )
+        else:
+            self._call_rpc(context, lb, listener, api_dict, 'delete_listener')
 
 
 class PoolManager(EntityManager):
@@ -402,18 +564,47 @@ class PoolManager(EntityManager):
     def create(self, context, pool):
         """Create a pool."""
 
-        self.loadbalancer = pool.loadbalancer
-        self.api_dict = self._get_pool_dict(pool)
-        self._call_rpc(context, pool, 'create_pool')
+        self._log_entity(pool)
+
+        lb = pool.loadbalancer
+        api_dict = self._get_pool_dict(pool)
+
+        def append_listeners(context, loadbalancer, service):
+            for listener in loadbalancer.listeners:
+                if listener.default_pool:
+                    if listener.default_pool.id == pool.id:
+                        LOG.debug("listener %s has default pool %s",
+                                  listener.id, pool.id)
+                        self._append_listeners(context, service, listener)
+
+        def append_pools_monitors(context, loadbalancer, service):
+            self._append_pools_monitors(context, service, pool)
+
+        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+            # Pool and l7plicies ???
+            # Pool may be associated with listener, maybe not.
+            # Pool has no members
+            # Listener may have l7policies. Utilize default behavior.
+            self._call_rpc(
+                context, lb, pool, api_dict, 'create_pool',
+                append_listeners=append_listeners,
+                append_pools_monitors=append_pools_monitors,
+                append_members=lambda *args: None
+            )
+        else:
+            self._call_rpc(context, lb, pool, api_dict, 'create_pool')
 
     @log_helpers.log_method_call
     def update(self, context, old_pool, pool):
         """Update a pool."""
 
+        self._log_entity(old_pool)
+        self._log_entity(pool)
+
         driver = self.driver
-        self.loadbalancer = pool.loadbalancer
+        lb = pool.loadbalancer
         try:
-            agent_host, service = self._setup_crud(context, pool)
+            agent_host, service = self._setup_crud(context, lb, pool)
             driver.agent_rpc.update_pool(
                 context,
                 self._get_pool_dict(old_pool),
@@ -429,9 +620,32 @@ class PoolManager(EntityManager):
     def delete(self, context, pool):
         """Delete a pool."""
 
-        self.loadbalancer = pool.loadbalancer
-        self.api_dict = self._get_pool_dict(pool)
-        self._call_rpc(context, pool, 'delete_pool')
+        self._log_entity(pool)
+
+        lb = pool.loadbalancer
+        api_dict = self._get_pool_dict(pool)
+
+        def append_listeners(context, loadbalancer, service):
+            for listener in loadbalancer.listeners:
+                if listener.default_pool:
+                    if listener.default_pool.id == pool.id:
+                        LOG.debug("listener %s has default pool %s",
+                                  listener.id, pool.id)
+                        self._append_listeners(context, service, listener)
+
+        def append_pools_monitors(context, loadbalancer, service):
+            self._append_pools_monitors(context, service, pool)
+
+        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+            # Pool may be associated with a listener
+            # Utilize default behavior to load member, l7policy and rule
+            self._call_rpc(
+                context, lb, pool, api_dict, 'delete_pool',
+                append_listeners=append_listeners,
+                append_pools_monitors=append_pools_monitors
+            )
+        else:
+            self._call_rpc(context, lb, pool, api_dict, 'delete_pool')
 
 
 class MemberManager(EntityManager):
@@ -441,15 +655,41 @@ class MemberManager(EntityManager):
     def create(self, context, member):
         """Create a member."""
 
-        self.loadbalancer = member.pool.loadbalancer
+        self._log_entity(member)
 
-        if self.driver.unlegacy_setting_placeholder_driver_side:
-            LOG.debug('running un-legacy way for member create p1:')
-            driver = self.driver
+        lb = member.pool.loadbalancer
+        the_port_id = None
+        driver = self.driver
+
+        filters = {
+            'device_owner': ['F5:lbaasv2'],
+            'fixed_ips': {'subnet_id': [member.subnet_id]}
+        }
+        LOG.debug('fetching certain ports details:')
+        all_ports = driver.plugin.db._core_plugin.get_ports(
+            context, filters
+        )
+        LOG.debug("all_ports details: %s" % all_ports)
+
+        if len(all_ports) < 1:
             subnet = driver.plugin.db._core_plugin.get_subnet(
                 context, member.subnet_id
             )
-            agent_host, service = self._setup_crud(context, member)
+
+            agent_host = 'temp'
+            LOG.info('running here')
+            if member.attached_to_loadbalancer() and lb:
+                LOG.info('scheduing here instead')
+                this_agent = self.driver.scheduler.schedule(
+                    self.driver.plugin,
+                    context,
+                    lb.id,
+                    self.driver.env
+                )
+                LOG.info(this_agent)
+                agent_host = this_agent.get('host')
+            LOG.info(agent_host)
+
             p = driver.plugin.db._core_plugin.create_port(context, {
                 'port': {
                     'tenant_id': subnet['tenant_id'],
@@ -459,78 +699,117 @@ class MemberManager(EntityManager):
                     'device_id': member.id,
                     'device_owner': 'F5:lbaasv2',
                     'admin_state_up': member.admin_state_up,
+                    portbindings.VNIC_TYPE: "normal",
                     'name': 'fake_pool_port_' + member.id,
                     portbindings.HOST_ID: agent_host}})
             LOG.debug('the port created here is: %s' % p)
-        self.api_dict = member.to_dict(pool=False)
-        self._call_rpc(context, member, 'create_member')
+            the_port_id = p['id']
 
-        if self.driver.unlegacy_setting_placeholder_driver_side:
-            LOG.debug('running un-legacy way for member create p2:')
-            port_id = None
-            if p.get('id'):
-                port_id = p['id']
-            if port_id:
-                driver.plugin.db._core_plugin.delete_port(context, port_id)
-                LOG.debug('XXXXXX delete port: %s' % port_id)
-            else:
-                LOG.error('port_id seems none')
+        api_dict = member.to_dict(pool=False)
 
-    # only for MIGU
+        def append_pools_monitors(context, loadbalancer, service):
+            self._append_pools_monitors(context, service, member.pool)
+
+        LOG.info('the_port_id is:')
+        LOG.info(the_port_id)
+
+        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+            # Utilize default behavior to append all members
+            self._call_rpc(
+                context, lb, member, api_dict, 'create_member',
+                append_listeners=lambda *args: None,
+                append_pools_monitors=append_pools_monitors,
+                append_l7policies_rules=lambda *args: None,
+                the_port_id=the_port_id
+            )
+        else:
+            self._call_rpc(
+                context, lb, member, api_dict, 'create_member',
+                the_port_id=the_port_id
+            )
+
     @log_helpers.log_method_call
     def create_bulk(self, context, members):
         """Create members."""
-        start_time = time()
         subnets = []
         p_list = []
 
-        LOG.info("inside create_bulk for members: %s" % members)
+        LOG.info("create_bulk start for members: %s" % members)
 
         if not members:
             LOG.error("no members found in members. Just return.")
             return
 
+        driver = self.driver
+        lb = members[0].pool.loadbalancer
+
         for member in members:
             if member.subnet_id not in subnets:
-                self.loadbalancer = member.pool.loadbalancer
-                driver = self.driver
-                subnet = driver.plugin.db._core_plugin.get_subnet(
-                    context, member.subnet_id
+                the_filter = {
+                    'device_owner': ['F5:lbaasv2'],
+                    'fixed_ips': {'subnet_id': [member.subnet_id]}
+                }
+
+                LOG.debug('fetching ports details:')
+                all_ports = driver.plugin.db._core_plugin.get_ports(
+                    context, the_filter
                 )
+                LOG.debug("all_ports details: %s" % all_ports)
+                if len(all_ports) < 1:
+                    subnet = driver.plugin.db._core_plugin.get_subnet(
+                        context, member.subnet_id
+                    )
 
-                LOG.info("time for subnet  %.5f secs" % (time() - start_time))
+                    LOG.info("end getting subnet")
 
-                agent = self.driver.scheduler.schedule(
-                    self.driver.plugin, context,
-                    self.loadbalancer.id,
-                    self.driver.env
-                )
-                LOG.info("time for agent  %.5f secs" % (time() - start_time))
-                LOG.info(agent)
+                    agent = self.driver.scheduler.schedule(
+                        self.driver.plugin, context, lb.id, self.driver.env
+                    )
+                    LOG.info("end scheduling agent")
+                    LOG.info(agent)
 
-                agent_host = agent['host']
-                p = driver.plugin.db._core_plugin.create_port(context, {
-                    'port': {
-                        'tenant_id': subnet['tenant_id'],
-                        'network_id': subnet['network_id'],
-                        'mac_address': n_const.ATTR_NOT_SPECIFIED,
-                        'fixed_ips': n_const.ATTR_NOT_SPECIFIED,
-                        'device_id': member.id,
-                        'device_owner': 'F5:lbaasv2',
-                        'admin_state_up': member.admin_state_up,
-                        'name': 'fake_pool_port_' + member.id,
-                        portbindings.HOST_ID: agent_host}})
-                p_list.append(p)
-                LOG.info('the port created here is: %s' % p)
+                    agent_host = agent['host']
+                    p = driver.plugin.db._core_plugin.create_port(context, {
+                        'port': {
+                            'tenant_id': subnet['tenant_id'],
+                            'network_id': subnet['network_id'],
+                            'mac_address': n_const.ATTR_NOT_SPECIFIED,
+                            'fixed_ips': n_const.ATTR_NOT_SPECIFIED,
+                            'device_id': member.id,
+                            'device_owner': 'F5:lbaasv2',
+                            'admin_state_up': member.admin_state_up,
+                            portbindings.VNIC_TYPE: "normal",
+                            'name': 'fake_pool_port_' + member.id,
+                            portbindings.HOST_ID: agent_host}})
+                    p_list.append(p)
+                    LOG.info('the port created here is: %s' % p)
 
-                self.api_dict = member.to_dict(pool=False)
+                api_dict = member.to_dict(pool=False)
                 subnets.append(member.subnet_id)
 
-        self._call_rpc(context, member, 'create_member')
+        self._call_rpc(context, lb, member, api_dict, 'create_member',
+                       multiple=True)
 
+        LOG.info('p_list details: %s' % p_list)
         for port in p_list:
-            LOG.info('p_list details: %s' % p_list)
-            driver.plugin.db._core_plugin.delete_port(context, port["id"])
+            port_subnet_id = port['fixed_ips'][0]['subnet_id']
+            LOG.info(port_subnet_id)
+
+            filters = {
+                'device_owner': ['F5:lbaasv2'],
+                'fixed_ips': {'subnet_id': [port_subnet_id]}
+            }
+            ports_from_subnet = driver.plugin.db._core_plugin.get_ports(
+                context, filters
+            )
+            LOG.info("ports_from_subnet details: %s" % ports_from_subnet)
+
+            if len(ports_from_subnet) < 2:
+                LOG.warn('Skip last port deletion process on purpose!')
+            else:
+                port_id_to_del = port.get('id')
+                LOG.info('XXXXXX delete port: %s' % port_id_to_del)
+                driver.plugin.db._core_plugin.delete_port(context, port["id"])
 
         LOG.info("create_bulk for members end.")
 
@@ -538,10 +817,13 @@ class MemberManager(EntityManager):
     def update(self, context, old_member, member):
         """Update a member."""
 
+        self._log_entity(old_member)
+        self._log_entity(member)
+
         driver = self.driver
-        self.loadbalancer = member.pool.loadbalancer
+        lb = member.pool.loadbalancer
         try:
-            agent_host, service = self._setup_crud(context, member)
+            agent_host, service = self._setup_crud(context, lb, member)
             driver.agent_rpc.update_member(
                 context,
                 old_member.to_dict(pool=False),
@@ -556,10 +838,25 @@ class MemberManager(EntityManager):
     @log_helpers.log_method_call
     def delete(self, context, member):
         """Delete a member."""
-        self.loadbalancer = member.pool.loadbalancer
+
+        self._log_entity(member)
+
+        lb = member.pool.loadbalancer
         driver = self.driver
         try:
-            agent_host, service = self._setup_crud(context, member)
+            def append_pools_monitors(context, loadbalancer, service):
+                self._append_pools_monitors(context, service, member.pool)
+
+            if cfg.CONF.f5_driver_perf_mode in (2, 3):
+                # Utilize default behavior to append all members
+                agent_host, service = self._setup_crud(
+                    context, lb, member,
+                    append_listeners=lambda *args: None,
+                    append_pools_monitors=append_pools_monitors,
+                    append_l7policies_rules=lambda *args: None
+                )
+            else:
+                agent_host, service = self._setup_crud(context, lb, member)
 
             driver.agent_rpc.delete_member(
                 context, member.to_dict(pool=False), service, agent_host)
@@ -579,11 +876,12 @@ class MemberManager(EntityManager):
 
         member = members_list[0]
 
-        self.loadbalancer = member.pool.loadbalancer
+        lb = member.pool.loadbalancer
         driver = self.driver
 
         try:
-            agent_host, service = self._setup_crud(context, member)
+            agent_host, service = self._setup_crud(context, lb, member,
+                                                   multiple=True)
 
             driver.agent_rpc.delete_member(
                 context, member.to_dict(pool=False), service, agent_host)
@@ -601,18 +899,37 @@ class HealthMonitorManager(EntityManager):
     def create(self, context, health_monitor):
         """Create a health monitor."""
 
-        self.loadbalancer = health_monitor.pool.loadbalancer
-        self.api_dict = health_monitor.to_dict(pool=False)
-        self._call_rpc(context, health_monitor, 'create_health_monitor')
+        self._log_entity(health_monitor)
+
+        lb = health_monitor.pool.loadbalancer
+        api_dict = health_monitor.to_dict(pool=False)
+
+        def append_pools_monitors(context, loadbalancer, service):
+            self._append_pools_monitors(context, service, health_monitor.pool)
+
+        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+            # Utilize default behavior to append all members
+            self._call_rpc(
+                context, lb, health_monitor, api_dict, 'create_health_monitor',
+                append_listeners=lambda *args: None,
+                append_pools_monitors=append_pools_monitors,
+                append_l7policies_rules=lambda *args: None
+            )
+        else:
+            self._call_rpc(context, lb, health_monitor, api_dict,
+                           'create_health_monitor')
 
     @log_helpers.log_method_call
     def update(self, context, old_health_monitor, health_monitor):
         """Update a health monitor."""
 
+        self._log_entity(old_health_monitor)
+        self._log_entity(health_monitor)
+
         driver = self.driver
-        self.loadbalancer = health_monitor.pool.loadbalancer
+        lb = health_monitor.pool.loadbalancer
         try:
-            agent_host, service = self._setup_crud(context, health_monitor)
+            agent_host, service = self._setup_crud(context, lb, health_monitor)
             driver.agent_rpc.update_health_monitor(
                 context,
                 old_health_monitor.to_dict(pool=False),
@@ -628,9 +945,25 @@ class HealthMonitorManager(EntityManager):
     def delete(self, context, health_monitor):
         """Delete a health monitor."""
 
-        self.loadbalancer = health_monitor.pool.loadbalancer
-        self.api_dict = health_monitor.to_dict(pool=False)
-        self._call_rpc(context, health_monitor, 'delete_health_monitor')
+        self._log_entity(health_monitor)
+
+        lb = health_monitor.pool.loadbalancer
+        api_dict = health_monitor.to_dict(pool=False)
+
+        def append_pools_monitors(context, loadbalancer, service):
+            self._append_pools_monitors(context, service, health_monitor.pool)
+
+        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+            # Utilize default behavior to append all members
+            self._call_rpc(
+                context, lb, health_monitor, api_dict, 'delete_health_monitor',
+                append_listeners=lambda *args: None,
+                append_pools_monitors=append_pools_monitors,
+                append_l7policies_rules=lambda *args: None
+            )
+        else:
+            self._call_rpc(context, lb, health_monitor, api_dict,
+                           'delete_health_monitor')
 
 
 class L7PolicyManager(EntityManager):
@@ -640,18 +973,41 @@ class L7PolicyManager(EntityManager):
     def create(self, context, policy):
         """Create an L7 policy."""
 
-        self.loadbalancer = policy.listener.loadbalancer
-        self.api_dict = policy.to_dict(listener=False, rules=False)
-        self._call_rpc(context, policy, 'create_l7policy')
+        self._log_entity(policy)
+
+        lb = policy.listener.loadbalancer
+        api_dict = policy.to_dict(listener=False, rules=False)
+
+        def append_listeners(context, loadbalancer, service):
+            self._append_listeners(context, service, policy.listener)
+
+        def append_pools_monitors(context, loadbalancer, service):
+            self._append_pools_monitors(
+                context, service, policy.listener.default_pool)
+
+        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+            # Utilize default behavior to load policies and rules
+            # Listener may have default pool
+            # Utilize default behavior to load members
+            self._call_rpc(
+                context, lb, policy, api_dict, 'create_l7policy',
+                append_listeners=append_listeners,
+                append_pools_monitors=append_pools_monitors
+            )
+        else:
+            self._call_rpc(context, lb, policy, api_dict, 'create_l7policy')
 
     @log_helpers.log_method_call
     def update(self, context, old_policy, policy):
         """Update a policy."""
 
+        self._log_entity(old_policy)
+        self._log_entity(policy)
+
         driver = self.driver
-        self.loadbalancer = policy.listener.loadbalancer
+        lb = policy.listener.loadbalancer
         try:
-            agent_host, service = self._setup_crud(context, policy)
+            agent_host, service = self._setup_crud(context, lb, policy)
             driver.agent_rpc.update_l7policy(
                 context,
                 old_policy.to_dict(listener=False),
@@ -667,9 +1023,29 @@ class L7PolicyManager(EntityManager):
     def delete(self, context, policy):
         """Delete a policy."""
 
-        self.loadbalancer = policy.listener.loadbalancer
-        self.api_dict = policy.to_dict(listener=False, rules=False)
-        self._call_rpc(context, policy, 'delete_l7policy')
+        self._log_entity(policy)
+
+        lb = policy.listener.loadbalancer
+        api_dict = policy.to_dict(listener=False, rules=False)
+
+        def append_listeners(context, loadbalancer, service):
+            self._append_listeners(context, service, policy.listener)
+
+        def append_pools_monitors(context, loadbalancer, service):
+            self._append_pools_monitors(
+                context, service, policy.listener.default_pool)
+
+        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+            # Utilize default behavior to load policies and rules
+            # Listener may have default pool
+            # Utilize default behavior to load members
+            self._call_rpc(
+                context, lb, policy, api_dict, 'delete_l7policy',
+                append_listeners=append_listeners,
+                append_pools_monitors=append_pools_monitors
+            )
+        else:
+            self._call_rpc(context, lb, policy, api_dict, 'delete_l7policy')
 
 
 class L7RuleManager(EntityManager):
@@ -679,18 +1055,41 @@ class L7RuleManager(EntityManager):
     def create(self, context, rule):
         """Create an L7 rule."""
 
-        self.loadbalancer = rule.policy.listener.loadbalancer
-        self.api_dict = rule.to_dict(policy=False)
-        self._call_rpc(context, rule, 'create_l7rule')
+        self._log_entity(rule)
+
+        lb = rule.policy.listener.loadbalancer
+        api_dict = rule.to_dict(policy=False)
+
+        def append_listeners(context, loadbalancer, service):
+            self._append_listeners(context, service, rule.policy.listener)
+
+        def append_pools_monitors(context, loadbalancer, service):
+            self._append_pools_monitors(
+                context, service, rule.policy.listener.default_pool)
+
+        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+            # Utilize default behavior to load policies and rules
+            # Listener may have default pool
+            # Utilize default behavior to load members
+            self._call_rpc(
+                context, lb, rule, api_dict, 'create_l7rule',
+                append_listeners=append_listeners,
+                append_pools_monitors=append_pools_monitors
+            )
+        else:
+            self._call_rpc(context, lb, rule, api_dict, 'create_l7rule')
 
     @log_helpers.log_method_call
     def update(self, context, old_rule, rule):
         """Update a rule."""
 
+        self._log_entity(old_rule)
+        self._log_entity(rule)
+
         driver = self.driver
-        self.loadbalancer = rule.policy.listener.loadbalancer
+        lb = rule.policy.listener.loadbalancer
         try:
-            agent_host, service = self._setup_crud(context, rule)
+            agent_host, service = self._setup_crud(context, lb, rule)
             driver.agent_rpc.update_l7rule(
                 context,
                 old_rule.to_dict(policy=False),
@@ -706,6 +1105,26 @@ class L7RuleManager(EntityManager):
     def delete(self, context, rule):
         """Delete a rule."""
 
-        self.loadbalancer = rule.policy.listener.loadbalancer
-        self.api_dict = rule.to_dict(policy=False)
-        self._call_rpc(context, rule, 'delete_l7rule')
+        self._log_entity(rule)
+
+        lb = rule.policy.listener.loadbalancer
+        api_dict = rule.to_dict(policy=False)
+
+        def append_listeners(context, loadbalancer, service):
+            self._append_listeners(context, service, rule.policy.listener)
+
+        def append_pools_monitors(context, loadbalancer, service):
+            self._append_pools_monitors(
+                context, service, rule.policy.listener.default_pool)
+
+        if cfg.CONF.f5_driver_perf_mode in (2, 3):
+            # Utilize default behavior to load policies and rules
+            # Listener may have default pool
+            # Utilize default behavior to load members
+            self._call_rpc(
+                context, lb, rule, api_dict, 'delete_l7rule',
+                append_listeners=append_listeners,
+                append_pools_monitors=append_pools_monitors
+            )
+        else:
+            self._call_rpc(context, lb, rule, api_dict, 'delete_l7rule')

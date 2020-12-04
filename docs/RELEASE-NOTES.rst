@@ -5,6 +5,27 @@
 Release Notes
 =============
 
+v312.4.1 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* member creation
+* performance improvement
+* refresh agent
+* pass port id argument
+
+
+Bug Fixes
+`````````
+* None noted.
+
+
+Limitations
+```````````
+* None noted.
+
+
 v312.2.0 (Pike)
 --------------
 

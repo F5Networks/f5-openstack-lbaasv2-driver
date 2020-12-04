@@ -189,13 +189,12 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
         """
 
         with context.session.begin(subtransactions=True):
-            loadbalancer = plugin.db.get_loadbalancer(context, loadbalancer_id)
             # If the loadbalancer is hosted on an active agent
             # already, return that agent or one in its env
             lbaas_agent = self.get_lbaas_agent_hosting_loadbalancer(
                 plugin,
                 context,
-                loadbalancer.id,
+                loadbalancer_id,
                 env
             )
 
@@ -204,6 +203,14 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                 LOG.debug(' Assigning task to agent %s.'
                           % (lbaas_agent['id']))
                 return lbaas_agent
+
+            # moving this part here so that this db call basically only called
+            # while creating lb. If it was for creating lb, then this call
+            # returns immediately. For other ops, it should have returned
+            # already above, so this db call is avoided.
+            LOG.info('get_loadbalancer start inside schedule')
+            loadbalancer = plugin.db.get_loadbalancer(context, loadbalancer_id)
+            LOG.info('get_loadbalancer end inside schedule')
 
             # There is no existing loadbalancer agent binding.
             # Find all active agent candidates in this env.
