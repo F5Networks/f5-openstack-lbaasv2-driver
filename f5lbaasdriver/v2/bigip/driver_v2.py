@@ -163,13 +163,23 @@ class EntityManager(object):
                 context, loadbalancer, entity, **kwargs)
             rpc_callable = getattr(self.driver.agent_rpc, rpc_method)
 
-            the_port = kwargs.get("the_port_id", None)
-            LOG.info(the_port)
-            if the_port:
-                LOG.info('the_port is not None')
+            the_port_id = kwargs.get("the_port_id", None)
+            LOG.info(the_port_id)
+
+            the_port_ids = kwargs.get("the_port_ids", None)
+            LOG.info(the_port_ids)
+
+            if the_port_id:
+                LOG.info('the_port not none')
                 rpc_callable(
                     context, api_dict, service,
-                    agent_host, the_port_id=the_port
+                    agent_host, the_port_id=the_port_id
+                )
+            elif the_port_ids:
+                LOG.info('bulk not none')
+                rpc_callable(
+                    context, api_dict, service,
+                    agent_host, the_port_ids=the_port_ids
                 )
             else:
                 LOG.info('the_port is None')
@@ -666,12 +676,13 @@ class MemberManager(EntityManager):
             'fixed_ips': {'subnet_id': [member.subnet_id]}
         }
         LOG.debug('fetching certain ports details:')
-        all_ports = driver.plugin.db._core_plugin.get_ports(
+        all_ports = driver.plugin.db._core_plugin.get_ports_count(
             context, filters
         )
-        LOG.debug("all_ports details: %s" % all_ports)
+        LOG.debug("all_ports length:")
+        LOG.debug(all_ports)
 
-        if len(all_ports) < 1:
+        if all_ports < 1:
             subnet = driver.plugin.db._core_plugin.get_subnet(
                 context, member.subnet_id
             )
@@ -732,7 +743,7 @@ class MemberManager(EntityManager):
     def create_bulk(self, context, members):
         """Create members."""
         subnets = []
-        p_list = []
+        the_port_ids = []
 
         LOG.info("create_bulk start for members: %s" % members)
 
@@ -751,11 +762,13 @@ class MemberManager(EntityManager):
                 }
 
                 LOG.debug('fetching ports details:')
-                all_ports = driver.plugin.db._core_plugin.get_ports(
+                all_ports = driver.plugin.db._core_plugin.get_ports_count(
                     context, the_filter
                 )
-                LOG.debug("all_ports details: %s" % all_ports)
-                if len(all_ports) < 1:
+                LOG.debug("all_ports length: ")
+                LOG.debug(all_ports)
+
+                if all_ports < 1:
                     subnet = driver.plugin.db._core_plugin.get_subnet(
                         context, member.subnet_id
                     )
@@ -781,35 +794,14 @@ class MemberManager(EntityManager):
                             portbindings.VNIC_TYPE: "normal",
                             'name': 'fake_pool_port_' + member.id,
                             portbindings.HOST_ID: agent_host}})
-                    p_list.append(p)
                     LOG.info('the port created here is: %s' % p)
+                    the_port_ids.append(p['id'])
 
                 api_dict = member.to_dict(pool=False)
                 subnets.append(member.subnet_id)
 
         self._call_rpc(context, lb, member, api_dict, 'create_member',
-                       multiple=True)
-
-        LOG.info('p_list details: %s' % p_list)
-        for port in p_list:
-            port_subnet_id = port['fixed_ips'][0]['subnet_id']
-            LOG.info(port_subnet_id)
-
-            filters = {
-                'device_owner': ['F5:lbaasv2'],
-                'fixed_ips': {'subnet_id': [port_subnet_id]}
-            }
-            ports_from_subnet = driver.plugin.db._core_plugin.get_ports(
-                context, filters
-            )
-            LOG.info("ports_from_subnet details: %s" % ports_from_subnet)
-
-            if len(ports_from_subnet) < 2:
-                LOG.warn('Skip last port deletion process on purpose!')
-            else:
-                port_id_to_del = port.get('id')
-                LOG.info('XXXXXX delete port: %s' % port_id_to_del)
-                driver.plugin.db._core_plugin.delete_port(context, port["id"])
+                       the_port_ids=the_port_ids, multiple=True)
 
         LOG.info("create_bulk for members end.")
 
