@@ -743,12 +743,13 @@ class MemberManager(EntityManager):
                     'fixed_ips': {'subnet_id': [member.subnet_id]}
                 }
                 LOG.debug('fetching certain ports details:')
-                all_ports = driver.plugin.db._core_plugin.get_ports(
+                all_ports = driver.plugin.db._core_plugin.get_ports_count(
                     context, filters
                 )
-                LOG.debug("all_ports details: %s" % all_ports)
+                LOG.debug("all_ports length:")
+                LOG.debug(all_ports)
 
-                if len(all_ports) < 2:
+                if all_ports < 2:
                     LOG.warn('Skip last port deletion process on purpose!')
                     return
 
@@ -785,11 +786,12 @@ class MemberManager(EntityManager):
                 }
 
                 LOG.debug('fetching ports details:')
-                all_ports = driver.plugin.db._core_plugin.get_ports(
+                all_ports = driver.plugin.db._core_plugin.get_ports_count(
                     context, the_filter
                 )
-                LOG.debug("all_ports details: %s" % all_ports)
-                if len(all_ports) < 1:
+                LOG.info("all_ports length: ")
+                LOG.info(all_ports)
+                if all_ports < 1:
                     subnet = driver.plugin.db._core_plugin.get_subnet(
                         context, member.subnet_id
                     )
@@ -833,12 +835,13 @@ class MemberManager(EntityManager):
                 'device_owner': ['network:f5lbaasv2'],
                 'fixed_ips': {'subnet_id': [port_subnet_id]}
             }
-            ports_from_subnet = driver.plugin.db._core_plugin.get_ports(
+            ports_from_subnet = driver.plugin.db._core_plugin.get_ports_count(
                 context, filters
             )
-            LOG.info("ports_from_subnet details: %s" % ports_from_subnet)
+            LOG.info("ports_from_subnet length: ")
+            LOG.info(ports_from_subnet)
 
-            if len(ports_from_subnet) < 2:
+            if ports_from_subnet < 2:
                 LOG.warn('Skip last port deletion process on purpose!')
             else:
                 port_id_to_del = port.get('id')
