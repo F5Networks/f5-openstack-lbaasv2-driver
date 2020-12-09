@@ -4,6 +4,20 @@
 
 Release Notes
 =============
+v312.4.2 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* use count to improve performance
+
+Bug Fixes
+`````````
+* None noted.
+
+Limitations
+```````````
+* None noted.
 
 v312.4.1 (Pike)
 --------------
