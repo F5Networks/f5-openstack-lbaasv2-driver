@@ -213,7 +213,7 @@ class LBaaSv2AgentRPC(object):
     @log_helpers.log_method_call
     def create_member(
         self, context, member, service, host,
-        the_port_id=None
+        **kwargs
     ):
         topic = '%s.%s' % (self.topic, host)
         return self.cast(
@@ -222,7 +222,7 @@ class LBaaSv2AgentRPC(object):
                 'create_member',
                 member=member,
                 service=service,
-                the_port_id=the_port_id
+                **kwargs
             ),
             topic=topic)
 
