@@ -679,12 +679,13 @@ class MemberManager(EntityManager):
             'fixed_ips': {'subnet_id': [member.subnet_id]}
         }
         LOG.debug('fetching certain ports details:')
-        all_ports = driver.plugin.db._core_plugin.get_ports(
+        all_ports = driver.plugin.db._core_plugin.get_ports_count(
             context, filters
         )
-        LOG.debug("all_ports details: %s" % all_ports)
+        LOG.debug("all_ports length:")
+        LOG.debug(all_ports)
 
-        if len(all_ports) < 1:
+        if all_ports < 1:
             subnet = driver.plugin.db._core_plugin.get_subnet(
                 context, member.subnet_id
             )
@@ -764,11 +765,12 @@ class MemberManager(EntityManager):
                     'fixed_ips': {'subnet_id': [member.subnet_id]}
                 }
                 LOG.debug('fetching ports details:')
-                all_ports = driver.plugin.db._core_plugin.get_ports(
+                all_ports = driver.plugin.db._core_plugin.get_ports_count(
                     context, the_filter
                 )
-                LOG.debug("all_ports details: %s" % all_ports)
-                if len(all_ports) < 1:
+                LOG.info("all_ports length:")
+                LOG.info(all_ports)
+                if all_ports < 1:
                     subnet = driver.plugin.db._core_plugin.get_subnet(
                         context, member.subnet_id
                     )
