@@ -48,6 +48,13 @@ OPTS = [
         default=0,
         help=('switch driver performance mode from 0 to 3')
     ),
+    cfg.BoolOpt(
+        'to_speedup_populate_logic',
+        default=False,
+        help=("If True, uses new fast populate logic,"
+              "If set to False, then revert to old behavior "
+              "just in case.")
+    ),
     cfg.StrOpt(
         'f5_loadbalancer_pool_scheduler_driver_v2',
         default=(

@@ -221,7 +221,9 @@ class LBaaSv2ServiceBuilder(object):
             context, loadbalancer, service['l7policies'])
 
     @log_helpers.log_method_call
-    def _get_extended_member(self, context, member):
+    def _get_extended_member(
+        self, context, member, my_net_ids=[]
+    ):
         """Get extended member attributes and member networking."""
         member_dict = member.to_dict(pool=False)
         subnet_id = member.subnet_id
@@ -248,11 +250,32 @@ class LBaaSv2ServiceBuilder(object):
         # we no longer support member port creation
         if len(ports) == 1:
             member_dict['port'] = ports[0]
-            self._populate_member_network(context, member_dict, network)
+            if cfg.CONF.to_speedup_populate_logic:
+                if (network_id in my_net_ids and
+                        network.get('provider:segmentation_id')):
+                    LOG.debug("populating %s skipped" % member.address)
+                else:
+                    LOG.info("populating %s here" % member.address)
+                    self._populate_member_network(
+                        context, member_dict, network
+                    )
+            else:
+                self._populate_member_network(context, member_dict, network)
         elif len(ports) == 0:
-            self._populate_member_network(context, member_dict, network)
             LOG.warning("Lbaas member %s has no associated neutron port"
                         % member.address)
+            if cfg.CONF.to_speedup_populate_logic:
+                if (network_id in my_net_ids and
+                        network.get('provider:segmentation_id')):
+                    LOG.debug("populating %s skipped" % member.address)
+                else:
+                    LOG.info("populating %s here" % member.address)
+                    self._populate_member_network(
+                        context, member_dict, network
+                    )
+            else:
+                self._populate_member_network(context, member_dict, network)
+
         elif len(ports) > 1:
             LOG.warning("Multiple ports found for member: %s" % member.address)
 
@@ -367,7 +390,9 @@ class LBaaSv2ServiceBuilder(object):
                     'fixed_ips': {'subnet_id': [member['subnet_id']]},
                     'binding:host_id': [host_id]
                     }
-                port = self.plugin.db._core_plugin.get_ports(context, filters)
+                port = self.plugin.db._core_plugin.get_ports(
+                    context, filters=filters, limit=1
+                )
                 if port:
                     port_id = port[0]['id']
                     segment_data = self.disconnected_service.get_segment_id(
@@ -680,15 +705,23 @@ class LBaaSv2ServiceBuilder(object):
             LOG.info('these are the members:')
             LOG.info(members)
 
+            # not not want to mix things up, so using separate variables
+            my_net_ids = []
+
             for member in members:
                 # Get extended member attributes, network, and subnet.
                 member_dict, subnet, network = (
-                    self._get_extended_member(context, member)
+                    self._get_extended_member(
+                        context, member,
+                        my_net_ids
+                    )
                 )
 
                 subnet_map[subnet['id']] = subnet
                 network_map[network['id']] = network
                 pool_members.append(member_dict)
+
+                my_net_ids.append(network['id'])
 
         return pool_members
 
