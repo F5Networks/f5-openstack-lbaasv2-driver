@@ -38,7 +38,6 @@ from f5lbaasdriver.v2.bigip import neutron_client
 from f5lbaasdriver.v2.bigip import plugin_rpc
 # from neutron.api.v2 import attributes
 from neutron_lib import constants as n_const
-from time import time
 
 LOG = logging.getLogger(__name__)
 
