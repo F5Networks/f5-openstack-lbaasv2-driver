@@ -17,8 +17,6 @@ u"""Service Module for F5® LBaaSv2."""
 import datetime
 import json
 
-from neutron_lbaas.common import keystone
-
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
@@ -27,7 +25,6 @@ from f5lbaasdriver.v2.bigip import constants_v2
 from f5lbaasdriver.v2.bigip.disconnected_service import DisconnectedService
 from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 from f5lbaasdriver.v2.bigip import neutron_client as q_client
-from keystoneclient.v3 import client
 
 LOG = logging.getLogger(__name__)
 
@@ -71,11 +68,6 @@ class LBaaSv2ServiceBuilder(object):
 
             # Start with the neutron loadbalancer definition
             service['loadbalancer'] = self._get_extended_loadbalancer(
-                context,
-                loadbalancer
-            )
-
-            service['qos'] = self._get_extended_qos(
                 context,
                 loadbalancer
             )
@@ -272,18 +264,6 @@ class LBaaSv2ServiceBuilder(object):
             LOG.warning("Multiple ports found for member: %s" % member.address)
 
         return (member_dict, subnet, network)
-
-    @log_helpers.log_method_call
-    def _get_extended_qos(self, context, loadbalancer):
-        try:
-            sess = keystone.get_session()
-            client_sess = client.Client(session=sess)
-            project = client_sess.projects.get(project=loadbalancer.tenant_id)
-            return project.qos
-
-        except Exception as e:
-            LOG.error('Exception: Get keystone project: %s', e.message)
-            return ''
 
     @log_helpers.log_method_call
     def _get_extended_loadbalancer(self, context, loadbalancer):
