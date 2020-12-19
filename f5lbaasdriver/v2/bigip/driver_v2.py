@@ -38,7 +38,6 @@ from f5lbaasdriver.v2.bigip import neutron_client
 from f5lbaasdriver.v2.bigip import plugin_rpc
 # from neutron.api.v2 import attributes
 from neutron_lib import constants as n_const
-from time import time
 
 LOG = logging.getLogger(__name__)
 
@@ -47,6 +46,13 @@ OPTS = [
         'f5_driver_perf_mode',
         default=0,
         help=('switch driver performance mode from 0 to 3')
+    ),
+    cfg.BoolOpt(
+        'to_speedup_populate_logic',
+        default=False,
+        help=("If True, uses new fast populate logic,"
+              "If set to False, then revert to old behavior "
+              "just in case.")
     ),
     cfg.StrOpt(
         'f5_loadbalancer_pool_scheduler_driver_v2',
@@ -326,6 +332,11 @@ class LoadBalancerManager(EntityManager):
             scheduler = self.driver.scheduler
             agent_config_dict = \
                 scheduler.deserialize_agent_configurations(agent_config)
+
+            if agent in context.session:
+                LOG.info('inside here')
+                context.session.expire(agent, ['heartbeat_timestamp'])
+                LOG.info(agent)
 
             if not agent_config_dict.get('nova_managed', False):
                 # Update the port for the VIP to show ownership by this driver
@@ -667,12 +678,13 @@ class MemberManager(EntityManager):
             'fixed_ips': {'subnet_id': [member.subnet_id]}
         }
         LOG.debug('fetching certain ports details:')
-        all_ports = driver.plugin.db._core_plugin.get_ports(
+        all_ports = driver.plugin.db._core_plugin.get_ports_count(
             context, filters
         )
-        LOG.debug("all_ports details: %s" % all_ports)
+        LOG.debug("all_ports length:")
+        LOG.debug(all_ports)
 
-        if len(all_ports) < 1:
+        if all_ports < 1:
             subnet = driver.plugin.db._core_plugin.get_subnet(
                 context, member.subnet_id
             )
@@ -733,56 +745,62 @@ class MemberManager(EntityManager):
     @log_helpers.log_method_call
     def create_bulk(self, context, members):
         """Create members."""
-        start_time = time()
         subnets = []
-        p_list = []
+        the_port_ids = []
 
-        LOG.info("inside create_bulk for members: %s" % members)
+        LOG.info("create_bulk start for members: %s" % members)
 
         if not members:
             LOG.error("no members found in members. Just return.")
             return
 
+        driver = self.driver
+        lb = members[0].pool.loadbalancer
+
         for member in members:
             if member.subnet_id not in subnets:
-                lb = member.pool.loadbalancer
-                driver = self.driver
-                subnet = driver.plugin.db._core_plugin.get_subnet(
-                    context, member.subnet_id
+                the_filter = {
+                    'device_owner': ['network:f5lbaasv2'],
+                    'fixed_ips': {'subnet_id': [member.subnet_id]}
+                }
+                LOG.debug('fetching ports details:')
+                all_ports = driver.plugin.db._core_plugin.get_ports_count(
+                    context, the_filter
                 )
+                LOG.info("all_ports length:")
+                LOG.info(all_ports)
+                if all_ports < 1:
+                    subnet = driver.plugin.db._core_plugin.get_subnet(
+                        context, member.subnet_id
+                    )
+                    LOG.info("end getting subnet")
 
-                LOG.info("time for subnet  %.5f secs" % (time() - start_time))
+                    agent = self.driver.scheduler.schedule(
+                        self.driver.plugin, context, lb.id, self.driver.env
+                    )
+                    LOG.info("end scheduling agent")
+                    LOG.info(agent)
 
-                agent = self.driver.scheduler.schedule(
-                    self.driver.plugin, context, lb.id, self.driver.env
-                )
-                LOG.info("time for agent  %.5f secs" % (time() - start_time))
-                LOG.info(agent)
-
-                agent_host = agent['host']
-                p = driver.plugin.db._core_plugin.create_port(context, {
-                    'port': {
-                        'tenant_id': subnet['tenant_id'],
-                        'network_id': subnet['network_id'],
-                        'mac_address': n_const.ATTR_NOT_SPECIFIED,
-                        'fixed_ips': n_const.ATTR_NOT_SPECIFIED,
-                        'device_id': member.id,
-                        'device_owner': 'network:f5lbaasv2',
-                        'admin_state_up': member.admin_state_up,
-                        'name': 'fake_pool_port_' + member.id,
-                        portbindings.HOST_ID: agent_host}})
-                p_list.append(p)
-                LOG.info('the port created here is: %s' % p)
+                    agent_host = agent['host']
+                    p = driver.plugin.db._core_plugin.create_port(context, {
+                        'port': {
+                            'tenant_id': subnet['tenant_id'],
+                            'network_id': subnet['network_id'],
+                            'mac_address': n_const.ATTR_NOT_SPECIFIED,
+                            'fixed_ips': n_const.ATTR_NOT_SPECIFIED,
+                            'device_id': member.id,
+                            'device_owner': 'network:f5lbaasv2',
+                            'admin_state_up': member.admin_state_up,
+                            'name': 'fake_pool_port_' + member.id,
+                            portbindings.HOST_ID: agent_host}})
+                    LOG.info('the port created here is: %s' % p)
+                    the_port_ids.append(p['id'])
 
                 api_dict = member.to_dict(pool=False)
                 subnets.append(member.subnet_id)
 
         self._call_rpc(context, lb, member, api_dict, 'create_member',
-                       multiple=True)
-
-        for port in p_list:
-            LOG.info('p_list details: %s' % p_list)
-            driver.plugin.db._core_plugin.delete_port(context, port["id"])
+                       the_port_ids=the_port_ids, multiple=True)
 
         LOG.info("create_bulk for members end.")
 
