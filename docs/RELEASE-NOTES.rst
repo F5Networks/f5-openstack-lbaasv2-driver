@@ -5,6 +5,17 @@
 Release Notes
 =============
 
+v212.5.0 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* Several performance improvements
+
+Bug Fixes
+`````````
+* None noted.
+
 v212.4.0 (Pike)
 --------------
 
