@@ -5,6 +5,23 @@
 Release Notes
 =============
 
+v112.5.5 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* remove the tenant level of qos feature from driver
+
+Bug Fixes
+`````````
+* None noted.
+
+
+Limitations
+```````````
+* None noted.
+`````````
+
 v112.5.4 (Pike)
 --------------
 
