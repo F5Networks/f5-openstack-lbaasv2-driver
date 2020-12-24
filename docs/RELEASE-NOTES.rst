@@ -4,6 +4,21 @@
 
 Release Notes
 =============
+v312.4.3 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* remove the tenant level of qos feature from driver
+
+Bug Fixes
+`````````
+* None noted.
+
+Limitations
+```````````
+* None noted.
+
 v312.4.2 (Pike)
 --------------
 
