@@ -277,16 +277,6 @@ class LBaaSv2PluginCallbacksRPC(object):
             try:
                 if lb_name and lb_name.startswith(tuple(pref_list)):
                     LOG.warn('there comes lb name, u SHOULD modify it later')
-                else:
-                    LOG.info('before get_loadbalancer')
-                    lb_db = self.driver.plugin.db.get_loadbalancer(
-                        context,
-                        loadbalancer_id
-                    )
-                    LOG.info('after get_loadbalancer')
-                    if (lb_db.provisioning_status ==
-                            plugin_constants.PENDING_DELETE):
-                        status = plugin_constants.PENDING_DELETE
 
                 LOG.info('before update_status')
                 self.driver.plugin.db.update_status(
@@ -313,15 +303,6 @@ class LBaaSv2PluginCallbacksRPC(object):
         """Agent confirmation hook to update listener status."""
         with context.session.begin(subtransactions=True):
             try:
-                LOG.info('before get_listener')
-                listener_db = self.driver.plugin.db.get_listener(
-                    context,
-                    listener_id
-                )
-                LOG.info('after get_listener')
-                if (listener_db.provisioning_status ==
-                        plugin_constants.PENDING_DELETE):
-                    provisioning_status = plugin_constants.PENDING_DELETE
                 LOG.info('before update_status')
                 self.driver.plugin.db.update_status(
                     context,
@@ -347,23 +328,15 @@ class LBaaSv2PluginCallbacksRPC(object):
         """Agent confirmations hook to update pool status."""
         with context.session.begin(subtransactions=True):
             try:
-                LOG.info('before get_pool')
-                pool = self.driver.plugin.db.get_pool(
+                LOG.info('before update_status')
+                self.driver.plugin.db.update_status(
                     context,
-                    pool_id
+                    models.PoolV2,
+                    pool_id,
+                    provisioning_status,
+                    operating_status
                 )
-                LOG.info('after get_pool')
-                if (pool.provisioning_status !=
-                        plugin_constants.PENDING_DELETE):
-                    LOG.info('before update_status')
-                    self.driver.plugin.db.update_status(
-                        context,
-                        models.PoolV2,
-                        pool_id,
-                        provisioning_status,
-                        operating_status
-                    )
-                    LOG.info('after update_status')
+                LOG.info('after update_status')
             except Exception as e:
                 LOG.error('Exception: update_pool_status: %s',
                           e.message)
@@ -380,23 +353,15 @@ class LBaaSv2PluginCallbacksRPC(object):
         """Agent confirmations hook to update member status."""
         with context.session.begin(subtransactions=True):
             try:
-                LOG.info('before get_pool_member')
-                member = self.driver.plugin.db.get_pool_member(
+                LOG.info('before update_status')
+                self.driver.plugin.db.update_status(
                     context,
-                    member_id
+                    models.MemberV2,
+                    member_id,
+                    provisioning_status,
+                    operating_status
                 )
-                LOG.info('after get_pool_member')
-                if (member.provisioning_status !=
-                        plugin_constants.PENDING_DELETE):
-                    LOG.info('before update_status')
-                    self.driver.plugin.db.update_status(
-                        context,
-                        models.MemberV2,
-                        member_id,
-                        provisioning_status,
-                        operating_status
-                    )
-                    LOG.info('after update_status')
+                LOG.info('after update_status')
             except Exception as e:
                 LOG.error('Exception: update_member_status: %s',
                           e.message)
@@ -413,23 +378,15 @@ class LBaaSv2PluginCallbacksRPC(object):
         """Agent confirmation hook to update health monitor status."""
         with context.session.begin(subtransactions=True):
             try:
-                LOG.info('before get_healthmonitor')
-                health_monitor = self.driver.plugin.db.get_healthmonitor(
+                LOG.info('before update_status')
+                self.driver.plugin.db.update_status(
                     context,
-                    health_monitor_id
+                    models.HealthMonitorV2,
+                    health_monitor_id,
+                    provisioning_status,
+                    operating_status
                 )
-                LOG.info('after get_healthmonitor')
-                if (health_monitor.provisioning_status !=
-                        plugin_constants.PENDING_DELETE):
-                    LOG.info('before update_status')
-                    self.driver.plugin.db.update_status(
-                        context,
-                        models.HealthMonitorV2,
-                        health_monitor_id,
-                        provisioning_status,
-                        operating_status
-                    )
-                    LOG.info('after update_status')
+                LOG.info('after update_status')
             except Exception as e:
                 LOG.error('Exception: update_health_monitor_status: %s',
                           e.message)
@@ -446,15 +403,6 @@ class LBaaSv2PluginCallbacksRPC(object):
         """Agent confirmation hook to update l7 policy status."""
         with context.session.begin(subtransactions=True):
             try:
-                LOG.info('before get_l7policy')
-                l7policy_db = self.driver.plugin.db.get_l7policy(
-                    context,
-                    l7policy_id
-                )
-                LOG.info('after get_l7policy')
-                if (l7policy_db.provisioning_status ==
-                        plugin_constants.PENDING_DELETE):
-                    provisioning_status = plugin_constants.PENDING_DELETE
                 LOG.info('before update_status')
                 self.driver.plugin.db.update_status(
                     context,
@@ -481,16 +429,6 @@ class LBaaSv2PluginCallbacksRPC(object):
         """Agent confirmation hook to update l7 policy status."""
         with context.session.begin(subtransactions=True):
             try:
-                LOG.info('before get_l7policy_rule')
-                l7rule_db = self.driver.plugin.db.get_l7policy_rule(
-                    context,
-                    l7rule_id,
-                    l7policy_id
-                )
-                LOG.info('after get_l7policy_rule')
-                if (l7rule_db.provisioning_status ==
-                        plugin_constants.PENDING_DELETE):
-                    provisioning_status = plugin_constants.PENDING_DELETE
                 LOG.info('before update_status')
                 self.driver.plugin.db.update_status(
                     context,
