@@ -258,7 +258,7 @@ class LBaaSv2ServiceBuilder(object):
             return project.qos
 
         except Exception as e:
-            LOG.error('Exception: Get keystone project: %s', e.message)
+            LOG.warning('Exception: Get keystone project: %s', e.message)
             return ''
 
     @log_helpers.log_method_call
