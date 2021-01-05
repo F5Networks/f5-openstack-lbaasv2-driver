@@ -5,6 +5,24 @@
 Release Notes
 =============
 
+v112.5.2.15 (Pike)
+------------------
+
+Added Functionality
+```````````````````
+* None noted.
+
+
+Bug Fixes
+`````````
+* error log to warning log.
+
+
+Limitations
+```````````
+* None noted.
+`````````
+
 v112.5.2 (Pike)
 --------------
 
