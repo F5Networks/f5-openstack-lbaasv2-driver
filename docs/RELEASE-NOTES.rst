@@ -5,6 +5,21 @@
 Release Notes
 =============
 
+v112.5.6 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+
+Bug Fixes
+`````````
+* Fix loadbalancer not to stay pending_delete while loadbalancer creation error.
+
+Limitations
+```````````
+* None noted.
+`````````
+
 v112.5.5 (Pike)
 --------------
 
