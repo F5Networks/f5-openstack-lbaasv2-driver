@@ -15,6 +15,7 @@ python:
 before_install:
 - git config --global user.email "OpenStack_TravisCI@f5.com"
 - git config --global user.name "Travis F5 Openstack"
+- echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_ID" --password-stdin
 - docker pull f5devcentral/containthedocs:latest
 install:
 - pip install hacking==1.1.0 pytest coverage
