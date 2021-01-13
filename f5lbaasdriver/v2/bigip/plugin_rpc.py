@@ -24,6 +24,7 @@ from neutron.plugins.common import constants as plugin_constants
 
 from neutron_lbaas.db.loadbalancer import models
 from neutron_lbaas.services.loadbalancer import constants as nlb_constant
+from neutron_lbaas.services.loadbalancer.data_models import LoadBalancer
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as neutron_const
@@ -108,6 +109,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                     context,
                     id=loadbalancer_id
                 )
+                lb = LoadBalancer(**lb) if type(lb) == dict else lb
                 agent = self.driver.plugin.db.get_agent_hosting_loadbalancer(
                     context,
                     loadbalancer_id
@@ -138,11 +140,12 @@ class LBaaSv2PluginCallbacksRPC(object):
                     agent.id
                 )
                 for lb in agent_lbs:
+                    lbobj = LoadBalancer(**lb) if type(lb) == dict else lb
                     loadbalancers.append(
                         {
                             'agent_host': agent['host'],
-                            'lb_id': lb.id,
-                            'tenant_id': lb.tenant_id
+                            'lb_id': lbobj.id,
+                            'tenant_id': lbobj.tenant_id
                         }
                     )
         if host:
@@ -166,12 +169,13 @@ class LBaaSv2PluginCallbacksRPC(object):
                     agent.id
                 )
                 for lb in agent_lbs:
-                    if lb.provisioning_status == plugin_constants.ACTIVE:
+                    lbobj = LoadBalancer(**lb) if type(lb) == dict else lb
+                    if lbobj.provisioning_status == plugin_constants.ACTIVE:
                         loadbalancers.append(
                             {
                                 'agent_host': agent['host'],
-                                'lb_id': lb.id,
-                                'tenant_id': lb.tenant_id
+                                'lb_id': lbobj.id,
+                                'tenant_id': lbobj.tenant_id
                             }
                         )
         if host:
@@ -195,13 +199,16 @@ class LBaaSv2PluginCallbacksRPC(object):
                     agent.id
                 )
                 for lb in agent_lbs:
-                    if (lb.provisioning_status != plugin_constants.ACTIVE and
-                            lb.provisioning_status != plugin_constants.ERROR):
+                    lbobj = LoadBalancer(**lb) if type(lb) == dict else lb
+                    if (lbobj.provisioning_status !=
+                        plugin_constants.ACTIVE and
+                            lbobj.provisioning_status !=
+                            plugin_constants.ERROR):
                         loadbalancers.append(
                             {
                                 'agent_host': agent['host'],
-                                'lb_id': lb.id,
-                                'tenant_id': lb.tenant_id
+                                'lb_id': lbobj.id,
+                                'tenant_id': lbobj.tenant_id
                             }
                         )
         if host:
@@ -225,12 +232,13 @@ class LBaaSv2PluginCallbacksRPC(object):
                     agent.id
                 )
                 for lb in agent_lbs:
-                    if (lb.provisioning_status == plugin_constants.ERROR):
+                    lbobj = LoadBalancer(**lb) if type(lb) == dict else lb
+                    if (lbobj.provisioning_status == plugin_constants.ERROR):
                         loadbalancers.append(
                             {
                                 'agent_host': agent['host'],
-                                'lb_id': lb.id,
-                                'tenant_id': lb.tenant_id
+                                'lb_id': lbobj.id,
+                                'tenant_id': lbobj.tenant_id
                             }
                         )
         if host:
@@ -711,6 +719,8 @@ class LBaaSv2PluginCallbacksRPC(object):
                 try:
                     lb_db = self.driver.plugin.db.get_loadbalancer(context,
                                                                    lbid)
+                    lb_db = LoadBalancer(**lb_db) \
+                        if type(lb_db) == dict else lb_db
                     lb_status[lbid] = lb_db.provisioning_status
 
                 except q_exc.NotFound:
