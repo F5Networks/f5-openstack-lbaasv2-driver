@@ -23,6 +23,7 @@ from oslo_log import log as logging
 
 from neutron_lbaas import agent_scheduler
 from neutron_lbaas.extensions import lbaas_agentschedulerv2
+from neutron_lbaas.services.loadbalancer.data_models import LoadBalancer
 
 LOG = logging.getLogger(__name__)
 
@@ -221,6 +222,8 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
             # already above, so this db call is avoided.
             LOG.info('get_loadbalancer start inside schedule')
             loadbalancer = plugin.db.get_loadbalancer(context, loadbalancer_id)
+            loadbalancer = LoadBalancer(**loadbalancer) \
+                if type(loadbalancer) == dict else loadbalancer
             LOG.info('get_loadbalancer end inside schedule')
 
             # There is no existing loadbalancer agent binding.
@@ -338,6 +341,8 @@ class MultiAgentScheduler(TenantScheduler):
     def schedule(self, plugin, context, loadbalancer_id, env=None):
         with context.session.begin(subtransactions=True):
             loadbalancer = plugin.db.get_loadbalancer(context, loadbalancer_id)
+            loadbalancer = LoadBalancer(**loadbalancer) \
+                if type(loadbalancer) == dict else loadbalancer
             # If the loadbalancer is hosted on an active agent
             # already, return that agent or one in its env
             lbaas_agent = self.get_lbaas_agent_hosting_loadbalancer(
