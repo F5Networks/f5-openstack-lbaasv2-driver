@@ -19,6 +19,7 @@ from f5lbaasdriver.v2.bigip import constants_v2 as constants
 
 from neutron.common import rpc as neutron_rpc
 from neutron.db import agents_db
+from neutron.db import api as db_api
 from neutron.db.models import agent as agents_model
 from neutron.plugins.common import constants as plugin_constants
 
@@ -292,6 +293,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                           e.message)
 
     @log_helpers.log_method_call
+    @db_api.retry_db_errors
     def listener_destroyed(self, context, listener_id=None):
         """Agent confirmation hook that listener has been destroyed."""
         self.driver.plugin.db.delete_listener(context, listener_id)
