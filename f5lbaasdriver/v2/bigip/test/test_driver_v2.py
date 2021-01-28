@@ -64,6 +64,7 @@ class FakePool(FakeBaseObj):
         self.provisioning_status = 'good'
         self.operating_status = 'really_good'
         self.loadbalancer = FakeLB()
+        self.session_persistence = None
 
     def to_api_dict(self):
         return self.__dict__
