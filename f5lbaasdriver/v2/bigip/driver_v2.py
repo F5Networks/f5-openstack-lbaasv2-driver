@@ -567,6 +567,11 @@ class PoolManager(EntityManager):
             l7_policies=False,
             members=False,
             session_persistence=False)
+
+        if pool.session_persistence:
+            pool_dict['session_persistence'] = (
+                pool.session_persistence.to_api_dict())
+
         pool_dict['provisioning_status'] = pool.provisioning_status
         pool_dict['operating_status'] = pool.operating_status
         return pool_dict
