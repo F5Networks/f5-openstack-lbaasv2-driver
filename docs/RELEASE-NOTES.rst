@@ -4,6 +4,17 @@
 
 Release Notes
 =============
+v212.5.2 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* Compat with lb dict passed from neutron_lbaas.
+* Pass persistence parameter to agent
+
+Bug Fixes
+`````````
+* None noted.
 
 v212.5.1 (Pike)
 --------------
