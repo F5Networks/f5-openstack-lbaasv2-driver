@@ -19,6 +19,15 @@ before_install:
 install:
 - pip install hacking pytest coverage
 - pip install -r requirements.test.txt
+before_script:
+# Workaround
+- SITE=$(pip --version | awk '{ print $4 }')
+- sed -i "/^VALID = (/i PROCESS = 'process'" ${SITE}/neutron/callbacks/resources.py
+- sed -i "/^VALID = (/a PROCESS," ${SITE}/neutron/callbacks/resources.py
+- cat ${SITE}/neutron/callbacks/resources.py
+- sed -i "/^VALID = (/i AFTER_INIT = 'after_init'" ${SITE}/neutron/callbacks/events.py
+- sed -i "/^VALID = (/a AFTER_INIT," ${SITE}/neutron/callbacks/events.py
+- cat ${SITE}/neutron/callbacks/events.py
 script:
 - flake8 ./f5lbaasdriver
 - coverage run --source f5lbaasdriver -m py.test f5lbaasdriver/v2/bigip/

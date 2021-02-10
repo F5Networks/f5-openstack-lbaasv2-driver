@@ -16,7 +16,7 @@ import mock
 import pytest
 
 import neutron.api.v2.attributes
-from neutron_lib import constants as neutron_const
+from neutron.common import constants as neutron_const
 
 import f5lbaasdriver.v2.bigip.plugin_rpc
 

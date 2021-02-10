@@ -1,7 +1,7 @@
 -e .
 
-git+https://github.com/openstack/neutron.git@stable/ocata
-git+https://github.com/F5Networks/neutron-lbaas.git@stable/ocata
+git+https://github.com/openstack/neutron.git@kilo-eol
+git+https://github.com/F5Networks/neutron-lbaas.git@stable/kilo
 git+https://github.com/F5Networks/pytest-symbols.git
 git+https://github.com/F5Networks/f5-openstack-test.git@stable/newton
 
@@ -16,10 +16,10 @@ f5-sdk==2.3.3
 -c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=stable/ocata
 
 mock==IGNORED      # See section comment
-pytest==IGNORED    # See section comment
+pytest==3.0.6 # See section comment
 decorator==IGNORED # See section comment
 paramiko==IGNORED  # See section comment
 python-glanceclient==IGNORED
 python-heatclient==IGNORED
-tempest==IGNORED   # See section comment
+tempest==10.0.0 # See section comment
 pytest-cov==2.2.1

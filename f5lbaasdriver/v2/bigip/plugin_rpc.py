@@ -25,7 +25,8 @@ from neutron.plugins.common import constants as plugin_constants
 from neutron_lbaas.db.loadbalancer import models
 from neutron_lbaas.services.loadbalancer import constants as nlb_constant
 
-from neutron_lib import constants as neutron_const
+from neutron.api.v2 import attributes as attrs
+from neutron.common import constants as neutron_const
 
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
@@ -512,7 +513,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                     subnet_id
                 )
                 if not mac_address:
-                    mac_address = neutron_const.ATTR_NOT_SPECIFIED
+                    mac_address = attrs.ATTR_NOT_SPECIFIED
                 fixed_ip = {'subnet_id': subnet['id']}
                 if fixed_address_count > 1:
                     fixed_ips = []
@@ -680,7 +681,7 @@ class LBaaSv2PluginCallbacksRPC(object):
             )
 
             if not mac_address:
-                mac_address = neutron_const.ATTR_NOT_SPECIFIED
+                mac_address = attrs.ATTR_NOT_SPECIFIED
             if not host:
                 host = ''
             if not name:
@@ -694,7 +695,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                 'admin_state_up': True,
                 'device_owner': 'network:f5lbaasv2',
                 'status': neutron_const.PORT_STATUS_ACTIVE,
-                'fixed_ips': neutron_const.ATTR_NOT_SPECIFIED
+                'fixed_ips': attrs.ATTR_NOT_SPECIFIED
             }
             if device_id:
                 port_data['device_id'] = device_id
