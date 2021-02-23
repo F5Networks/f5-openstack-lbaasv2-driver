@@ -5,6 +5,21 @@
 Release Notes
 =============
 
+v112.5.8 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+
+Bug Fixes
+`````````
+* Pass persistence parameter to agent
+
+Limitations
+```````````
+* None noted.
+`````````
+
 v112.5.6 (Pike)
 --------------
 
