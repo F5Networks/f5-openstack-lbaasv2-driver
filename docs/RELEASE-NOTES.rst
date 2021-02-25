@@ -4,6 +4,17 @@
 
 Release Notes
 =============
+v212.5.3 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* None noted.
+
+Bug Fixes
+`````````
+* None noted.
+
 v212.5.2 (Pike)
 --------------
 
@@ -25,7 +36,6 @@ Added Functionality
 Bug Fixes
 `````````
 * Fix loadbalancer not to stay pending_delete while loadbalancer creation error.
-
 
 v212.5.0 (Pike)
 --------------
