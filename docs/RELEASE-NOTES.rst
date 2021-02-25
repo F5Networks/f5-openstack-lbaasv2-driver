@@ -4,6 +4,23 @@
 
 Release Notes
 =============
+v312.4.4 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* None noted.
+
+Bug Fixes
+`````````
+* Do not make lb stay at pending_delete state
+* Compat with lb dict passed from neutron_lbaas.
+* Pass persistence parameter to agent
+
+Limitations
+```````````
+* None noted.
+
 v312.4.3 (Pike)
 --------------
 
