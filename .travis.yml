@@ -15,8 +15,18 @@ python:
 before_install:
 - git config --global user.email "OpenStack_TravisCI@f5.com"
 - git config --global user.name "Travis F5 Openstack"
-- docker pull f5devcentral/containthedocs:latest
+- wget https://github.com/F5Networks/docker-images/raw/master/centos:6.tar.gz
+- wget https://github.com/F5Networks/docker-images/raw/master/centos:7.tar.gz
+- wget https://github.com/F5Networks/docker-images/raw/master/f5devcentral_containthedocs:latest.tar.gz
+- wget https://github.com/F5Networks/docker-images/raw/master/ubuntu:trusty.tar.gz
+- wget https://github.com/F5Networks/docker-images/raw/master/ubuntu:xenial.tar.gz
+- docker load -i centos:6.tar.gz
+- docker load -i centos:7.tar.gz
+- docker load -i f5devcentral_containthedocs:latest.tar.gz
+- docker load -i ubuntu:trusty.tar.gz
+- docker load -i ubuntu:xenial.tar.gz
 install:
+- python -m pip install pip==9.0.3
 - pip install hacking pytest coverage
 - pip install -r requirements.test.txt
 script:

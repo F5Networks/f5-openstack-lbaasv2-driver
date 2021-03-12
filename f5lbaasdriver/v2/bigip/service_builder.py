@@ -417,7 +417,7 @@ class LBaaSv2ServiceBuilder(object):
         """Get l7 policies filtered by listeners."""
         l7policies = []
         if listeners:
-            listener_ids = [l['id'] for l in listeners]
+            listener_ids = [_['id'] for _ in listeners]
             policies = self.plugin.db.get_l7policies(
                 context, filters={'listener_id': listener_ids})
             l7policies.extend(self._l7policy_to_dict(p) for p in policies)
