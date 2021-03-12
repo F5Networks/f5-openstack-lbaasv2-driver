@@ -438,7 +438,7 @@ class LBaaSv2ServiceBuilder(object):
         """Get l7 policies filtered by listeners."""
         l7policies = []
         if listeners:
-            listener_ids = [l['id'] for l in listeners]
+            listener_ids = [_['id'] for _ in listeners]
 
             def get_db_policies():
                 if cfg.CONF.f5_driver_perf_mode in (1, 3):
