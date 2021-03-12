@@ -62,9 +62,9 @@ def add_diff_env_to_controller(differentiated_environment):
         # Stop neutron server / f5_plugin
         execute(lambda: run('sudo systemctl stop neutron-server'))
         # Edit agent configuration to use new environment
-        sedtmpl = r'''sed -i "s/^\(environment_prefix = \)\(.*\)$/\\1%s/"''' +\
-                  r''' /etc/neutron/services/f5/f5-openstack-agent.ini'''
-        sedstring = 'sudo ' + sedtmpl % diff_env
+        sedtempl = '''sed -i "s/^(environment_prefix = )(.*)$/\\1%s/"''' +\
+                   ''' /etc/neutron/services/f5/f5-openstack-agent.ini'''
+        sedstring = 'sudo ' + sedtempl % diff_env
         execute(lambda: run(sedstring))
         # Add diff env to neutron_lbaas.conf and installed Python package
         add_string = 'sudo add_f5agent_environment %s' % diff_env
