@@ -29,10 +29,8 @@ from neutron_lbaas.services.loadbalancer.data_models import LoadBalancer
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as neutron_const
 from neutron_lib import exceptions as q_exc
-
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
-
 
 LOG = logging.getLogger(__name__)
 
@@ -187,6 +185,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                             }
                         )
         if host:
+            LOG.debug('get active lb with host %s' % host)
             return [lb for lb in loadbalancers if lb['agent_host'] == host]
         else:
             return loadbalancers
@@ -346,6 +345,27 @@ class LBaaSv2PluginCallbacksRPC(object):
     def pool_destroyed(self, context, pool_id=None):
         """Agent confirmation hook that pool has been destroyed."""
         self.driver.plugin.db.delete_pool(context, pool_id)
+
+    @log_helpers.log_method_call
+    def update_member_status_in_batch(self, context, members=[]):
+        """Agent confirmations hook to update member status in batch."""
+        LOG.info('before update status in batch %d', len(members))
+        for member in members:
+            try:
+                LOG.info('member is %s %s.', member['id'], member['state'])
+                self.driver.plugin.db.update_status(
+                    context,
+                    models.MemberV2,
+                    member['id'],
+                    None,
+                    member['state']
+                )
+            # we only deal with Not found exception and skip all the others
+            except q_exc.NotFound:
+                LOG.warning('member %s not found.', member['id'])
+        LOG.info('end of update status in batch.')
+
+        return
 
     @log_helpers.log_method_call
     def update_member_status(self, context, member_id=None,
