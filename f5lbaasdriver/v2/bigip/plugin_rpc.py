@@ -111,22 +111,23 @@ class LBaaSv2PluginCallbacksRPC(object):
                     id=loadbalancer_id
                 )
                 lb = LoadBalancer(**lb) if type(lb) == dict else lb
-                LOG.info('after get_loadbalancer')
-                agent = self.driver.plugin.db.get_agent_hosting_loadbalancer(
-                    context,
-                    loadbalancer_id
-                )
-                # the preceeding get call returns a nested dict, unwind
-                # one level if necessary
-                agent = (agent['agent'] if 'agent' in agent else agent)
-                LOG.info('before build')
-                service = self.driver.service_builder.build(
-                    context, lb, agent)
-                LOG.info('after build')
+                # LOG.info('after get_loadbalancer')
+                # agent = self.driver.plugin.db.get_agent_hosting_loadbalancer(
+                    # context,
+                    # loadbalancer_id
+                # )
+                # # the preceeding get call returns a nested dict, unwind
+                # # one level if necessary
+                # agent = (agent['agent'] if 'agent' in agent else agent)
+                # LOG.info('before build')
+                # service = self.driver.service_builder.build(
+                    # context, lb, agent)
+                # LOG.info('after build')
             except Exception as e:
                 LOG.error("Exception: get_service_by_loadbalancer_id: %s",
                           e.message)
-            return service
+            # return service
+            return lb.to_api_dict()
 
     @log_helpers.log_method_call
     def get_all_loadbalancers(self, context, env, group=None, host=None):
@@ -886,3 +887,43 @@ class LBaaSv2PluginCallbacksRPC(object):
             has_l7policy[listener_id] = result
         LOG.debug("has_l7policy: ({})".format(has_l7policy))
         return has_l7policy
+
+    @log_helpers.log_method_call
+    def get_subnet_by_id(self, context, subnet_id):
+            subnet = self.driver.plugin.db._core_plugin.get_subnet(
+                context,
+                subnet_id
+            )
+            return subnet
+
+    @log_helpers.log_method_call
+    def get_network_by_id(self, context, network_id):
+            network = self.driver.plugin.db._core_plugin.get_network(
+                context,
+                network_id
+            )
+            return network
+
+    @log_helpers.log_method_call
+    def get_pool_by_id(self, context, pool_id):
+            pool = self.driver.plugin.db.get_pool(
+                context,
+                pool_id
+            )
+            return pool.to_api_dict()
+
+    @log_helpers.log_method_call
+    def get_healthmonitor_by_id(self, context, healthmonitor_id):
+            healthmonitor = self.driver.plugin.db.get_healthmonitor(
+                context,
+                healthmonitor_id
+            )
+            return healthmonitor.to_api_dict()
+
+    @log_helpers.log_method_call
+    def get_member_by_id(self, context, member_id):
+            member = self.driver.plugin.db.get_pool_member(
+                context,
+                member_id
+            )
+            return member.to_api_dict()

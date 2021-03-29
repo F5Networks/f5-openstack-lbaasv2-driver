@@ -138,7 +138,12 @@ class F5DriverV2(object):
         self.service_builder = importutils.import_object(
             cfg.CONF.f5_loadbalancer_service_builder_v2, self)
 
+        # use self.driver.env
         self.agent_rpc = agent_rpc.LBaaSv2AgentRPC(self)
+        # use self.driver.scheduler
+        # self.driver.env
+        # self.driver.unlegacy_setting_placeholder_driver_side
+        # self.driver.plugin.db
         self.plugin_rpc = plugin_rpc.LBaaSv2PluginCallbacksRPC(self)
 
         self.q_client = \
