@@ -349,22 +349,39 @@ class LBaaSv2PluginCallbacksRPC(object):
     @log_helpers.log_method_call
     def update_member_status_in_batch(self, context, members=[]):
         """Agent confirmations hook to update member status in batch."""
-        LOG.info('before update status in batch %d', len(members))
+        length = len(members)
+        LOG.debug('before updating status in batch %d', length)
         for member in members:
             try:
-                LOG.info('member is %s %s.', member['id'], member['state'])
+                pool_id = member['pool_id']
+                address = member['address']
+                port = member['protocol_port']
+                status = member['state']
+                model = models.MemberV2
+
+                query = self.driver.plugin.db._model_query(
+                    context, model).filter(
+                    model.pool_id == pool_id,
+                    model.address == address,
+                    model.protocol_port == port)
+
+                resource = query.one()
+                if not resource:
+                    LOG.debug("no resource found.")
+                    continue
+
                 self.driver.plugin.db.update_status(
                     context,
-                    models.MemberV2,
-                    member['id'],
+                    model,
+                    resource.id,
                     None,
-                    member['state']
+                    status
                 )
             # we only deal with Not found exception and skip all the others
-            except q_exc.NotFound:
-                LOG.warning('member %s not found.', member['id'])
-        LOG.info('end of update status in batch.')
-
+            except Exception as e:
+                LOG.error('Exception: update_pool_status_in_batch: %s',
+                          e.message)
+        LOG.debug('end updating status in batch %d.', length)
         return
 
     @log_helpers.log_method_call
