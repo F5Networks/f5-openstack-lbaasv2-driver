@@ -328,6 +328,44 @@ class LBaaSv2PluginCallbacksRPC(object):
         self.driver.plugin.db.delete_pool(context, pool_id)
 
     @log_helpers.log_method_call
+    def update_member_status_in_batch(self, context, members=[]):
+        """Agent confirmations hook to update member status in batch."""
+        length = len(members)
+        LOG.debug('before updating status in batch %d', length)
+        for member in members:
+            try:
+                pool_id = member['pool_id']
+                address = member['address']
+                port = member['protocol_port']
+                status = member['state']
+                model = models.MemberV2
+
+                query = self.driver.plugin.db._model_query(
+                    context, model).filter(
+                    model.pool_id == pool_id,
+                    model.address == address,
+                    model.protocol_port == port)
+
+                resource = query.one()
+                if not resource:
+                    LOG.debug("no resource found.")
+                    continue
+
+                self.driver.plugin.db.update_status(
+                    context,
+                    model,
+                    resource.id,
+                    None,
+                    status
+                )
+            # we only deal with Not found exception and skip all the others
+            except Exception as e:
+                LOG.error('Exception: update_pool_status_in_batch: %s',
+                          e.message)
+        LOG.debug('end updating status in batch %d.', length)
+        return
+
+    @log_helpers.log_method_call
     def update_member_status(self, context, member_id=None,
                              provisioning_status=None,
                              operating_status=None):
