@@ -161,7 +161,8 @@ def test_lbmgr_create_mismatched_tenant_exception(mock_log):
     assert mock_log.error.call_args == mock.call(
         'Exception: loadbalancer create: Tenant Id of network and '
         'loadbalancer mismatched')
-    assert mock_driver.plugin.db.update_status.call_args is None
+    assert mock_driver.plugin.db.update_status.call_args == \
+        mock.call(mock_ctx, models.LoadBalancer, 'test_lb_id', 'ERROR')
 
 
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
@@ -170,9 +171,8 @@ def test_lbmgr_create_no_eligible_agent(mock_log):
     mock_driver.scheduler.schedule.side_effect = FakeNoEligibleAgentExc
     lb_mgr = dv2.LoadBalancerManager(mock_driver)
     mock_ctx = mock.MagicMock(name='mock_context')
-    lb_mgr.create(mock_ctx, FakeLB())
-    assert mock_log.error.call_args == mock.call(
-        'Exception: loadbalancer create: test exception')
+    with pytest.raises(FakeNoEligibleAgentExc):
+        lb_mgr.create(mock_ctx, FakeLB())
     assert mock_driver.plugin.db.update_status.call_args == \
         mock.call(mock_ctx, models.LoadBalancer, 'test_lb_id', 'ERROR')
 
@@ -216,11 +216,9 @@ def test_lbmgr_update_no_active_agent_exception(mock_log):
     mock_ctx = mock.MagicMock(name='mock_context')
     old_lb = FakeLB(id='old_lb')
     new_lb = FakeLB(id='new_lb')
-    lb_mgr.update(mock_ctx, old_lb, new_lb)
-    assert mock_log.error.call_args == mock.call(
-        'Exception: loadbalancer update: No active agent found for '
-        'loadbalancer new_lb.')
-    assert mock_driver._handle_driver_error.call_args == \
+    with pytest.raises(lbaas_agentschedulerv2.NoActiveLbaasAgent):
+        lb_mgr.update(mock_ctx, old_lb, new_lb)
+    assert mock_driver.plugin.db.update_status.call_args == \
         mock.call(mock_ctx, models.LoadBalancer, 'new_lb', 'ERROR')
 
 
@@ -233,12 +231,9 @@ def test_lbmgr_update_no_eligible_agent_exception(mock_log):
     mock_ctx = mock.MagicMock(name='mock_context')
     old_lb = FakeLB(id='old_lb')
     new_lb = FakeLB(id='new_lb')
-    lb_mgr.update(mock_ctx, old_lb, new_lb)
-    assert mock_log.error.call_args == mock.call(
-        'Exception: loadbalancer update: No eligible agent found for '
-        'loadbalancer new_lb.'
-    )
-    assert mock_driver._handle_driver_error.call_args == \
+    with pytest.raises(lbaas_agentschedulerv2.NoEligibleLbaasAgent):
+        lb_mgr.update(mock_ctx, old_lb, new_lb)
+    assert mock_driver.plugin.db.update_status.call_args == \
         mock.call(mock_ctx, models.LoadBalancer, 'new_lb', 'ERROR')
 
 
@@ -259,13 +254,14 @@ def test_lbmgr_delete_no_eligible_agent_exception(mock_log):
     lb_mgr = dv2.LoadBalancerManager(mock_driver)
     mock_ctx = mock.MagicMock(name='mock_context')
     fake_lb = FakeLB(id='test_lb')
-    lb_mgr.delete(mock_ctx, fake_lb)
+    with pytest.raises(lbaas_agentschedulerv2.NoEligibleLbaasAgent):
+        lb_mgr.delete(mock_ctx, fake_lb)
     assert mock_log.error.call_args == mock.call(
         'Exception: loadbalancer delete: No eligible agent found for '
         'loadbalancer test_lb.'
     )
-    assert mock_driver.plugin.db.delete_loadbalancer.call_args == \
-        mock.call(mock_ctx, 'test_lb')
+    assert mock_driver.plugin.db.update_status.call_args == \
+        mock.call(mock_ctx, models.LoadBalancer, 'test_lb', 'ERROR')
 
 
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
@@ -553,13 +549,11 @@ def test_mgr__call_rpc_no_eligible_agent_exception(
         side_effect=lbaas_agentschedulerv2.NoEligibleLbaasAgent(
             loadbalancer_id='test_lb')
     )
-    fake_pol = FakePolicy(id='test_lb')
-    pol_mgr.delete(mock_ctx, fake_pol)
-    assert mock_log.error.call_args == mock.call(
-        'Exception: delete_l7policy: No eligible agent found for '
-        'loadbalancer test_lb.'
-    )
-    assert mock_driver.plugin.db.update_status.call_args is None
+    fake_pol = FakePolicy(id='test_policy')
+    with pytest.raises(lbaas_agentschedulerv2.NoEligibleLbaasAgent):
+        pol_mgr.delete(mock_ctx, fake_pol)
+    assert mock_driver.plugin.db.update_status.call_args == \
+        mock.call(mock_ctx, models.L7Policy, 'test_policy', 'ERROR')
 
 
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
@@ -570,16 +564,17 @@ def test_mgr__call_rpc_mismatch_tenant_exception(
     rule_mgr._setup_crud = mock.MagicMock(
         name='mock_setup_crud', side_effect=f5_exc.F5MismatchedTenants
     )
-    fake_rule = FakeRule(id='test_lb')
+    fake_rule = FakeRule(id='test_rule')
     with pytest.raises(f5_exc.F5MismatchedTenants) as ex:
         rule_mgr.create(mock_ctx, fake_rule)
     assert 'Tenant Id of network and loadbalancer mismatched' in \
         ex.value.message
     assert mock_log.error.call_args == mock.call(
-        'Exception: create_l7rule: Tenant Id of network and loadbalancer '
+        'Exception: l7rule create: Tenant Id of network and loadbalancer '
         'mismatched'
     )
-    assert mock_driver.plugin.db.update_status.call_args is None
+    assert mock_driver.plugin.db.update_status.call_args == \
+        mock.call(mock_ctx, models.L7Rule, 'test_rule', 'ERROR')
 
 
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
@@ -595,7 +590,7 @@ def test_mgr__call_rpc_exception(
         pol_mgr.delete(mock_ctx, fake_pol)
     assert 'test' == ex.value.message
     assert mock_log.error.call_args == mock.call(
-        'Exception: delete_l7policy: test'
+        'Exception: l7policy delete: test'
     )
 
 

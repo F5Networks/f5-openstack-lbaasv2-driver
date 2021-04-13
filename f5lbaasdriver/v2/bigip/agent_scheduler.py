@@ -67,6 +67,9 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                         context, plugin, env, gn, lbaas_agent['agent'])
                     if reassigned_agent:
                         lbaas_agent = {'agent': reassigned_agent}
+                    else:
+                        raise lbaas_agentschedulerv2.NoActiveLbaasAgent(
+                            loadbalancer_id=loadbalancer_id)
 
             return lbaas_agent
 
