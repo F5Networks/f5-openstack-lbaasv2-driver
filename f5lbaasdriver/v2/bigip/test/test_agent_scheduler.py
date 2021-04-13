@@ -261,9 +261,10 @@ def test_get_lbaas_agent_hosting_loadbalancer_agent_dead_2():
     mock_plugin.db.get_agent_hosting_loadbalancer.return_value = fake_agent
     mock_cxt = mock.MagicMock(name='context')
     sched = agent_scheduler.TenantScheduler()
-    res = sched.get_lbaas_agent_hosting_loadbalancer(
-        mock_plugin, mock_cxt, 'test_lb_id', env='test_env')
-    assert res == fake_agent
+    with pytest.raises(NoActiveLbaasAgent) as ex:
+        sched.get_lbaas_agent_hosting_loadbalancer(
+            mock_plugin, mock_cxt, 'test_lb_id', env='test_env')
+    assert 'No active agent found for loadbalancer' in ex.value.message
 
 
 def test_get_lbaas_agent_hosting_loadbalancer_agent_dead_has_env_gn():
@@ -282,9 +283,10 @@ def test_get_lbaas_agent_hosting_loadbalancer_agent_dead_has_env_gn():
     mock_plugin.db.get_agent_hosting_loadbalancer.return_value = fake_agent
     mock_cxt = mock.MagicMock(name='context')
     sched = agent_scheduler.TenantScheduler()
-    res = sched.get_lbaas_agent_hosting_loadbalancer(
-        mock_plugin, mock_cxt, 'test_lb_id', env='test_env')
-    assert res == fake_agent
+    with pytest.raises(NoActiveLbaasAgent) as ex:
+        sched.get_lbaas_agent_hosting_loadbalancer(
+            mock_plugin, mock_cxt, 'test_lb_id', env='test_env')
+    assert 'No active agent found for loadbalancer' in ex.value.message
 
 
 def test_get_lbaas_agent_hosting_loadbalancer_agent_dead_env_agents_active():
