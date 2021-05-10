@@ -4,6 +4,18 @@
 
 Release Notes
 =============
+v212.5.3 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* add a new member batch operation rpc
+* use the pool-id address and port to update the member
+
+Bug Fixes
+`````````
+* Handle driver exception enhancement
+
 v212.5.2 (Pike)
 --------------
 
