@@ -113,7 +113,8 @@ def happy_path_driver():
 
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.agent_rpc')
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.plugin_rpc')
-def test_f5driverv2(mock_plugin_rpc, mock_agent_rpc):
+@mock.patch('f5lbaasdriver.v2.bigip.driver_v2.ACLGroupManager')
+def test_f5driverv2(mock_plugin_rpc, mock_agent_rpc, mock_ACLGroupManager):
     mock_plugin = mock.MagicMock(name='mock_plugin')
     d = dv2.F5DriverV2(plugin=mock_plugin)
     assert d.plugin == mock_plugin

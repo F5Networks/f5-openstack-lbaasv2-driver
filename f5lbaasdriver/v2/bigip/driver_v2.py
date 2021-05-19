@@ -111,6 +111,7 @@ class F5DriverV2(object):
         self.healthmonitor = HealthMonitorManager(self)
         self.l7policy = L7PolicyManager(self)
         self.l7rule = L7RuleManager(self)
+        self.acl_group = ACLGroupManager(self)
 
         self.unlegacy_setting_placeholder_driver_side = \
             cfg.CONF.unlegacy_setting_placeholder_driver_side
@@ -553,6 +554,31 @@ class ListenerManager(EntityManager):
                                'delete_listener')
         except Exception as e:
             LOG.error("Exception: listener delete: %s" % e.message)
+            self._handle_entity_error(context, listener.id,
+                                      loadbalancer_id=lb.id)
+            raise e
+
+    @log_helpers.log_method_call
+    def update_acl_bind(self, context, listener, acl_bind):
+        """Update a ACL binding of listener."""
+
+        self._log_entity(listener)
+        self._log_entity(acl_bind)
+
+        driver = self.driver
+        lb = listener.loadbalancer
+        try:
+            agent_host, service = self._setup_crud(context, lb, listener)
+            driver.agent_rpc.update_acl_bind(
+                context,
+                listener.to_dict(loadbalancer=False, default_pool=False),
+                acl_bind.to_dict(),
+                service,
+                agent_host
+            )
+        except Exception as e:
+            LOG.error("Exception: ACL binding of listener update: %s" %
+                      e.message)
             self._handle_entity_error(context, listener.id,
                                       loadbalancer_id=lb.id)
             raise e
@@ -1218,4 +1244,85 @@ class L7RuleManager(EntityManager):
             LOG.error("Exception: l7rule delete: %s" % e.message)
             self._handle_entity_error(context, rule.id,
                                       loadbalancer_id=lb.id)
+            raise e
+
+
+class CommonResourceManager(EntityManager):
+
+    def __init__(self, driver):
+        super(EntityManager, self).__init__(driver)
+
+    def _get_all_alive_agents(self, context):
+        """Select all alive lbaas agents"""
+
+        agents = []
+        agents = self.driver.plugin.db.get_lbaas_agents(context, active=1)
+
+        LOG.debug("Candidate agents for Common resource: %s", agents)
+
+        if len(agents) == 0:
+            err_msg = "No F5 lbaas agents found alive for Common Resource"
+            LOG.error(err_msg)
+            raise Exception(err_msg)
+
+        return agents
+
+
+class ACLGroupManager(CommonResourceManager):
+    def __init__(self, driver):
+        super(CommonResourceManager, self).__init__(driver)
+
+        # in case of break pipeline
+        try:
+            self.model = models.ACLGroup
+        except AttributeError as ex:
+            LOG.warn(ex.message)
+
+    @log_helpers.log_method_call
+    def create(self, context, acl_group):
+        """If there are multiple agent, we may have trouble.
+
+           If half of the agent action is successful, while
+           db is polluted, but bigip may not.
+        """
+
+        try:
+            agents = self._get_all_alive_agents(context)
+
+            for ag in agents:
+                agent_host = ag["host"]
+                self.driver.agent_rpc.create_acl_group(
+                    context, acl_group, agent_host
+                )
+        except Exception as e:
+            # self._handle_entity_error(context, acl_group['id'])
+            LOG.error("Exception: ACLGroup create: %s" % e.message)
+            raise e
+
+    @log_helpers.log_method_call
+    def update(self, context, acl_group):
+        try:
+            agents = self._get_all_alive_agents(context)
+
+            for ag in agents:
+                agent_host = ag["host"]
+                self.driver.agent_rpc.update_acl_group(
+                    context, acl_group, agent_host
+                )
+        except Exception as e:
+            LOG.error("Exception: ACLGroup update: %s" % e.message)
+            raise e
+
+    @log_helpers.log_method_call
+    def delete(self, context, acl_group):
+        try:
+            agents = self._get_all_alive_agents(context)
+
+            for ag in agents:
+                agent_host = ag["host"]
+                self.driver.agent_rpc.delete_acl_group(
+                    context, acl_group, agent_host
+                )
+        except Exception as e:
+            LOG.error("Exception: ACLGroup delete: %s" % e.message)
             raise e
