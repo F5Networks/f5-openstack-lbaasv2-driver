@@ -15,12 +15,12 @@ u"""Service Module for F5® LBaaSv2."""
 # limitations under the License.
 #
 
-from neutron.extensions import portbindings
-
 from neutron_lib import constants as neutron_const
 
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
+
+from neutron_lib.api.definitions import portbindings
 
 LOG = logging.getLogger(__name__)
 
@@ -64,7 +64,8 @@ class F5NetworksNeutronClient(object):
                 }
 
                 if ('binding:capabilities' in
-                        portbindings.EXTENDED_ATTRIBUTES_2_0['ports']):
+                        portbindings.RESOURCE_ATTRIBUTE_MAP[
+                            portbindings.COLLECTION_NAME]):
                     port_data['binding:capabilities'] = {
                         'port_filter': False}
                 port = self.plugin.db._core_plugin.create_port(
