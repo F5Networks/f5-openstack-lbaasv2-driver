@@ -1,7 +1,7 @@
 -e .
 
-git+https://github.com/openstack/neutron.git@stable/ocata
-git+https://github.com/F5Networks/neutron-lbaas.git@stable/ocata
+git+https://github.com/openstack/neutron.git@stable/pike
+git+https://github.com/F5Networks/neutron-lbaas.git@stable/pike
 git+https://github.com/F5Networks/pytest-symbols.git
 git+https://github.com/F5Networks/f5-openstack-test.git@stable/newton
 
@@ -13,7 +13,7 @@ f5-sdk==3.0.20
 # URL.  If you add a version here it will be ignored, and therefore be
 # misleading to readers of this file.
 #
--c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=stable/ocata
+-c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=stable/pike
 
 mock==IGNORED      # See section comment
 pytest==IGNORED    # See section comment
