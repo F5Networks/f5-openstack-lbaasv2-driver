@@ -5,6 +5,23 @@
 Release Notes
 =============
 
+v112.5.9 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* Add a new member batch operation rpc 
+* Use the pool-id address and port to update the member 
+
+Bug Fixes
+`````````
+* Fix handle driver exception 
+
+Limitations
+```````````
+* None noted.
+`````````
+
 v112.5.8 (Pike)
 --------------
 
