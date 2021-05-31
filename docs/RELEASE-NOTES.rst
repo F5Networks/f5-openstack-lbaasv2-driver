@@ -5,6 +5,21 @@
 Release Notes
 =============
 
+v312.4.6 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* None noted
+
+Bug Fixes
+`````````
+* Fix do not evaluate tenant affinity when schedule agent
+
+Limitations
+```````````
+* None noted.
+
 v312.4.5 (Pike)
 --------------
 
