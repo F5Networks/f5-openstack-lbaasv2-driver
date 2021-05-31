@@ -368,3 +368,50 @@ class LBaaSv2AgentRPC(object):
                 service=service
             ),
             topic=topic)
+
+    @log_helpers.log_method_call
+    def create_acl_group(self, context, acl_group, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'create_acl_group',
+                acl_group=acl_group
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def delete_acl_group(self, context, acl_group, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'delete_acl_group',
+                acl_group=acl_group
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def update_acl_group(self, context, acl_group, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'update_acl_group',
+                acl_group=acl_group
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def update_acl_bind(self, context, listener,
+                        acl_bind, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'update_acl_bind',
+                listener=listener,
+                acl_bind=acl_bind,
+                service=service
+            ),
+            topic=topic)
