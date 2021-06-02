@@ -4,6 +4,17 @@
 
 Release Notes
 =============
+v212.5.4 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* feature: Add ACL function
+
+Bug Fixes
+`````````
+* None noted
+
 v212.5.3 (Pike)
 --------------
 
