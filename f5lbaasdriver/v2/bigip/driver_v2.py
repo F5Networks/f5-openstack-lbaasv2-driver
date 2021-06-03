@@ -341,10 +341,10 @@ class LoadBalancerManager(EntityManager):
             agent_config_dict = \
                 scheduler.deserialize_agent_configurations(agent_config)
 
-            if agent in context.session:
-                LOG.info('inside here')
-                context.session.expire(agent, ['heartbeat_timestamp'])
-                LOG.info(agent)
+            # if agent in context.session:
+                # LOG.info('inside here')
+                # context.session.expire(agent, ['heartbeat_timestamp'])
+                # LOG.info(agent)
 
             if not agent_config_dict.get('nova_managed', False):
                 # Update the port for the VIP to show ownership by this driver
