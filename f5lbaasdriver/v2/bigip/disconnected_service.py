@@ -13,8 +13,14 @@
 # limitations under the License.
 #
 
-from neutron.db import segments_db
 from neutron.plugins.ml2 import db
+
+try:
+    from neutron.db import segments_db
+except ImportError:
+    # Mitaka compatibility
+    segments_db = db
+
 from neutron.plugins.ml2 import models
 
 from oslo_log import log as logging
@@ -52,7 +58,12 @@ class DisconnectedService(object):
             agent_configuration.get('tunnel_types', [])
         ]
         # look up segment details in the ml2_network_segments table
-        segments = segments_db.get_network_segments(context, network['id'],
+        if db == segments_db:
+            # Mitaka compatibility
+            ctx = context.session
+        else:
+            ctx = context
+        segments = segments_db.get_network_segments(ctx, network['id'],
                                                     filter_dynamic=None)
 
         for segment in segments:
@@ -98,8 +109,13 @@ class DisconnectedService(object):
                         for level in levels:
                             if level.driver in ('f5networks', 'huawei_ac_ml2'):
                                 LOG.debug('level with driver f5networks')
+                                if db == segments_db:
+                                    # Mitaka compatibility
+                                    ctx = context.session
+                                else:
+                                    ctx = context
                                 segment = segments_db.get_segment_by_id(
-                                    context, level.segment_id
+                                    ctx, level.segment_id
                                 )
                                 LOG.debug(
                                     'vxlan 2 vlan seg id %s: segment %s'
