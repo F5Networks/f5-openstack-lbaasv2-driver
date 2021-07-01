@@ -20,7 +20,11 @@ from neutron_lib import constants as neutron_const
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 
-from neutron_lib.api.definitions import portbindings
+try:
+    from neutron_lib.api.definitions import portbindings
+except ImportError:
+    # Mitaka compatibility
+    from neutron.extensions import portbindings
 
 LOG = logging.getLogger(__name__)
 

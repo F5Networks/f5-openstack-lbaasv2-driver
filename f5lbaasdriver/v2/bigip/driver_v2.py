@@ -26,7 +26,13 @@ from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.plugins.common import constants as plugin_constants
-from neutron_lib.api.definitions import portbindings
+
+try:
+    from neutron_lib.api.definitions import portbindings
+except ImportError:
+    # Mitaka compatibility
+    from neutron.extensions import portbindings
+
 from neutron_lib import constants as q_const
 
 from neutron_lbaas.db.loadbalancer import models
@@ -122,9 +128,15 @@ class F5DriverV2(object):
         self.plugin.agent_notifiers.update(
             {q_const.AGENT_TYPE_LOADBALANCER: self.agent_rpc})
 
+        try:
+            after_init = events.AFTER_INIT
+        except AttributeError:
+            # Mitaka compatibility
+            after_init = events.AFTER_CREATE
+
         registry.subscribe(self._bindRegistryCallback(),
                            resources.PROCESS,
-                           events.AFTER_INIT)
+                           after_init)
 
     def _bindRegistryCallback(self):
         # Defines a callback function with name tied to driver env. Need to

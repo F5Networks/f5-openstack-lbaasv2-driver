@@ -19,14 +19,25 @@ from f5lbaasdriver.v2.bigip import constants_v2 as constants
 
 from neutron.common import rpc as neutron_rpc
 from neutron.db import agents_db
-from neutron.db.models import agent as agents_model
+
+try:
+    from neutron.db.models import agent as agents_model
+except ImportError:
+    # Mitaka compatibility
+    agents_model = agents_db
+
 from neutron.plugins.common import constants as plugin_constants
 
 from neutron_lbaas.db.loadbalancer import models
 from neutron_lbaas.services.loadbalancer import constants as nlb_constant
 from neutron_lbaas.services.loadbalancer.data_models import LoadBalancer
 
-from neutron_lib.api.definitions import portbindings
+try:
+    from neutron_lib.api.definitions import portbindings
+except ImportError:
+    # Mitaka compatibility
+    from neutron.extensions import portbindings
+
 from neutron_lib import constants as neutron_const
 from neutron_lib import exceptions as q_exc
 from oslo_log import helpers as log_helpers
