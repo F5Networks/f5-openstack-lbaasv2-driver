@@ -105,15 +105,19 @@ class LBaaSv2PluginCallbacksRPC(object):
                       % loadbalancer_id)
 
             try:
+                LOG.info('before get_loadbalancer')
                 lb = self.driver.plugin.db.get_loadbalancer(
                     context,
                     id=loadbalancer_id
                 )
+                LOG.info('after get_loadbalancer')
                 lb = LoadBalancer(**lb) if type(lb) == dict else lb
+                LOG.info('before get_agent_hosting_loadbalancer')
                 agent = self.driver.plugin.db.get_agent_hosting_loadbalancer(
                     context,
                     loadbalancer_id
                 )
+                LOG.info('before get_agent_hosting_loadbalancer')
                 # the preceeding get call returns a nested dict, unwind
                 # one level if necessary
                 agent = (agent['agent'] if 'agent' in agent else agent)
@@ -135,10 +139,12 @@ class LBaaSv2PluginCallbacksRPC(object):
             agents = self.driver.scheduler.get_agents_in_env(
                 context, plugin, env, group, active=None)
             for agent in agents:
+                LOG.info('before list_loadbalancers_on_lbaas_agent')
                 agent_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
                     context,
                     agent.id
                 )
+                LOG.info('after list_loadbalancers_on_lbaas_agent')
                 for lb in agent_lbs:
                     lbobj = LoadBalancer(**lb) if type(lb) == dict else lb
                     loadbalancers.append(
@@ -164,10 +170,12 @@ class LBaaSv2PluginCallbacksRPC(object):
             agents = self.driver.scheduler.get_agents_in_env(
                 context, plugin, env, group, active=None)
             for agent in agents:
+                LOG.info('before list_loadbalancers_on_lbaas_agent')
                 agent_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
                     context,
                     agent.id
                 )
+                LOG.info('after list_loadbalancers_on_lbaas_agent')
                 for lb in agent_lbs:
                     lbobj = LoadBalancer(**lb) if type(lb) == dict else lb
                     if lbobj.provisioning_status == plugin_constants.ACTIVE:
@@ -194,10 +202,12 @@ class LBaaSv2PluginCallbacksRPC(object):
             agents = self.driver.scheduler.get_agents_in_env(
                 context, plugin, env, group, active=None)
             for agent in agents:
+                LOG.info('before list_loadbalancers_on_lbaas_agent')
                 agent_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
                     context,
                     agent.id
                 )
+                LOG.info('after list_loadbalancers_on_lbaas_agent')
                 for lb in agent_lbs:
                     lbobj = LoadBalancer(**lb) if type(lb) == dict else lb
                     if (lbobj.provisioning_status !=
@@ -227,10 +237,12 @@ class LBaaSv2PluginCallbacksRPC(object):
             agents = self.driver.scheduler.get_agents_in_env(
                 context, plugin, env, group, active=None)
             for agent in agents:
+                LOG.info('before list_loadbalancers_on_lbaas_agent')
                 agent_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
                     context,
                     agent.id
                 )
+                LOG.info('after list_loadbalancers_on_lbaas_agent')
                 for lb in agent_lbs:
                     lbobj = LoadBalancer(**lb) if type(lb) == dict else lb
                     if (lbobj.provisioning_status == plugin_constants.ERROR):
@@ -252,9 +264,11 @@ class LBaaSv2PluginCallbacksRPC(object):
         """Update service stats."""
         with context.session.begin(subtransactions=True):
             try:
+                LOG.info('before update_loadbalancer_stats')
                 self.driver.plugin.db.update_loadbalancer_stats(
                     context, loadbalancer_id, stats
                 )
+                LOG.info('after update_loadbalancer_stats')
             except Exception as e:
                 LOG.error('Exception: update_loadbalancer_stats: %s',
                           e.message)
@@ -265,6 +279,7 @@ class LBaaSv2PluginCallbacksRPC(object):
         """Agent confirmation hook to update loadbalancer status."""
         with context.session.begin(subtransactions=True):
             try:
+                LOG.info('before update_status')
                 self.driver.plugin.db.update_status(
                     context,
                     models.LoadBalancer,
@@ -272,6 +287,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                     status,
                     operating_status
                 )
+                LOG.info('after update_status')
             except Exception as e:
                 LOG.error('Exception: update_loadbalancer_status: %s',
                           e.message)
@@ -288,6 +304,7 @@ class LBaaSv2PluginCallbacksRPC(object):
         """Agent confirmation hook to update listener status."""
         with context.session.begin(subtransactions=True):
             try:
+                LOG.info('before update_status')
                 self.driver.plugin.db.update_status(
                     context,
                     models.Listener,
@@ -295,6 +312,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                     provisioning_status,
                     operating_status
                 )
+                LOG.info('after update_status')
             except Exception as e:
                 LOG.error('Exception: update_listener_status: %s',
                           e.message)
@@ -311,6 +329,7 @@ class LBaaSv2PluginCallbacksRPC(object):
         """Agent confirmations hook to update pool status."""
         with context.session.begin(subtransactions=True):
             try:
+                LOG.info('before update_status')
                 self.driver.plugin.db.update_status(
                     context,
                     models.PoolV2,
@@ -318,6 +337,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                     provisioning_status,
                     operating_status
                 )
+                LOG.info('after update_status')
             except Exception as e:
                 LOG.error('Exception: update_pool_status: %s',
                           e.message)
@@ -334,6 +354,7 @@ class LBaaSv2PluginCallbacksRPC(object):
         """Agent confirmations hook to update member status."""
         with context.session.begin(subtransactions=True):
             try:
+                LOG.info('before update_status')
                 self.driver.plugin.db.update_status(
                     context,
                     models.MemberV2,
@@ -341,6 +362,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                     provisioning_status,
                     operating_status
                 )
+                LOG.info('after update_status')
             except Exception as e:
                 LOG.error('Exception: update_member_status: %s',
                           e.message)
@@ -357,6 +379,7 @@ class LBaaSv2PluginCallbacksRPC(object):
         """Agent confirmation hook to update health monitor status."""
         with context.session.begin(subtransactions=True):
             try:
+                LOG.info('before update_status')
                 self.driver.plugin.db.update_status(
                     context,
                     models.HealthMonitorV2,
@@ -364,6 +387,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                     provisioning_status,
                     operating_status
                 )
+                LOG.info('after update_status')
             except Exception as e:
                 LOG.error('Exception: update_health_monitor_status: %s',
                           e.message)
@@ -380,6 +404,7 @@ class LBaaSv2PluginCallbacksRPC(object):
         """Agent confirmation hook to update l7 policy status."""
         with context.session.begin(subtransactions=True):
             try:
+                LOG.info('before update_status')
                 self.driver.plugin.db.update_status(
                     context,
                     models.L7Policy,
@@ -387,6 +412,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                     provisioning_status,
                     operating_status
                 )
+                LOG.info('after update_status')
             except Exception as e:
                 LOG.error('Exception: update_l7policy_status: %s',
                           e.message)
@@ -404,6 +430,7 @@ class LBaaSv2PluginCallbacksRPC(object):
         """Agent confirmation hook to update l7 policy status."""
         with context.session.begin(subtransactions=True):
             try:
+                LOG.info('before update_status')
                 self.driver.plugin.db.update_status(
                     context,
                     models.L7Rule,
@@ -411,6 +438,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                     provisioning_status,
                     operating_status
                 )
+                LOG.info('after update_status')
             except Exception as e:
                 LOG.error('Exception: update_l7rule_status: %s',
                           e.message)
