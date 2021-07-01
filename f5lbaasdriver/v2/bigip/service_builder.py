@@ -312,7 +312,9 @@ class LBaaSv2ServiceBuilder(object):
                     'fixed_ips': {'subnet_id': [member['subnet_id']]},
                     'binding:host_id': [host_id]
                     }
-                port = self.plugin.db._core_plugin.get_ports(context, filters)
+                port = self.plugin.db._core_plugin.get_ports(
+                    context, filters=filters, limit=1
+                )
                 if port:
                     port_id = port[0]['id']
                     segment_data = self.disconnected_service.get_segment_id(
