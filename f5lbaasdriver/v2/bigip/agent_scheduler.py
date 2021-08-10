@@ -250,12 +250,12 @@ class TenantScheduler(agent_scheduler.ChanceScheduler):
                 # Do we already have this tenant assigned to this
                 # agent candidate? If we do and it has capacity
                 # then assign this loadbalancer to this agent.
-                assigned_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
-                    context, candidate['id'])
-                for assigned_lb in assigned_lbs:
-                    if loadbalancer.tenant_id == assigned_lb.tenant_id:
-                        chosen_agent = candidate
-                        break
+                # assigned_lbs = plugin.db.list_loadbalancers_on_lbaas_agent(
+                    # context, candidate['id'])
+                # for assigned_lb in assigned_lbs:
+                    # if loadbalancer.tenant_id == assigned_lb.tenant_id:
+                        # chosen_agent = candidate
+                        # break
 
                 if chosen_agent:
                     # Does the agent which had tenants assigned
