@@ -50,7 +50,7 @@ LOG = logging.getLogger(__name__)
 OPTS = [
     cfg.IntOpt(
         'f5_driver_perf_mode',
-        default=0,
+        default=3,
         help=('switch driver performance mode from 0 to 3')
     ),
     cfg.StrOpt(
@@ -133,6 +133,8 @@ class F5DriverV2(object):
         except AttributeError:
             # Mitaka compatibility
             after_init = events.AFTER_CREATE
+
+        after_init = events.AFTER_CREATE
 
         registry.subscribe(self._bindRegistryCallback(),
                            resources.PROCESS,
