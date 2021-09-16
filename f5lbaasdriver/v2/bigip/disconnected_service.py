@@ -63,7 +63,7 @@ class DisconnectedService(object):
             ctx = context.session
         else:
             ctx = context
-        segments = segments_db.get_network_segments(ctx, network['id'],
+        segments = segments_db.get_network_segments(context.session, network['id'],
                                                     filter_dynamic=None)
 
         for segment in segments:
@@ -101,7 +101,7 @@ class DisconnectedService(object):
             if agent_hosts:
                 for host_id in agent_hosts:
                     levels = db.get_binding_levels(
-                        context, port_id, host_id
+                        context.session, port_id, host_id
                     )
                     if levels:
                         LOG.debug('levels: %s binding host_id: %s' % (
@@ -115,7 +115,7 @@ class DisconnectedService(object):
                                 else:
                                     ctx = context
                                 segment = segments_db.get_segment_by_id(
-                                    ctx, level.segment_id
+                                    context.session, level.segment_id
                                 )
                                 LOG.debug(
                                     'vxlan 2 vlan seg id %s: segment %s'

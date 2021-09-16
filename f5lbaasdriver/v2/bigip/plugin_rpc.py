@@ -550,7 +550,9 @@ class LBaaSv2PluginCallbacksRPC(object):
                     subnet_id
                 )
                 if not mac_address:
-                    mac_address = neutron_const.ATTR_NOT_SPECIFIED
+                    # mac_address = neutron_const.ATTR_NOT_SPECIFIED
+                    from random import randint
+                    mac_address = ":".join(["%02x" % x for x in map(lambda x: randint(0, 255), range(6))])
                 fixed_ip = {'subnet_id': subnet['id']}
                 if fixed_address_count > 1:
                     fixed_ips = []

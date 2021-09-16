@@ -699,13 +699,18 @@ class MemberManager(EntityManager):
             subnet = driver.plugin.db._core_plugin.get_subnet(
                 context, member.subnet_id
             )
+            from random import randint
+            from neutron.api.v2 import attributes
+
+            mac_address = ":".join(["%02x" % x for x in map(lambda x: randint(0, 255), range(6))])
+
             agent_host, service = self._setup_crud(context, lb, member)
             p = driver.plugin.db._core_plugin.create_port(context, {
                 'port': {
                     'tenant_id': subnet['tenant_id'],
                     'network_id': subnet['network_id'],
-                    'mac_address': n_const.ATTR_NOT_SPECIFIED,
-                    'fixed_ips': n_const.ATTR_NOT_SPECIFIED,
+                    'mac_address': mac_address,
+                    'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
                     'device_id': member.id,
                     'device_owner': 'network:f5lbaasv2',
                     'admin_state_up': member.admin_state_up,
@@ -744,63 +749,6 @@ class MemberManager(EntityManager):
                 LOG.debug('XXXXXX delete port: %s' % port_id)
             else:
                 LOG.error('port_id seems none')
-
-    # only for MIGU
-    @log_helpers.log_method_call
-    def create_bulk(self, context, members):
-        """Create members."""
-        start_time = time()
-        subnets = []
-        p_list = []
-
-        LOG.info("inside create_bulk for members: %s" % members)
-
-        if not members:
-            LOG.error("no members found in members. Just return.")
-            return
-
-        for member in members:
-            if member.subnet_id not in subnets:
-                lb = member.pool.loadbalancer
-                driver = self.driver
-                subnet = driver.plugin.db._core_plugin.get_subnet(
-                    context, member.subnet_id
-                )
-
-                LOG.info("time for subnet  %.5f secs" % (time() - start_time))
-
-                agent = self.driver.scheduler.schedule(
-                    self.driver.plugin, context, lb.id, self.driver.env
-                )
-                LOG.info("time for agent  %.5f secs" % (time() - start_time))
-                LOG.info(agent)
-
-                agent_host = agent['host']
-                p = driver.plugin.db._core_plugin.create_port(context, {
-                    'port': {
-                        'tenant_id': subnet['tenant_id'],
-                        'network_id': subnet['network_id'],
-                        'mac_address': n_const.ATTR_NOT_SPECIFIED,
-                        'fixed_ips': n_const.ATTR_NOT_SPECIFIED,
-                        'device_id': member.id,
-                        'device_owner': 'network:f5lbaasv2',
-                        'admin_state_up': member.admin_state_up,
-                        'name': 'fake_pool_port_' + member.id,
-                        portbindings.HOST_ID: agent_host}})
-                p_list.append(p)
-                LOG.info('the port created here is: %s' % p)
-
-                api_dict = member.to_dict(pool=False)
-                subnets.append(member.subnet_id)
-
-        self._call_rpc(context, lb, member, api_dict, 'create_member',
-                       multiple=True)
-
-        for port in p_list:
-            LOG.info('p_list details: %s' % p_list)
-            driver.plugin.db._core_plugin.delete_port(context, port["id"])
-
-        LOG.info("create_bulk for members end.")
 
     @log_helpers.log_method_call
     def update(self, context, old_member, member):
