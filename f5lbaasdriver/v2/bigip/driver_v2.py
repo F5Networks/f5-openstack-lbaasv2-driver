@@ -194,7 +194,23 @@ class EntityManager(object):
             agent_host, service = self._setup_crud(
                 context, loadbalancer, entity, **kwargs)
             rpc_callable = getattr(self.driver.agent_rpc, rpc_method)
-            rpc_callable(context, api_dict, service, agent_host)
+
+            the_port_id = kwargs.get("the_port_id", None)
+            LOG.info(the_port_id)
+
+            the_port_ids = kwargs.get("the_port_ids", [])
+            LOG.info(the_port_ids)
+
+            if the_port_id or the_port_ids:
+                LOG.info('not None')
+                rpc_callable(
+                    context, api_dict, service,
+                    agent_host, the_port_id=the_port_id,
+                    the_port_ids=the_port_ids
+                )
+            else:
+                LOG.info('is None')
+                rpc_callable(context, api_dict, service, agent_host)
         except Exception as e:
             LOG.error("Exception: %s: %s" % (rpc_method, e))
             raise e
@@ -707,48 +723,64 @@ class MemberManager(EntityManager):
 
         driver = self.driver
         lb = member.pool.loadbalancer
+        the_port_id = None
 
         if self.driver.unlegacy_setting_placeholder_driver_side:
             LOG.debug('running un-legacy way for member create p1:')
-            driver = self.driver
-            subnet = driver.plugin.db._core_plugin.get_subnet(
-                context, member.subnet_id
-            )
-            # agent_host, service = self._setup_crud(context, member)
-            agent_host = 'temp'
-            LOG.info('running here')
-            if member.attached_to_loadbalancer() and lb:
-                LOG.info('scheduing here instead')
-                this_agent = self.driver.scheduler.schedule(
-                    self.driver.plugin,
-                    context,
-                    lb.id,
-                    self.driver.env
-                )
-                LOG.info(this_agent)
-                agent_host = this_agent.get('host')
-            LOG.info(agent_host)
 
-            if self.driver.port_normal_or_baremetal == "normal":
-                LOG.debug('setting port to normal')
-                port_type = "normal"
-            else:
-                LOG.debug('setting port to baremetal')
-                port_type = "baremetal"
-            p = driver.plugin.db._core_plugin.create_port(context, {
-                'port': {
-                    'tenant_id': subnet['tenant_id'],
-                    'network_id': subnet['network_id'],
-                    'mac_address': n_const.ATTR_NOT_SPECIFIED,
-                    'fixed_ips': n_const.ATTR_NOT_SPECIFIED,
-                    'device_id': member.id,
-                    'device_owner': 'network:f5lbaasv2',
-                    'admin_state_up': member.admin_state_up,
-                    portbindings.VNIC_TYPE: port_type,
-                    'name': 'fake_pool_port_' + member.id,
-                    portbindings.HOST_ID: agent_host}})
-            LOG.debug('the port created here is: %s' % p)
+            filters = {
+                'device_owner': ['network:f5lbaasv2'],
+                'fixed_ips': {'subnet_id': [member.subnet_id]}
+            }
+
+            LOG.debug('fetching certain ports details:')
+
+            all_ports = driver.plugin.db._core_plugin.get_ports_count(
+                context, filters
+            )
+            LOG.debug("all_ports length:")
+            LOG.debug(all_ports)
+
+            if all_ports < 1:
+                subnet = driver.plugin.db._core_plugin.get_subnet(
+                    context, member.subnet_id
+                )
+
+                agent_host = 'temp'
+                LOG.info('running here')
+                if member.attached_to_loadbalancer() and lb:
+                    LOG.info('scheduling here instead')
+                    this_agent = self.driver.scheduler.schedule(
+                        self.driver.plugin,
+                        context,
+                        lb.id,
+                        self.driver.env
+                    )
+                    LOG.info(this_agent)
+                    agent_host = this_agent.get('host')
+                LOG.info(agent_host)
+
+                p = driver.plugin.db._core_plugin.create_port(context, {
+                    'port': {
+                        'tenant_id': subnet['tenant_id'],
+                        'network_id': subnet['network_id'],
+                        'mac_address': n_const.ATTR_NOT_SPECIFIED,
+                        'fixed_ips': n_const.ATTR_NOT_SPECIFIED,
+                        'device_id': member.id,
+                        'device_owner': 'network:f5lbaasv2',
+                        'admin_state_up': member.admin_state_up,
+                        portbindings.VNIC_TYPE: "baremetal",
+                        'name': 'pool_port_' + member.id,
+                        portbindings.HOST_ID: agent_host
+                    }
+                }
+                )
+                LOG.debug('the port created here is: %s' % p)
+                the_port_id = p['id']
+
         api_dict = member.to_dict(pool=False)
+        LOG.info('the_port_id is:')
+        LOG.info(the_port_id)
 
         def append_pools_monitors(context, loadbalancer, service):
             self._append_pools_monitors(context, service, member.pool)
@@ -760,51 +792,25 @@ class MemberManager(EntityManager):
                     context, lb, member, api_dict, 'create_member',
                     append_listeners=lambda *args: None,
                     append_pools_monitors=append_pools_monitors,
-                    append_l7policies_rules=lambda *args: None
+                    append_l7policies_rules=lambda *args: None,
+                    the_port_id=the_port_id
                 )
             else:
-                self._call_rpc(context, lb, member, api_dict, 'create_member')
+                self._call_rpc(
+                    context, lb, member, api_dict,
+                    'create_member',
+                    the_port_id=the_port_id
+                )
         except Exception as e:
             LOG.error("Exception: member create: %s" % e.message)
             self._handle_entity_error(context, member.id,
                                       loadbalancer_id=lb.id)
             raise e
 
-        if self.driver.unlegacy_setting_placeholder_driver_side:
-            LOG.debug('running un-legacy way for member create p2:')
-
-            if not self.driver.to_delete_last_port:
-                filters = {
-                    'device_owner': ['network:f5lbaasv2'],
-                    # 'binding:host_id': [agent_host],
-                    'fixed_ips': {'subnet_id': [member.subnet_id]}
-                }
-                LOG.debug('fetching certain ports details:')
-                all_ports = driver.plugin.db._core_plugin.get_ports_count(
-                    context, filters
-                )
-                LOG.debug("all_ports length:")
-                LOG.debug(all_ports)
-
-                if all_ports < 2:
-                    LOG.warn('Skip last port deletion process on purpose!')
-                    return
-
-            LOG.debug('start deleting the port')
-            port_id = None
-            if p.get('id'):
-                port_id = p['id']
-            if port_id:
-                driver.plugin.db._core_plugin.delete_port(context, port_id)
-                LOG.debug('XXXXXX delete port: %s' % port_id)
-            else:
-                LOG.error('port_id seems none')
-
     @log_helpers.log_method_call
     def create_bulk(self, context, members):
         """Create members."""
         subnets = []
-        p_list = []
 
         LOG.info("create_bulk start for members: %s" % members)
 
@@ -814,6 +820,7 @@ class MemberManager(EntityManager):
 
         driver = self.driver
         lb = members[0].pool.loadbalancer
+        the_port_ids = []
 
         for member in members:
             if member.subnet_id not in subnets:
@@ -852,38 +859,20 @@ class MemberManager(EntityManager):
                             'device_owner': 'network:f5lbaasv2',
                             'admin_state_up': member.admin_state_up,
                             portbindings.VNIC_TYPE: "baremetal",
-                            'name': 'fake_pool_port_' + member.id,
+                            'name': 'pool_port_' + member.id,
                             portbindings.HOST_ID: agent_host}})
-                    p_list.append(p)
+                    the_port_ids.append(p['id'])
                     LOG.info('the port created here is: %s' % p)
 
                 api_dict = member.to_dict(pool=False)
                 subnets.append(member.subnet_id)
 
-        self._call_rpc(context, lb, member, api_dict, 'create_member',
-                       multiple=True)
-
-        LOG.info('p_list details: %s' % p_list)
-        for port in p_list:
-            port_subnet_id = port['fixed_ips'][0]['subnet_id']
-            LOG.info(port_subnet_id)
-
-            filters = {
-                'device_owner': ['network:f5lbaasv2'],
-                'fixed_ips': {'subnet_id': [port_subnet_id]}
-            }
-            ports_from_subnet = driver.plugin.db._core_plugin.get_ports_count(
-                context, filters
-            )
-            LOG.info("ports_from_subnet length: ")
-            LOG.info(ports_from_subnet)
-
-            if ports_from_subnet < 2:
-                LOG.warn('Skip last port deletion process on purpose!')
-            else:
-                port_id_to_del = port.get('id')
-                LOG.info('XXXXXX delete port: %s' % port_id_to_del)
-                driver.plugin.db._core_plugin.delete_port(context, port["id"])
+        LOG.info(the_port_ids)
+        self._call_rpc(
+            context, lb, member, api_dict, 'create_member',
+            the_port_ids=the_port_ids,
+            multiple=True
+        )
 
         LOG.info("create_bulk for members end.")
 

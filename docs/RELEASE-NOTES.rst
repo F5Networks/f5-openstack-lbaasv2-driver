@@ -5,6 +5,22 @@
 Release Notes
 =============
 
+v112.5.10 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* [OPENSTACK-2285] use another way to remove some ports
+
+Bug Fixes
+`````````
+* None noted.
+
+Limitations
+```````````
+* None noted.
+`````````
+
 v112.5.9 (Pike)
 --------------
 
