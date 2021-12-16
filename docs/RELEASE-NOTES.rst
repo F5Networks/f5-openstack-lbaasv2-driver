@@ -5,6 +5,23 @@
 Release Notes
 =============
 
+v12.3.0 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* Add some performance improvement fixes
+
+
+Bug Fixes
+`````````
+* None noted.
+
+
+Limitations
+```````````
+* None noted.
+
 v12.2.0 (Pike)
 --------------
 

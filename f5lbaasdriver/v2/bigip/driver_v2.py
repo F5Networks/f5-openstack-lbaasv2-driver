@@ -64,7 +64,7 @@ OPTS = [
     ),
     cfg.StrOpt(
         'unlegacy_setting_placeholder_driver_side',
-        default=None,
+        default='special_driver_side',
         help=('used in certain hpb cases to differenciate legacy scenarios')
     )
 ]
@@ -317,6 +317,11 @@ class LoadBalancerManager(EntityManager):
             scheduler = self.driver.scheduler
             agent_config_dict = \
                 scheduler.deserialize_agent_configurations(agent_config)
+
+            if agent in context.session:
+                LOG.info('inside here')
+                context.session.expire(agent, ['heartbeat_timestamp'])
+                LOG.info(agent)
 
             if not agent_config_dict.get('nova_managed', False):
                 # Update the port for the VIP to show ownership by this driver
