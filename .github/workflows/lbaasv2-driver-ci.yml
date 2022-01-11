@@ -1,0 +1,33 @@
+name: LBaaSv2 Driver CI
+
+on: pull_request
+
+jobs:
+  unit-test:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Install Pre-requisites
+        run: |
+          sudo apt-get install -y flake8
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Run Flake8
+        run: |
+          flake8 ./f5lbaasdriver
+      - name: Before Unit Test
+        run: |
+          pip install -r requirements.test.txt
+      - name: Run Unit Test
+        run: |
+          coverage run --source f5lbaasdriver -m py.test f5lbaasdriver/v2/bigip/
+          coverage report
+  build-rpm:
+    runs-on: ubuntu-18.04
+    container:
+      image: centos:7
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Build RPM package
+        run: |
+          echo "Build RPM package"
