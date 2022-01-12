@@ -4,7 +4,7 @@ on: pull_request
 
 jobs:
   unit-test:
-    runs-on: ubuntu-18.04
+    runs-on: vio-ubuntu-18.04
     steps:
       - name: Install Pre-requisites
         run: |
