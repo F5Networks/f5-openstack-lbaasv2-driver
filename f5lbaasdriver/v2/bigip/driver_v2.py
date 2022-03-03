@@ -56,8 +56,8 @@ OPTS = [
     ),
     cfg.StrOpt(
         'comment_out_vip_owner',
-        default='',
-        help=('when set, vip owner is commented out, not included in update')
+        default='no',
+        help=('if set yes, vip owner is commented out, not included in update')
     ),
     cfg.StrOpt(
         'f5_loadbalancer_service_builder_v2',
@@ -112,9 +112,7 @@ class F5DriverV2(object):
         self.scheduler = importutils.import_object(
             cfg.CONF.f5_loadbalancer_pool_scheduler_driver_v2)
 
-        self.comment_out_vip_owner = importutils.import_object(
-            cfg.CONF.comment_out_vip_owner
-        )
+        self.comment_out_vip_owner = cfg.CONF.comment_out_vip_owner
 
         self.service_builder = importutils.import_object(
             cfg.CONF.f5_loadbalancer_service_builder_v2, self)
@@ -363,7 +361,7 @@ class LoadBalancerManager(EntityManager):
 
                 # comment out owner;
                 # there are other ways, seems this is the clearer way.
-                if driver.comment_out_vip_owner:
+                if driver.comment_out_vip_owner == 'yes':
                     port_data = {
                         'admin_state_up': True,
                         'status': q_const.PORT_STATUS_ACTIVE
