@@ -55,6 +55,11 @@ OPTS = [
               'pool to a default loadbalancer agent')
     ),
     cfg.StrOpt(
+        'comment_out_vip_owner',
+        default='no',
+        help=('if set yes, vip owner is commented out, not included in update')
+    ),
+    cfg.StrOpt(
         'f5_loadbalancer_service_builder_v2',
         default=(
             'f5lbaasdriver.v2.bigip.service_builder.LBaaSv2ServiceBuilder'
@@ -106,6 +111,8 @@ class F5DriverV2(object):
         # what scheduler to use for pool selection
         self.scheduler = importutils.import_object(
             cfg.CONF.f5_loadbalancer_pool_scheduler_driver_v2)
+
+        self.comment_out_vip_owner = cfg.CONF.comment_out_vip_owner
 
         self.service_builder = importutils.import_object(
             cfg.CONF.f5_loadbalancer_service_builder_v2, self)
@@ -351,6 +358,15 @@ class LoadBalancerManager(EntityManager):
                     'device_owner': 'F5:lbaasv2',
                     'status': q_const.PORT_STATUS_ACTIVE
                 }
+
+                # comment out owner;
+                # there are other ways, seems this is the clearer way.
+                if driver.comment_out_vip_owner == 'yes':
+                    port_data = {
+                        'admin_state_up': True,
+                        'status': q_const.PORT_STATUS_ACTIVE
+                    }
+
                 port_data[portbindings.HOST_ID] = agent_host
                 if driver.unlegacy_setting_placeholder_driver_side:
                     LOG.debug('setting to normal')
