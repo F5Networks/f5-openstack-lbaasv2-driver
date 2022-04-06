@@ -20,6 +20,7 @@ from f5lbaasdriver.v2.bigip import constants_v2 as constants
 from neutron.common import rpc as neutron_rpc
 from neutron.db import agents_db
 from neutron.db.models import agent as agents_model
+from neutron.extensions import l3 as l3_ext
 from neutron.plugins.common import constants as plugin_constants
 
 from neutron_lbaas.db.loadbalancer import models
@@ -724,6 +725,165 @@ class LBaaSv2PluginCallbacksRPC(object):
             except Exception as exc:
                 LOG.error('could not remove allowed address pair: %s'
                           % exc.message)
+
+    @log_helpers.log_method_call
+    def create_network(self, context, **kwargs):
+        """Create a network."""
+        networks = []
+        name = kwargs.get("name", "")
+        if name:
+            filters = {'name': [name]}
+            networks = self.driver.plugin.db._core_plugin.get_networks(
+                context,
+                filters=filters
+            )
+
+        if networks:
+            return networks[0]
+        else:
+            network_data = kwargs.copy()
+            for key in network_data:
+                if network_data[key] is None:
+                    network_data[key] = neutron_const.ATTR_NOT_SPECIFIED
+            network = self.driver.plugin.db._core_plugin.create_network(
+                context, {'network': network_data})
+            return network
+
+    @log_helpers.log_method_call
+    def get_network_by_id(self, context, id=None):
+        """Get a network."""
+        return self.driver.plugin.db._core_plugin.get_network(
+            context, id
+        )
+
+    @log_helpers.log_method_call
+    def delete_network_by_name(self, context, name=None):
+        """Delete network."""
+        networks = []
+        if name:
+            filters = {
+                'name': [name]
+            }
+            networks = self.driver.plugin.db._core_plugin.get_networks(
+                context,
+                filters=filters
+            )
+
+        if networks:
+            for network in networks:
+                self.driver.plugin.db._core_plugin.delete_network(
+                    context, network['id'])
+
+        return networks
+
+    @log_helpers.log_method_call
+    def create_subnet(self, context, **kwargs):
+        """Create a subnet on a network."""
+        subnets = []
+        name = kwargs.get("name", "")
+        if name:
+            filters = {'name': [name]}
+            subnets = self.driver.plugin.db._core_plugin.get_subnets(
+                context,
+                filters=filters
+            )
+
+        if subnets:
+            return subnets[0]
+        else:
+            subnet_data = kwargs.copy()
+            for key in subnet_data:
+                if subnet_data[key] is None:
+                    subnet_data[key] = neutron_const.ATTR_NOT_SPECIFIED
+            subnet = self.driver.plugin.db._core_plugin.create_subnet(
+                context, {'subnet': subnet_data})
+            return subnet
+
+    @log_helpers.log_method_call
+    def delete_subnet_by_name(self, context, name=None):
+        """Delete a subnet on a network."""
+        subnets = []
+        if name:
+            filters = {
+                'name': [name]
+            }
+            subnets = self.driver.plugin.db._core_plugin.get_subnets(
+                context,
+                filters=filters
+            )
+
+        if subnets:
+            for subnet in subnets:
+                self.driver.plugin.db._core_plugin.delete_subnet(
+                    context, subnet['id'])
+
+    @log_helpers.log_method_call
+    def get_subnet_by_name(self, context, name=None):
+        """Delete a subnet on a network."""
+        subnets = []
+        if name:
+            filters = {
+                'name': [name]
+            }
+            subnets = self.driver.plugin.db._core_plugin.get_subnets(
+                context,
+                filters=filters
+            )
+
+        return subnets
+
+    @log_helpers.log_method_call
+    def get_router_id_by_subnet(self, context, subnet_id=None):
+        """Get the router of a subnet."""
+        ports = None
+        if subnet_id:
+            filters = {
+                'device_owner': [
+                    'network:router_interface',
+                    'network:ha_router_replicated_interface'
+                ],
+                'fixed_ips': {
+                    'subnet_id': [subnet_id]
+                }
+            }
+            ports = self.driver.plugin.db._core_plugin.get_ports(
+                context,
+                filters=filters
+            )
+
+        if ports:
+            return ports[0]['device_id']
+        else:
+            return ''
+
+    @log_helpers.log_method_call
+    def attach_subnet_to_router(self, context, router_id=None, subnet_id=None):
+        """Attach a subnet to a router."""
+        if router_id and subnet_id:
+            self.driver.plugin.db._l3_plugin.add_router_interface(
+                context, router_id, {'subnet_id': subnet_id}
+            )
+
+    @log_helpers.log_method_call
+    def detach_subnet_from_router(self, context, router_id=None,
+                                  subnet_id=None, subnet_name=None):
+        """Dettach a subnet to a router."""
+        if not subnet_id and subnet_name:
+            filters = {'name': [subnet_name]}
+            subnets = self.driver.plugin.db._core_plugin.get_subnets(
+                context,
+                filters=filters
+            )
+            if subnets:
+                subnet_id = subnets[0]['id']
+
+        if router_id and subnet_id:
+            try:
+                self.driver.plugin.db._l3_plugin.remove_router_interface(
+                    context, router_id, {'subnet_id': subnet_id}
+                )
+            except l3_ext.RouterInterfaceNotFoundForSubnet:
+                pass
 
     @log_helpers.log_method_call
     def create_port_on_network(self, context, network_id=None,

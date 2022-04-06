@@ -28,6 +28,8 @@ from neutron.callbacks import resources
 from neutron.plugins.common import constants as plugin_constants
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as q_const
+from neutron_lib.plugins import constants as pg_const
+from neutron_lib.plugins import directory
 
 from neutron_lbaas.db.loadbalancer import models
 
@@ -109,6 +111,10 @@ class F5DriverV2(object):
             sys.exit(1)
 
         self.plugin = plugin
+        # NOTE(qzhao): Append L3 plugin to LBaaSv2 DB plugin
+        if not getattr(self.plugin.db, '_l3_plugin', None):
+            self.plugin.db._l3_plugin = directory.get_plugin(pg_const.L3)
+
         self.env = env
 
         self.loadbalancer = LoadBalancerManager(self)
