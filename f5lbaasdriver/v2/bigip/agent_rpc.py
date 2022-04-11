@@ -211,14 +211,18 @@ class LBaaSv2AgentRPC(object):
             topic=topic)
 
     @log_helpers.log_method_call
-    def create_member(self, context, member, service, host):
+    def create_member(
+        self, context, member, service, host,
+        **kwargs
+    ):
         topic = '%s.%s' % (self.topic, host)
         return self.cast(
             context,
             self.make_msg(
                 'create_member',
                 member=member,
-                service=service
+                service=service,
+                **kwargs
             ),
             topic=topic)
 

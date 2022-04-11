@@ -5,6 +5,23 @@
 Release Notes
 =============
 
+v12.4.0 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* stable Pike as base
+
+
+Bug Fixes
+`````````
+* None noted.
+
+
+Limitations
+```````````
+* None noted.
+
 v12.3.0 (Pike)
 --------------
 
