@@ -44,7 +44,7 @@ LOG = logging.getLogger(__name__)
 OPTS = [
     cfg.IntOpt(
         'f5_driver_perf_mode',
-        default=0,
+        default=3,
         help=('switch driver performance mode from 0 to 3')
     ),
     cfg.StrOpt(

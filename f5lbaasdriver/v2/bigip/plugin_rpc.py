@@ -115,12 +115,14 @@ class LBaaSv2PluginCallbacksRPC(object):
                     context,
                     loadbalancer_id
                 )
-                LOG.info('before get_agent_hosting_loadbalancer')
+                LOG.info('after get_agent_hosting_loadbalancer')
                 # the preceeding get call returns a nested dict, unwind
                 # one level if necessary
                 agent = (agent['agent'] if 'agent' in agent else agent)
+                LOG.info('before build')
                 service = self.driver.service_builder.build(
                     context, lb, agent)
+                LOG.info('after build')
             except Exception as e:
                 LOG.error("Exception: get_service_by_loadbalancer_id: %s",
                           e.message)
