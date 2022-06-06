@@ -4,6 +4,19 @@
 
 Release Notes
 =============
+v212.5.5 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* [PENSTACK-2479] Add get subnet rpc call
+
+Bug Fixes
+`````````
+* None noted
+
+Release Notes
+=============
 v212.5.4 (Pike)
 --------------
 
