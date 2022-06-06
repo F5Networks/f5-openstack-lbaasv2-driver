@@ -1,6 +1,6 @@
 -e .
 
-git+https://github.com/openstack/neutron.git@stable/pike
+git+https://github.com/openstack/neutron.git@pike-eol
 git+https://github.com/F5Networks/neutron-lbaas.git@stable/pike
 git+https://github.com/F5Networks/pytest-symbols.git
 git+https://github.com/F5Networks/f5-openstack-test.git@stable/newton
