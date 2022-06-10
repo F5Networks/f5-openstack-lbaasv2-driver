@@ -61,6 +61,13 @@ OPTS = [
         help=('Driver to use for scheduling '
               'pool to a default loadbalancer agent')
     ),
+    cfg.ListOpt(
+        'agent_filters',
+        default=[
+            'EnvironmentFilter,RandomFilter'
+        ],
+        help=('Filters of Agent scheduler')
+    ),
     cfg.StrOpt(
         'f5_loadbalancer_service_builder_v2',
         default=(
