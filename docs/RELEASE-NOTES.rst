@@ -4,12 +4,25 @@
 
 Release Notes
 =============
+v212.5.6 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* [OPENSTACK-2490] Schedule loadbalancer to desired availability zone
+
+Bug Fixes
+`````````
+* None noted
+
+Release Notes
+=============
 v212.5.5 (Pike)
 --------------
 
 Added Functionality
 ```````````````````
-* [PENSTACK-2479] Add get subnet rpc call
+* [OPENSTACK-2479] Add get subnet rpc call
 
 Bug Fixes
 `````````
