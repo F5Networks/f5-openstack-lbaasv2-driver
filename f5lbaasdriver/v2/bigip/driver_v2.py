@@ -367,7 +367,15 @@ class LoadBalancerManager(EntityManager):
                 else:
                     LOG.debug('setting to baremetal')
                     port_data[portbindings.VNIC_TYPE] = "baremetal"
+
                 port_data[portbindings.PROFILE] = {}
+
+                llinfo = agent_config_dict.get('local_link_information', None)
+                if llinfo:
+                    port_data[portbindings.PROFILE] = {
+                        "local_link_information": llinfo
+                    }
+
                 driver.plugin.db._core_plugin.update_port(
                     context,
                     loadbalancer.vip_port_id,
