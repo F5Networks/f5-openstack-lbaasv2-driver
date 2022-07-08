@@ -4,6 +4,19 @@
 
 Release Notes
 =============
+v212.5.7 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* [OPENSTACK-2512] Include VTEP IP address in Neutron port
+
+Bug Fixes
+`````````
+* None noted
+
+Release Notes
+=============
 v212.5.6 (Pike)
 --------------
 
