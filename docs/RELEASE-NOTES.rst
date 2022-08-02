@@ -4,6 +4,20 @@
 
 Release Notes
 =============
+v212.5.8 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* [OPENSTACK-2490] Use network AZ hints if AZ is empty
+* [OPENSTACK-2444] Support large SNAT pool
+
+Bug Fixes
+`````````
+* None noted
+
+Release Notes
+=============
 v212.5.7 (Pike)
 --------------
 
