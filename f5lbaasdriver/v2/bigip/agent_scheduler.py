@@ -172,6 +172,10 @@ class AvailabilityZoneFilter(AgentFilter):
         if len(network["availability_zones"]) > 0:
             az = network["availability_zones"][0]
 
+        # NOTE(qzhao): Use AZ hints if AZ is empty
+        if not az and len(network["availability_zone_hints"]) > 0:
+            az = network["availability_zone_hints"][0]
+
         result = []
         if not az:
             for candidate in candidates:
