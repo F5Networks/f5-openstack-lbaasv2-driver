@@ -219,18 +219,20 @@ class EntityManager(object):
         '''
 
         if entity.attached_to_loadbalancer() and loadbalancer:
-            (agent, service) = self._schedule_agent_create_service(
-                context, loadbalancer, entity, **kwargs)
+            agent = self._schedule_agent(context, loadbalancer,
+                                         entity, **kwargs)
+            service = self._create_service(context, loadbalancer, agent,
+                                           entity, **kwargs)
             return agent['host'], service
 
         raise F5NoAttachedLoadbalancerException()
 
-    def _schedule_agent_create_service(self, context, loadbalancer,
-                                       entity=None, **kwargs):
-        '''Schedule agent and build service--used for most managers.
+    def _schedule_agent(self, context, loadbalancer,
+                        entity=None, **kwargs):
+        '''Schedule agent --used for most managers.
 
         :param context: auth context for performing crud operation
-        :returns: tuple -- (agent object, service dict)
+        :returns: agent object
         '''
 
         agent = self.driver.scheduler.schedule(
@@ -239,9 +241,19 @@ class EntityManager(object):
             loadbalancer.id,
             self.driver.env
         )
+        return agent
+
+    def _create_service(self, context, loadbalancer, agent,
+                        entity=None, **kwargs):
+        '''build service--used for most managers.
+
+        :param context: auth context for performing crud operation
+        :returns: service dict
+        '''
+
         service = self.driver.service_builder.build(
             context, loadbalancer, agent, **kwargs)
-        return agent, service
+        return service
 
     @log_helpers.log_method_call
     def _append_listeners(self, context, service, listener):
@@ -344,7 +356,8 @@ class LoadBalancerManager(EntityManager):
 
         driver = self.driver
         try:
-            agent, service = self._schedule_agent_create_service(
+            service = {}
+            agent = self._schedule_agent(
                 context, loadbalancer)
             agent_host = agent['host']
             agent_config = agent.get('configurations', {})
@@ -387,7 +400,11 @@ class LoadBalancerManager(EntityManager):
                     loadbalancer.vip_port_id,
                     {'port': port_data}
                 )
-                # agent, service = self._schedule_agent_create_service(context)
+
+                # NOTE(qzhao): Vlan id might be assigned after updating vip
+                # port. Need to build service payload after updating port.
+                service = self._create_service(context, loadbalancer, agent)
+
                 if driver.unlegacy_setting_placeholder_driver_side:
                     LOG.debug('calling extra build():')
                     service = self.driver.service_builder.build(
@@ -411,8 +428,8 @@ class LoadBalancerManager(EntityManager):
 
         driver = self.driver
         try:
-            agent, service = self._schedule_agent_create_service(
-                context, loadbalancer)
+            agent = self._schedule_agent(context, loadbalancer)
+            service = self._create_service(context, loadbalancer, agent)
             agent_host = agent['host']
 
             driver.agent_rpc.update_loadbalancer(
@@ -435,8 +452,8 @@ class LoadBalancerManager(EntityManager):
 
         driver = self.driver
         try:
-            agent, service = self._schedule_agent_create_service(
-                context, loadbalancer)
+            agent = self._schedule_agent(context, loadbalancer)
+            service = self._create_service(context, loadbalancer, agent)
             agent_host = agent['host']
 
             driver.agent_rpc.delete_loadbalancer(
