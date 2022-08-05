@@ -9,6 +9,7 @@ v212.5.8 (Pike)
 
 Added Functionality
 ```````````````````
+* [OPENSTACK-2512] Build service payload after update vip port
 * [OPENSTACK-2490] Use network AZ hints if AZ is empty
 * [OPENSTACK-2444] Support large SNAT pool
 
