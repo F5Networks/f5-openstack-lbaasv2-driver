@@ -50,6 +50,10 @@ notifications:
     - secure: R9I38fqG1n1dXSd97e7eKrNt8XtWPpcF7J1cZ8cc+vB3+LcHjruMTVfRZHPWsBHMlWxvgrl7zD3t+38cIW2hJ7YrWjo4Izl60k8OM6HteFwHfDGsLM6eZNUaTZFORbeTSJCo6jryAI7qsu5xjU2uUi08nJTmuXU9jxsC+7mRzh1EL680TaPtCfoniVqI+3xRWt1ApVs8u61yU44x83KlBcSHdg9F/7X3o/I9vG+CiKxm+RWi0i6g1RebLzAEnYYMTGEctTaQCmyt4Y8+I9K/WBVKEQyT6o1z2Ac00qmbsk0sbSuEt9q30nJwlqGR1/WTn4FvDxGC1BE82rOmyppFjV0giXlJGINQre6LuGnMkeW8Cmg2P4vsHVwmxDR8B4G2cwdSgiho758wtP3ABVVA10GgnoatxeUAAC1rc6QAcQ9HdYObKmGzpRjp+6AWp1YghSCjszdRUvwtfWIZ9fmvTZBhB2qDJxAsyjw0DU+hxIfGs1v6TV6hcN4Vh9C34fKvP19tn7BS5vbZTPorq67uTxDj9EOfLOzuZNKbzRLqNQu+ZXniiV7P5sqT+mEryGJ04rrEC7/KuuWg0zPhevitY1oZNo4fjSSiSN2m42c+9cOtw0eZVACQFwI2vlU5pdRhPkfU6QqKPNIIfjsp+uWehN5sRPvL+GKh5siiQzhvyJ4=
     on_success: change
     on_failure: always
+before_deploy:
+  # Workaround https://github.com/travis-ci/dpl/issues/1235
+  - python3 -m venv ~/venv
+  - source ~/venv/bin/activate
 deploy:
   - provider: releases
     api_key:
