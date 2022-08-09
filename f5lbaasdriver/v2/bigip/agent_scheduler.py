@@ -176,6 +176,10 @@ class AvailabilityZoneFilter(AgentFilter):
         if not az and len(network["availability_zone_hints"]) > 0:
             az = network["availability_zone_hints"][0]
 
+        # NOTE(qzhao): Use default AZ if AZ hints is empty
+        if not az and len(cfg.CONF.default_availability_zones) > 0:
+            az = cfg.CONF.default_availability_zones[0]
+
         result = []
         if not az:
             for candidate in candidates:
