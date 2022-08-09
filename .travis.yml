@@ -64,15 +64,15 @@ deploy:
     on:
       repo: F5Networks/f5-openstack-lbaasv2-driver
       tags: true
-  - provider: pypi
-    user: $PYPI_USER
-    password: $PYPI_PASSWORD
-    server: https://upload.pypi.org/legacy/
-    on:
-      all_branches: true
-      tags: true
-      python: 2.7
-    skip_cleanup: true
+  #- provider: pypi
+  #  user: $PYPI_USER
+  #  password: $PYPI_PASSWORD
+  #  server: https://upload.pypi.org/legacy/
+  #  on:
+  #    all_branches: true
+  #    tags: true
+  #    python: 2.7
+  #  skip_cleanup: true
   # deploy docs to s3
   - provider: script
     skip_cleanup: true
