@@ -605,7 +605,8 @@ class LBaaSv2PluginCallbacksRPC(object):
     @log_helpers.log_method_call
     def update_port_on_subnet(
         self, context, port_id, port_name=None,
-        subnet_id=None, fixed_address_count=0
+        subnet_id=None, mac_address=None,
+        fixed_address_count=0
     ):
         port = {'port': {}}
 
@@ -618,6 +619,11 @@ class LBaaSv2PluginCallbacksRPC(object):
                 port['port']['fixed_ips'].append(
                     {'subnet_id': subnet_id}
                 )
+        if mac_address is not None:
+            port['port']['mac_address'] = mac_address
+
+        if not port['port']:
+            return
 
         port = self.driver.plugin.db._core_plugin.update_port(
             context, port_id, port
