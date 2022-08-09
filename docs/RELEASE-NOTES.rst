@@ -11,6 +11,7 @@ Added Functionality
 ```````````````````
 * [OPENSTACK-2512] Build service payload after update vip port
 * [OPENSTACK-2490] Use network AZ hints if AZ is empty
+* [OPENSTACK-2546] Use default AZ if either AZ or AZ hints is empty
 * [OPENSTACK-2444] Support large SNAT pool
 
 Bug Fixes
