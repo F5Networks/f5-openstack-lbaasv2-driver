@@ -58,7 +58,7 @@ OPTS = [
     cfg.StrOpt(
         'f5_loadbalancer_pool_scheduler_driver_v2',
         default=(
-            'f5lbaasdriver.v2.bigip.agent_scheduler.TenantScheduler'
+            'f5lbaasdriver.v2.bigip.agent_scheduler.AgentSchedulerNG'
         ),
         help=('Driver to use for scheduling '
               'pool to a default loadbalancer agent')
@@ -66,7 +66,9 @@ OPTS = [
     cfg.ListOpt(
         'agent_filters',
         default=[
-            'EnvironmentFilter,RandomFilter'
+            'AvailabilityZoneFilter',
+            'EnvironmentFilter',
+            'RandomFilter'
         ],
         help=('Filters of Agent scheduler')
     ),
