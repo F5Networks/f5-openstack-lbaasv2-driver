@@ -240,7 +240,7 @@ class EntityManager(object):
         agent = self.driver.scheduler.schedule(
             self.driver.plugin,
             context,
-            loadbalancer.id,
+            loadbalancer,
             self.driver.env
         )
         return agent
@@ -477,7 +477,7 @@ class LoadBalancerManager(EntityManager):
             agent = driver.scheduler.schedule(
                 driver.plugin,
                 context,
-                loadbalancer.id,
+                loadbalancer,
                 driver.env
             )
             service = driver.service_builder.build(context,
@@ -794,7 +794,7 @@ class MemberManager(EntityManager):
                 this_agent = self.driver.scheduler.schedule(
                     self.driver.plugin,
                     context,
-                    lb.id,
+                    lb,
                     self.driver.env
                 )
                 LOG.info(this_agent)
@@ -879,7 +879,7 @@ class MemberManager(EntityManager):
                     LOG.info("end getting subnet")
 
                     agent = self.driver.scheduler.schedule(
-                        self.driver.plugin, context, lb.id, self.driver.env
+                        self.driver.plugin, context, lb, self.driver.env
                     )
                     LOG.info("end scheduling agent")
                     LOG.info(agent)

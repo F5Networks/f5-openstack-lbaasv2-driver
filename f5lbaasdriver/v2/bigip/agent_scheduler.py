@@ -14,7 +14,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from collections import defaultdict
 import json
 import random
 
@@ -24,7 +23,6 @@ from oslo_utils import importutils
 
 from neutron_lbaas import agent_scheduler
 from neutron_lbaas.extensions import lbaas_agentschedulerv2
-from neutron_lbaas.services.loadbalancer.data_models import LoadBalancer
 
 LOG = logging.getLogger(__name__)
 
@@ -54,10 +52,10 @@ class AgentSchedulerNG(agent_scheduler.ChanceScheduler):
                 return {}
         return agent_conf
 
-    def schedule(self, plugin, context, lb_id, env=None):
+    def schedule(self, plugin, context, lb, env=None):
 
         # If LB is already hosted on an agent, return this agent
-        agent = plugin.db.get_agent_hosting_loadbalancer(context, lb_id)
+        agent = plugin.db.get_agent_hosting_loadbalancer(context, lb.id)
 
         if agent:
             if agent["agent"]["alive"] and \
@@ -66,20 +64,14 @@ class AgentSchedulerNG(agent_scheduler.ChanceScheduler):
             else:
                 # Agent is not active or BIG-IP state is wrong
                 raise lbaas_agentschedulerv2.NoActiveLbaasAgent(
-                    loadbalancer_id=lb_id)
-
-        # It is a new LB, load LB content
-        # TODO(qzhao): Driver should already have lb content.
-        # Need to optimize it in the future.
-        lb = plugin.db.get_loadbalancer(context, lb_id)
-        lb = LoadBalancer(**lb) if type(lb) == dict else lb
+                    loadbalancer_id=lb.id)
 
         # Load all LBaaS Agents
         candidates = []
         candidates = plugin.db.get_lbaas_agents(context, active=True)
         if len(candidates) <= 0:
             raise lbaas_agentschedulerv2.NoActiveLbaasAgent(
-                loadbalancer_id=lb_id)
+                loadbalancer_id=lb.id)
 
         # Select the desired Agent
         for filter in self.filters:
@@ -94,15 +86,15 @@ class AgentSchedulerNG(agent_scheduler.ChanceScheduler):
 
         if len(candidates) <= 0:
             raise lbaas_agentschedulerv2.NoEligibleLbaasAgent(
-                loadbalancer_id=lb_id)
+                loadbalancer_id=lb.id)
         else:
             chosen_agent = candidates[0]
             binding = agent_scheduler.LoadbalancerAgentBinding()
             binding.agent = chosen_agent
-            binding.loadbalancer_id = lb_id
+            binding.loadbalancer_id = lb.id
             context.session.add(binding)
             LOG.info("LB %s is scheduled to agent %s",
-                     lb_id, chosen_agent["id"])
+                     lb.id, chosen_agent["id"])
             return chosen_agent
 
 
