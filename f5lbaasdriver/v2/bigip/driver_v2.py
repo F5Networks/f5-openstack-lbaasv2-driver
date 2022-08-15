@@ -31,9 +31,12 @@ from neutron_lib import constants as q_const
 from neutron_lib.plugins import constants as pg_const
 from neutron_lib.plugins import directory
 
+from neutron_lbaas import agent_scheduler
 from neutron_lbaas.db.loadbalancer import models
+from neutron_lbaas.extensions import lbaas_agentschedulerv2
 
 from f5lbaasdriver.v2.bigip import agent_rpc
+from f5lbaasdriver.v2.bigip import device_scheduler
 from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 from f5lbaasdriver.v2.bigip import neutron_client
 from f5lbaasdriver.v2.bigip import plugin_rpc
@@ -56,7 +59,7 @@ OPTS = [
               "just in case.")
     ),
     cfg.StrOpt(
-        'f5_loadbalancer_pool_scheduler_driver_v2',
+        'loadbalancer_agent_scheduler',
         default=(
             'f5lbaasdriver.v2.bigip.agent_scheduler.AgentSchedulerNG'
         ),
@@ -71,6 +74,27 @@ OPTS = [
             'RandomFilter'
         ],
         help=('Filters of Agent scheduler')
+    ),
+    cfg.StrOpt(
+        'loadbalancer_device_scheduler',
+        default=(
+            'f5lbaasdriver.v2.bigip.device_scheduler.DeviceSchedulerNG'
+        ),
+        help=('Driver to use for scheduling '
+              'a loadbalancer to a BIG-IP device')
+    ),
+    cfg.ListOpt(
+        'device_filters',
+        default=[
+            'AvailabilityZoneFilter',
+            'RandomFilter'
+        ],
+        help=('Filters of device scheduler')
+    ),
+    cfg.StrOpt(
+        'device_inventory',
+        default="/etc/neutron/services/f5/inventory.json",
+        help=('Device inventory file')
     ),
     cfg.StrOpt(
         'f5_loadbalancer_service_builder_v2',
@@ -132,8 +156,10 @@ class F5DriverV2(object):
             cfg.CONF.unlegacy_setting_placeholder_driver_side
 
         # what scheduler to use for pool selection
-        self.scheduler = importutils.import_object(
-            cfg.CONF.f5_loadbalancer_pool_scheduler_driver_v2)
+        self.agent_scheduler = importutils.import_object(
+            cfg.CONF.loadbalancer_agent_scheduler)
+        self.device_scheduler = importutils.import_object(
+            cfg.CONF.loadbalancer_device_scheduler)
 
         self.service_builder = importutils.import_object(
             cfg.CONF.f5_loadbalancer_service_builder_v2, self)
@@ -221,29 +247,66 @@ class EntityManager(object):
         '''
 
         if entity.attached_to_loadbalancer() and loadbalancer:
-            agent = self._schedule_agent(context, loadbalancer,
-                                         entity, **kwargs)
+            agent, device = self._schedule_agent_and_device(
+                context, loadbalancer, entity, **kwargs)
             service = self._create_service(context, loadbalancer, agent,
                                            entity, **kwargs)
+            service["device"] = device
             return agent['host'], service
 
         raise F5NoAttachedLoadbalancerException()
 
-    def _schedule_agent(self, context, loadbalancer,
-                        entity=None, **kwargs):
+    def _schedule_agent_and_device(self, context, loadbalancer,
+                                   entity=None, **kwargs):
         '''Schedule agent --used for most managers.
 
         :param context: auth context for performing crud operation
         :returns: agent object
         '''
 
-        agent = self.driver.scheduler.schedule(
+        # If LB is already hosted on an agent, return this agent and device
+        result = self.driver.plugin.db.get_agent_hosting_loadbalancer(
+            context, loadbalancer.id)
+
+        if result:
+            agent = result["agent"]
+            if not agent["alive"] or not agent["admin_state_up"]:
+                # Agent is not active or it is disabled
+                raise lbaas_agentschedulerv2.NoActiveLbaasAgent(
+                    loadbalancer_id=loadbalancer.id)
+
+            device_id = result["device_id"]
+            device = self.driver.device_scheduler.load_device(device_id)
+            if device and device["admin_state_up"]:
+                return agent, device
+
+            raise device_scheduler.NoActiveLbaasDevice(
+                loadbalancer_id=loadbalancer.id)
+
+        # Schedule agent and device for new LB
+        agent = self.driver.agent_scheduler.schedule(
             self.driver.plugin,
             context,
             loadbalancer,
             self.driver.env
         )
-        return agent
+
+        device = self.driver.device_scheduler.schedule(
+            self.driver.plugin,
+            context,
+            loadbalancer
+        )
+
+        # Save LB, agent and device association
+        binding = agent_scheduler.LoadbalancerAgentBinding()
+        binding.loadbalancer_id = loadbalancer.id
+        binding.agent = agent
+        binding.device_id = device["id"]
+        context.session.add(binding)
+        LOG.info("LB %s is scheduled to agent %s device %s",
+                 loadbalancer.id, agent["id"], device["id"])
+
+        return agent, device
 
     def _create_service(self, context, loadbalancer, agent,
                         entity=None, **kwargs):
@@ -359,15 +422,15 @@ class LoadBalancerManager(EntityManager):
         driver = self.driver
         try:
             service = {}
-            agent = self._schedule_agent(
+            agent, device = self._schedule_agent_and_device(
                 context, loadbalancer)
             agent_host = agent['host']
             agent_config = agent.get('configurations', {})
             LOG.debug("agent configurations: %s" % agent_config)
 
-            scheduler = self.driver.scheduler
+            agent_scheduler = self.driver.agent_scheduler
             agent_config_dict = \
-                scheduler.deserialize_agent_configurations(agent_config)
+                agent_scheduler.deserialize_agent_configurations(agent_config)
 
             if agent in context.session:
                 LOG.info('inside here')
@@ -406,6 +469,7 @@ class LoadBalancerManager(EntityManager):
                 # NOTE(qzhao): Vlan id might be assigned after updating vip
                 # port. Need to build service payload after updating port.
                 service = self._create_service(context, loadbalancer, agent)
+                service["device"] = device
 
                 if driver.unlegacy_setting_placeholder_driver_side:
                     LOG.debug('calling extra build():')
@@ -430,8 +494,10 @@ class LoadBalancerManager(EntityManager):
 
         driver = self.driver
         try:
-            agent = self._schedule_agent(context, loadbalancer)
+            agent, device = self._schedule_agent_and_device(context,
+                                                            loadbalancer)
             service = self._create_service(context, loadbalancer, agent)
+            service["device"] = device
             agent_host = agent['host']
 
             driver.agent_rpc.update_loadbalancer(
@@ -454,8 +520,10 @@ class LoadBalancerManager(EntityManager):
 
         driver = self.driver
         try:
-            agent = self._schedule_agent(context, loadbalancer)
+            agent, device = self._schedule_agent_and_device(context,
+                                                            loadbalancer)
             service = self._create_service(context, loadbalancer, agent)
+            service["device"] = device
             agent_host = agent['host']
 
             driver.agent_rpc.delete_loadbalancer(
@@ -474,7 +542,7 @@ class LoadBalancerManager(EntityManager):
     def stats(self, context, loadbalancer):
         driver = self.driver
         try:
-            agent = driver.scheduler.schedule(
+            agent = driver.agent_scheduler.schedule(
                 driver.plugin,
                 context,
                 loadbalancer,
@@ -791,7 +859,7 @@ class MemberManager(EntityManager):
             LOG.info('running here')
             if member.attached_to_loadbalancer() and lb:
                 LOG.info('scheduing here instead')
-                this_agent = self.driver.scheduler.schedule(
+                this_agent = self.driver.agent_scheduler.schedule(
                     self.driver.plugin,
                     context,
                     lb,

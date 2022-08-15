@@ -53,19 +53,6 @@ class AgentSchedulerNG(agent_scheduler.ChanceScheduler):
         return agent_conf
 
     def schedule(self, plugin, context, lb, env=None):
-
-        # If LB is already hosted on an agent, return this agent
-        agent = plugin.db.get_agent_hosting_loadbalancer(context, lb.id)
-
-        if agent:
-            if agent["agent"]["alive"] and \
-               agent["agent"]["admin_state_up"]:
-                return agent["agent"]
-            else:
-                # Agent is not active or BIG-IP state is wrong
-                raise lbaas_agentschedulerv2.NoActiveLbaasAgent(
-                    loadbalancer_id=lb.id)
-
         # Load all LBaaS Agents
         candidates = []
         candidates = plugin.db.get_lbaas_agents(context, active=True)
@@ -88,14 +75,7 @@ class AgentSchedulerNG(agent_scheduler.ChanceScheduler):
             raise lbaas_agentschedulerv2.NoEligibleLbaasAgent(
                 loadbalancer_id=lb.id)
         else:
-            chosen_agent = candidates[0]
-            binding = agent_scheduler.LoadbalancerAgentBinding()
-            binding.agent = chosen_agent
-            binding.loadbalancer_id = lb.id
-            context.session.add(binding)
-            LOG.info("LB %s is scheduled to agent %s",
-                     lb.id, chosen_agent["id"])
-            return chosen_agent
+            return candidates[0]
 
 
 class AgentFilter(object):
