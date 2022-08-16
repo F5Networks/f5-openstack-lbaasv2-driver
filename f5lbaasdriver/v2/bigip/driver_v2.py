@@ -844,69 +844,6 @@ class MemberManager(EntityManager):
                                       loadbalancer_id=lb.id)
             raise e
 
-    # only for MIGU
-    @log_helpers.log_method_call
-    def create_bulk(self, context, members):
-        """Create members."""
-        subnets = []
-        the_port_ids = []
-
-        LOG.info("create_bulk start for members: %s" % members)
-
-        if not members:
-            LOG.error("no members found in members. Just return.")
-            return
-
-        driver = self.driver
-        lb = members[0].pool.loadbalancer
-
-        for member in members:
-            if member.subnet_id not in subnets:
-                the_filter = {
-                    'device_owner': ['network:f5lbaasv2'],
-                    'fixed_ips': {'subnet_id': [member.subnet_id]}
-                }
-                LOG.debug('fetching ports details:')
-                all_ports = driver.plugin.db._core_plugin.get_ports_count(
-                    context, the_filter
-                )
-                LOG.info("all_ports length:")
-                LOG.info(all_ports)
-                if all_ports < 1:
-                    subnet = driver.plugin.db._core_plugin.get_subnet(
-                        context, member.subnet_id
-                    )
-                    LOG.info("end getting subnet")
-
-                    agent = self.driver.scheduler.schedule(
-                        self.driver.plugin, context, lb, self.driver.env
-                    )
-                    LOG.info("end scheduling agent")
-                    LOG.info(agent)
-
-                    agent_host = agent['host']
-                    p = driver.plugin.db._core_plugin.create_port(context, {
-                        'port': {
-                            'tenant_id': subnet['tenant_id'],
-                            'network_id': subnet['network_id'],
-                            'mac_address': n_const.ATTR_NOT_SPECIFIED,
-                            'fixed_ips': n_const.ATTR_NOT_SPECIFIED,
-                            'device_id': member.id,
-                            'device_owner': 'network:f5lbaasv2',
-                            'admin_state_up': member.admin_state_up,
-                            'name': 'fake_pool_port_' + member.id,
-                            portbindings.HOST_ID: agent_host}})
-                    LOG.info('the port created here is: %s' % p)
-                    the_port_ids.append(p['id'])
-
-                api_dict = member.to_dict(pool=False)
-                subnets.append(member.subnet_id)
-
-        self._call_rpc(context, lb, member, api_dict, 'create_member',
-                       the_port_ids=the_port_ids, multiple=True)
-
-        LOG.info("create_bulk for members end.")
-
     @log_helpers.log_method_call
     def update(self, context, old_member, member):
         """Update a member."""
@@ -962,33 +899,6 @@ class MemberManager(EntityManager):
             self._handle_entity_error(context, member.id,
                                       loadbalancer_id=lb.id)
             raise e
-
-    # only for MIGU
-    @log_helpers.log_method_call
-    def delete_bulk(self, context, members_list):
-        """Delete members."""
-        LOG.info("inside delete_bulk for members: %s:" % members_list)
-
-        if not members_list:
-            LOG.error("no members found in members_list. Just return.")
-            return
-
-        member = members_list[0]
-
-        lb = member.pool.loadbalancer
-        driver = self.driver
-
-        try:
-            agent_host, service = self._setup_crud(context, lb, member,
-                                                   multiple=True)
-
-            driver.agent_rpc.delete_member(
-                context, member.to_dict(pool=False), service, agent_host)
-        except Exception as e:
-            LOG.error("Exception: member delete: %s" % e.message)
-            raise e
-
-        LOG.info("delete_bulk for members end.")
 
 
 class HealthMonitorManager(EntityManager):
