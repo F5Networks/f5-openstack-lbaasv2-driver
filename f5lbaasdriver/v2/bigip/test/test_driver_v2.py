@@ -106,7 +106,21 @@ class FakeRule(FakeBaseObj):
 @pytest.fixture
 def happy_path_driver():
     mock_driver = mock.MagicMock(name='mock_driver')
-    mock_driver.scheduler.schedule.return_value = {'host': 'test_agent'}
+    mock_driver.agent_scheduler.schedule.return_value = {
+        'id': 'test_agent',
+        'host': 'test_agent'
+    }
+    mock_driver.device_scheduler.schedule.return_value = {'id': 'test_device'}
+    mock_driver.plugin.db.get_agent_hosting_loadbalancer.return_value = {
+        'agent': {
+            'id': 'test_agent', 'host': 'test_agent',
+            'alive': True, 'admin_state_up': True
+        },
+        'device_id': 'test_device'
+    }
+    mock_driver.device_scheduler.load_device.return_value = {
+         'id': 'test_device', 'admin_state_up': True
+    }
     mock_driver.service_builder.build.return_value = {}
     return mock_driver, mock.MagicMock(name='mock_context')
 
@@ -125,7 +139,12 @@ def test_f5driverv2(mock_plugin_rpc, mock_agent_rpc, mock_ACLGroupManager):
 
 def test_lbmgr_create():
     mock_driver = mock.MagicMock(name='mock_driver')
-    mock_driver.scheduler.schedule.return_value = {'host': 'test_agent'}
+    mock_driver.agent_scheduler.schedule.return_value = {
+         'id': 'test_agent',
+         'host': 'test_agent'
+    }
+    mock_driver.device_scheduler.schedule.return_value = {'id': 'test_device'}
+    mock_driver.plugin.db.get_agent_hosting_loadbalancer.return_value = {}
     mock_driver.service_builder.build.return_value = {}
     lb_mgr = dv2.LoadBalancerManager(mock_driver)
     mock_ctx = mock.MagicMock(name='mock_context')
@@ -138,7 +157,8 @@ def test_lbmgr_create():
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
 def test_lbmgr_create_exception(mock_log):
     mock_driver = mock.MagicMock(name='mock_driver')
-    mock_driver.scheduler.schedule.return_value = {}
+    mock_driver.agent_scheduler.schedule.return_value = {'id': 'test_agent'}
+    mock_driver.plugin.db.get_agent_hosting_loadbalancer.return_value = {}
     lb_mgr = dv2.LoadBalancerManager(mock_driver)
     mock_ctx = mock.MagicMock(name='mock_context')
     fake_lb = FakeLB()
@@ -152,7 +172,9 @@ def test_lbmgr_create_exception(mock_log):
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
 def test_lbmgr_create_mismatched_tenant_exception(mock_log):
     mock_driver = mock.MagicMock(name='mock_driver')
-    mock_driver.scheduler.schedule.side_effect = f5_exc.F5MismatchedTenants
+    mock_driver.agent_scheduler.schedule.side_effect = \
+        f5_exc.F5MismatchedTenants
+    mock_driver.plugin.db.get_agent_hosting_loadbalancer.return_value = {}
     lb_mgr = dv2.LoadBalancerManager(mock_driver)
     mock_ctx = mock.MagicMock(name='mock_context')
     with pytest.raises(f5_exc.F5MismatchedTenants) as ex:
@@ -169,7 +191,8 @@ def test_lbmgr_create_mismatched_tenant_exception(mock_log):
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
 def test_lbmgr_create_no_eligible_agent(mock_log):
     mock_driver = mock.MagicMock(name='mock_driver')
-    mock_driver.scheduler.schedule.side_effect = FakeNoEligibleAgentExc
+    mock_driver.agent_scheduler.schedule.side_effect = FakeNoEligibleAgentExc
+    mock_driver.plugin.db.get_agent_hosting_loadbalancer.return_value = {}
     lb_mgr = dv2.LoadBalancerManager(mock_driver)
     mock_ctx = mock.MagicMock(name='mock_context')
     with pytest.raises(FakeNoEligibleAgentExc):
@@ -180,7 +203,16 @@ def test_lbmgr_create_no_eligible_agent(mock_log):
 
 def test_lbmgr_update():
     mock_driver = mock.MagicMock(name='mock_driver')
-    mock_driver.scheduler.schedule.return_value = {'host': 'test_agent'}
+    mock_driver.plugin.db.get_agent_hosting_loadbalancer.return_value = {
+        'agent': {
+            'id': 'test_agent', 'host': 'test_agent',
+            'alive': True, 'admin_state_up': True
+        },
+        'device_id': 'test_device'
+    }
+    mock_driver.device_scheduler.load_device.return_value = {
+         'id': 'test_device', 'admin_state_up': True
+    }
     mock_driver.service_builder.build.return_value = {}
     lb_mgr = dv2.LoadBalancerManager(mock_driver)
     mock_ctx = mock.MagicMock(name='mock_context')
@@ -190,13 +222,21 @@ def test_lbmgr_update():
     assert mock_driver.agent_rpc.update_loadbalancer.call_args == \
         mock.call(
             mock_ctx, old_lb.to_api_dict(),
-            new_lb.to_api_dict(), {}, 'test_agent')
+            new_lb.to_api_dict(),
+            {'device': {'id': 'test_device', 'admin_state_up': True}},
+            'test_agent')
 
 
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
 def test_lbmgr_update_exception(mock_log):
     mock_driver = mock.MagicMock(name='mock_driver')
-    mock_driver.scheduler.schedule.return_value = {}
+    mock_driver.plugin.db.get_agent_hosting_loadbalancer.return_value = {
+        'agent': {
+            'id': 'test_agent',
+            'alive': True, 'admin_state_up': True
+        },
+        'device_id': 'test_device'
+    }
     lb_mgr = dv2.LoadBalancerManager(mock_driver)
     mock_ctx = mock.MagicMock(name='mock_context')
     old_lb = FakeLB(id='old_lb')
@@ -244,7 +284,9 @@ def test_lbmgr_delete(happy_path_driver):
     fake_lb = FakeLB()
     lb_mgr.delete(mock_ctx, fake_lb)
     assert mock_driver.agent_rpc.delete_loadbalancer.call_args == \
-        mock.call(mock_ctx, fake_lb.to_api_dict(), {}, 'test_agent')
+        mock.call(mock_ctx, fake_lb.to_api_dict(),
+                  {'device': {'id': 'test_device', 'admin_state_up': True}},
+                  'test_agent')
 
 
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
@@ -268,7 +310,13 @@ def test_lbmgr_delete_no_eligible_agent_exception(mock_log):
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
 def test_lbmgr_delete_exception(mock_log):
     mock_driver = mock.MagicMock(name='mock_driver')
-    mock_driver.scheduler.schedule.return_value = {}
+    mock_driver.plugin.db.get_agent_hosting_loadbalancer.return_value = {
+        'agent': {
+            'id': 'test_agent',
+            'alive': True, 'admin_state_up': True
+        },
+        'device_id': 'test_device'
+    }
     lb_mgr = dv2.LoadBalancerManager(mock_driver)
     mock_ctx = mock.MagicMock(name='mock_context')
     fake_lb = FakeLB()
@@ -285,7 +333,9 @@ def test_listenermgr_create(happy_path_driver):
     fake_lstnr = FakeListener()
     lstnr_mgr.create(mock_ctx, fake_lstnr)
     assert mock_driver.agent_rpc.create_listener.call_args == \
-        mock.call(mock_ctx, fake_lstnr.to_dict(), {}, 'test_agent')
+        mock.call(mock_ctx, fake_lstnr.to_dict(),
+                  {'device': {'id': 'test_device', 'admin_state_up': True}},
+                  'test_agent')
 
 
 def test_listener_update(happy_path_driver):
@@ -299,7 +349,7 @@ def test_listener_update(happy_path_driver):
             mock_ctx,
             fake_old_lstnr.to_dict(),
             fake_new_lstnr.to_dict(),
-            {},
+            {'device': {'id': 'test_device', 'admin_state_up': True}},
             'test_agent')
 
 
@@ -324,7 +374,9 @@ def test_listenermgr_delete(happy_path_driver):
     fake_lstnr = FakeListener()
     lstnr_mgr.delete(mock_ctx, fake_lstnr)
     assert mock_driver.agent_rpc.delete_listener.call_args == \
-        mock.call(mock_ctx, fake_lstnr.to_dict(), {}, 'test_agent')
+        mock.call(mock_ctx, fake_lstnr.to_dict(),
+                  {'device': {'id': 'test_device', 'admin_state_up': True}},
+                  'test_agent')
 
 
 def test_poolmgr_create(happy_path_driver):
@@ -333,7 +385,9 @@ def test_poolmgr_create(happy_path_driver):
     fake_pool = FakePool()
     pool_mgr.create(mock_ctx, fake_pool)
     assert mock_driver.agent_rpc.create_pool.call_args == \
-        mock.call(mock_ctx, fake_pool.to_dict(), {}, 'test_agent')
+        mock.call(mock_ctx, fake_pool.to_dict(),
+                  {'device': {'id': 'test_device', 'admin_state_up': True}},
+                  'test_agent')
 
 
 def test_poolmgr_update(happy_path_driver):
@@ -347,7 +401,7 @@ def test_poolmgr_update(happy_path_driver):
             mock_ctx,
             fake_old_pool.to_dict(),
             fake_new_pool.to_dict(),
-            {},
+            {'device': {'id': 'test_device', 'admin_state_up': True}},
             'test_agent')
 
 
@@ -372,7 +426,9 @@ def test_poolmgr_delete(happy_path_driver):
     fake_pool = FakePool()
     pool_mgr.delete(mock_ctx, fake_pool)
     assert mock_driver.agent_rpc.delete_pool.call_args == \
-        mock.call(mock_ctx, fake_pool.to_dict(), {}, 'test_agent')
+        mock.call(mock_ctx, fake_pool.to_dict(),
+                  {'device': {'id': 'test_device', 'admin_state_up': True}},
+                  'test_agent')
 
 
 def test_membermgr_create(happy_path_driver):
@@ -395,7 +451,7 @@ def test_member_update(happy_path_driver):
             mock_ctx,
             fake_old_member.to_dict(),
             fake_new_member.to_dict(),
-            {},
+            {'device': {'id': 'test_device', 'admin_state_up': True}},
             'test_agent')
 
 
@@ -420,7 +476,9 @@ def test_membermgr_delete(happy_path_driver):
     fake_member = FakeMember()
     member_mgr.delete(mock_ctx, fake_member)
     assert mock_driver.agent_rpc.delete_member.call_args == \
-        mock.call(mock_ctx, fake_member.to_dict(), {}, 'test_agent')
+        mock.call(mock_ctx, fake_member.to_dict(),
+                  {'device': {'id': 'test_device', 'admin_state_up': True}},
+                  'test_agent')
 
 
 def test_health_monitormgr_create(happy_path_driver):
@@ -429,7 +487,9 @@ def test_health_monitormgr_create(happy_path_driver):
     fake_health_monitor = FakeHM()
     health_monitor_mgr.create(mock_ctx, fake_health_monitor)
     assert mock_driver.agent_rpc.create_health_monitor.call_args == \
-        mock.call(mock_ctx, fake_health_monitor.to_dict(), {}, 'test_agent')
+        mock.call(mock_ctx, fake_health_monitor.to_dict(),
+                  {'device': {'id': 'test_device', 'admin_state_up': True}},
+                  'test_agent')
 
 
 def test_health_monitor_update(happy_path_driver):
@@ -444,7 +504,7 @@ def test_health_monitor_update(happy_path_driver):
             mock_ctx,
             fake_old_health_monitor.to_dict(),
             fake_new_health_monitor.to_dict(),
-            {},
+            {'device': {'id': 'test_device', 'admin_state_up': True}},
             'test_agent')
 
 
@@ -471,7 +531,9 @@ def test_health_monitormgr_delete(happy_path_driver):
     fake_health_monitor = FakeHM()
     health_monitor_mgr.delete(mock_ctx, fake_health_monitor)
     assert mock_driver.agent_rpc.delete_health_monitor.call_args == \
-        mock.call(mock_ctx, fake_health_monitor.to_dict(), {}, 'test_agent')
+        mock.call(mock_ctx, fake_health_monitor.to_dict(),
+                  {'device': {'id': 'test_device', 'admin_state_up': True}},
+                  'test_agent')
 
 
 def test_l7policymgr_create(happy_path_driver):
@@ -480,7 +542,9 @@ def test_l7policymgr_create(happy_path_driver):
     fake_l7policy = FakePolicy()
     l7policy_mgr.create(mock_ctx, fake_l7policy)
     assert mock_driver.agent_rpc.create_l7policy.call_args == \
-        mock.call(mock_ctx, fake_l7policy.to_dict(), {}, 'test_agent')
+        mock.call(mock_ctx, fake_l7policy.to_dict(),
+                  {'device': {'id': 'test_device', 'admin_state_up': True}},
+                  'test_agent')
 
 
 def test_l7policymgr_update(happy_path_driver):
@@ -494,7 +558,7 @@ def test_l7policymgr_update(happy_path_driver):
             mock_ctx,
             fake_old_l7policy.to_dict(),
             fake_new_l7policy.to_dict(),
-            {},
+            {'device': {'id': 'test_device', 'admin_state_up': True}},
             'test_agent')
 
 
@@ -504,7 +568,9 @@ def test_l7policymgr_delete(happy_path_driver):
     fake_l7policy = FakePolicy()
     l7policy_mgr.delete(mock_ctx, fake_l7policy)
     assert mock_driver.agent_rpc.delete_l7policy.call_args == \
-        mock.call(mock_ctx, fake_l7policy.to_dict(), {}, 'test_agent')
+        mock.call(mock_ctx, fake_l7policy.to_dict(),
+                  {'device': {'id': 'test_device', 'admin_state_up': True}},
+                  'test_agent')
 
 
 def test_l7rulemgr_create(happy_path_driver):
@@ -513,7 +579,9 @@ def test_l7rulemgr_create(happy_path_driver):
     fake_l7rule = FakeRule()
     l7rule_mgr.create(mock_ctx, fake_l7rule)
     assert mock_driver.agent_rpc.create_l7rule.call_args == \
-        mock.call(mock_ctx, fake_l7rule.to_dict(), {}, 'test_agent')
+        mock.call(mock_ctx, fake_l7rule.to_dict(),
+                  {'device': {'id': 'test_device', 'admin_state_up': True}},
+                  'test_agent')
 
 
 def test_l7rulemgr_update(happy_path_driver):
@@ -527,7 +595,7 @@ def test_l7rulemgr_update(happy_path_driver):
             mock_ctx,
             fake_old_l7rule.to_dict(),
             fake_new_l7rule.to_dict(),
-            {},
+            {'device': {'id': 'test_device', 'admin_state_up': True}},
             'test_agent')
 
 
@@ -537,7 +605,9 @@ def test_l7rulemgr_delete(happy_path_driver):
     fake_l7rule = FakeRule()
     l7rule_mgr.delete(mock_ctx, fake_l7rule)
     assert mock_driver.agent_rpc.delete_l7rule.call_args == \
-        mock.call(mock_ctx, fake_l7rule.to_dict(), {}, 'test_agent')
+        mock.call(mock_ctx, fake_l7rule.to_dict(),
+                  {'device': {'id': 'test_device', 'admin_state_up': True}},
+                  'test_agent')
 
 
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')
