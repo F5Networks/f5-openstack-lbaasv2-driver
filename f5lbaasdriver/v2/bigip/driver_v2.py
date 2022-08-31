@@ -31,9 +31,12 @@ from neutron_lib import constants as q_const
 from neutron_lib.plugins import constants as pg_const
 from neutron_lib.plugins import directory
 
+from neutron_lbaas import agent_scheduler
 from neutron_lbaas.db.loadbalancer import models
+from neutron_lbaas.extensions import lbaas_agentschedulerv2
 
 from f5lbaasdriver.v2.bigip import agent_rpc
+from f5lbaasdriver.v2.bigip import device_scheduler
 from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 from f5lbaasdriver.v2.bigip import neutron_client
 from f5lbaasdriver.v2.bigip import plugin_rpc
@@ -56,9 +59,9 @@ OPTS = [
               "just in case.")
     ),
     cfg.StrOpt(
-        'f5_loadbalancer_pool_scheduler_driver_v2',
+        'loadbalancer_agent_scheduler',
         default=(
-            'f5lbaasdriver.v2.bigip.agent_scheduler.TenantScheduler'
+            'f5lbaasdriver.v2.bigip.agent_scheduler.AgentSchedulerNG'
         ),
         help=('Driver to use for scheduling '
               'pool to a default loadbalancer agent')
@@ -66,9 +69,32 @@ OPTS = [
     cfg.ListOpt(
         'agent_filters',
         default=[
-            'EnvironmentFilter,RandomFilter'
+            'AvailabilityZoneFilter',
+            'EnvironmentFilter',
+            'RandomFilter'
         ],
         help=('Filters of Agent scheduler')
+    ),
+    cfg.StrOpt(
+        'loadbalancer_device_scheduler',
+        default=(
+            'f5lbaasdriver.v2.bigip.device_scheduler.DeviceSchedulerNG'
+        ),
+        help=('Driver to use for scheduling '
+              'a loadbalancer to a BIG-IP device')
+    ),
+    cfg.ListOpt(
+        'device_filters',
+        default=[
+            'AvailabilityZoneFilter',
+            'RandomFilter'
+        ],
+        help=('Filters of device scheduler')
+    ),
+    cfg.StrOpt(
+        'device_inventory',
+        default="/etc/neutron/services/f5/inventory.json",
+        help=('Device inventory file')
     ),
     cfg.StrOpt(
         'f5_loadbalancer_service_builder_v2',
@@ -130,8 +156,10 @@ class F5DriverV2(object):
             cfg.CONF.unlegacy_setting_placeholder_driver_side
 
         # what scheduler to use for pool selection
-        self.scheduler = importutils.import_object(
-            cfg.CONF.f5_loadbalancer_pool_scheduler_driver_v2)
+        self.agent_scheduler = importutils.import_object(
+            cfg.CONF.loadbalancer_agent_scheduler)
+        self.device_scheduler = importutils.import_object(
+            cfg.CONF.loadbalancer_device_scheduler)
 
         self.service_builder = importutils.import_object(
             cfg.CONF.f5_loadbalancer_service_builder_v2, self)
@@ -219,29 +247,66 @@ class EntityManager(object):
         '''
 
         if entity.attached_to_loadbalancer() and loadbalancer:
-            agent = self._schedule_agent(context, loadbalancer,
-                                         entity, **kwargs)
+            agent, device = self._schedule_agent_and_device(
+                context, loadbalancer, entity, **kwargs)
             service = self._create_service(context, loadbalancer, agent,
                                            entity, **kwargs)
+            service["device"] = device
             return agent['host'], service
 
         raise F5NoAttachedLoadbalancerException()
 
-    def _schedule_agent(self, context, loadbalancer,
-                        entity=None, **kwargs):
+    def _schedule_agent_and_device(self, context, loadbalancer,
+                                   entity=None, **kwargs):
         '''Schedule agent --used for most managers.
 
         :param context: auth context for performing crud operation
         :returns: agent object
         '''
 
-        agent = self.driver.scheduler.schedule(
+        # If LB is already hosted on an agent, return this agent and device
+        result = self.driver.plugin.db.get_agent_hosting_loadbalancer(
+            context, loadbalancer.id)
+
+        if result:
+            agent = result["agent"]
+            if not agent["alive"] or not agent["admin_state_up"]:
+                # Agent is not active or it is disabled
+                raise lbaas_agentschedulerv2.NoActiveLbaasAgent(
+                    loadbalancer_id=loadbalancer.id)
+
+            device_id = result["device_id"]
+            device = self.driver.device_scheduler.load_device(device_id)
+            if device and device["admin_state_up"]:
+                return agent, device
+
+            raise device_scheduler.NoActiveLbaasDevice(
+                loadbalancer_id=loadbalancer.id)
+
+        # Schedule agent and device for new LB
+        agent = self.driver.agent_scheduler.schedule(
             self.driver.plugin,
             context,
-            loadbalancer.id,
+            loadbalancer,
             self.driver.env
         )
-        return agent
+
+        device = self.driver.device_scheduler.schedule(
+            self.driver.plugin,
+            context,
+            loadbalancer
+        )
+
+        # Save LB, agent and device association
+        binding = agent_scheduler.LoadbalancerAgentBinding()
+        binding.loadbalancer_id = loadbalancer.id
+        binding.agent = agent
+        binding.device_id = device["id"]
+        context.session.add(binding)
+        LOG.info("LB %s is scheduled to agent %s device %s",
+                 loadbalancer.id, agent["id"], device["id"])
+
+        return agent, device
 
     def _create_service(self, context, loadbalancer, agent,
                         entity=None, **kwargs):
@@ -357,15 +422,15 @@ class LoadBalancerManager(EntityManager):
         driver = self.driver
         try:
             service = {}
-            agent = self._schedule_agent(
+            agent, device = self._schedule_agent_and_device(
                 context, loadbalancer)
             agent_host = agent['host']
             agent_config = agent.get('configurations', {})
             LOG.debug("agent configurations: %s" % agent_config)
 
-            scheduler = self.driver.scheduler
+            agent_scheduler = self.driver.agent_scheduler
             agent_config_dict = \
-                scheduler.deserialize_agent_configurations(agent_config)
+                agent_scheduler.deserialize_agent_configurations(agent_config)
 
             if agent in context.session:
                 LOG.info('inside here')
@@ -404,6 +469,7 @@ class LoadBalancerManager(EntityManager):
                 # NOTE(qzhao): Vlan id might be assigned after updating vip
                 # port. Need to build service payload after updating port.
                 service = self._create_service(context, loadbalancer, agent)
+                service["device"] = device
 
                 if driver.unlegacy_setting_placeholder_driver_side:
                     LOG.debug('calling extra build():')
@@ -428,8 +494,10 @@ class LoadBalancerManager(EntityManager):
 
         driver = self.driver
         try:
-            agent = self._schedule_agent(context, loadbalancer)
+            agent, device = self._schedule_agent_and_device(context,
+                                                            loadbalancer)
             service = self._create_service(context, loadbalancer, agent)
+            service["device"] = device
             agent_host = agent['host']
 
             driver.agent_rpc.update_loadbalancer(
@@ -452,8 +520,10 @@ class LoadBalancerManager(EntityManager):
 
         driver = self.driver
         try:
-            agent = self._schedule_agent(context, loadbalancer)
+            agent, device = self._schedule_agent_and_device(context,
+                                                            loadbalancer)
             service = self._create_service(context, loadbalancer, agent)
+            service["device"] = device
             agent_host = agent['host']
 
             driver.agent_rpc.delete_loadbalancer(
@@ -472,10 +542,10 @@ class LoadBalancerManager(EntityManager):
     def stats(self, context, loadbalancer):
         driver = self.driver
         try:
-            agent = driver.scheduler.schedule(
+            agent = driver.agent_scheduler.schedule(
                 driver.plugin,
                 context,
-                loadbalancer.id,
+                loadbalancer,
                 driver.env
             )
             service = driver.service_builder.build(context,
@@ -789,10 +859,10 @@ class MemberManager(EntityManager):
             LOG.info('running here')
             if member.attached_to_loadbalancer() and lb:
                 LOG.info('scheduing here instead')
-                this_agent = self.driver.scheduler.schedule(
+                this_agent = self.driver.agent_scheduler.schedule(
                     self.driver.plugin,
                     context,
-                    lb.id,
+                    lb,
                     self.driver.env
                 )
                 LOG.info(this_agent)
@@ -841,69 +911,6 @@ class MemberManager(EntityManager):
             self._handle_entity_error(context, member.id,
                                       loadbalancer_id=lb.id)
             raise e
-
-    # only for MIGU
-    @log_helpers.log_method_call
-    def create_bulk(self, context, members):
-        """Create members."""
-        subnets = []
-        the_port_ids = []
-
-        LOG.info("create_bulk start for members: %s" % members)
-
-        if not members:
-            LOG.error("no members found in members. Just return.")
-            return
-
-        driver = self.driver
-        lb = members[0].pool.loadbalancer
-
-        for member in members:
-            if member.subnet_id not in subnets:
-                the_filter = {
-                    'device_owner': ['network:f5lbaasv2'],
-                    'fixed_ips': {'subnet_id': [member.subnet_id]}
-                }
-                LOG.debug('fetching ports details:')
-                all_ports = driver.plugin.db._core_plugin.get_ports_count(
-                    context, the_filter
-                )
-                LOG.info("all_ports length:")
-                LOG.info(all_ports)
-                if all_ports < 1:
-                    subnet = driver.plugin.db._core_plugin.get_subnet(
-                        context, member.subnet_id
-                    )
-                    LOG.info("end getting subnet")
-
-                    agent = self.driver.scheduler.schedule(
-                        self.driver.plugin, context, lb.id, self.driver.env
-                    )
-                    LOG.info("end scheduling agent")
-                    LOG.info(agent)
-
-                    agent_host = agent['host']
-                    p = driver.plugin.db._core_plugin.create_port(context, {
-                        'port': {
-                            'tenant_id': subnet['tenant_id'],
-                            'network_id': subnet['network_id'],
-                            'mac_address': n_const.ATTR_NOT_SPECIFIED,
-                            'fixed_ips': n_const.ATTR_NOT_SPECIFIED,
-                            'device_id': member.id,
-                            'device_owner': 'network:f5lbaasv2',
-                            'admin_state_up': member.admin_state_up,
-                            'name': 'fake_pool_port_' + member.id,
-                            portbindings.HOST_ID: agent_host}})
-                    LOG.info('the port created here is: %s' % p)
-                    the_port_ids.append(p['id'])
-
-                api_dict = member.to_dict(pool=False)
-                subnets.append(member.subnet_id)
-
-        self._call_rpc(context, lb, member, api_dict, 'create_member',
-                       the_port_ids=the_port_ids, multiple=True)
-
-        LOG.info("create_bulk for members end.")
 
     @log_helpers.log_method_call
     def update(self, context, old_member, member):
@@ -960,33 +967,6 @@ class MemberManager(EntityManager):
             self._handle_entity_error(context, member.id,
                                       loadbalancer_id=lb.id)
             raise e
-
-    # only for MIGU
-    @log_helpers.log_method_call
-    def delete_bulk(self, context, members_list):
-        """Delete members."""
-        LOG.info("inside delete_bulk for members: %s:" % members_list)
-
-        if not members_list:
-            LOG.error("no members found in members_list. Just return.")
-            return
-
-        member = members_list[0]
-
-        lb = member.pool.loadbalancer
-        driver = self.driver
-
-        try:
-            agent_host, service = self._setup_crud(context, lb, member,
-                                                   multiple=True)
-
-            driver.agent_rpc.delete_member(
-                context, member.to_dict(pool=False), service, agent_host)
-        except Exception as e:
-            LOG.error("Exception: member delete: %s" % e.message)
-            raise e
-
-        LOG.info("delete_bulk for members end.")
 
 
 class HealthMonitorManager(EntityManager):
