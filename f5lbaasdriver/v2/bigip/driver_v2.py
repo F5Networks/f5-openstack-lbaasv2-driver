@@ -88,6 +88,7 @@ OPTS = [
         default=[
             'AvailabilityZoneFilter',
             'FlavorFilter',
+            'CapacityFilter',
             'RandomFilter'
         ],
         help=('Filters of device scheduler')
@@ -96,6 +97,11 @@ OPTS = [
         'device_inventory',
         default="/etc/neutron/services/f5/inventory.json",
         help=('Device inventory file')
+    ),
+    cfg.StrOpt(
+        'scheduler_constants',
+        default="/etc/neutron/services/f5/scheduler.json",
+        help=('Scheduler constant file')
     ),
     cfg.StrOpt(
         'f5_loadbalancer_service_builder_v2',
