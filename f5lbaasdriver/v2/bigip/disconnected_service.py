@@ -44,9 +44,6 @@ class DisconnectedService(object):
     def get_network_segment(self, context, agent_configuration, network):
         data = None
 
-        network_segment_physical_network = \
-            agent_configuration.get('network_segment_physical_network', None)
-
         supported_encapsulations = [
             x.lower() for x in self.supported_encapsulations +
             agent_configuration.get('tunnel_types', [])
@@ -57,10 +54,13 @@ class DisconnectedService(object):
 
         for segment in segments:
             LOG.debug("F5 disconnected service check segment: %s" % segment)
-            if ((network_segment_physical_network ==
-                 segment['physical_network']) and
-                (segment['network_type'].lower() in
-                 supported_encapsulations)):
+            # TODO(qzhao): Skip to compare network_segment_physical_network.
+            # Need to optimize vlan segment checking in the future.
+            # if ((network_segment_physical_network ==
+            #      segment['physical_network']) and
+            #      (segment['network_type'].lower() in
+            #      supported_encapsulations)):
+            if segment['network_type'].lower() in supported_encapsulations:
                 data = segment
                 break
             elif (network['provider:network_type'] == 'opflex' and
