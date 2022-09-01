@@ -454,7 +454,7 @@ class LoadBalancerManager(EntityManager):
 
                 port_data[portbindings.PROFILE] = {}
 
-                llinfo = agent_config_dict.get('local_link_information', None)
+                llinfo = device.get('local_link_information', None)
                 if llinfo:
                     port_data[portbindings.PROFILE] = {
                         "local_link_information": llinfo
