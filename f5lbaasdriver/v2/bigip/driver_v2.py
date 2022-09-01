@@ -107,11 +107,6 @@ OPTS = [
         'bwc_profile',
         default=None,
         help='bwc_profile name which is configured in bigip side'
-    ),
-    cfg.StrOpt(
-        'unlegacy_setting_placeholder_driver_side',
-        default=None,
-        help=('used in certain hpb cases to differenciate legacy scenarios')
     )
 ]
 
@@ -151,9 +146,6 @@ class F5DriverV2(object):
         self.l7policy = L7PolicyManager(self)
         self.l7rule = L7RuleManager(self)
         self.acl_group = ACLGroupManager(self)
-
-        self.unlegacy_setting_placeholder_driver_side = \
-            cfg.CONF.unlegacy_setting_placeholder_driver_side
 
         # what scheduler to use for pool selection
         self.agent_scheduler = importutils.import_object(
@@ -440,12 +432,7 @@ class LoadBalancerManager(EntityManager):
                 'status': q_const.PORT_STATUS_ACTIVE
             }
             port_data[portbindings.HOST_ID] = agent_host
-            if driver.unlegacy_setting_placeholder_driver_side:
-                LOG.debug('setting to normal')
-                port_data[portbindings.VNIC_TYPE] = "normal"
-            else:
-                LOG.debug('setting to baremetal')
-                port_data[portbindings.VNIC_TYPE] = "baremetal"
+            port_data[portbindings.VNIC_TYPE] = "baremetal"
 
             port_data[portbindings.PROFILE] = {}
 
@@ -465,11 +452,6 @@ class LoadBalancerManager(EntityManager):
             # port. Need to build service payload after updating port.
             service = self._create_service(context, loadbalancer, agent)
             service["device"] = device
-
-            if driver.unlegacy_setting_placeholder_driver_side:
-                LOG.debug('calling extra build():')
-                service = self.driver.service_builder.build(
-                    context, loadbalancer, agent)
 
             driver.agent_rpc.create_loadbalancer(
                 context, loadbalancer.to_api_dict(), service, agent_host)
