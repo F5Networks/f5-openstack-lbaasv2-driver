@@ -140,10 +140,13 @@ def test_f5driverv2(mock_plugin_rpc, mock_agent_rpc, mock_ACLGroupManager):
 def test_lbmgr_create():
     mock_driver = mock.MagicMock(name='mock_driver')
     mock_driver.agent_scheduler.schedule.return_value = {
-         'id': 'test_agent',
-         'host': 'test_agent'
+        'id': 'test_agent',
+        'host': 'test_agent'
     }
-    mock_driver.device_scheduler.schedule.return_value = {'id': 'test_device'}
+    mock_driver.device_scheduler.schedule.return_value = {
+        'id': 'test_device',
+        'admin_state_up': True
+    }
     mock_driver.plugin.db.get_agent_hosting_loadbalancer.return_value = {}
     mock_driver.service_builder.build.return_value = {}
     lb_mgr = dv2.LoadBalancerManager(mock_driver)
@@ -151,7 +154,9 @@ def test_lbmgr_create():
     fake_lb = FakeLB()
     lb_mgr.create(mock_ctx, fake_lb)
     assert mock_driver.agent_rpc.create_loadbalancer.call_args == \
-        mock.call(mock_ctx, fake_lb.to_api_dict(), {}, 'test_agent')
+        mock.call(mock_ctx, fake_lb.to_api_dict(),
+                  {'device': {'id': 'test_device', 'admin_state_up': True}},
+                  'test_agent')
 
 
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.LOG')

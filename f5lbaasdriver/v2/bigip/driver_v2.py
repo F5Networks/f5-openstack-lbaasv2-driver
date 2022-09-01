@@ -428,55 +428,48 @@ class LoadBalancerManager(EntityManager):
             agent_config = agent.get('configurations', {})
             LOG.debug("agent configurations: %s" % agent_config)
 
-            agent_scheduler = self.driver.agent_scheduler
-            agent_config_dict = \
-                agent_scheduler.deserialize_agent_configurations(agent_config)
-
             if agent in context.session:
                 LOG.info('inside here')
                 context.session.expire(agent, ['heartbeat_timestamp'])
                 LOG.info(agent)
 
-            if not agent_config_dict.get('nova_managed', False):
-                # Update the port for the VIP to show ownership by this driver
-                port_data = {
-                    'admin_state_up': True,
-                    'device_owner': 'network:f5lbaasv2',
-                    'status': q_const.PORT_STATUS_ACTIVE
-                }
-                port_data[portbindings.HOST_ID] = agent_host
-                if driver.unlegacy_setting_placeholder_driver_side:
-                    LOG.debug('setting to normal')
-                    port_data[portbindings.VNIC_TYPE] = "normal"
-                else:
-                    LOG.debug('setting to baremetal')
-                    port_data[portbindings.VNIC_TYPE] = "baremetal"
-
-                port_data[portbindings.PROFILE] = {}
-
-                llinfo = device.get('local_link_information', None)
-                if llinfo:
-                    port_data[portbindings.PROFILE] = {
-                        "local_link_information": llinfo
-                    }
-
-                driver.plugin.db._core_plugin.update_port(
-                    context,
-                    loadbalancer.vip_port_id,
-                    {'port': port_data}
-                )
-
-                # NOTE(qzhao): Vlan id might be assigned after updating vip
-                # port. Need to build service payload after updating port.
-                service = self._create_service(context, loadbalancer, agent)
-                service["device"] = device
-
-                if driver.unlegacy_setting_placeholder_driver_side:
-                    LOG.debug('calling extra build():')
-                    service = self.driver.service_builder.build(
-                        context, loadbalancer, agent)
+            # Update the port for the VIP to show ownership by this driver
+            port_data = {
+                'admin_state_up': True,
+                'device_owner': 'network:f5lbaasv2',
+                'status': q_const.PORT_STATUS_ACTIVE
+            }
+            port_data[portbindings.HOST_ID] = agent_host
+            if driver.unlegacy_setting_placeholder_driver_side:
+                LOG.debug('setting to normal')
+                port_data[portbindings.VNIC_TYPE] = "normal"
             else:
-                LOG.debug("Agent devices are nova managed")
+                LOG.debug('setting to baremetal')
+                port_data[portbindings.VNIC_TYPE] = "baremetal"
+
+            port_data[portbindings.PROFILE] = {}
+
+            llinfo = device.get('local_link_information', None)
+            if llinfo:
+                port_data[portbindings.PROFILE] = {
+                    "local_link_information": llinfo
+                }
+
+            driver.plugin.db._core_plugin.update_port(
+                context,
+                loadbalancer.vip_port_id,
+                {'port': port_data}
+            )
+
+            # NOTE(qzhao): Vlan id might be assigned after updating vip
+            # port. Need to build service payload after updating port.
+            service = self._create_service(context, loadbalancer, agent)
+            service["device"] = device
+
+            if driver.unlegacy_setting_placeholder_driver_side:
+                LOG.debug('calling extra build():')
+                service = self.driver.service_builder.build(
+                    context, loadbalancer, agent)
 
             driver.agent_rpc.create_loadbalancer(
                 context, loadbalancer.to_api_dict(), service, agent_host)
