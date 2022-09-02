@@ -44,9 +44,6 @@ class DisconnectedService(object):
     def get_network_segment(self, context, agent_configuration, network):
         data = None
 
-        network_segment_physical_network = \
-            agent_configuration.get('network_segment_physical_network', None)
-
         supported_encapsulations = [
             x.lower() for x in self.supported_encapsulations +
             agent_configuration.get('tunnel_types', [])
@@ -57,10 +54,13 @@ class DisconnectedService(object):
 
         for segment in segments:
             LOG.debug("F5 disconnected service check segment: %s" % segment)
-            if ((network_segment_physical_network ==
-                 segment['physical_network']) and
-                (segment['network_type'].lower() in
-                 supported_encapsulations)):
+            # TODO(qzhao): Skip to compare network_segment_physical_network.
+            # Need to optimize vlan segment checking in the future.
+            # if ((network_segment_physical_network ==
+            #      segment['physical_network']) and
+            #      (segment['network_type'].lower() in
+            #      supported_encapsulations)):
+            if segment['network_type'].lower() in supported_encapsulations:
                 data = segment
                 break
             elif (network['provider:network_type'] == 'opflex' and
@@ -83,32 +83,3 @@ class DisconnectedService(object):
                 data['physical_network'] = network['provider:physical_network']
 
         return data
-
-    def get_segment_id(self, context, port_id, agent_hosts):
-        try:
-            segment = None
-            if agent_hosts:
-                for host_id in agent_hosts:
-                    levels = db.get_binding_levels(
-                        context, port_id, host_id
-                    )
-                    if levels:
-                        LOG.debug('levels: %s binding host_id: %s' % (
-                            levels, host_id))
-                        for level in levels:
-                            if level.driver in ('f5networks', 'huawei_ac_ml2'):
-                                LOG.debug('level with driver f5networks')
-                                segment = segments_db.get_segment_by_id(
-                                    context, level.segment_id
-                                )
-                                LOG.debug(
-                                    'vxlan 2 vlan seg id %s: segment %s'
-                                    % (level.segment_id, segment)
-                                )
-                                if segment:
-                                    break
-            return segment
-        except Exception as exc:
-            LOG.error(
-                "could not get segment id by port %s and host %s, %s" % (
-                    port_id, agent_hosts, exc.message))

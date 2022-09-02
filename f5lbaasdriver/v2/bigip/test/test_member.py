@@ -59,6 +59,8 @@ def test_get_extended_member_no_port(mock_log):
     driver.plugin.db._core_plugin.get_ports.return_value = []
 
     service_builder = LBaaSv2ServiceBuilder(driver)
+    service_builder.disconnected_service = mock.MagicMock()
+    service_builder.disconnected_service.get_network_segment.return_value = {}
 
     member_dict, subnet, net = \
         service_builder._get_extended_member(context, member)
@@ -75,6 +77,9 @@ def test_get_extended_member_one_port(mock_log):
     driver.plugin.db._core_plugin.get_ports.return_value = [1]
 
     service_builder = LBaaSv2ServiceBuilder(driver)
+    service_builder.disconnected_service = mock.MagicMock()
+    service_builder.disconnected_service.get_network_segment.return_value = {}
+
     member_dict, subnet, net = \
         service_builder._get_extended_member(context, member)
     assert mock_log.warning.call_args_list == []
