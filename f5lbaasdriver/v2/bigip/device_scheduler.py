@@ -23,6 +23,8 @@ from oslo_utils import importutils
 
 from neutron_lbaas.extensions import lbaas_agentschedulerv2
 
+from f5lbaasdriver.v2.bigip import agent_scheduler as f5_agent_scheduler
+
 LOG = logging.getLogger(__name__)
 
 
@@ -123,10 +125,8 @@ class RandomFilter(DeviceFilter):
             return candidates
 
 
-class AvailabilityZoneFilter(DeviceFilter):
-
-    def select(self, context, plugin, lb, candidates, **kwargs):
-        return candidates
+class AvailabilityZoneFilter(f5_agent_scheduler.AvailabilityZoneFilter):
+    pass
 
 
 class FlavorFilter(DeviceFilter):
