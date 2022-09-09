@@ -87,6 +87,7 @@ OPTS = [
         'device_filters',
         default=[
             'AvailabilityZoneFilter',
+            'FlavorFilter',
             'RandomFilter'
         ],
         help=('Filters of device scheduler')
