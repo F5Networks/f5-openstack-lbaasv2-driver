@@ -127,3 +127,42 @@ class AvailabilityZoneFilter(DeviceFilter):
 
     def select(self, context, plugin, lb, candidates, **kwargs):
         return candidates
+
+
+class FlavorFilter(DeviceFilter):
+
+    def select(self, context, plugin, lb, candidates, **kwargs):
+        flavor = lb.flavor
+        if flavor < 1 or 8 < flavor < 11 or flavor > 13:
+            # Invalid flavor values
+            return []
+
+        result = []
+        for candidate in candidates:
+            lic_types = []
+            for key in candidate["bigip"].keys():
+                bigip = candidate["bigip"][key]
+                lic = bigip["license"].values()[0]
+                if lic == "VE, LAB":
+                    lic_types.append("LAB")
+                elif lic.startswith("VE"):
+                    lic_types.append("VE")
+                else:
+                    lic_types.append("HW")
+
+            select_it = True
+            if 1 <= flavor <= 8:
+                # Select BIG-IP HW or BIG-IP VE with dev license
+                for lic_type in lic_types:
+                    if lic_type == "VE":
+                        select_it = False
+            elif 11 <= flavor <= 13:
+                # Select BIG-IP VE
+                for lic_type in lic_types:
+                    if lic_type == "HW":
+                        select_it = False
+
+            if select_it:
+                result.append(candidate)
+
+        return result
