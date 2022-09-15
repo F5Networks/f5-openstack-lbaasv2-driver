@@ -16,14 +16,17 @@
 
 import json
 import random
+import sys
 
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
 
+from neutron_lbaas import agent_scheduler
 from neutron_lbaas.extensions import lbaas_agentschedulerv2
 
 from f5lbaasdriver.v2.bigip import agent_scheduler as f5_agent_scheduler
+from f5lbaasdriver.v2.bigip import constants_v2
 
 LOG = logging.getLogger(__name__)
 
@@ -61,11 +64,30 @@ class DeviceSchedulerNG(object):
         if len(candidates) <= 0:
             raise NoActiveLbaasDevice(loadbalancer_id=lb.id)
 
+        device_ids = [device["id"] for device in candidates]
+        bindings = self.load_bindings(context, device_ids=device_ids)
+        lbs = self.load_loadbalancers(context, plugin, bindings, device_ids)
+
+        # Construct a map for filters in order to get the loadbalancers
+        # of every device candidates a little bit easier
+        lb_map = {}
+        for device_id in device_ids:
+            lb_map[device_id] = []
+            lb_ids = []
+            for binding in bindings:
+                if binding.device_id == device_id:
+                    lb_ids.append(binding.loadbalancer_id)
+            for a_lb in lbs:
+                if a_lb["id"] in lb_ids:
+                    lb_map[device_id].append(a_lb)
+
         # Select the desired device
         for filter in self.filters:
             LOG.debug("Before filter %s device candidates are %s",
                       type(filter).__name__, [i["id"] for i in candidates])
-            candidates = filter.select(context, plugin, lb, candidates)
+            candidates = filter.select(context, plugin, lb, candidates,
+                                       bindings=bindings, existing_lbs=lbs,
+                                       lb_map=lb_map)
             LOG.debug("After filter %s device candidates are %s",
                       type(filter).__name__, [i["id"] for i in candidates])
             if len(candidates) <= 0:
@@ -105,12 +127,54 @@ class DeviceSchedulerNG(object):
 
         return self.inventory.get(id, {})
 
+    def load_bindings(self, context, device_ids=[]):
+        query = context.session.query(agent_scheduler.LoadbalancerAgentBinding)
+        if len(device_ids) > 0:
+            query = query.filter(
+                agent_scheduler.LoadbalancerAgentBinding.device_id.in_(
+                    device_ids
+                )
+            )
+        bindings = [binding for binding in query]
+        return bindings
+
+    def load_loadbalancers(self, context, plugin, bindings, device_ids):
+        # Load all existing loadbalancers on candidate devices
+        lb_ids = []
+        for binding in bindings:
+            if binding.device_id in device_ids:
+                lb_ids.append(binding.loadbalancer_id)
+
+        filters = {"id": lb_ids}
+        lbs = plugin.db.get_loadbalancers(context, filters=filters)
+
+        # SDN vendor might modify db interface to return dict instead of
+        # loadbalancer object. Convert them to dict in order to handle them
+        # in a unified way.
+        lb_dicts = []
+        for lb in lbs:
+            if type(lb) != dict:
+                lb_dicts.append(lb.to_api_dict(full_graph=False))
+            else:
+                lb_dicts.append(lb)
+
+        return lb_dicts
+
 
 class DeviceFilter(object):
 
     def __init__(self, scheduler):
         """Initialze Device Filter"""
         self.scheduler = scheduler
+
+    def load_constant(self):
+        try:
+            f = open(cfg.CONF.scheduler_constants)
+            self.constant = json.load(f)
+            f.close()
+        except Exception:
+            # No constant file. Ingnore error.
+            self.constant = {}
 
     def select(self, context, plugin, lb, candidates, **kwargs):
         raise NotImplementedError()
@@ -166,3 +230,119 @@ class FlavorFilter(DeviceFilter):
                 result.append(candidate)
 
         return result
+
+
+class CapacityFilter(DeviceFilter):
+
+    def __init__(self, scheduler):
+        super(CapacityFilter, self).__init__(scheduler)
+        self.load_constant()
+
+    def load_constant(self):
+        super(CapacityFilter, self).load_constant()
+
+        if "flavor" not in self.constant:
+            self.constant["flavor"] = constants_v2.FLAVOR_CONN_MAP
+
+        if "capacity" not in self.constant:
+            self.constant["capacity"] = constants_v2.CAPACITY_MAP
+
+        capacity_const = self.constant["capacity"]
+        if "license" in capacity_const:
+            for lic in capacity_const["license"]:
+                lic_const = capacity_const["license"][lic]
+                # Negative value means unlimited
+                for key in ["lod", "rod", "cod"]:
+                    if key in lic_const and lic_const[key] < 0:
+                        lic_const[key] = sys.maxint
+
+                # Fix invalid values
+                for key in ["por", "poc"]:
+                    if key in lic_const and \
+                       (lic_const[key] < 0 or lic_const[key] > 1):
+                        lic_const[key] = 1.00
+
+    def select(self, context, plugin, lb, candidates, **kwargs):
+        result = []
+        for candidate in candidates:
+            capacity = self.calculate(context, plugin, lb,
+                                      candidate, **kwargs)
+            LOG.debug("Capacity of candidate %s is %s",
+                      candidate["id"], capacity)
+            if capacity >= 1:
+                candidate["capacity"] = capacity
+                result.append(candidate)
+        return sorted(result, key=lambda x: x["capacity"], reverse=True)
+
+    def calculate(self, context, plugin, lb, candidate, **kwargs):
+        lb_map = kwargs.get("lb_map", {})
+
+        rolb = 0
+        colb = 0
+        flavor = str(lb.flavor)
+        flavor_const = self.constant["flavor"]
+        if flavor in flavor_const:
+            rolb = flavor_const[flavor]["rate_limit"]
+            colb = flavor_const[flavor]["connection_limit"]
+
+        device_id = candidate["id"]
+        lbs = lb_map[device_id]
+
+        LB = len(lbs)
+        ROLB = 0
+        COLB = 0
+        for a_lb in lbs:
+            its_flavor = a_lb["flavor"]
+            if its_flavor in flavor_const:
+                ROLB += flavor_const[its_flavor]["rate_limit"]
+                COLB += flavor_const[its_flavor]["connection_limit"]
+
+        result = []
+        # If the device contains multiple bigips, select the
+        # minimum capacity of every bigips.
+        for bigip in candidate["bigip"].keys():
+            capacity = self.calculate_bigip(
+                candidate["bigip"][bigip],
+                rolb=rolb, colb=colb,
+                LB=LB, ROLB=ROLB, COLB=COLB
+            )
+            LOG.debug("BIG-IP %s capacity is %s", bigip, capacity)
+            result.append(capacity)
+
+        if len(result) > 0:
+            return sorted(result)[0]
+        else:
+            return 0
+
+    def calculate_bigip(self, bigip, **kwargs):
+        rolb = kwargs.get("rolb", 0)
+        colb = kwargs.get("colb", 0)
+        LB = kwargs.get("LB", 0)
+        ROLB = kwargs.get("ROLB", 0)
+        COLB = kwargs.get("COLB", 0)
+
+        capacity_const = self.constant["capacity"]
+        license = bigip["license"].values()[0]
+        if "license" in capacity_const and \
+           license in capacity_const["license"]:
+            constant = capacity_const["license"][license]
+        elif "license" in capacity_const and \
+             "default" in capacity_const["license"]:
+            LOG.debug("No device type specific capacity constant. "
+                      "Use default values.")
+            constant = capacity_const["license"]["default"]
+        else:
+            LOG.warning("No capacity constant. Skip calculating.")
+            return 0
+
+        lod = constant["lod"]
+        rod = constant["rod"]
+        cod = constant["cod"]
+        por = constant["por"]
+        poc = constant["poc"]
+
+        X = lod - LB
+        Y = ((rod * por) - ROLB) / rolb
+        Z = ((cod * poc) - COLB) / colb
+
+        return min(X, Y, Z)
