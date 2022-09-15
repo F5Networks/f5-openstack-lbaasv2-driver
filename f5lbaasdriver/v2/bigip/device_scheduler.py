@@ -346,3 +346,24 @@ class CapacityFilter(DeviceFilter):
         Z = ((cod * poc) - COLB) / colb
 
         return min(X, Y, Z)
+
+
+class SubnetAffinityFilter(DeviceFilter):
+
+    def select(self, context, plugin, lb, candidates, **kwargs):
+        lb_map = kwargs.get("lb_map", {})
+        subnet_id = lb.vip_subnet_id
+        result = []
+
+        for candidate in candidates:
+            device_id = candidate["id"]
+            lbs = lb_map[device_id]
+            for a_lb in lbs:
+                if subnet_id == a_lb["vip_subnet_id"]:
+                    result.append(candidate)
+                    break
+
+        if len(result) > 0:
+            return result
+        else:
+            return candidates

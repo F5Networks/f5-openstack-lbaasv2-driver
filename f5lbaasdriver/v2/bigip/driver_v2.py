@@ -89,6 +89,7 @@ OPTS = [
             'AvailabilityZoneFilter',
             'FlavorFilter',
             'CapacityFilter',
+            'SubnetAffinityFilter',
             'RandomFilter'
         ],
         help=('Filters of device scheduler')
