@@ -441,13 +441,14 @@ class LoadBalancerManager(EntityManager):
             port_data[portbindings.HOST_ID] = agent_host
             port_data[portbindings.VNIC_TYPE] = "baremetal"
 
-            port_data[portbindings.PROFILE] = {}
+            port_data[portbindings.PROFILE] = {
+                "backend_device": device["id"]
+            }
 
-            llinfo = device.get('local_link_information', None)
+            llkey = "local_link_information"
+            llinfo = device.get(llkey, None)
             if llinfo:
-                port_data[portbindings.PROFILE] = {
-                    "local_link_information": llinfo
-                }
+                port_data[portbindings.PROFILE][llkey] = llinfo
 
             driver.plugin.db._core_plugin.update_port(
                 context,
