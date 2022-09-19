@@ -292,7 +292,7 @@ class CapacityFilter(DeviceFilter):
         ROLB = 0
         COLB = 0
         for a_lb in lbs:
-            its_flavor = a_lb["flavor"]
+            its_flavor = str(a_lb["flavor"])
             if its_flavor in flavor_const:
                 ROLB += flavor_const[its_flavor]["rate_limit"]
                 COLB += flavor_const[its_flavor]["connection_limit"]
