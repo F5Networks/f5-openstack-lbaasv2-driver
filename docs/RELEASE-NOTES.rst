@@ -4,6 +4,32 @@
 
 Release Notes
 =============
+v212.6.1 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* [OPENSTACK-2579] Subnet affinity filter
+* [OPENSTACK-2560] Fix capacity filter failing to get flavor const
+* [OPENSTACK-2560] Device capacity filter
+* [OPENSTACK-2560] Device availability zone filter
+* [OPENSTACK-2560] Device flavor filter
+* [OPENSTACK-2560] Remove unlegacy_setting_placeholder_driver_side
+* [OPENSTACK-2560] Remove "nova managed" agent case
+* [OPENSTACK-2560] Get vtep ip from inventory instead of agent config
+* [OPENSTACK-2560] Skip to compare network segment physical network
+* [OPENSTACK-2560] Modify driver unit test
+* [OPENSTACK-2532] Device scheduler
+* [OPENSTACK-2560] Bump up version number
+* [OPENSTACK-2532] Remove legacy bulk member code
+* [OPENSTACK-2522] Enable driver to update port mac
+* [OPENSTACK-2532] Skip loading loadbalancer in agent scheduler
+* [OPENSTACK-2532] Remove legacy agent scheduler
+
+Bug Fixes
+`````````
+* None noted
+
 v212.5.8 (Pike)
 --------------
 
