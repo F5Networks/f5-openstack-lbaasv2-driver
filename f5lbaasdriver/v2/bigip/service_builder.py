@@ -622,26 +622,8 @@ class LBaaSv2ServiceBuilder(object):
             # in that case seems we have to fetch them
             # using db.get_pool_members, which is not desired.
             members = get_db_members()
-            LOG.info('these are the members:')
-            LOG.info(members)
-
-            # not not want to mix things up, so using separate variables
-            my_net_ids = []
-
             for member in members:
-                # Get extended member attributes, network, and subnet.
-                member_dict, subnet, network = (
-                    self._get_extended_member(
-                        context, member,
-                        my_net_ids
-                    )
-                )
-
-                subnet_map[subnet['id']] = subnet
-                network_map[network['id']] = network
-                pool_members.append(member_dict)
-
-                my_net_ids.append(network['id'])
+                pool_members.append(member.to_dict(pool=False))
 
         return pool_members
 
