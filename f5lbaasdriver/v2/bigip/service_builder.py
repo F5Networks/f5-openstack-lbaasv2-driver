@@ -185,67 +185,6 @@ class LBaaSv2ServiceBuilder(object):
             context, loadbalancer, service['l7policies'])
 
     @log_helpers.log_method_call
-    def _get_extended_member(
-        self, context, member, my_net_ids=[]
-    ):
-        """Get extended member attributes and member networking."""
-        member_dict = member.to_dict(pool=False)
-        subnet_id = member.subnet_id
-        subnet = self._get_subnet_cached(
-            context,
-            subnet_id
-        )
-        network_id = subnet['network_id']
-        network = self._get_member_network_cached(
-            context,
-            network_id
-        )
-
-        member_dict['network_id'] = network_id
-
-        # Use the fixed ip.
-        filter = {'fixed_ips': {'subnet_id': [subnet_id],
-                                'ip_address': [member.address]}}
-        ports = self.plugin.db._core_plugin.get_ports(
-            context,
-            filter
-        )
-
-        # we no longer support member port creation
-        if len(ports) == 1:
-            member_dict['port'] = ports[0]
-            if cfg.CONF.to_speedup_populate_logic:
-                if (network_id in my_net_ids and
-                        network.get('provider:segmentation_id')):
-                    LOG.debug("populating %s skipped" % member.address)
-                else:
-                    LOG.info("populating %s here" % member.address)
-                    self._populate_member_network(
-                        context, member_dict, network
-                    )
-            else:
-                self._populate_member_network(context, member_dict, network)
-        elif len(ports) == 0:
-            LOG.warning("Lbaas member %s has no associated neutron port"
-                        % member.address)
-            if cfg.CONF.to_speedup_populate_logic:
-                if (network_id in my_net_ids and
-                        network.get('provider:segmentation_id')):
-                    LOG.debug("populating %s skipped" % member.address)
-                else:
-                    LOG.info("populating %s here" % member.address)
-                    self._populate_member_network(
-                        context, member_dict, network
-                    )
-            else:
-                self._populate_member_network(context, member_dict, network)
-
-        elif len(ports) > 1:
-            LOG.warning("Multiple ports found for member: %s" % member.address)
-
-        return (member_dict, subnet, network)
-
-    @log_helpers.log_method_call
     def _get_extended_loadbalancer(self, context, loadbalancer):
         """Get loadbalancer dictionary and add extended data(e.g. VIP)."""
         loadbalancer_dict = loadbalancer.to_api_dict()
@@ -309,40 +248,6 @@ class LBaaSv2ServiceBuilder(object):
             self.net_cache[network_id] = network
 
         return self.net_cache[network_id]
-
-    def _populate_member_network(self, context, member, network):
-        """Add vtep networking info to pool member and update the network."""
-        member['vxlan_vteps'] = []
-        member['gre_vteps'] = []
-
-        LOG.debug('legacy way of populating member:')
-        agent_config = {}
-        segment_data = self.disconnected_service.get_network_segment(
-            context, agent_config, network)
-        LOG.debug('legacy segment_data: %s' % segment_data)
-        if segment_data:
-            network['provider:segmentation_id'] = \
-                segment_data.get('segmentation_id', None)
-            network['provider:network_type'] = \
-                segment_data.get('network_type', None)
-            network['provider:physical_network'] = \
-                segment_data.get('physical_network', None)
-
-        net_type = network.get('provider:network_type', "undefined")
-        if net_type == 'vxlan':
-            if 'port' in member and 'binding:host_id' in member['port']:
-                host = member['port']['binding:host_id']
-                member['vxlan_vteps'] = self._get_endpoints(
-                    context, 'vxlan', host)
-        if net_type == 'gre':
-            if 'port' in member and 'binding:host_id' in member['port']:
-                host = member['port']['binding:host_id']
-                member['gre_vteps'] = self._get_endpoints(
-                    context, 'gre', host)
-        if 'provider:network_type' not in network:
-            network['provider:network_type'] = 'undefined'
-        if 'provider:segmentation_id' not in network:
-            network['provider:segmentation_id'] = 0
 
     @log_helpers.log_method_call
     def _populate_loadbalancer_network_vteps(
@@ -622,26 +527,8 @@ class LBaaSv2ServiceBuilder(object):
             # in that case seems we have to fetch them
             # using db.get_pool_members, which is not desired.
             members = get_db_members()
-            LOG.info('these are the members:')
-            LOG.info(members)
-
-            # not not want to mix things up, so using separate variables
-            my_net_ids = []
-
             for member in members:
-                # Get extended member attributes, network, and subnet.
-                member_dict, subnet, network = (
-                    self._get_extended_member(
-                        context, member,
-                        my_net_ids
-                    )
-                )
-
-                subnet_map[subnet['id']] = subnet
-                network_map[network['id']] = network
-                pool_members.append(member_dict)
-
-                my_net_ids.append(network['id'])
+                pool_members.append(member.to_dict(pool=False))
 
         return pool_members
 
