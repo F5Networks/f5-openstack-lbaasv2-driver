@@ -765,6 +765,19 @@ class MemberManager(EntityManager):
         driver = self.driver
         lb = member.pool.loadbalancer
 
+        # Refuse to create member along with another tenant's subnet
+        subnet = driver.plugin.db._core_plugin.get_subnet(
+            context, member.subnet_id
+        )
+        if member.tenant_id != subnet["tenant_id"]:
+            network = driver.plugin.db._core_plugin.get_network(
+                context, subnet["network_id"]
+            )
+            if not network["shared"]:
+                raise Exception(
+                    "Member and subnet are not belong to the same tenant"
+                )
+
         the_port_id = None
         driver = self.driver
 
@@ -780,10 +793,6 @@ class MemberManager(EntityManager):
         LOG.debug(all_ports)
 
         if all_ports < 1:
-            subnet = driver.plugin.db._core_plugin.get_subnet(
-                context, member.subnet_id
-            )
-
             # agent_host, service = self._setup_crud(context, lb, member)
             agent_host = 'temp'
             LOG.info('running here')

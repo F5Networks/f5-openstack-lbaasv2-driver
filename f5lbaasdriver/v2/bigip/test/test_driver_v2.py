@@ -80,6 +80,7 @@ class FakeMember(FakeBaseObj):
         self.pool = FakePool()
         self.subnet_id = subnet_id
         self.admin_state_up = admin_state_up
+        self.tenant_id = "1234"
 
 
 class FakeHM(FakeBaseObj):

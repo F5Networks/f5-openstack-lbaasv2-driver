@@ -12,11 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mock
 import pytest
 from uuid import uuid4
-
-from f5lbaasdriver.v2.bigip.service_builder import LBaaSv2ServiceBuilder
 
 
 class FakeDict(dict):
@@ -48,50 +45,3 @@ def _uuid():
 @pytest.fixture
 def member():
     return [FakeDict(subnet_id=_uuid())]
-
-
-@mock.patch('f5lbaasdriver.v2.bigip.service_builder.LOG')
-def test_get_extended_member_no_port(mock_log):
-    context = mock.MagicMock()
-    driver = mock.MagicMock()
-    member = FakeDict()
-    member.address = "10.2.2.10"
-    driver.plugin.db._core_plugin.get_ports.return_value = []
-
-    service_builder = LBaaSv2ServiceBuilder(driver)
-
-    member_dict, subnet, net = \
-        service_builder._get_extended_member(context, member)
-    assert mock_log.warning.call_args_list == \
-        [mock.call('Lbaas member 10.2.2.10 has no associated neutron port')]
-    assert 'port' not in member_dict
-
-
-@mock.patch('f5lbaasdriver.v2.bigip.service_builder.LOG')
-def test_get_extended_member_one_port(mock_log):
-    context = mock.MagicMock()
-    driver = mock.MagicMock()
-    member = FakeDict()
-    driver.plugin.db._core_plugin.get_ports.return_value = [1]
-
-    service_builder = LBaaSv2ServiceBuilder(driver)
-    member_dict, subnet, net = \
-        service_builder._get_extended_member(context, member)
-    assert mock_log.warning.call_args_list == []
-    assert 'port' in member_dict
-
-
-@mock.patch('f5lbaasdriver.v2.bigip.service_builder.LOG')
-def test_get_extended_member_several_ports(mock_log):
-    context = mock.MagicMock()
-    driver = mock.MagicMock()
-    member = FakeDict()
-    member.address = "10.2.2.10"
-    driver.plugin.db._core_plugin.get_ports.return_value = [1, 2, 3, 4]
-
-    service_builder = LBaaSv2ServiceBuilder(driver)
-    member_dict, subnet, net = \
-        service_builder._get_extended_member(context, member)
-    assert mock_log.warning.call_args_list == \
-        [mock.call("Multiple ports found for member: 10.2.2.10")]
-    assert 'port' not in member_dict
