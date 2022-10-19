@@ -15,9 +15,12 @@ u"""F5 Networks® LBaaSv2 Driver Implementation."""
 #   limitations under the License.
 
 import os
+import random
 import sys
+from time import sleep
 
 from oslo_config import cfg
+from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import importutils
@@ -290,18 +293,57 @@ class EntityManager(object):
             self.driver.env
         )
 
-        device = self.driver.device_scheduler.schedule(
-            self.driver.plugin,
-            context,
-            loadbalancer
-        )
-
-        # Save LB, agent and device association
-        binding = agent_scheduler.LoadbalancerAgentBinding()
+        LAB = agent_scheduler.LoadbalancerAgentBinding
+        binding = LAB()
         binding.loadbalancer_id = loadbalancer.id
         binding.agent = agent
-        binding.device_id = device["id"]
-        context.session.add(binding)
+        binding.device_id = "unknown"
+
+        max_wait = 30
+        wait = 0
+        attempt = 1
+        while wait <= max_wait:
+            try:
+                with context.session.begin(subtransactions=True):
+                    # Insert a new row without device assigned
+                    context.session.add(binding)
+                    context.session.flush()
+
+                    # Lock all rows who do not have devices assigned.
+                    query = context.session.query(LAB).populate_existing(
+                        ).with_for_update().filter_by(device_id="unknown")
+
+                    # Fetch data from query object, in order to ensure it
+                    # is executed against db
+                    b = binding
+                    for x in query:
+                        if x.loadbalancer_id == binding.loadbalancer_id:
+                            b = x
+                            break
+
+                    # Schedule device
+                    device = self.driver.device_scheduler.schedule(
+                        self.driver.plugin, context, loadbalancer
+                    )
+                    # Update the new row's device_id
+                    b.device_id = device["id"]
+                    context.session.add(b)
+                break
+            except db_exc.DBDeadlock as ex:
+                # NOTE(qzhao):  A request who does not get the row lock
+                # may encounter deadlock error. It can retry, and should
+                # give up eventually, if it can not acquire the lock.
+                LOG.info("Attempt %s DB deadlock: %s", attempt, ex)
+                interval = random.uniform(0, 1.0)
+                if wait + interval <= max_wait:
+                    # Wait up to 1 second
+                    wait += interval
+                    attempt += 1
+                    sleep(interval)
+                else:
+                    raise device_scheduler.DeviceSchedulerBusy(
+                        loadbalancer_id=loadbalancer.id)
+
         LOG.info("LB %s is scheduled to agent %s device %s",
                  loadbalancer.id, agent["id"], device["id"])
 
