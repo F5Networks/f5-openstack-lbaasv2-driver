@@ -27,7 +27,6 @@ from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.plugins.common import constants as plugin_constants
 from neutron_lib.api.definitions import portbindings
-from neutron_lib import constants as q_const
 from neutron_lib.plugins import constants as pg_const
 from neutron_lib.plugins import directory
 
@@ -173,7 +172,7 @@ class F5DriverV2(object):
         # add this agent RPC to the neutron agent scheduler
         # mixins agent_notifiers dictionary for it's env
         self.plugin.agent_notifiers.update(
-            {q_const.AGENT_TYPE_LOADBALANCER: self.agent_rpc})
+            {n_const.AGENT_TYPE_LOADBALANCER: self.agent_rpc})
 
         registry.subscribe(self._bindRegistryCallback(),
                            resources.PROCESS,
@@ -437,7 +436,7 @@ class LoadBalancerManager(EntityManager):
             port_data = {
                 'admin_state_up': True,
                 'device_owner': 'network:f5lbaasv2',
-                'status': q_const.PORT_STATUS_ACTIVE
+                'status': n_const.PORT_STATUS_ACTIVE
             }
             port_data[portbindings.HOST_ID] = agent_host
             port_data[portbindings.VNIC_TYPE] = "baremetal"
