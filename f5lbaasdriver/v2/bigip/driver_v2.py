@@ -285,6 +285,23 @@ class EntityManager(object):
             raise device_scheduler.NoActiveLbaasDevice(
                 loadbalancer_id=loadbalancer.id)
 
+        # If no binding
+        if loadbalancer.provisioning_status == n_const.PENDING_CREATE:
+            # LB is being created. Let's go.
+            pass
+        elif loadbalancer.provisioning_status == n_const.PENDING_DELETE:
+            # LB is being deleted. LB db and binding db are inconsistent.
+            # However, we can silently delete LB from db. It only happens
+            # in development phase.
+            LOG.info("No binding information for loadbalancer %s",
+                     loadbalancer.id)
+            return None, None
+        else:
+            # LB db and binding db are inconsistent. It only happens in
+            # development phase.
+            raise Exception("No binding information for loadbalancer %s",
+                            loadbalancer.id)
+
         # Schedule agent and device for new LB
         agent = self.driver.agent_scheduler.schedule(
             self.driver.plugin,
@@ -546,12 +563,17 @@ class LoadBalancerManager(EntityManager):
         try:
             agent, device = self._schedule_agent_and_device(context,
                                                             loadbalancer)
-            service = self._create_service(context, loadbalancer, agent)
-            service["device"] = device
-            agent_host = agent['host']
+            if agent and device:
+                # NOTE(qzhao): Call agent to delete LB.
+                service = self._create_service(context, loadbalancer, agent)
+                service["device"] = device
+                agent_host = agent['host']
 
-            driver.agent_rpc.delete_loadbalancer(
-                context, loadbalancer.to_api_dict(), service, agent_host)
+                driver.agent_rpc.delete_loadbalancer(
+                    context, loadbalancer.to_api_dict(), service, agent_host)
+            else:
+                # NOTE(qzhao): Silently delete LB, if no binding information
+                driver.plugin.db.delete_loadbalancer(context, loadbalancer.id)
         except Exception as e:
             LOG.error("Exception: loadbalancer delete: %s" % e)
             self._handle_entity_error(context, loadbalancer.id)
