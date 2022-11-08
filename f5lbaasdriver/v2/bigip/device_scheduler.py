@@ -45,6 +45,11 @@ class BadDeviceInventory(lbaas_agentschedulerv2.NoActiveLbaasAgent):
     message = ("Fail to load device inventory: %(loadbalancer_id)s")
 
 
+class DeviceSchedulerBusy(NoEligibleLbaasDevice):
+    message = ("Device scheduler is busy and cannot schedule a device "
+               "for loadbalancer %(loadbalancer_id)s.")
+
+
 class DeviceSchedulerNG(object):
     """NextGen Device Scheduler for LBaaSv2"""
 
@@ -128,9 +133,14 @@ class DeviceSchedulerNG(object):
         return self.inventory.get(id, {})
 
     def load_bindings(self, context, device_ids=[]):
-        query = context.session.query(agent_scheduler.LoadbalancerAgentBinding)
-        if len(device_ids) > 0:
-            query = query.filter(
+        if not device_ids:
+            query = context.session.query(
+                agent_scheduler.LoadbalancerAgentBinding
+            ).populate_existing().all()
+        else:
+            query = context.session.query(
+                agent_scheduler.LoadbalancerAgentBinding
+            ).populate_existing().filter(
                 agent_scheduler.LoadbalancerAgentBinding.device_id.in_(
                     device_ids
                 )

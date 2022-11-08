@@ -30,6 +30,7 @@ class FakeLB(object):
     def __init__(self, id='test_lb_id'):
         self.id = id
         self.vip_port_id = 'test_vip_port_id'
+        self.provisioning_status = "PENDING_CREATE"
 
     def to_api_dict(self):
         return self.__dict__
