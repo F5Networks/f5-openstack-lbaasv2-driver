@@ -90,7 +90,7 @@ OPTS = [
         default=[
             'AvailabilityZoneFilter',
             'FlavorFilter',
-            'CapacityFilter',
+            'BandwidthCapacityFilter',
             'SubnetAffinityFilter',
             'RandomFilter'
         ],

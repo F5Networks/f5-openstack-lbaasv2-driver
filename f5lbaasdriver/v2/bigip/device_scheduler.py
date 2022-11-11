@@ -262,7 +262,7 @@ class CapacityFilter(DeviceFilter):
             for lic in capacity_const["license"]:
                 lic_const = capacity_const["license"][lic]
                 # Negative value means unlimited
-                for key in ["lod", "rod", "cod"]:
+                for key in ["bandwidth", "lod", "rod", "cod"]:
                     if key in lic_const and lic_const[key] < 0:
                         lic_const[key] = sys.maxint
 
@@ -356,6 +356,122 @@ class CapacityFilter(DeviceFilter):
         Z = ((cod * poc) - COLB) / colb
 
         return min(X, Y, Z)
+
+
+class BandwidthCapacityFilter(CapacityFilter):
+
+    def __init__(self, scheduler):
+        super(BandwidthCapacityFilter, self).__init__(scheduler)
+
+    def select(self, context, plugin, lb, candidates, **kwargs):
+        result = []
+
+        # Only VE flavor 11/12/13 requires to calculate bandwidth
+        flavor = lb.flavor
+        if flavor < 11 or flavor > 13:
+            return candidates
+
+        for candidate in candidates:
+            capacity = self.calculate(context, plugin, lb,
+                                      candidate, **kwargs)
+            LOG.debug("Capacity of candidate %s is %s",
+                      candidate["id"], capacity)
+            if capacity >= 0:
+                candidate["capacity"] = capacity
+                result.append(candidate)
+        return sorted(result, key=lambda x: x["capacity"], reverse=True)
+
+    def calculate(self, context, plugin, lb, candidate, **kwargs):
+        lb_map = kwargs.get("lb_map", {})
+        device_id = candidate["id"]
+        lbs = lb_map[device_id]
+
+        osr, BC_device = self.device_osr_capacity(candidate)
+
+        N_xy = {}
+        Q_xy = {}
+        R_xy = {}
+        RR_xy = {}
+
+        N_xy[lb.vip_subnet_id] = {"11": 0, "12": 0, "13": 0}
+        Q_xy[lb.vip_subnet_id] = {"11": 0, "12": 0, "13": 0}
+        R_xy[lb.vip_subnet_id] = {"11": 0, "12": 0, "13": 0}
+        RR_xy[lb.vip_subnet_id] = {"11": 0, "12": 0, "13": 0}
+
+        N_xy[lb.vip_subnet_id][str(lb.flavor)] = 1
+        R_xy[lb.vip_subnet_id][str(lb.flavor)] = 1
+
+        for a_lb in lbs:
+            subnet = a_lb["vip_subnet_id"]
+            flavor = str(a_lb["flavor"])
+
+            if subnet not in N_xy:
+                N_xy[subnet] = {"11": 0, "12": 0, "13": 0}
+                Q_xy[subnet] = {"11": 0, "12": 0, "13": 0}
+                R_xy[subnet] = {"11": 0, "12": 0, "13": 0}
+                RR_xy[subnet] = {"11": 0, "12": 0, "13": 0}
+
+            N_xy[subnet][flavor] += 1
+            Q_xy[subnet][flavor] = N_xy[subnet][flavor] / osr
+            R_xy[subnet][flavor] = N_xy[subnet][flavor] % osr
+
+        for x in R_xy.keys():
+            # Fill the largest flavor cart
+            RR_xy[x]["13"] = R_xy[x]["13"]
+            # The last non-empty cart is nec
+            nec = -1
+            if R_xy[x]["13"] > 0:
+                nec = 0
+
+            f = ["13", "12", "11"]
+            # Start from the second largest flavor
+            y = 1
+            while y < len(f):
+                if R_xy[x][f[y]] > 0 and nec >= 0:
+                    # Get on the last non-empty cart
+                    RR_xy[x][f[nec]] += R_xy[x][f[y]]
+                    rest = RR_xy[x][f[nec]] - osr
+
+                    # if the last non-empty cart is full, let the rest ones
+                    # to get off and get on the cart of flavor y
+                    if rest > 0:
+                        RR_xy[x][f[nec]] = osr
+                        RR_xy[x][f[y]] = rest
+                        nec = y
+                elif R_xy[x][f[y]] > 0 and nec < 0:
+                    # If no larger cart, get on the cart of flavor y
+                    RR_xy[x][f[y]] = R_xy[x][f[y]]
+                    nec = y
+
+                # Goto next smaller flavor
+                y += 1
+
+        BC = {}
+        BC_all = 0
+        for x in N_xy.keys():
+            BC[x] = 500 * (Q_xy[x]["13"] + int(RR_xy[x]["13"] > 0)) + \
+                    200 * (Q_xy[x]["12"] + int(RR_xy[x]["12"] > 0)) + \
+                    100 * (Q_xy[x]["11"] + int(RR_xy[x]["11"] > 0))
+            BC_all += BC[x]
+
+        LOG.debug("Bandwidth capacity of every subnet is %s", BC)
+
+        return BC_device - BC_all
+
+    def device_osr_capacity(self, device):
+        osr = []
+        bc = []
+        user_osr = device.get("osr", 0)
+        capacity_const = self.constant["capacity"]
+        for key in device["bigip"].keys():
+            lic = device["bigip"][key]["license"].values()[0]
+            if lic in capacity_const["license"]:
+                osr.append(capacity_const["license"][lic]["osr"])
+                bc.append(capacity_const["license"][lic]["bandwidth"])
+            else:
+                osr.append(capacity_const["license"]["default"]["osr"])
+                bc.append(capacity_const["license"]["default"]["bandwidth"])
+        return user_osr or min(osr), min(bc)
 
 
 class SubnetAffinityFilter(DeviceFilter):
