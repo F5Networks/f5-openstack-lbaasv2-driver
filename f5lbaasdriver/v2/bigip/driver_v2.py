@@ -35,6 +35,7 @@ from neutron_lib.plugins import directory
 
 from neutron_lbaas import agent_scheduler
 from neutron_lbaas.db.loadbalancer import models
+from neutron_lbaas.services.loadbalancer import data_models
 
 from f5lbaasdriver.v2.bigip import agent_rpc
 from f5lbaasdriver.v2.bigip import device_scheduler
@@ -737,31 +738,6 @@ class ListenerManager(EntityManager):
                                       loadbalancer_id=lb.id)
             raise e
 
-    @log_helpers.log_method_call
-    def update_acl_bind(self, context, listener, acl_bind):
-        """Update a ACL binding of listener."""
-
-        self._log_entity(listener)
-        self._log_entity(acl_bind)
-
-        driver = self.driver
-        lb = listener.loadbalancer
-        try:
-            agent_host, service = self._setup_crud(context, lb, listener)
-            driver.agent_rpc.update_acl_bind(
-                context,
-                listener.to_dict(loadbalancer=False, default_pool=False),
-                acl_bind.to_dict(),
-                service,
-                agent_host
-            )
-        except Exception as e:
-            LOG.error("Exception: ACL binding of listener update: %s" %
-                      e.message)
-            self._handle_entity_error(context, listener.id,
-                                      loadbalancer_id=lb.id)
-            raise e
-
 
 class PoolManager(EntityManager):
     """PoolManager class handles Neutron LBaaS pool CRUD."""
@@ -1345,30 +1321,10 @@ class L7RuleManager(EntityManager):
             raise e
 
 
-class CommonResourceManager(EntityManager):
+class ACLGroupManager(EntityManager):
 
     def __init__(self, driver):
-        super(EntityManager, self).__init__(driver)
-
-    def _get_all_alive_agents(self, context):
-        """Select all alive lbaas agents"""
-
-        agents = []
-        agents = self.driver.plugin.db.get_lbaas_agents(context, active=1)
-
-        LOG.debug("Candidate agents for Common resource: %s", agents)
-
-        if len(agents) == 0:
-            err_msg = "No F5 lbaas agents found alive for Common Resource"
-            LOG.error(err_msg)
-            raise Exception(err_msg)
-
-        return agents
-
-
-class ACLGroupManager(CommonResourceManager):
-    def __init__(self, driver):
-        super(CommonResourceManager, self).__init__(driver)
+        super(ACLGroupManager, self).__init__(driver)
 
         # in case of break pipeline
         try:
@@ -1376,51 +1332,142 @@ class ACLGroupManager(CommonResourceManager):
         except AttributeError as ex:
             LOG.warn(ex.message)
 
+    def _setup_crud(self, context, loadbalancer, loadbalancer_dict):
+        '''Setup CRUD operations for managers to make calls to agent.
+
+        :param context: auth context for performing CRUD operation
+        :returns: tuple -- (agent object, service dict)
+        :raises: F5NoAttachedLoadbalancerException
+        '''
+
+        service = dict()
+
+        agent, device = self._schedule_agent_and_device(
+            context, loadbalancer)
+
+        service['loadbalancer'] = loadbalancer_dict
+        service["device"] = device
+        return agent['host'], service
+
     @log_helpers.log_method_call
-    def create(self, context, acl_group):
-        """If there are multiple agent, we may have trouble.
+    def add_acl_bind(
+        self, context, acl_bind, loadbalancer_dict,
+        listener, acl_group
+    ):
 
-           If half of the agent action is successful, while
-           db is polluted, but bigip may not.
-        """
+        loadbalancer = data_models.LoadBalancer(
+            **loadbalancer_dict)
 
+        driver = self.driver
         try:
-            agents = self._get_all_alive_agents(context)
+            agent_host, service = self._setup_crud(
+                context, loadbalancer,
+                loadbalancer_dict
+            )
 
-            for ag in agents:
-                agent_host = ag["host"]
-                self.driver.agent_rpc.create_acl_group(
-                    context, acl_group, agent_host
+            # if not put this. F5 agent will call
+            # _search_element, and throw error
+            service['acl_group'] = acl_group
+
+            # 1. Create a ACL Data group
+            # 2. Add a ACL binding of listener.
+            driver.agent_rpc.add_acl_bind(
+                context,
+                listener,
+                acl_group,
+                acl_bind,
+                service,
+                agent_host
+            )
+        except Exception as ex:
+            msg = "Fail to add ACL bind of listener. \n" \
+                "Listener: %s \n" \
+                "ACL binding: %s \n" \
+                "ACL group: %s \n" \
+                "Agent host %s \n" % (
+                    listener, acl_bind, acl_group,
+                    agent_host
                 )
-        except Exception as e:
-            # self._handle_entity_error(context, acl_group['id'])
-            LOG.error("Exception: ACLGroup create: %s" % e.message)
-            raise e
+            LOG.exception(msg)
+            raise f5_exc.ACLBindError(str(ex))
 
     @log_helpers.log_method_call
-    def update(self, context, acl_group):
-        try:
-            agents = self._get_all_alive_agents(context)
+    def remove_acl_bind(
+        self, context, acl_bind, loadbalancer_dict,
+        listener, acl_group
+    ):
 
-            for ag in agents:
-                agent_host = ag["host"]
+        loadbalancer = data_models.LoadBalancer(
+            **loadbalancer_dict)
+
+        driver = self.driver
+        try:
+            agent_host, service = self._setup_crud(
+                context, loadbalancer,
+                loadbalancer_dict
+            )
+
+            # if not put this. F5 agent will call
+            # _search_element, and throw error
+            service['acl_group'] = acl_group
+
+            # 1. Remove a ACL binding of listener.
+            # 2. Try to delete the shared ACL Data group.
+            driver.agent_rpc.remove_acl_bind(
+                context,
+                listener,
+                acl_group,
+                acl_bind,
+                service,
+                agent_host
+            )
+        except Exception as ex:
+            msg = "Fail to remove ACL bind of listener. \n" \
+                "Listener: %s \n" \
+                "ACL binding: %s \n" \
+                "ACL group: %s \n" \
+                "Agent host %s" % (
+                    listener, acl_bind, acl_group,
+                    agent_host
+                )
+            LOG.exception(msg)
+            raise f5_exc.ACLBindError(str(ex))
+
+    @log_helpers.log_method_call
+    def update_acl_group(self, context, acl_group, loadbalancers):
+
+        service_devices = dict()
+
+        try:
+            for loadbalancer_dict in loadbalancers:
+                loadbalancer = data_models.LoadBalancer(
+                    **loadbalancer_dict)
+
+                agent_host, service = self._setup_crud(
+                    context, loadbalancer,
+                    loadbalancer_dict
+                )
+
+                service_devices[
+                    service["device"]["id"]
+                ] = {"agent_host": agent_host, "service": service}
+
+            for device in service_devices.values():
+                agent_host = device["agent_host"]
+                service = device["service"]
+
+                # if not put this. F5 agent will call
+                # _search_element, and throw error
+                service['acl_group'] = acl_group
+
                 self.driver.agent_rpc.update_acl_group(
-                    context, acl_group, agent_host
+                    context, acl_group, service, agent_host
                 )
-        except Exception as e:
-            LOG.error("Exception: ACLGroup update: %s" % e.message)
-            raise e
-
-    @log_helpers.log_method_call
-    def delete(self, context, acl_group):
-        try:
-            agents = self._get_all_alive_agents(context)
-
-            for ag in agents:
-                agent_host = ag["host"]
-                self.driver.agent_rpc.delete_acl_group(
-                    context, acl_group, agent_host
+        except Exception as ex:
+            msg = "Fail to update ACL group.\n" \
+                "ACL group: %s \n" \
+                "Agent host %s" % (
+                    acl_group, agent_host
                 )
-        except Exception as e:
-            LOG.error("Exception: ACLGroup delete: %s" % e.message)
-            raise e
+            LOG.exception(msg)
+            raise f5_exc.ACLGroupUpdateError(str(ex))
