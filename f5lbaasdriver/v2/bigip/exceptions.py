@@ -14,6 +14,7 @@ u"""F5 Networks® LBaaSv2 Exceptions."""
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+from neutron_lbaas.extensions import lbaas_agentschedulerv2
 from neutron_lib import exceptions as q_exc
 
 
@@ -53,3 +54,13 @@ class PolicyHasMoreThanOneListener(F5LBaaSv2DriverException):
 class RuleHasMoreThanOnePolicy(F5LBaaSv2DriverException):
     """A rule should have only one policy."""
     pass
+
+
+class ACLBindError(lbaas_agentschedulerv2.NoEligibleLbaasAgent):
+    def __init__(self, msg):
+        self.msg = msg
+
+
+class ACLGroupUpdateError(lbaas_agentschedulerv2.NoEligibleLbaasAgent):
+    def __init__(self, msg):
+        self.msg = msg
