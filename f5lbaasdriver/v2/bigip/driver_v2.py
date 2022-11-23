@@ -42,6 +42,7 @@ from f5lbaasdriver.v2.bigip import device_scheduler
 from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 from f5lbaasdriver.v2.bigip import neutron_client
 from f5lbaasdriver.v2.bigip import plugin_rpc
+from f5lbaasdriver.v2.bigip import validator
 # from neutron.api.v2 import attributes
 from neutron_lib import constants as n_const
 
@@ -470,6 +471,10 @@ class LoadBalancerManager(EntityManager):
     def __init__(self, driver):
         super(LoadBalancerManager, self).__init__(driver)
         self.model = models.LoadBalancer
+        self.validators = [
+            validator.FlavorValidator(),
+            validator.SnatIPValidator(driver)
+        ]
 
     @log_helpers.log_method_call
     def create(self, context, loadbalancer):
@@ -479,6 +484,9 @@ class LoadBalancerManager(EntityManager):
 
         driver = self.driver
         try:
+            for v in self.validators:
+                v.validate_create(context, loadbalancer)
+
             service = {}
             agent, device = self._schedule_agent_and_device(
                 context, loadbalancer)
@@ -535,6 +543,9 @@ class LoadBalancerManager(EntityManager):
 
         driver = self.driver
         try:
+            for v in self.validators:
+                v.validate_update(context, old_loadbalancer, loadbalancer)
+
             agent, device = self._schedule_agent_and_device(context,
                                                             loadbalancer)
             service = self._create_service(context, loadbalancer, agent)

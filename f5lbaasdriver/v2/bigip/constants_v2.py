@@ -33,6 +33,17 @@ NET_CACHE_SECONDS = 1800
 # SUPPORTED PROVIDERNET TUNNEL NETWORK TYPES
 TUNNEL_TYPES = ['vxlan', 'gre']
 
+FLAVOR_SNAT_MAP = {
+    4: {
+        1: 2, 2: 2, 3: 2, 4: 4, 5: 8, 6: 16, 7: 122, 8: 58,
+        11: 1, 12: 1, 13: 1
+    },
+    6: {
+        1: 1, 2: 1, 3: 1, 4: 3, 5: 7, 6: 15, 7: 121, 8: 57,
+        11: 1, 12: 1, 13: 1
+    }
+}
+
 FLAVOR_CONN_MAP = {
     "1": {
         'bandwidth': 200,

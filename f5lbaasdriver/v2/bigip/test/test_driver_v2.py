@@ -29,6 +29,7 @@ class FakeNoEligibleAgentExc(lbaas_agentschedulerv2.NoEligibleLbaasAgent):
 class FakeLB(object):
     def __init__(self, id='test_lb_id'):
         self.id = id
+        self.flavor = 7
         self.vip_port_id = 'test_vip_port_id'
         self.provisioning_status = "PENDING_CREATE"
 
