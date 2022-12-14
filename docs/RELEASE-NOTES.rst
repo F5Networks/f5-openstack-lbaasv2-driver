@@ -4,6 +4,23 @@
 
 Release Notes
 =============
+v212.6.2 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* [OPENSTACK-2608] Validate available SNAT IPs
+* [OPENSTACK-2625] Bandwidth capacity filter
+* [OPENSTACK-2596] Ensure device scheduling consistency
+* [OPENSTACK-2596] Silently delete LB if no binding information
+* [OPENSTACK-2596] Unify neutron constants name
+* [OPENSTACK-2571] Refuse to create member with other tenant's subnet
+* [OPENSTACK-2571] Optimize creating/deleting member performance
+
+Bug Fixes
+`````````
+* None noted
+
 v212.6.1 (Pike)
 --------------
 
