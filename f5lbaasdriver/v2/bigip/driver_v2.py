@@ -35,7 +35,6 @@ from neutron_lib.plugins import directory
 
 from neutron_lbaas import agent_scheduler
 from neutron_lbaas.db.loadbalancer import models
-from neutron_lbaas.extensions import lbaas_agentschedulerv2
 
 from f5lbaasdriver.v2.bigip import agent_rpc
 from f5lbaasdriver.v2.bigip import device_scheduler
@@ -267,6 +266,8 @@ class EntityManager(object):
         :returns: agent object
         '''
 
+        LAB = agent_scheduler.LoadbalancerAgentBinding
+
         # If LB is already hosted on an agent, return this agent and device
         result = self.driver.plugin.db.get_agent_hosting_loadbalancer(
             context, loadbalancer.id)
@@ -274,10 +275,24 @@ class EntityManager(object):
         if result:
             agent = result["agent"]
             if not agent["alive"] or not agent["admin_state_up"]:
-                # Agent is not active or it is disabled
-                raise lbaas_agentschedulerv2.NoActiveLbaasAgent(
-                    loadbalancer_id=loadbalancer.id)
+                # Agent is not alive or is disabled. Attempt to
+                # reschedule this loadbalancer to a new agent.
+                LOG.info("Reschedule loadbalancer %s", loadbalancer.id)
+                agent = self.driver.agent_scheduler.schedule(
+                    self.driver.plugin,
+                    context,
+                    loadbalancer,
+                    self.driver.env
+                )
+                # Update binding table
+                with context.session.begin(subtransactions=True):
+                    query = context.session.query(LAB)
+                    binding = query.get(loadbalancer.id)
+                    binding.agent_id = agent["id"]
+                LOG.info("Loadbalancer %s is rescheduled to agent %s",
+                         loadbalancer.id, agent.id)
 
+            # Load device info and return
             device_id = result["device_id"]
             device = self.driver.device_scheduler.load_device(device_id)
             if device and device["admin_state_up"]:
@@ -311,7 +326,6 @@ class EntityManager(object):
             self.driver.env
         )
 
-        LAB = agent_scheduler.LoadbalancerAgentBinding
         binding = LAB()
         binding.loadbalancer_id = loadbalancer.id
         binding.agent = agent

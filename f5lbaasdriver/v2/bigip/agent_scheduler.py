@@ -149,7 +149,10 @@ class AvailabilityZoneFilter(AgentFilter):
                     result.append(candidate)
         else:
             for candidate in candidates:
-                if candidate["availability_zone"] == az:
+                zones = []
+                if candidate["availability_zone"]:
+                    zones = candidate["availability_zone"].split(",")
+                if az in zones:
                     result.append(candidate)
 
         return result
