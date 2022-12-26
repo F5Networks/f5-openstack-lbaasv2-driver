@@ -34,6 +34,7 @@ from neutron_lib.plugins import directory
 from neutron_lbaas.db.loadbalancer import models
 
 from f5lbaasdriver.v2.bigip import agent_rpc
+from f5lbaasdriver.v2.bigip import constants_v2 as constants
 from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 from f5lbaasdriver.v2.bigip import neutron_client
 from f5lbaasdriver.v2.bigip import plugin_rpc
@@ -349,6 +350,80 @@ class LoadBalancerManager(EntityManager):
         self.model = models.LoadBalancer
 
     @log_helpers.log_method_call
+    def recreate(self, context, loadbalancer):
+        import pdb; pdb.set_trace()
+        """Create a loadbalancer."""
+
+        self._log_entity(loadbalancer)
+
+        driver = self.driver
+        try:
+            service = {}
+            agent = self._schedule_agent(
+                context, loadbalancer)
+            agent_host = agent['host']
+            agent_config = agent.get('configurations', {})
+            LOG.debug("agent configurations: %s" % agent_config)
+
+            scheduler = self.driver.scheduler
+            agent_config_dict = \
+                scheduler.deserialize_agent_configurations(agent_config)
+
+            if not agent_config_dict.get('nova_managed', False):
+                # Update the port for the VIP to show ownership by this driver
+                port_data = {
+                    'admin_state_up': True,
+                    'device_owner': 'network:f5lbaasv2',
+                    'status': q_const.PORT_STATUS_ACTIVE
+                }
+                port_data[portbindings.HOST_ID] = agent_host
+                if driver.unlegacy_setting_placeholder_driver_side:
+                    LOG.debug('setting to normal')
+                    port_data[portbindings.VNIC_TYPE] = "normal"
+                else:
+                    LOG.debug('setting to baremetal')
+                    port_data[portbindings.VNIC_TYPE] = "baremetal"
+
+                port_data[portbindings.PROFILE] = {}
+
+                llinfo = agent_config_dict.get('local_link_information', None)
+                if llinfo:
+                    port_data[portbindings.PROFILE] = {
+                        "local_link_information": llinfo
+                    }
+
+                driver.plugin.db._core_plugin.update_port(
+                    context,
+                    loadbalancer.vip_port_id,
+                    {'port': port_data}
+                )
+
+                # NOTE(qzhao): Vlan id might be assigned after updating vip
+                # port. Need to build service payload after updating port.
+                service = self._create_service(context, loadbalancer, agent)
+
+                if driver.unlegacy_setting_placeholder_driver_side:
+                    LOG.debug('calling extra build():')
+                    service = self.driver.service_builder.build(
+                        context, loadbalancer, agent)
+            else:
+                LOG.debug("Agent devices are nova managed")
+
+            import pdb; pdb.set_trace()
+            environment_prefix = agent["configurations"][
+                "environment_prefix"]
+            driver.agent_rpc.topic = \
+                constants.TOPIC_LOADBALANCER_AGENT_V2 + "_" \
+                + environment_prefix
+            driver.agent_rpc.create_loadbalancer(
+                context, loadbalancer.to_api_dict(), service, agent_host,
+            )
+        except Exception as e:
+            LOG.error("Exception: loadbalancer create: %s" % e.message)
+            self._handle_entity_error(context, loadbalancer.id)
+            raise e
+
+    @log_helpers.log_method_call
     def create(self, context, loadbalancer):
         """Create a loadbalancer."""
 
@@ -506,6 +581,7 @@ class ListenerManager(EntityManager):
 
         self._log_entity(listener)
 
+        import pdb; pdb.set_trace()
         lb = listener.loadbalancer
         api_dict = listener.to_dict(loadbalancer=False, default_pool=False)
 
