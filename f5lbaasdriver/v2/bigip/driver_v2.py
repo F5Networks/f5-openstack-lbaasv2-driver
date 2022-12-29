@@ -351,8 +351,7 @@ class LoadBalancerManager(EntityManager):
 
     @log_helpers.log_method_call
     def recreate(self, context, loadbalancer):
-        import pdb; pdb.set_trace()
-        """Create a loadbalancer."""
+        """recreate a loadbalancer."""
 
         self._log_entity(loadbalancer)
 
@@ -409,7 +408,6 @@ class LoadBalancerManager(EntityManager):
             else:
                 LOG.debug("Agent devices are nova managed")
 
-            import pdb; pdb.set_trace()
             environment_prefix = agent["configurations"][
                 "environment_prefix"]
             driver.agent_rpc.topic = \
@@ -581,7 +579,6 @@ class ListenerManager(EntityManager):
 
         self._log_entity(listener)
 
-        import pdb; pdb.set_trace()
         lb = listener.loadbalancer
         api_dict = listener.to_dict(loadbalancer=False, default_pool=False)
 
