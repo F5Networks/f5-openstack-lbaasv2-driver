@@ -186,26 +186,33 @@ class EntityManager(object):
             self.driver.plugin.db.update_status(context, self.model, id,
                                                 status)
 
+    def _agent_rpc_topic(self, agent):
+        environment_prefix = agent["configurations"][
+            "environment_prefix"]
+        agent_topic = \
+            constants.TOPIC_LOADBALANCER_AGENT_V2 + "_" \
+            + environment_prefix + "." + agent["host"]
+        return agent_topic
+
     def _call_rpc(self, context, loadbalancer, entity, api_dict,
                   rpc_method, **kwargs):
         '''Perform operations common to create and delete for managers.'''
 
         try:
-            agent_host, service = self._setup_crud(
+            agent_topic, service = self._setup_crud(
                 context, loadbalancer, entity, **kwargs)
             rpc_callable = getattr(self.driver.agent_rpc, rpc_method)
-
             the_port = kwargs.get("the_port_id", None)
             LOG.info(the_port)
             if the_port:
                 LOG.info('the_port is not None')
                 rpc_callable(
                     context, api_dict, service,
-                    agent_host, the_port_id=the_port
+                    agent_topic, the_port_id=the_port
                 )
             else:
                 LOG.info('the_port is None')
-                rpc_callable(context, api_dict, service, agent_host)
+                rpc_callable(context, api_dict, service, agent_topic)
         except Exception as e:
             LOG.error("Exception: %s: %s" % (rpc_method, e))
             raise e
@@ -224,7 +231,8 @@ class EntityManager(object):
                                          entity, **kwargs)
             service = self._create_service(context, loadbalancer, agent,
                                            entity, **kwargs)
-            return agent['host'], service
+            agent_topic = self._agent_rpc_topic(agent)
+            return agent_topic, service
 
         raise F5NoAttachedLoadbalancerException()
 
@@ -376,7 +384,7 @@ class LoadBalancerManager(EntityManager):
                     'status': q_const.PORT_STATUS_ACTIVE
                 }
                 port_data[portbindings.HOST_ID] = agent_host
-                if driver.unlegacy_setting_placeholder_driver_side:
+                if self.driver.unlegacy_setting_placeholder_driver_side:
                     LOG.debug('setting to normal')
                     port_data[portbindings.VNIC_TYPE] = "normal"
                 else:
@@ -391,7 +399,7 @@ class LoadBalancerManager(EntityManager):
                         "local_link_information": llinfo
                     }
 
-                driver.plugin.db._core_plugin.update_port(
+                self.driver.plugin.db._core_plugin.update_port(
                     context,
                     loadbalancer.vip_port_id,
                     {'port': port_data}
@@ -572,6 +580,10 @@ class ListenerManager(EntityManager):
     def __init__(self, driver):
         super(ListenerManager, self).__init__(driver)
         self.model = models.Listener
+
+    @log_helpers.log_method_call
+    def recreate(self, context, listener):
+        self.create(context, listener)
 
     @log_helpers.log_method_call
     def create(self, context, listener):
