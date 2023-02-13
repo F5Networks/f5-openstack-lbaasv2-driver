@@ -116,8 +116,7 @@ class DeviceSchedulerNG(object):
                 self.inventory[device_id]["id"] = device_id
 
     def load_active_devices(self):
-        if not self.inventory:
-            self.load_inventory()
+        self.load_inventory()
 
         devices = []
         for device_id in self.inventory.keys():
