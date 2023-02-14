@@ -13,7 +13,7 @@ f5-sdk==3.0.20
 # URL.  If you add a version here it will be ignored, and therefore be
 # misleading to readers of this file.
 #
--c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=stable/pike
+-c https://opendev.org/openstack/requirements/raw/tag/pike-eol/upper-constraints.txt
 
 mock==IGNORED      # See section comment
 pytest==IGNORED    # See section comment
