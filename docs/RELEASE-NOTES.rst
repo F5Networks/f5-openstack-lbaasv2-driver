@@ -4,6 +4,23 @@
 
 Release Notes
 =============
+v212.5.9 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* [OPENSTACK-2522] Enable driver to update port mac
+* [OPENSTACK-2571] Optimize creating/deleting member performance
+* [OPENSTACK-2571] Refuse to create member with other tenant's subnet
+* [OPENSTACK-2608] Validate available SNAT IPs
+* [OPENSTACK-2690] Change ACL functions for 9.9-stable public cloud
+
+Bug Fixes
+`````````
+* None noted
+
+Release Notes
+=============
 v212.5.8 (Pike)
 --------------
 
