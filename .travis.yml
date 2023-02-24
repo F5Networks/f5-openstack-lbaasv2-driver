@@ -2,8 +2,8 @@ sudo: required
 env:
   global:
   - DIST_REPO="f5-openstack-lbaasv2-driver-dist"
-  - PKG_VERSION=`python -c "import f5lbaasdriver; print f5lbaasdriver.__version__"`
-  - PKG_RELEASE=$(python ${DIST_REPO}/scripts/get-version-release.py --release)
+  - PKG_VERSION=212.5.9
+  - PKG_RELEASE=1
   - PKG_RELEASE_EL7=${DIST_REPO}/rpms/f5-openstack-lbaasv2-driver-${PKG_VERSION}-1.el7.noarch.rpm
   - PKG_RELEASE_1404=${DIST_REPO}/deb_dist/python-f5-openstack-lbaasv2-driver_${PKG_VERSION}-${PKG_RELEASE}_1404_all.deb
   - RELEASE_TAG=v$(echo $PKG_VERSION | cut -d . -f 1,2)
