@@ -65,7 +65,33 @@ class DeviceSchedulerNG(object):
 
     def schedule(self, plugin, context, lb):
         # Load all BIG-IP devices
-        candidates = self.load_active_devices()
+        lb_name = lb.name
+        LOG.debug("lb_name here is %s ", lb_name)
+
+        # if found, store the device, to schedule to it
+        the_inactive_dev = []
+        if (
+            lb_name
+            and cfg.CONF.special_lb_name_prefix
+            and lb_name.startswith(cfg.CONF.special_lb_name_prefix)
+        ):
+            inactive_devices = self.load_inactive_device_groups()
+            LOG.debug("inactive_devices here is %s ", inactive_devices)
+            for each in inactive_devices:
+                id_prefix = each["id"][:8]
+                length = len(cfg.CONF.special_lb_name_prefix)
+                if lb_name.endswith(id_prefix, length):
+                    LOG.debug("chooses inactive device here %s ", each["id"])
+                    LOG.debug(each)
+                    the_inactive_dev.append(each)
+                    break
+
+        if the_inactive_dev:
+            candidates = the_inactive_dev
+        else:
+            candidates = self.load_active_devices()
+
+        LOG.debug("the candidates are: %s", candidates)
         if len(candidates) <= 0:
             raise NoActiveLbaasDevice(loadbalancer_id=lb.id)
 
@@ -122,6 +148,16 @@ class DeviceSchedulerNG(object):
         for device_id in self.inventory.keys():
             device = self.inventory[device_id]
             if device["admin_state_up"]:
+                devices.append(device)
+        return devices
+
+    def load_inactive_device_groups(self):
+        self.load_inventory()
+
+        devices = []
+        for device_id in self.inventory.keys():
+            device = self.inventory[device_id]
+            if not device["admin_state_up"]:
                 devices.append(device)
         return devices
 

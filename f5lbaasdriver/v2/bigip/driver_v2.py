@@ -118,6 +118,13 @@ OPTS = [
         'bwc_profile',
         default=None,
         help='bwc_profile name which is configured in bigip side'
+    ),
+    cfg.StrOpt(
+        'special_lb_name_prefix',
+        default="SPECIAL_",
+        help=('if lb name starts with this prefix and ends with first '
+              '8 chars of an inactive device uuid, try scheduling to '
+              'this device before real onboarding.')
     )
 ]
 
@@ -297,7 +304,21 @@ class EntityManager(object):
             device_id = result["device_id"]
             device = self.driver.device_scheduler.load_device(device_id)
             if device and device["admin_state_up"]:
+                LOG.debug("choose active device here %s ", device_id)
                 return agent, device
+
+            if device and not device["admin_state_up"]:
+                name = loadbalancer.name
+                if (
+                    name
+                    and cfg.CONF.special_lb_name_prefix
+                    and name.startswith(cfg.CONF.special_lb_name_prefix)
+                ):
+                    id_prefix = device_id[:8]
+                    length = len(cfg.CONF.special_lb_name_prefix)
+                    if name.endswith(id_prefix, length):
+                        LOG.debug("choose inactive device here %s ", device_id)
+                        return agent, device
 
             raise device_scheduler.NoActiveLbaasDevice(
                 loadbalancer_id=loadbalancer.id)
