@@ -73,14 +73,20 @@ class DeviceSchedulerNG(object):
         if (
             lb_name
             and cfg.CONF.special_lb_name_prefix
-            and lb_name.startswith(cfg.CONF.special_lb_name_prefix)
+            # it is now required SPECIAL_XXXXXXXX included in lb_name;
+            # which means abc_SPECIAL_XXXXXXXX or SPECIAL_XXXXXXXX_def
+            # or ghi_SPECIAL_XXXXXXXX_jk can all satisfy. Earlier rule
+            # was lb_name starts with special_lb_name_prefix and ends
+            # with XXXXXXXX (the first 8 char of inactive device uuid)
+            and cfg.CONF.special_lb_name_prefix in lb_name
         ):
             inactive_devices = self.load_inactive_device_groups()
             LOG.debug("inactive_devices here is %s ", inactive_devices)
             for each in inactive_devices:
                 id_prefix = each["id"][:8]
-                length = len(cfg.CONF.special_lb_name_prefix)
-                if lb_name.endswith(id_prefix, length):
+                match_regex = cfg.CONF.special_lb_name_prefix + id_prefix
+                if match_regex in lb_name:
+                    LOG.debug("match_regex here is %s ", match_regex)
                     LOG.debug("chooses inactive device here %s ", each["id"])
                     LOG.debug(each)
                     the_inactive_dev.append(each)

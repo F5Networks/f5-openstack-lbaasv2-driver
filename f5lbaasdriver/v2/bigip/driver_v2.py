@@ -312,11 +312,11 @@ class EntityManager(object):
                 if (
                     name
                     and cfg.CONF.special_lb_name_prefix
-                    and name.startswith(cfg.CONF.special_lb_name_prefix)
+                    and cfg.CONF.special_lb_name_prefix in name
                 ):
                     id_prefix = device_id[:8]
-                    length = len(cfg.CONF.special_lb_name_prefix)
-                    if name.endswith(id_prefix, length):
+                    match_regex = cfg.CONF.special_lb_name_prefix + id_prefix
+                    if match_regex in name:
                         LOG.debug("choose inactive device here %s ", device_id)
                         return agent, device
 
