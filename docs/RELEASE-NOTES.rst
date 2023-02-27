@@ -4,6 +4,20 @@
 
 Release Notes
 =============
+v212.6.3 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* [OPENSTACK-2646] Multi-zone agent
+* [OPENSTACK-2692] Always reload inventory file
+* [OPENSTACK-2621] Change ACL functions for NG
+* [OPENSTACK-2686] special scheduling to the new inactive device
+
+Bug Fixes
+`````````
+* None noted
+
 v212.6.2 (Pike)
 --------------
 
