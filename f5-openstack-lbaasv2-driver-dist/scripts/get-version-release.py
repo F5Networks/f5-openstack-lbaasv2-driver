@@ -18,8 +18,8 @@ def runCommand(cmd):
                              stderr=subprocess.PIPE
                              )
         (output) = p.communicate()[0]
-    except OSError, e:
-        print >>sys.stderr, "Execution failed:", e
+    except OSError as e:
+        sys.stderr.write("Execution failed: %s" % e)
 
     return (output, p.returncode)
 
@@ -38,7 +38,7 @@ def main(args):
         tag = output.rstrip()
 
         # Does this tag match the format of tagged releases?
-        m = releaseTagRe.match(tag)
+        m = releaseTagRe.match(tag.decode('utf-8'))
         if m:
             version = m.group(1)
         (output, status) = runCommand('git rev-parse --short HEAD')
@@ -49,7 +49,7 @@ def main(args):
         (output, status) = runCommand('git describe --tags')
         if status == 0:
 
-            m = gitDescribeRe.match(output)
+            m = gitDescribeRe.match(output.decode('utf-8'))
             if m:
                 version = m.group(1)
                 release = m.group(2)
