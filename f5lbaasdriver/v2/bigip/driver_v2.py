@@ -546,11 +546,29 @@ class LoadBalancerManager(EntityManager):
 
             port_data[portbindings.PROFILE] = {}
 
+            vip_masq_mac = device.get('masquerade_mac')
+            if not vip_masq_mac:
+                LOG.error(
+                    "Can not find masquerade_mac in device %s, when"
+                    " creating loadbalancer %s." % (
+                        device, loadbalancer
+                    )
+                )
+
+            # llinfo is a list of dict type
             llinfo = device.get('local_link_information', None)
+
             if llinfo:
-                port_data[portbindings.PROFILE] = {
-                    "local_link_information": llinfo
-                }
+                link_info = llinfo[0]
+            else:
+                link_info = dict()
+                llinfo = [link_info]
+
+            link_info.update({"lb_mac": vip_masq_mac})
+
+            port_data[portbindings.PROFILE] = {
+                "local_link_information": llinfo
+            }
 
             driver.plugin.db._core_plugin.update_port(
                 context,
