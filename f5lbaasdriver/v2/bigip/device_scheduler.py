@@ -25,6 +25,8 @@ from oslo_utils import importutils
 from neutron_lbaas import agent_scheduler
 from neutron_lbaas.extensions import lbaas_agentschedulerv2
 
+from neutron_lbaas_inventory.db.inventory_db import InventoryDbPlugin
+
 from f5lbaasdriver.v2.bigip import agent_scheduler as f5_agent_scheduler
 from f5lbaasdriver.v2.bigip import constants_v2
 
@@ -61,7 +63,7 @@ class DeviceSchedulerNG(object):
             filter_path = ".".join([DeviceSchedulerNG.__module__, name])
             self.filters.append(importutils.import_object(filter_path, self))
 
-        self.inventory = None
+        self.inventory = InventoryDbPlugin()
 
     def schedule(self, plugin, context, lb):
         # Load all BIG-IP devices
@@ -80,7 +82,7 @@ class DeviceSchedulerNG(object):
             # with XXXXXXXX (the first 8 char of inactive device uuid)
             and cfg.CONF.special_lb_name_prefix in lb_name
         ):
-            inactive_devices = self.load_inactive_device_groups()
+            inactive_devices = self.load_inactive_device(context)
             LOG.debug("inactive_devices here is %s ", inactive_devices)
             for each in inactive_devices:
                 id_prefix = each["id"][:8]
@@ -95,7 +97,7 @@ class DeviceSchedulerNG(object):
         if the_inactive_dev:
             candidates = the_inactive_dev
         else:
-            candidates = self.load_active_devices()
+            candidates = self.load_active_devices(context)
 
         LOG.debug("the candidates are: %s", candidates)
         if len(candidates) <= 0:
@@ -135,43 +137,29 @@ class DeviceSchedulerNG(object):
         else:
             return candidates[0]
 
-    def load_inventory(self):
-        try:
-            f = open(cfg.CONF.device_inventory)
-            self.inventory = json.load(f)
-            f.close()
-        except Exception as ex:
-            raise BadDeviceInventory(loadbalancer_id=ex.message)
-
-        for device_id in self.inventory.keys():
-            if "id" not in self.inventory[device_id]:
-                self.inventory[device_id]["id"] = device_id
-
-    def load_active_devices(self):
-        self.load_inventory()
-
+    def load_devices(self, context, filters=None):
         devices = []
-        for device_id in self.inventory.keys():
-            device = self.inventory[device_id]
-            if device["admin_state_up"]:
-                devices.append(device)
+        devices_db = self.inventory.get_devices(context, filters)
+        for device_db in devices_db:
+            device = device_db["device_info"].copy()
+            for key in ["id", "type", "shared", "admin_state_up",
+                        "availability_zone"]:
+                device[key] = device_db[key]
+            devices.append(device)
         return devices
 
-    def load_inactive_device_groups(self):
-        self.load_inventory()
+    def load_active_devices(self, context):
+        return self.load_devices(context, {"admin_state_up": [True]})
 
-        devices = []
-        for device_id in self.inventory.keys():
-            device = self.inventory[device_id]
-            if not device["admin_state_up"]:
-                devices.append(device)
-        return devices
+    def load_inactive_device(self, context):
+        return self.load_devices(context, {"admin_state_up": [False]})
 
-    def load_device(self, id):
-        if not self.inventory:
-            self.load_inventory()
-
-        return self.inventory.get(id, {})
+    def load_device(self, context, id):
+        devices = self.load_devices(context, {"id": [id]})
+        if len(devices) > 0:
+            return devices[0]
+        else:
+            return None
 
     def load_bindings(self, context, device_ids=[]):
         if not device_ids:
