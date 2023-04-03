@@ -1121,3 +1121,21 @@ class LBaaSv2PluginCallbacksRPC(object):
             has_l7policy[listener_id] = result
         LOG.debug("has_l7policy: ({})".format(has_l7policy))
         return has_l7policy
+
+    @log_helpers.log_method_call
+    def get_devices(self, context, availability_zone):
+        """get devices from db inventory."""
+        devices = []
+        with context.session.begin(subtransactions=True):
+            try:
+                LOG.info('getting devices begins')
+                devices = self.driver.inventory_plugin.get_devices(
+                    context,
+                    filters={'availability_zone': availability_zone}
+                )
+                LOG.info('getting devices ends: %s' % devices)
+            except Exception as e:
+                LOG.error('Exception: get_devices: %s',
+                          e.message)
+
+        return devices
