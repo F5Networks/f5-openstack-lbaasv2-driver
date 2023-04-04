@@ -187,7 +187,7 @@ What's Next
 
 `Configure and start the F5 Agent`_.
 
-.. |Build Status| image:: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=stable/ocata
-    :target: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver
+.. |Build Status| image:: https://app.travis-ci.com/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=stable/ocata
+    :target: https://app.travis-ci.com/F5Networks/f5-openstack-lbaasv2-driver
     :alt: Build Status
 

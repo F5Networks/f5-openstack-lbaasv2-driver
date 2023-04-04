@@ -98,11 +98,6 @@ OPTS = [
         help=('Filters of device scheduler')
     ),
     cfg.StrOpt(
-        'device_inventory',
-        default="/etc/neutron/services/f5/inventory.json",
-        help=('Device inventory file')
-    ),
-    cfg.StrOpt(
         'scheduler_constants',
         default="/etc/neutron/services/f5/scheduler.json",
         help=('Scheduler constant file')
@@ -302,7 +297,8 @@ class EntityManager(object):
 
             # Load device info and return
             device_id = result["device_id"]
-            device = self.driver.device_scheduler.load_device(device_id)
+            device = self.driver.device_scheduler.load_device(context,
+                                                              device_id)
             if device and device["admin_state_up"]:
                 LOG.debug("choose active device here %s ", device_id)
                 return agent, device

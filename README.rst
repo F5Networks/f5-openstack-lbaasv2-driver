@@ -94,8 +94,8 @@ to Openstack_CLA@f5.com prior to their code submission being included
 in this project.
 
 
-.. |Build Status| image:: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=stable/ocata
-    :target: https://travis-ci.org/F5Networks/f5-openstack-lbaasv2-driver?branch=stable/ocata
+.. |Build Status| image:: https://app.travis-ci.com/F5Networks/f5-openstack-lbaasv2-driver.svg?branch=stable/ocata
+    :target: https://app.travis-ci.com/F5Networks/f5-openstack-lbaasv2-driver?branch=stable/ocata
 .. |slack badge| image:: https://f5-openstack-slack.herokuapp.com/badge.svg
     :target: https://f5-openstack-slack.herokuapp.com/
     :alt: Slack
