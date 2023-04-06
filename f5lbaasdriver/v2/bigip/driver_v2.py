@@ -37,6 +37,8 @@ from neutron_lbaas import agent_scheduler
 from neutron_lbaas.db.loadbalancer import models
 from neutron_lbaas.services.loadbalancer import data_models
 
+from neutron_lbaas_inventory.db.inventory_db import InventoryDbPlugin
+
 from f5lbaasdriver.v2.bigip import agent_rpc
 from f5lbaasdriver.v2.bigip import device_scheduler
 from f5lbaasdriver.v2.bigip import exceptions as f5_exc
@@ -150,6 +152,7 @@ class F5DriverV2(object):
             self.plugin.db._l3_plugin = directory.get_plugin(pg_const.L3)
 
         self.env = env
+        self.inventory_plugin = InventoryDbPlugin()
 
         self.loadbalancer = LoadBalancerManager(self)
         self.listener = ListenerManager(self)
