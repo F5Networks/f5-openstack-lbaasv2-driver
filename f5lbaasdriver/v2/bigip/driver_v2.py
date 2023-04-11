@@ -319,8 +319,15 @@ class EntityManager(object):
                         LOG.debug("choose inactive device here %s ", device_id)
                         return agent, device
 
-            raise device_scheduler.NoActiveLbaasDevice(
-                loadbalancer_id=loadbalancer.id)
+            if not device:
+                raise device_scheduler.LbaasDeviceDisappeared(
+                    loadbalancer_id=loadbalancer.id,
+                    device_id=device_id)
+
+            if not device["admin_state_up"]:
+                raise device_scheduler.LbaasDeviceDisabled(
+                    loadbalancer_id=loadbalancer.id,
+                    device_id=device_id)
 
         # If no binding
         if loadbalancer.provisioning_status == n_const.PENDING_CREATE:
