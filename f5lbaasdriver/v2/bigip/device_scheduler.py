@@ -22,6 +22,8 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
 
+from neutron_lib import exceptions as nexception
+
 from neutron_lbaas import agent_scheduler
 from neutron_lbaas.extensions import lbaas_agentschedulerv2
 
@@ -41,6 +43,16 @@ class NoEligibleLbaasDevice(lbaas_agentschedulerv2.NoEligibleLbaasAgent):
 class NoActiveLbaasDevice(lbaas_agentschedulerv2.NoActiveLbaasAgent):
     message = ("No active BIG-IP found "
                "for loadbalancer %(loadbalancer_id)s.")
+
+
+class LbaasDeviceDisappeared(nexception.Conflict):
+    message = ("Device %(device_id)s for loadbalancer %(loadbalancer_id)s "
+               "is disappeared.")
+
+
+class LbaasDeviceDisabled(nexception.Conflict):
+    message = ("Device %(device_id)s for loadbalancer %(loadbalancer_id)s "
+               "is disabled.")
 
 
 class BadDeviceInventory(lbaas_agentschedulerv2.NoActiveLbaasAgent):
