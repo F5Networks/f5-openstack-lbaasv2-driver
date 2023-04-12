@@ -1139,3 +1139,19 @@ class LBaaSv2PluginCallbacksRPC(object):
                           e.message)
 
         return devices
+
+    @log_helpers.log_method_call
+    def update_device(self, context, id, device):
+        """update devices in db inventory."""
+        with context.session.begin(subtransactions=True):
+            try:
+                LOG.info('update device %s begins' % id)
+                self.driver.inventory_plugin.update_device(
+                    context,
+                    id,
+                    device
+                )
+                LOG.info('update device %s ends.' % id)
+            except Exception as e:
+                LOG.error('Exception: update_device: %s',
+                          e.message)
