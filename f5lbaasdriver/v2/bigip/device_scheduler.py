@@ -18,7 +18,6 @@ import json
 import random
 import sys
 
-from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
 
@@ -30,8 +29,10 @@ from neutron_lbaas.extensions import lbaas_agentschedulerv2
 from neutron_lbaas_inventory.db.inventory_db import InventoryDbPlugin
 
 from f5lbaasdriver.v2.bigip import agent_scheduler as f5_agent_scheduler
+from f5lbaasdriver.v2.bigip import config
 from f5lbaasdriver.v2.bigip import constants_v2
 
+cfg = config.cfg
 LOG = logging.getLogger(__name__)
 
 

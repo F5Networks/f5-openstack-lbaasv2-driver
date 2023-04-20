@@ -19,7 +19,6 @@ import random
 import sys
 from time import sleep
 
-from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
@@ -40,6 +39,7 @@ from neutron_lbaas.services.loadbalancer import data_models
 from neutron_lbaas_inventory.db.inventory_db import InventoryDbPlugin
 
 from f5lbaasdriver.v2.bigip import agent_rpc
+from f5lbaasdriver.v2.bigip import config
 from f5lbaasdriver.v2.bigip import device_scheduler
 from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 from f5lbaasdriver.v2.bigip import neutron_client
@@ -48,84 +48,8 @@ from f5lbaasdriver.v2.bigip import validator
 # from neutron.api.v2 import attributes
 from neutron_lib import constants as n_const
 
+cfg = config.cfg
 LOG = logging.getLogger(__name__)
-
-OPTS = [
-    cfg.IntOpt(
-        'f5_driver_perf_mode',
-        default=0,
-        help=('switch driver performance mode from 0 to 3')
-    ),
-    cfg.BoolOpt(
-        'to_speedup_populate_logic',
-        default=False,
-        help=("If True, uses new fast populate logic,"
-              "If set to False, then revert to old behavior "
-              "just in case.")
-    ),
-    cfg.StrOpt(
-        'loadbalancer_agent_scheduler',
-        default=(
-            'f5lbaasdriver.v2.bigip.agent_scheduler.AgentSchedulerNG'
-        ),
-        help=('Driver to use for scheduling '
-              'pool to a default loadbalancer agent')
-    ),
-    cfg.ListOpt(
-        'agent_filters',
-        default=[
-            'AvailabilityZoneFilter',
-            'EnvironmentFilter',
-            'RandomFilter'
-        ],
-        help=('Filters of Agent scheduler')
-    ),
-    cfg.StrOpt(
-        'loadbalancer_device_scheduler',
-        default=(
-            'f5lbaasdriver.v2.bigip.device_scheduler.DeviceSchedulerNG'
-        ),
-        help=('Driver to use for scheduling '
-              'a loadbalancer to a BIG-IP device')
-    ),
-    cfg.ListOpt(
-        'device_filters',
-        default=[
-            'AvailabilityZoneFilter',
-            'FlavorFilter',
-            'BandwidthCapacityFilter',
-            'SubnetAffinityFilter',
-            'RandomFilter'
-        ],
-        help=('Filters of device scheduler')
-    ),
-    cfg.StrOpt(
-        'scheduler_constants',
-        default="/etc/neutron/services/f5/scheduler.json",
-        help=('Scheduler constant file')
-    ),
-    cfg.StrOpt(
-        'f5_loadbalancer_service_builder_v2',
-        default=(
-            'f5lbaasdriver.v2.bigip.service_builder.LBaaSv2ServiceBuilder'
-        ),
-        help=('Default class to use for building a service object.')
-    ),
-    cfg.StrOpt(
-        'bwc_profile',
-        default=None,
-        help='bwc_profile name which is configured in bigip side'
-    ),
-    cfg.StrOpt(
-        'special_lb_name_prefix',
-        default="SPECIAL_",
-        help=('if lb name starts with this prefix and ends with first '
-              '8 chars of an inactive device uuid, try scheduling to '
-              'this device before real onboarding.')
-    )
-]
-
-cfg.CONF.register_opts(OPTS)
 
 
 class F5NoAttachedLoadbalancerException(f5_exc.F5LBaaSv2DriverException):
