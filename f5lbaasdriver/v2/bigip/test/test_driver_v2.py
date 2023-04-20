@@ -149,7 +149,8 @@ def test_lbmgr_create():
     }
     mock_driver.device_scheduler.schedule.return_value = {
         'id': 'test_device',
-        'admin_state_up': True
+        'admin_state_up': True,
+        'device_info': {}
     }
     mock_driver.plugin.db.get_agent_hosting_loadbalancer.return_value = {}
     mock_driver.service_builder.build.return_value = {}
@@ -159,7 +160,8 @@ def test_lbmgr_create():
     lb_mgr.create(mock_ctx, fake_lb)
     assert mock_driver.agent_rpc.create_loadbalancer.call_args == \
         mock.call(mock_ctx, fake_lb.to_api_dict(),
-                  {'device': {'id': 'test_device', 'admin_state_up': True}},
+                  {'device': {'id': 'test_device', 'admin_state_up': True,
+                   'device_info': {}}},
                   'test_agent')
 
 

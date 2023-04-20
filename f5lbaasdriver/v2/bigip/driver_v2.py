@@ -476,7 +476,7 @@ class LoadBalancerManager(EntityManager):
 
             port_data[portbindings.PROFILE] = {}
 
-            vip_masq_mac = device.get('masquerade_mac')
+            vip_masq_mac = device['device_info'].get('masquerade_mac')
             if not vip_masq_mac:
                 LOG.error(
                     "Can not find masquerade_mac in device %s, when"

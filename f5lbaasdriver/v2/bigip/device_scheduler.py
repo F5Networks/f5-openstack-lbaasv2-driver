@@ -152,11 +152,15 @@ class DeviceSchedulerNG(object):
     def load_devices(self, context, filters=None):
         devices = []
         devices_db = self.inventory.get_devices(context, filters)
+        device_ids = [device["id"] for device in devices_db]
+        members = self.inventory.get_members(
+            context, {"device_id": device_ids})
         for device_db in devices_db:
-            device = device_db["device_info"].copy()
-            for key in ["id", "type", "shared", "admin_state_up",
-                        "availability_zone"]:
-                device[key] = device_db[key]
+            device = device_db.copy()
+            device["device_info"]["members"] = []
+            for member in members:
+                if member["device_id"] == device["id"]:
+                    device["device_info"]["members"].append(member.copy())
             devices.append(device)
         return devices
 
@@ -260,9 +264,8 @@ class FlavorFilter(DeviceFilter):
         result = []
         for candidate in candidates:
             lic_types = []
-            for key in candidate["bigip"].keys():
-                bigip = candidate["bigip"][key]
-                lic = bigip["license"].values()[0]
+            for bigip in candidate["device_info"]["members"]:
+                lic = bigip["device_info"]["license"].values()[0]
                 if lic == "VE, LAB":
                     lic_types.append("LAB")
                 elif lic.startswith("VE"):
@@ -367,13 +370,12 @@ class CapacityFilter(DeviceFilter):
         result = []
         # If the device contains multiple bigips, select the
         # minimum capacity of every bigips.
-        for bigip in candidate["bigip"].keys():
+        for bigip in candidate["device_info"]["members"]:
             capacity = self.calculate_bigip(
-                candidate["bigip"][bigip],
-                rolb=rolb, colb=colb,
+                bigip, rolb=rolb, colb=colb,
                 LB=LB, ROLB=ROLB, COLB=COLB
             )
-            LOG.debug("BIG-IP %s capacity is %s", bigip, capacity)
+            LOG.debug("BIG-IP %s capacity is %s", bigip["mgmt_ipv4"], capacity)
             result.append(capacity)
 
         if len(result) > 0:
@@ -389,7 +391,7 @@ class CapacityFilter(DeviceFilter):
         COLB = kwargs.get("COLB", 0)
 
         capacity_const = self.constant["capacity"]
-        license = bigip["license"].values()[0]
+        license = bigip["device_info"]["license"].values()[0]
 
         if "license" not in capacity_const:
             msg = "'license' is not in scheduler.json, " \
@@ -444,9 +446,10 @@ class BandwidthCapacityFilter(CapacityFilter):
             LOG.debug("Capacity of candidate %s is %s",
                       candidate["id"], capacity)
             if capacity >= 0:
-                candidate["capacity"] = capacity
+                candidate["bandwidth_capacity"] = capacity
                 result.append(candidate)
-        return sorted(result, key=lambda x: x["capacity"], reverse=True)
+        return sorted(result, key=lambda x: x["bandwidth_capacity"],
+                      reverse=True)
 
     def calculate(self, context, plugin, lb, candidate, **kwargs):
         lb_map = kwargs.get("lb_map", {})
@@ -530,8 +533,8 @@ class BandwidthCapacityFilter(CapacityFilter):
         bc = []
         user_osr = device.get("osr", 0)
         capacity_const = self.constant["capacity"]
-        for key in device["bigip"].keys():
-            lic = device["bigip"][key]["license"].values()[0]
+        for bigip in device["device_info"]["members"]:
+            lic = bigip["device_info"]["license"].values()[0]
             if lic in capacity_const["license"]:
                 osr.append(capacity_const["license"][lic]["osr"])
                 bc.append(capacity_const["license"][lic]["bandwidth"])
