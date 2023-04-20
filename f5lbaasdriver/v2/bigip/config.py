@@ -14,7 +14,11 @@ u"""F5 Networks® LBaaSv2 Driver Implementation."""
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import json
 from oslo_config import cfg
+from oslo_log import log as logging
+
+LOG = logging.getLogger(__name__)
 
 OPTS = [
     cfg.IntOpt(
@@ -26,16 +30,16 @@ OPTS = [
             'to_speedup_populate_logic',
             default=False,
             help=("If True, uses new fast populate logic,"
-                                "If set to False, then revert to old behavior "
-                                "just in case.")
+                  "If set to False, then revert to old behavior "
+                  "just in case.")
         ),
     cfg.StrOpt(
             'loadbalancer_agent_scheduler',
             default=(
-                        'f5lbaasdriver.v2.bigip.agent_scheduler.AgentSchedulerNG'
-                    ),
+                'f5lbaasdriver.v2.bigip.agent_scheduler.AgentSchedulerNG'
+            ),
             help=('Driver to use for scheduling '
-                                'pool to a default loadbalancer agent')
+                  'pool to a default loadbalancer agent')
         ),
     cfg.ListOpt(
             'agent_filters',
@@ -49,18 +53,17 @@ OPTS = [
     cfg.StrOpt(
             'loadbalancer_device_scheduler',
             default=(
-                        'f5lbaasdriver.v2.bigip.device_scheduler.DeviceSchedulerNG'
-                    ),
+                'f5lbaasdriver.v2.bigip.device_scheduler.DeviceSchedulerNG'
+            ),
             help=('Driver to use for scheduling '
-                                'a loadbalancer to a BIG-IP device')
+                  'a loadbalancer to a BIG-IP device')
         ),
     cfg.ListOpt(
             'device_filters',
             default=[
                         'AvailabilityZoneFilter',
                         'FlavorFilter',
-                        'BandwidthCapacityFilter',
-                        'SubnetAffinityFilter',
+                        'CapacityFilter',
                         'RandomFilter'
                     ],
             help=('Filters of device scheduler')
@@ -68,8 +71,8 @@ OPTS = [
     cfg.StrOpt(
             'f5_loadbalancer_service_builder_v2',
             default=(
-                        'f5lbaasdriver.v2.bigip.service_builder.LBaaSv2ServiceBuilder'
-                    ),
+                'f5lbaasdriver.v2.bigip.service_builder.LBaaSv2ServiceBuilder'
+            ),
             help=('Default class to use for building a service object.')
         ),
     cfg.StrOpt(
@@ -81,8 +84,8 @@ OPTS = [
             'special_lb_name_prefix',
             default="SPECIAL_",
             help=('if lb name starts with this prefix and ends with first '
-                                '8 chars of an inactive device uuid, try scheduling to '
-                                'this device before real onboarding.')
+                  '8 chars of an inactive device uuid, try scheduling to '
+                  'this device before real onboarding.')
         ),
     cfg.StrOpt(
             'scheduler_constants',
@@ -92,3 +95,27 @@ OPTS = [
 ]
 
 cfg.CONF.register_opts(OPTS)
+
+file_path = cfg.CONF.scheduler_constants
+cust_cfg = None
+try:
+    with open(file_path, 'r') as config_file:
+        cust_cfg = json.load(config_file)
+except Exception as err:
+    msg = "cannot load customerized config " \
+        "file %s\n error: %s\n" % (
+            cfg.CONF.scheduler_constants,
+            err
+        )
+    # use warning, not throw exception. exception is thrown by users
+    LOG.warning(msg)
+
+
+def merge_cfg_dict(cfg, *cust_cfgs):
+    try:
+        for nc in cust_cfgs:
+            cfg.update(nc)
+    except Exception as exc:
+        msg = "update config dict with %s\n error: %s\n" % (
+            nc, exc)
+        raise Exception(msg)

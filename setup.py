@@ -27,6 +27,13 @@ setup(name='f5-openstack-lbaasv2-driver',
       description='F5 Networks Driver for OpenStack LBaaSv2 service',
       long_description=readme(),
       version=f5lbaasdriver.__version__,
+      data_files=[
+          (
+              '/etc/neutron/services/f5', [
+                  'etc/neutron/services/f5/scheduler.json'
+              ]
+          )
+      ],
       entry_points={
           'console_scripts': ['add_f5agent_environment='
                               'f5lbaasdriver.utils.add_environment:main']},
@@ -37,7 +44,7 @@ setup(name='f5-openstack-lbaasv2-driver',
       # Runtime dependencies.
       install_requires=[],
 
-      packages=find_packages(),
+      packages=find_packages(exclude=['*.test', '*.test.*', 'test*', 'test']),
       classifiers=['Development Status :: 5 - Production/Stable',
                    'License :: OSI Approved :: Apache Software License',
                    'Operating System :: OS Independent',
