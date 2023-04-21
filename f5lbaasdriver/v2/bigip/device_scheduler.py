@@ -14,11 +14,9 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import json
 import random
 import sys
 
-from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
 
@@ -30,8 +28,10 @@ from neutron_lbaas.extensions import lbaas_agentschedulerv2
 from neutron_lbaas_inventory.db.inventory_db import InventoryDbPlugin
 
 from f5lbaasdriver.v2.bigip import agent_scheduler as f5_agent_scheduler
+from f5lbaasdriver.v2.bigip import config
 from f5lbaasdriver.v2.bigip import constants_v2
 
+cfg = config.cfg
 LOG = logging.getLogger(__name__)
 
 
@@ -218,14 +218,19 @@ class DeviceFilter(object):
         """Initialze Device Filter"""
         self.scheduler = scheduler
 
-    def load_constant(self):
-        try:
-            f = open(cfg.CONF.scheduler_constants)
-            self.constant = json.load(f)
-            f.close()
-        except Exception:
-            # No constant file. Ingnore error.
-            self.constant = {}
+    def load_config(self):
+
+        # default config
+        self.constant = {}
+        self.constant["flavor"] = constants_v2.FLAVOR_CONN_MAP
+        self.constant["capacity"] = constants_v2.CAPACITY_MAP
+
+        # customized config
+        if config.cust_cfg is None:
+            msg = "customerized configuration is None, check " \
+                "your /etc/neutron/services/f5/scheduler.json file."
+            raise Exception(msg)
+        self.cust_cfg = config.cust_cfg
 
     def select(self, context, plugin, lb, candidates, **kwargs):
         raise NotImplementedError()
@@ -287,16 +292,27 @@ class CapacityFilter(DeviceFilter):
 
     def __init__(self, scheduler):
         super(CapacityFilter, self).__init__(scheduler)
-        self.load_constant()
+        self.load_config()
 
-    def load_constant(self):
-        super(CapacityFilter, self).load_constant()
+    def load_config(self):
+        super(CapacityFilter, self).load_config()
 
-        if "flavor" not in self.constant:
-            self.constant["flavor"] = constants_v2.FLAVOR_CONN_MAP
+        if self.cust_cfg.get("flavor"):
+            LOG.debug("merge config: customized flavors")
+            config.merge_cfg_dict(
+                self.constant["flavor"],
+                self.cust_cfg["flavor"]
+            )
 
-        if "capacity" not in self.constant:
-            self.constant["capacity"] = constants_v2.CAPACITY_MAP
+        if self.cust_cfg.get("capacity") and \
+                self.cust_cfg.get("capacity").get("license"):
+            LOG.debug(
+                "merge config: customized capacity licenses"
+            )
+            config.merge_cfg_dict(
+                self.constant["capacity"]["license"],
+                self.cust_cfg["capacity"]["license"]
+            )
 
         capacity_const = self.constant["capacity"]
         if "license" in capacity_const:
@@ -374,16 +390,26 @@ class CapacityFilter(DeviceFilter):
 
         capacity_const = self.constant["capacity"]
         license = bigip["license"].values()[0]
-        if "license" in capacity_const and \
-           license in capacity_const["license"]:
-            constant = capacity_const["license"][license]
-        elif "license" in capacity_const and \
-             "default" in capacity_const["license"]:
-            LOG.debug("No device type specific capacity constant. "
-                      "Use default values.")
-            constant = capacity_const["license"]["default"]
+
+        if "license" not in capacity_const:
+            msg = "'license' is not in scheduler.json, " \
+                "skip capacity calculating.\n"
+            LOG.warning(msg)
+            return 0
+        capacity = capacity_const["license"]
+
+        if license in capacity:
+            constant = capacity[license]
+        elif "default" in capacity:
+            msg = "license: %s use default" \
+                "values in scheduler.json.\n" % license
+            LOG.debug(msg)
+            constant = capacity["default"]
         else:
-            LOG.warning("No capacity constant. Skip calculating.")
+            msg = "%s license corresponding capacity value not " \
+                "found in %s, and not default value config" % (
+                    license, capacity_const)
+            LOG.warning(msg)
             return 0
 
         lod = constant["lod"]

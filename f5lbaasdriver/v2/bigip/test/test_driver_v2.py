@@ -128,6 +128,7 @@ def happy_path_driver():
     return mock_driver, mock.MagicMock(name='mock_context')
 
 
+@mock.patch('f5lbaasdriver.v2.bigip.driver_v2.config.cust_cfg', {})
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.agent_rpc')
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.plugin_rpc')
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.ACLGroupManager')

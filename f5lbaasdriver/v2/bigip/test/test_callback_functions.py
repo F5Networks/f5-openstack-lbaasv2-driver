@@ -17,6 +17,7 @@ import mock
 from f5lbaasdriver.v2.bigip.driver_v2 import F5DriverV2
 
 
+@mock.patch('f5lbaasdriver.v2.bigip.driver_v2.config.cust_cfg', {})
 @mock.patch('f5lbaasdriver.v2.bigip.driver_v2.ACLGroupManager')
 @mock.patch('f5lbaasdriver.v2.bigip.agent_rpc.LBaaSv2AgentRPC')
 def test_bind_registry_callback(mock_agent_rpc, mock_ACLGroupManager):

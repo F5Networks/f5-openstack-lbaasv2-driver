@@ -102,11 +102,32 @@ FLAVOR_CONN_MAP = {
     }
 }
 
+# 'candiate' means a single bigip device here, not a device group.
+
+# lod: default load capacity of loadbalancers for current candidate
+# cod: default connection limit capacity of current candidate
+# poc: default multiplication factor for cod.
+# rod: default connection rate limit capacity of current candidate
+# por: default multiplication factor for rod.
+
+# ROLB: sum of rate_limit of all existed flavored lbs.
+# COLB: sum of connection_limit of all existed flavored lbs.
+# rolb: rate_limit of the provisioning flavored lb.
+# colb: connection_limit of the provisioning flavored lb.
+
+# X = lod - <all lbs of a candidate>
+# Y = ((rod * por) - ROLB) / rolb
+# Z = ((cod * poc) - COLB) / colb
+# we chose the min(X, Y, Z) stand for the score of current candidate.
+# a lowest score of candidates stands for a device group.
+# finally we return a list of device groups, their scores are all above 0.
+
 CAPACITY_MAP = {
     "license": {
         "VE-200M": {
             "osr": 5,
             "bandwidth": 200,
+
             "lod": 2,
             "rod": 5000,
             "cod": 200000,
@@ -116,6 +137,7 @@ CAPACITY_MAP = {
         "VE-1G": {
             "osr": 5,
             "bandwidth": 1000,
+
             "lod": 10,
             "rod": 25000,
             "cod": 1000000,
@@ -125,6 +147,7 @@ CAPACITY_MAP = {
         "VE-10G": {
             "osr": 5,
             "bandwidth": 10000,
+
             "lod": 32,
             "rod": 100000,
             "cod": 5000000,
@@ -134,6 +157,7 @@ CAPACITY_MAP = {
         "default": {
             "osr": 1,
             "bandwidth": -1,
+
             "lod": -1,
             "rod": -1,
             "cod": -1,
