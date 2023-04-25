@@ -1129,11 +1129,24 @@ class LBaaSv2PluginCallbacksRPC(object):
         with context.session.begin(subtransactions=True):
             try:
                 LOG.info('getting devices begins')
-                devices = self.driver.inventory_plugin.get_devices(
+                devices_db = self.driver.inventory_plugin.get_devices(
                     context,
                     filters={'availability_zone': availability_zone}
                 )
-                LOG.info('getting devices ends: %s' % devices)
+
+                device_ids = [device["id"] for device in devices_db]
+                members = self.driver.inventory_plugin.get_members(
+                    context, {"device_id": device_ids}
+                )
+                for device_db in devices_db:
+                    device = device_db.copy()
+                    device["device_info"]["members"] = []
+                    for member in members:
+                        if member["device_id"] == device["id"]:
+                            device["device_info"]["members"].append(
+                                member.copy()
+                            )
+                    devices.append(device)
             except Exception as e:
                 LOG.error('Exception: get_devices: %s',
                           e.message)
@@ -1141,17 +1154,18 @@ class LBaaSv2PluginCallbacksRPC(object):
         return devices
 
     @log_helpers.log_method_call
-    def update_device(self, context, id, device):
-        """update devices in db inventory."""
+    def update_device_member(self, context, id, member):
+        """update device member in db inventory."""
+        # the id here is device member's id
         with context.session.begin(subtransactions=True):
             try:
-                LOG.info('update device %s begins' % id)
-                self.driver.inventory_plugin.update_device(
+                LOG.info('update device member %s begins' % id)
+                self.driver.inventory_plugin.update_member(
                     context,
                     id,
-                    device
+                    member
                 )
-                LOG.info('update device %s ends.' % id)
+                LOG.info('update device member %s ends' % id)
             except Exception as e:
-                LOG.error('Exception: update_device: %s',
+                LOG.error('Exception: update_device_member: %s',
                           e.message)
