@@ -92,6 +92,7 @@ class F5DriverV2(object):
             cfg.CONF.loadbalancer_agent_scheduler)
         self.device_scheduler = importutils.import_object(
             cfg.CONF.loadbalancer_device_scheduler)
+        self.device_scheduler.driver = self
 
         self.service_builder = importutils.import_object(
             cfg.CONF.f5_loadbalancer_service_builder_v2, self)

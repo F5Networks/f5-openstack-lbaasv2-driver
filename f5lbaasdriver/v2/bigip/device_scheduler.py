@@ -36,13 +36,18 @@ LOG = logging.getLogger(__name__)
 
 
 class NoEligibleLbaasDevice(lbaas_agentschedulerv2.NoEligibleLbaasAgent):
-    message = ("No eligible BIG-IP found "
+    message = ("No eligible device found "
                "for loadbalancer %(loadbalancer_id)s.")
 
 
 class NoActiveLbaasDevice(lbaas_agentschedulerv2.NoActiveLbaasAgent):
-    message = ("No active BIG-IP found "
+    message = ("No active device found "
                "for loadbalancer %(loadbalancer_id)s.")
+
+
+class NoDedicatedLbaasDevice(NoActiveLbaasDevice):
+    message = ("The dedicated devices specified by "
+               "user-device-map does not exist.")
 
 
 class LbaasDeviceDisappeared(nexception.Conflict):
@@ -109,7 +114,11 @@ class DeviceSchedulerNG(object):
         if the_inactive_dev:
             candidates = the_inactive_dev
         else:
-            candidates = self.load_active_devices(context)
+            udms = self.load_user_device_maps(context, lb.tenant_id)
+            if len(udms) > 0:
+                candidates = self.load_dedicated_devices(context, udms)
+            else:
+                candidates = self.load_shared_devices(context)
 
         LOG.debug("the candidates are: %s", candidates)
         if len(candidates) <= 0:
@@ -164,8 +173,66 @@ class DeviceSchedulerNG(object):
             devices.append(device)
         return devices
 
-    def load_active_devices(self, context):
-        return self.load_devices(context, {"admin_state_up": [True]})
+    def load_shared_devices(self, context):
+        filters = {"shared": [True], "admin_state_up": [True]}
+        return self.load_devices(context, filters)
+
+    def load_user_device_maps(self, context, tenant_id):
+        if not hasattr(self.driver.plugin.db,
+                       'get_user_device_maps_as_api_dict'):
+            LOG.debug("No user-device-map db interface. "
+                      "Skip to load dedicated devices.")
+            return []
+
+        maps = self.driver.plugin.db.get_user_device_maps_as_api_dict(
+            context, {"user_id": [tenant_id]})
+        LOG.debug("The user-device-map for user_id %s is %s", tenant_id, maps)
+        return maps
+
+    def load_dedicated_devices(self, context, maps):
+        ipv4_filter = {"mgmt_ipv4": []}
+        ipv6_filter = {"mgmt_ipv6": []}
+        for map in maps:
+            node_ip = map["node_ip"]
+            for ips_str in node_ip.split(";"):
+                ips = ips_str.split(",")
+                for ip in ips:
+                    if "." in ip:
+                        ipv4_filter["mgmt_ipv4"].append(ip)
+                    elif ":" in ip:
+                        ipv6_filter["mgmt_ipv6"].append(ip)
+
+        members = []
+        if len(ipv4_filter["mgmt_ipv4"]) > 0:
+            members_db = self.inventory.get_members(context, ipv4_filter)
+            for member_db in members_db:
+                members.append(member_db.copy())
+        if len(ipv6_filter["mgmt_ipv6"]) > 0:
+            members_db = self.inventory.get_members(context, ipv6_filter)
+            for member_db in members_db:
+                members.append(member_db.copy())
+
+        if len(members) == 0:
+            raise NoDedicatedLbaasDevice()
+
+        device_ids = []
+        for member in members:
+            if member["device_id"] not in device_ids:
+                device_ids.append(member["device_id"])
+
+        device_filter = {
+            "id": device_ids,
+            "shared": [False],
+            "admin_state_up": [True]
+        }
+
+        devices = self.load_devices(context, device_filter)
+
+        # TODO(qzhao): Need to ensure consistency between user-device-map
+        # and inventory. For example, all device member mgmt ips must be
+        # in the same part of node_ip string.
+
+        return devices
 
     def load_inactive_device(self, context):
         return self.load_devices(context, {"admin_state_up": [False]})
