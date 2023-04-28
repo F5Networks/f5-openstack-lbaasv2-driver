@@ -14,6 +14,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import ipaddr
 import random
 import sys
 
@@ -200,7 +201,8 @@ class DeviceSchedulerNG(object):
                     if "." in ip:
                         ipv4_filter["mgmt_ipv4"].append(ip)
                     elif ":" in ip:
-                        ipv6_filter["mgmt_ipv6"].append(ip)
+                        ipv6_filter["mgmt_ipv6"].append(
+                            ipaddr.IPv6Address(ip).compressed)
 
         members = []
         if len(ipv4_filter["mgmt_ipv4"]) > 0:
