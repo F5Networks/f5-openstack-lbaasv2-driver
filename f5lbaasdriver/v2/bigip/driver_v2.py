@@ -477,7 +477,9 @@ class LoadBalancerManager(EntityManager):
 
             port_data[portbindings.PROFILE] = {}
 
-            vip_masq_mac = device['device_info'].get('masquerade_mac')
+            device_info = device.get('device_info')
+
+            vip_masq_mac = device_info.get('masquerade_mac')
             if not vip_masq_mac:
                 LOG.error(
                     "Can not find masquerade_mac in device %s, when"
@@ -487,7 +489,7 @@ class LoadBalancerManager(EntityManager):
                 )
 
             # llinfo is a list of dict type
-            llinfo = device.get('local_link_information', None)
+            llinfo = device_info.get('local_link_information')
 
             if llinfo:
                 link_info = llinfo[0]
