@@ -62,6 +62,7 @@ OPTS = [
             'device_filters',
             default=[
                         'AvailabilityZoneFilter',
+                        'OfflineDeviceFilter',
                         'FlavorFilter',
                         'CapacityFilter',
                         'RandomFilter'
