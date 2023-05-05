@@ -322,6 +322,41 @@ class AvailabilityZoneFilter(f5_agent_scheduler.AvailabilityZoneFilter):
     pass
 
 
+class OfflineDeviceFilter(DeviceFilter):
+    def select(self, context, plugin, lb, candidates, **kwargs):
+        result = []
+        for candidate in candidates:
+            select_it = True
+            for member in candidate["device_info"]["members"]:
+                ops = member["operating_status"]
+                status = ops.get("status", "OFFLINE")
+                if status != "ONLINE":
+                    select_it = False
+
+            if select_it:
+                result.append(candidate)
+
+        return result
+
+
+class OfflineDeviceMemberFilter(DeviceFilter):
+    def select(self, context, plugin, lb, candidates, **kwargs):
+        result = []
+        for candidate in candidates:
+            online_members = []
+            for member in candidate["device_info"]["members"]:
+                ops = member["operating_status"]
+                status = ops.get("status", "OFFLINE")
+                if status == "ONLINE":
+                    online_members.append(member)
+            candidate["device_info"]["members"] = online_members
+
+            if len(online_members) > 0:
+                result.append(candidate)
+
+        return result
+
+
 class FlavorFilter(DeviceFilter):
 
     def select(self, context, plugin, lb, candidates, **kwargs):
