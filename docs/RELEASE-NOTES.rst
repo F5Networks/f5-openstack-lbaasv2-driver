@@ -4,6 +4,29 @@
 
 Release Notes
 =============
+v212.6.4 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* [OPENSTACK-2751] Filtering out offline devices
+* [OPENSTACK-2512] Update vtep ip for neutron port
+* [OPENSTACK-2751] Support single ipv6 mgmt address
+* [OPENSTACK-2766] Driver update 4 new inventory dev
+* [OPENSTACK-2752] Schedule loadbalancer to dedicated device
+* [OPENSTACK-2764] Adapt to the new inventory device model
+* [OPENSTACK-2769] Change capacity config for capacity calculation
+* [OPENSTACK-2769] Move cfg OPTs to config.py
+* [OPENSTACK-2762] Throw granular exception if device is not found
+* [OPENSTACK-2747] Add update_device
+* [OPENSTACK-2747] Add driver side get_devices
+* [OPENSTACK-2739] Load device from inventory db
+* [OPENSTACK-2701] Update VIP with MAC of traffic group 1
+
+Bug Fixes
+`````````
+* None noted
+
 v212.6.3 (Pike)
 --------------
 
