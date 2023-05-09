@@ -13,6 +13,8 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import math
+
 from oslo_log import log as logging
 
 from neutron.services.network_ip_availability import plugin as niap
@@ -57,8 +59,7 @@ class FlavorValidator(LoadBalancerValidator):
 
     def validate(self, context, lb):
         f = lb.flavor
-        if f < 1 or f > 13 or \
-           (f > 8 and f < 11):
+        if f < 1 or 8 < f < 11 or 13 < f < 21 or f > 21:
             raise InvalidFlavor(loadbalancer_id=lb.id, flavor=f)
 
     def validate_create(self, context, lb):
@@ -114,9 +115,7 @@ class SnatIPValidator(LoadBalancerValidator):
         if flavor in [7, 8]:
             return
 
-        snat_map = constants_v2.FLAVOR_SNAT_MAP
-        v4_r = snat_map[4][flavor]
-        v6_r = snat_map[6][flavor]
+        v4_r, v6_r = self._calculate_snat(lb)
 
         v4_a, v6_a = self.get_available_ips(context, lb)
 
@@ -130,16 +129,13 @@ class SnatIPValidator(LoadBalancerValidator):
 
     def validate_update(self, context, old_lb, lb):
         flavor = lb.flavor
+        old_flavor = old_lb.flavor
+
         if flavor in [7, 8]:
             return
 
-        snat_map = constants_v2.FLAVOR_SNAT_MAP
-        v4_r = snat_map[4][flavor]
-        v6_r = snat_map[6][flavor]
-
-        old_flavor = old_lb.flavor
-        old_v4_r = snat_map[4][old_flavor]
-        old_v6_r = snat_map[6][old_flavor]
+        v4_r, v6_r = self._calculate_snat(lb)
+        old_v4_r, old_v6_r = self._calculate_snat(old_lb)
 
         if old_flavor not in [7, 8]:
             v4_r -= old_v4_r
@@ -154,3 +150,17 @@ class SnatIPValidator(LoadBalancerValidator):
         if v6_a is not None and v6_r > 0 and v6_a < v6_r:
             raise NoAvailableSnatIPv6(loadbalancer_id=lb.id, required=v6_r,
                                       available=v6_a)
+
+    def _calculate_snat(self, lb):
+        snat_map = constants_v2.FLAVOR_SNAT_MAP
+        v4_r = snat_map[4][lb.flavor]
+        v6_r = snat_map[6][lb.flavor]
+
+        if lb.flavor == 21 and lb.max_concurrency > 0:
+            v4_r = math.ceil(lb.max_concurrency / 65536)
+            if v4_r > 1:
+                v6_r = v4_r - 1
+            else:
+                v6_r = v4_r
+
+        return v4_r, v6_r

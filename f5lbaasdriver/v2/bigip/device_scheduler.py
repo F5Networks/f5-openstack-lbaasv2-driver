@@ -361,7 +361,7 @@ class FlavorFilter(DeviceFilter):
 
     def select(self, context, plugin, lb, candidates, **kwargs):
         flavor = lb.flavor
-        if flavor < 1 or 8 < flavor < 11 or flavor > 13:
+        if flavor < 1 or 8 < flavor < 11 or 13 < flavor < 21 or flavor > 21:
             # Invalid flavor values
             return []
 
@@ -378,7 +378,7 @@ class FlavorFilter(DeviceFilter):
                     lic_types.append("HW")
 
             select_it = True
-            if 1 <= flavor <= 8:
+            if 1 <= flavor <= 8 or flavor == 21:
                 # Select BIG-IP HW or BIG-IP VE with dev license
                 for lic_type in lic_types:
                     if lic_type == "VE":
