@@ -25,7 +25,7 @@ Added Functionality
 
 Bug Fixes
 `````````
-* None noted
+* [OPENSTACK-2751] replace package ipaddr with ipaddress
 
 v212.6.3 (Pike)
 --------------
