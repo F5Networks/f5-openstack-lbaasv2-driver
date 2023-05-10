@@ -4,7 +4,7 @@
 
 Release Notes
 =============
-v212.6.4 (Pike)
+v212.6.5 (Pike)
 --------------
 
 Added Functionality
