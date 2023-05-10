@@ -23,5 +23,5 @@ python-glanceclient==IGNORED
 python-heatclient==IGNORED
 tempest==IGNORED   # See section comment
 pytest-cov==2.2.1
-ipaddr
+ipaddress
 f5-openstack-lbaasv2-inventory
