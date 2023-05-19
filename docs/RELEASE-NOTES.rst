@@ -4,6 +4,16 @@
 
 Release Notes
 =============
+v212.6.6 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+
+Bug Fixes
+`````````
+* [OPENSTACK-2740] Switch to admin context when loading device
+
 v212.6.5 (Pike)
 --------------
 
