@@ -21,6 +21,7 @@ import sys
 from oslo_log import log as logging
 from oslo_utils import importutils
 
+from neutron_lib import context as ncontext
 from neutron_lib import exceptions as nexception
 
 from neutron_lbaas import agent_scheduler
@@ -160,8 +161,14 @@ class DeviceSchedulerNG(object):
             return candidates[0]
 
     def load_devices(self, context, filters=None):
+        # Switch to admin context, so that driver code can query
+        # devices onboared by admin when processing user request
+        if context.is_admin:
+            admin_ctx = context
+        else:
+            admin_ctx = ncontext.get_admin_context()
         devices = []
-        devices_db = self.inventory.get_devices(context, filters)
+        devices_db = self.inventory.get_devices(admin_ctx, filters)
         device_ids = [device["id"] for device in devices_db]
         members = self.inventory.get_members(
             context, {"device_id": device_ids})
