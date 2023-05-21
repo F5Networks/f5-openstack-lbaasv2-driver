@@ -1123,15 +1123,14 @@ class LBaaSv2PluginCallbacksRPC(object):
         return has_l7policy
 
     @log_helpers.log_method_call
-    def get_devices(self, context, availability_zone):
+    def get_devices(self, context):
         """get devices from db inventory."""
         devices = []
         with context.session.begin(subtransactions=True):
             try:
                 LOG.info('getting devices begins')
                 devices_db = self.driver.inventory_plugin.get_devices(
-                    context,
-                    filters={'availability_zone': availability_zone}
+                    context
                 )
 
                 device_ids = [device["id"] for device in devices_db]
