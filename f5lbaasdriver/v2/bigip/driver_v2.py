@@ -51,6 +51,24 @@ from neutron_lib import constants as n_const
 cfg = config.cfg
 LOG = logging.getLogger(__name__)
 
+# Semaphore of device scheduler
+sem = 1
+
+
+def _sem_down():
+    global sem
+    while True:
+        if sem > 0:
+            sem = sem - 1
+            break
+        else:
+            sleep(0)
+
+
+def _sem_up():
+    global sem
+    sem = sem + 1
+
 
 class F5NoAttachedLoadbalancerException(f5_exc.F5LBaaSv2DriverException):
     """Exception thrown when an LBaaSv2 object has not parent Loadbalancer."""
@@ -93,6 +111,17 @@ class F5DriverV2(object):
         self.device_scheduler = importutils.import_object(
             cfg.CONF.loadbalancer_device_scheduler)
         self.device_scheduler.driver = self
+
+        self.device_scheduler_perf_mode = \
+            cfg.CONF.loadbalancer_device_scheduler_perf_mode
+
+        if cfg.CONF.loadbalancer_device_scheduler_timeout >= 0:
+            self.device_scheduler_timeout = \
+                cfg.CONF.loadbalancer_device_scheduler_timeout
+
+        global sem
+        if cfg.CONF.loadbalancer_device_scheduler_semaphore > 1:
+            sem = cfg.CONF.loadbalancer_device_scheduler_semaphore
 
         self.service_builder = importutils.import_object(
             cfg.CONF.f5_loadbalancer_service_builder_v2, self)
@@ -279,46 +308,47 @@ class EntityManager(object):
             self.driver.env
         )
 
+        # Performance mode
+        # 1. quality (default): Enable semaphore and db lock both.
+        # 2. performance: Enable semaphore. No db lock.
+        perf_mode = self.driver.device_scheduler_perf_mode
+
         binding = LAB()
         binding.loadbalancer_id = loadbalancer.id
-        binding.agent = agent
+        binding.agent_id = agent["id"]
         binding.device_id = "unknown"
 
-        max_wait = 30
+        max_wait = self.driver.device_scheduler_timeout
         wait = 0
         attempt = 1
         while wait <= max_wait:
             try:
+                _sem_down()
+
                 with context.session.begin(subtransactions=True):
-                    # Insert a new row without device assigned
-                    context.session.add(binding)
-                    context.session.flush()
-
-                    # Lock all rows who do not have devices assigned.
-                    query = context.session.query(LAB).populate_existing(
-                        ).with_for_update().filter_by(device_id="unknown")
-
-                    # Fetch data from query object, in order to ensure it
-                    # is executed against db
-                    b = binding
-                    for x in query:
-                        if x.loadbalancer_id == binding.loadbalancer_id:
-                            b = x
-                            break
+                    if perf_mode == "quality":
+                        # Lock the table, refuse inserting
+                        query = context.session.query(LAB).populate_existing(
+                            ).with_for_update().filter_by(device_id="unknown")
 
                     # Schedule device
                     device = self.driver.device_scheduler.schedule(
                         self.driver.plugin, context, loadbalancer
                     )
-                    # Update the new row's device_id
-                    b.device_id = device["id"]
-                    context.session.add(b)
+                    # Insert a new row with device_id
+                    binding.device_id = device["id"]
+                    context.session.add(binding)
+
+                LOG.debug("Release db lock after %s attempts", attempt)
                 break
             except db_exc.DBDeadlock as ex:
                 # NOTE(qzhao):  A request who does not get the row lock
                 # may encounter deadlock error. It can retry, and should
                 # give up eventually, if it can not acquire the lock.
-                LOG.info("Attempt %s DB deadlock: %s", attempt, ex)
+
+                # Avoid log flooding when too many request come in.
+                if attempt == 1:
+                    LOG.debug("Attempt %s DB deadlock: %s", attempt, ex)
                 interval = random.uniform(0, 1.0)
                 if wait + interval <= max_wait:
                     # Wait up to 1 second
@@ -326,8 +356,11 @@ class EntityManager(object):
                     attempt += 1
                     sleep(interval)
                 else:
+                    LOG.debug("Cannot get db lock after %s attempts", attempt)
                     raise device_scheduler.DeviceSchedulerBusy(
                         loadbalancer_id=loadbalancer.id)
+            finally:
+                _sem_up()
 
         LOG.info("LB %s is scheduled to agent %s device %s",
                  loadbalancer.id, agent["id"], device["id"])
