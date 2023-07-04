@@ -58,6 +58,21 @@ OPTS = [
             help=('Driver to use for scheduling '
                   'a loadbalancer to a BIG-IP device')
         ),
+    cfg.StrOpt(
+            'loadbalancer_device_scheduler_perf_mode',
+            default='quality',
+            help=('Device scheduler performance mode')
+        ),
+    cfg.IntOpt(
+            'loadbalancer_device_scheduler_semaphore',
+            default=1,
+            help=('Device scheduler semaphore')
+        ),
+    cfg.IntOpt(
+            'loadbalancer_device_scheduler_timeout',
+            default=30,
+            help=('Device scheduler timeout')
+        ),
     cfg.ListOpt(
             'device_filters',
             default=[

@@ -154,6 +154,7 @@ def test_lbmgr_create():
     }
     mock_driver.plugin.db.get_agent_hosting_loadbalancer.return_value = {}
     mock_driver.service_builder.build.return_value = {}
+    mock_driver.device_scheduler_timeout = 30
     lb_mgr = dv2.LoadBalancerManager(mock_driver)
     mock_ctx = mock.MagicMock(name='mock_context')
     fake_lb = FakeLB()
@@ -170,6 +171,7 @@ def test_lbmgr_create_exception(mock_log):
     mock_driver = mock.MagicMock(name='mock_driver')
     mock_driver.agent_scheduler.schedule.return_value = {'id': 'test_agent'}
     mock_driver.plugin.db.get_agent_hosting_loadbalancer.return_value = {}
+    mock_driver.device_scheduler_timeout = 30
     lb_mgr = dv2.LoadBalancerManager(mock_driver)
     mock_ctx = mock.MagicMock(name='mock_context')
     fake_lb = FakeLB()
@@ -186,6 +188,7 @@ def test_lbmgr_create_mismatched_tenant_exception(mock_log):
     mock_driver.agent_scheduler.schedule.side_effect = \
         f5_exc.F5MismatchedTenants
     mock_driver.plugin.db.get_agent_hosting_loadbalancer.return_value = {}
+    mock_driver.device_scheduler_timeout = 30
     lb_mgr = dv2.LoadBalancerManager(mock_driver)
     mock_ctx = mock.MagicMock(name='mock_context')
     with pytest.raises(f5_exc.F5MismatchedTenants) as ex:
@@ -204,6 +207,7 @@ def test_lbmgr_create_no_eligible_agent(mock_log):
     mock_driver = mock.MagicMock(name='mock_driver')
     mock_driver.agent_scheduler.schedule.side_effect = FakeNoEligibleAgentExc
     mock_driver.plugin.db.get_agent_hosting_loadbalancer.return_value = {}
+    mock_driver.device_scheduler_timeout = 30
     lb_mgr = dv2.LoadBalancerManager(mock_driver)
     mock_ctx = mock.MagicMock(name='mock_context')
     with pytest.raises(FakeNoEligibleAgentExc):
