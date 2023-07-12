@@ -610,10 +610,28 @@ class LoadBalancerManager(EntityManager):
             self._handle_entity_error(context, loadbalancer.id)
             raise e
 
+    # Temporarily utilize this interface to implement loadbalancer rebuild
     @log_helpers.log_method_call
     def refresh(self, context, loadbalancer):
         """Refresh a loadbalancer."""
-        pass
+
+        self._log_entity(loadbalancer)
+
+        driver = self.driver
+        try:
+            agent, device = self._schedule_agent_and_device(context,
+                                                            loadbalancer)
+            # NOTE(qzhao): Call agent to rebuild LB.
+            service = self._create_service(context, loadbalancer, agent)
+            service["device"] = device
+            agent_host = agent['host']
+
+            driver.agent_rpc.rebuild_loadbalancer(
+                    context, loadbalancer.to_api_dict(), service, agent_host)
+        except Exception as e:
+            LOG.error("Exception: loadbalancer delete: %s" % e)
+            self._handle_entity_error(context, loadbalancer.id)
+            raise e
 
     @log_helpers.log_method_call
     def stats(self, context, loadbalancer):
