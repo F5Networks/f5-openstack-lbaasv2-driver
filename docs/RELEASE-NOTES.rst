@@ -4,6 +4,17 @@
 
 Release Notes
 =============
+v212.6.7 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* [OPENSTACK-2754] Support flavor 21
+* [OPENSTACK-2815] Optimize device scheduler locking
+
+Bug Fixes
+`````````
+
 v212.6.6 (Pike)
 --------------
 
