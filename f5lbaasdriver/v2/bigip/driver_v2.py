@@ -48,6 +48,8 @@ from f5lbaasdriver.v2.bigip import validator
 # from neutron.api.v2 import attributes
 from neutron_lib import constants as n_const
 
+from f5_openstack_agent.lbaasv2.drivers.bigip import utils
+
 cfg = config.cfg
 LOG = logging.getLogger(__name__)
 
@@ -227,10 +229,14 @@ class EntityManager(object):
         '''
 
         LAB = agent_scheduler.LoadbalancerAgentBinding
+        result = {}
 
-        # If LB is already hosted on an agent, return this agent and device
-        result = self.driver.plugin.db.get_agent_hosting_loadbalancer(
-            context, loadbalancer.id)
+        # designate devices for rebuild lbaas
+        additional_devices = kwargs.get("device_id", [])
+
+        if not additional_devices:
+            result = self.driver.plugin.db.get_agent_hosting_loadbalancer(
+                context, loadbalancer.id)
 
         if result:
             agent = result["agent"]
@@ -284,7 +290,9 @@ class EntityManager(object):
                     device_id=device_id)
 
         # If no binding
-        if loadbalancer.provisioning_status == n_const.PENDING_CREATE:
+        if loadbalancer.provisioning_status in [
+                n_const.PENDING_CREATE, n_const.PENDING_UPDATE
+        ]:
             # LB is being created. Let's go.
             pass
         elif loadbalancer.provisioning_status == n_const.PENDING_DELETE:
@@ -331,13 +339,29 @@ class EntityManager(object):
                         query = context.session.query(LAB).populate_existing(
                             ).with_for_update().filter_by(device_id="unknown")
 
-                    # Schedule device
-                    device = self.driver.device_scheduler.schedule(
-                        self.driver.plugin, context, loadbalancer
-                    )
-                    # Insert a new row with device_id
-                    binding.device_id = device["id"]
-                    context.session.add(binding)
+                    # Schedule devices in db, as normal.
+                    if not additional_devices:
+                        device = self.driver.device_scheduler.schedule(
+                            self.driver.plugin, context, loadbalancer
+                        )
+
+                        binding.device_id = device["id"]
+                        context.session.add(binding)
+
+                    # we designate additional device to rebuild
+                    if len(additional_devices) == 1:
+                        device = self.driver.device_scheduler.designate_device(
+                            context, loadbalancer, additional_devices
+                        )
+
+                        # FIXME is any good way to do this update ?
+                        # this may be dangerous, since there is no
+                        # binding backup
+                        statement = 'update lbaas_loadbalanceragentbindings ' \
+                            'set device_id="%s", agent_id="%s" ' \
+                            'where loadbalancer_id="%s"' % (
+                                device['id'], agent['id'], loadbalancer.id)
+                        context.session.execute(statement)
 
                 LOG.debug("Release db lock after %s attempts", attempt)
                 break
@@ -612,19 +636,27 @@ class LoadBalancerManager(EntityManager):
 
     # Temporarily utilize this interface to implement loadbalancer rebuild
     @log_helpers.log_method_call
-    def refresh(self, context, loadbalancer):
+    def refresh(self, context, lbext):
         """Refresh a loadbalancer."""
 
+        loadbalancer = lbext['loadbalancerext']['loadbalancer']
+        device_id = lbext['loadbalancerext']['device_id']
+
         self._log_entity(loadbalancer)
+        LOG.info("rebuild loadbalancer with body %s", lbext)
 
         driver = self.driver
         try:
-            agent, device = self._schedule_agent_and_device(context,
-                                                            loadbalancer)
+            agent, device = self._schedule_agent_and_device(
+                context, loadbalancer, device_id=device_id)
+
             # NOTE(qzhao): Call agent to rebuild LB.
             service = self._create_service(context, loadbalancer, agent)
             service["device"] = device
             agent_host = agent['host']
+
+            lb_port = service["loadbalancer"]["vip_port"]
+            self._update_lb_port(lb_port, device)
 
             self._allocate_acl_groups(context, service)
 
@@ -634,6 +666,45 @@ class LoadBalancerManager(EntityManager):
             LOG.error("Exception: loadbalancer delete: %s" % e)
             self._handle_entity_error(context, loadbalancer.id)
             raise e
+
+    def _update_lb_port(self, lb_port, device):
+        import pdb; pdb.set_trace()
+        device_info = device.get('device_info')
+
+        vip_masq_mac = device_info.get('masquerade_mac')
+        if not vip_masq_mac:
+            LOG.error(
+                "Can not find masquerade_mac in device %s, when"
+                " rebuild and update port %s." % (
+                    device, lb_port
+                )
+            )
+
+        # llinfo is a list of dict type
+        llinfo = device_info.get('local_link_information')
+
+        if llinfo:
+            link_info = llinfo[0]
+        else:
+            link_info = dict()
+            llinfo = [link_info]
+
+        link_info.update({"lb_mac": vip_masq_mac})
+        binding_profile = {"local_link_information": llinfo}
+
+        same_mac, same_vtep = utils.check_port_llinfo(
+            lb_port, binding_profile
+        )
+
+        # port_data[portbindings.PROFILE] = {
+            # "local_link_information": llinfo
+        # }
+
+        # driver.plugin.db._core_plugin.update_port(
+            # context,
+            # loadbalancer.vip_port_id,
+            # {'port': port_data}
+        # )
 
     def _allocate_acl_groups(self, context, service):
 

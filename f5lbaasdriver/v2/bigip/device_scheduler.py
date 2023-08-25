@@ -160,6 +160,33 @@ class DeviceSchedulerNG(object):
         else:
             return candidates[0]
 
+    def designate_device(self, context, lb, add_device=[]):
+        '''Return a designated device
+
+        when a user rebuilds a loadbalancer with a single device id,
+        the process takes it as designated device. The method returns
+        a designated device regardless of the device's tenant id, the
+        scheduler filters or the status of device.
+        '''
+
+        LOG.debug(
+            "the allocate loadbalancer %s to designate device %s" %
+            (lb.id, add_device)
+        )
+
+        if not add_device:
+            raise NoEligibleLbaasDevice(loadbalancer_id=lb.id)
+
+        candidate = {}
+        device_id = add_device[0]
+        candidate = self.load_device(context, device_id)
+        LOG.debug("the designate device candidates is: %s", candidate)
+
+        if not candidate:
+            raise NoEligibleLbaasDevice(loadbalancer_id=lb.id)
+        else:
+            return candidate
+
     def load_devices(self, context, filters=None):
         # Switch to admin context, so that driver code can query
         # devices onboared by admin when processing user request
