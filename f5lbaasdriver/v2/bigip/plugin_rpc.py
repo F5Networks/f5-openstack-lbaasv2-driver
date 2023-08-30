@@ -606,7 +606,8 @@ class LBaaSv2PluginCallbacksRPC(object):
     def update_port_on_subnet(
         self, context, port_id, port_name=None,
         subnet_id=None, mac_address=None,
-        fixed_address_count=0
+        fixed_address_count=0,
+        binding_profile=None
     ):
         port = {'port': {}}
 
@@ -621,6 +622,9 @@ class LBaaSv2PluginCallbacksRPC(object):
                 )
         if mac_address is not None:
             port['port']['mac_address'] = mac_address
+
+        if binding_profile is not None:
+            port['port']['binding:profile'] = binding_profile
 
         if not port['port']:
             return
