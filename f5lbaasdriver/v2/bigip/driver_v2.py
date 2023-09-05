@@ -626,12 +626,62 @@ class LoadBalancerManager(EntityManager):
             service["device"] = device
             agent_host = agent['host']
 
+            self._allocate_acl_groups(context, service)
+
             driver.agent_rpc.rebuild_loadbalancer(
                     context, loadbalancer.to_api_dict(), service, agent_host)
         except Exception as e:
             LOG.error("Exception: loadbalancer delete: %s" % e)
             self._handle_entity_error(context, loadbalancer.id)
             raise e
+
+    def _allocate_acl_groups(self, context, service):
+
+        # for compatibility with pipeline test only.
+        if not hasattr(
+            models, "ACLGroupListenerBinding") or not hasattr(
+                data_models, "ACLGroupListenerBinding"):
+            return
+
+        listeners = service.get('listeners')
+
+        if not listeners:
+            return
+
+        for lstn in listeners:
+            acl_group_bind = {}
+            acl_group = {}
+            acl_rules = []
+            filters = None
+
+            lstn_id = lstn['id']
+
+            filters = {'listener_id': [lstn_id]}
+            acl_group_objs = self.driver.plugin.db._get_resources(
+                context, models.ACLGroupListenerBinding, filters=filters
+            )
+
+            if acl_group_objs:
+                acl_group_bind = \
+                    data_models.ACLGroupListenerBinding.from_sqlalchemy_model(
+                        acl_group_objs[0]).to_api_dict()
+                acl_group_id = acl_group_bind['acl_group_id']
+
+                acl_group_obj = self.driver.plugin.db.get_acl_group(
+                    context, acl_group_id)
+                if acl_group_obj:
+                    acl_group = acl_group_obj.to_api_dict()
+
+                filters = {"acl_group_id": [acl_group_id]}
+                acl_rule_objs = self.driver.plugin.db.get_acl_group_acl_rules(
+                    context, filters=filters)
+                if len(acl_rule_objs):
+                    acl_rules = [rule.to_api_dict() for rule in acl_rule_objs]
+
+            if acl_group_bind and acl_group:
+                acl_group['acl_rules_detail'] = acl_rules
+                lstn['acl_group'] = acl_group
+                lstn['acl_group_bind'] = acl_group_bind
 
     @log_helpers.log_method_call
     def stats(self, context, loadbalancer):
