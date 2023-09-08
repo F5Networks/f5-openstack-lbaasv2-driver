@@ -612,8 +612,12 @@ class LoadBalancerManager(EntityManager):
 
     # Temporarily utilize this interface to implement loadbalancer rebuild
     @log_helpers.log_method_call
-    def refresh(self, context, loadbalancer):
+    def refresh(self, context, body):
         """Refresh a loadbalancer."""
+
+        lbext = body['loadbalancerext']
+        loadbalancer = lbext['loadbalancer']
+        rebuild_all = lbext['all']
 
         self._log_entity(loadbalancer)
 
@@ -626,10 +630,14 @@ class LoadBalancerManager(EntityManager):
             service["device"] = device
             agent_host = agent['host']
 
-            self._allocate_acl_groups(context, service)
-
-            driver.agent_rpc.rebuild_loadbalancer(
+            if rebuild_all:
+                self._allocate_acl_groups(context, service)
+                driver.agent_rpc.rebuild_loadbalancer(
                     context, loadbalancer.to_api_dict(), service, agent_host)
+            else:
+                driver.agent_rpc.create_loadbalancer(
+                    context, loadbalancer.to_api_dict(), service, agent_host)
+
         except Exception as e:
             LOG.error("Exception: loadbalancer delete: %s" % e)
             self._handle_entity_error(context, loadbalancer.id)
