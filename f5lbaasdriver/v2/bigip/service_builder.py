@@ -14,14 +14,12 @@ u"""Service Module for F5® LBaaSv2."""
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import datetime
 import json
 
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 
-from f5lbaasdriver.v2.bigip import constants_v2
 from f5lbaasdriver.v2.bigip.disconnected_service import DisconnectedService
 from f5lbaasdriver.v2.bigip import exceptions as f5_exc
 from f5lbaasdriver.v2.bigip import neutron_client as q_client
@@ -46,20 +44,12 @@ class LBaaSv2ServiceBuilder(object):
         """Get full service definition from loadbalancer id."""
         self.driver = driver
 
-        self.net_cache = {}
-        self.subnet_cache = {}
-        self.last_cache_update = datetime.datetime.fromtimestamp(0)
         self.plugin = self.driver.plugin
         self.disconnected_service = DisconnectedService()
         self.q_client = q_client.F5NetworksNeutronClient(self.plugin)
 
     def build(self, context, loadbalancer, agent, **kwargs):
         """Get full service definition from loadbalancer ID."""
-        # Invalidate cache if it is too old
-        if ((datetime.datetime.now() - self.last_cache_update).seconds >
-                constants_v2.NET_CACHE_SECONDS):
-            self.net_cache = {}
-            self.subnet_cache = {}
 
         service = {}
         with context.session.begin(subtransactions=True):
@@ -75,7 +65,7 @@ class LBaaSv2ServiceBuilder(object):
             # Get the subnet network associated with the VIP.
             subnet_map = {}
             subnet_id = loadbalancer.vip_subnet_id
-            vip_subnet = self._get_subnet_cached(
+            vip_subnet = self._get_subnet(
                 context,
                 subnet_id
             )
@@ -86,7 +76,7 @@ class LBaaSv2ServiceBuilder(object):
             vip_port = service['loadbalancer']['vip_port']
             network_id = vip_port['network_id']
             service['loadbalancer']['network_id'] = network_id
-            network = self._get_network_cached(
+            network = self._get_network(
                 context,
                 network_id
             )
@@ -197,57 +187,27 @@ class LBaaSv2ServiceBuilder(object):
         return loadbalancer_dict
 
     @log_helpers.log_method_call
-    def _get_subnet_cached(self, context, subnet_id):
-        """Retrieve subnet from cache if available; otherwise, from Neutron."""
-        if subnet_id not in self.subnet_cache:
-            subnet = self.plugin.db._core_plugin.get_subnet(
-                context,
-                subnet_id
-            )
-            self.subnet_cache[subnet_id] = subnet
-        return self.subnet_cache[subnet_id]
+    def _get_subnet(self, context, subnet_id):
+        """Retrieve subnet from Neutron."""
+        subnet = self.plugin.db._core_plugin.get_subnet(
+            context,
+            subnet_id
+        )
+        return subnet
 
     @log_helpers.log_method_call
-    def _get_network_cached(self, context, network_id):
-        """Retrieve network from cache or from Neutron."""
-        if network_id not in self.net_cache:
-            network = self.plugin.db._core_plugin.get_network(
-                context,
-                network_id
-            )
-            if 'provider:network_type' not in network:
-                network['provider:network_type'] = 'undefined'
-            if 'provider:segmentation_id' not in network:
-                network['provider:segmentation_id'] = 0
-            self.net_cache[network_id] = network
+    def _get_network(self, context, network_id):
+        """Retrieve network from Neutron."""
+        network = self.plugin.db._core_plugin.get_network(
+            context,
+            network_id
+        )
+        if 'provider:network_type' not in network:
+            network['provider:network_type'] = 'undefined'
+        if 'provider:segmentation_id' not in network:
+            network['provider:segmentation_id'] = 0
 
-        return self.net_cache[network_id]
-
-    @log_helpers.log_method_call
-    def _get_member_network_cached(self, context, network_id):
-        """Retrieve network from cache or from Neutron."""
-        if network_id not in self.net_cache:
-            network = self.plugin.db._core_plugin.get_network(
-                context,
-                network_id
-            )
-            if 'provider:network_type' not in network:
-                network['provider:network_type'] = 'undefined'
-            if 'provider:segmentation_id' not in network:
-                network['provider:segmentation_id'] = 0
-            if 'segments' in network:
-                LOG.info("afred Begin net_dict is %s.", network)
-                for segment in network['segments']:
-                    if segment['provider:network_type'] == 'vlan':
-                        network['provider:network_type'] = 'vlan'
-                        network['provider:segmentation_id'] = segment[
-                            'provider:segmentation_id']
-                        network['provider:physical_network'] = segment[
-                            'provider:physical_network']
-                LOG.info("afred End net_dict is %s.", network)
-            self.net_cache[network_id] = network
-
-        return self.net_cache[network_id]
+        return network
 
     @log_helpers.log_method_call
     def _populate_loadbalancer_network_vteps(
