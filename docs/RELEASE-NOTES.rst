@@ -4,6 +4,18 @@
 
 Release Notes
 =============
+v212.6.6.1 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+
+Bug Fixes
+`````````
+* [OPENSTACK-2884] Remove network cache
+
+Release Notes
+=============
 v212.6.6 (Pike)
 --------------
 
