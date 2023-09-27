@@ -4,6 +4,18 @@
 
 Release Notes
 =============
+v212.6.7.2 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+
+Bug Fixes
+`````````
+* [OPENSTACK-2897] Add debug log of loading network data
+
+Release Notes
+=============
 v212.6.7.1 (Pike)
 --------------
 
