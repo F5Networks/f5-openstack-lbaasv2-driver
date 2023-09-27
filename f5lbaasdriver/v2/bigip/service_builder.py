@@ -202,6 +202,9 @@ class LBaaSv2ServiceBuilder(object):
             context,
             network_id
         )
+        LOG.debug("Network %s obtained from core plugin is: %s",
+                  network_id, network)
+
         if 'provider:network_type' not in network:
             network['provider:network_type'] = 'undefined'
         if 'provider:segmentation_id' not in network:
