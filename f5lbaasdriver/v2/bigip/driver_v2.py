@@ -183,18 +183,7 @@ class EntityManager(object):
             agent_host, service = self._setup_crud(
                 context, loadbalancer, entity, **kwargs)
             rpc_callable = getattr(self.driver.agent_rpc, rpc_method)
-
-            the_port = kwargs.get("the_port_id", None)
-            LOG.info(the_port)
-            if the_port:
-                LOG.info('the_port is not None')
-                rpc_callable(
-                    context, api_dict, service,
-                    agent_host, the_port_id=the_port
-                )
-            else:
-                LOG.info('the_port is None')
-                rpc_callable(context, api_dict, service, agent_host)
+            rpc_callable(context, api_dict, service, agent_host)
         except Exception as e:
             LOG.error("Exception: %s: %s" % (rpc_method, e))
             raise e
@@ -976,57 +965,10 @@ class MemberManager(EntityManager):
                     "Member and subnet are not belong to the same tenant"
                 )
 
-        the_port_id = None
-        driver = self.driver
-
-        filters = {
-            'device_owner': ['network:f5lbaasv2'],
-            'fixed_ips': {'subnet_id': [member.subnet_id]}
-        }
-        LOG.debug('fetching certain ports details:')
-        all_ports = driver.plugin.db._core_plugin.get_ports_count(
-            context, filters
-        )
-        LOG.debug("all_ports length:")
-        LOG.debug(all_ports)
-
-        if all_ports < 1:
-            # agent_host, service = self._setup_crud(context, lb, member)
-            agent_host = 'temp'
-            LOG.info('running here')
-            if member.attached_to_loadbalancer() and lb:
-                LOG.info('scheduing here instead')
-                this_agent = self.driver.agent_scheduler.schedule(
-                    self.driver.plugin,
-                    context,
-                    lb,
-                    self.driver.env
-                )
-                LOG.info(this_agent)
-                agent_host = this_agent.get('host')
-                LOG.info(agent_host)
-
-            p = driver.plugin.db._core_plugin.create_port(context, {
-                'port': {
-                    'tenant_id': subnet['tenant_id'],
-                    'network_id': subnet['network_id'],
-                    'mac_address': n_const.ATTR_NOT_SPECIFIED,
-                    'fixed_ips': n_const.ATTR_NOT_SPECIFIED,
-                    'device_id': member.id,
-                    'device_owner': 'network:f5lbaasv2',
-                    'admin_state_up': member.admin_state_up,
-                    'name': 'pool_port_' + member.id,
-                    portbindings.HOST_ID: agent_host}})
-            LOG.debug('the port created here is: %s' % p)
-            the_port_id = p['id']
-
         api_dict = member.to_dict(pool=False)
 
         def append_pools_monitors(context, loadbalancer, service):
             self._append_pools_monitors(context, service, member.pool)
-
-        LOG.info('the_port_id is:')
-        LOG.info(the_port_id)
 
         try:
             if cfg.CONF.f5_driver_perf_mode in (2, 3):
@@ -1036,12 +978,10 @@ class MemberManager(EntityManager):
                     append_listeners=lambda *args: None,
                     append_pools_monitors=append_pools_monitors,
                     append_l7policies_rules=lambda *args: None,
-                    the_port_id=the_port_id
                 )
             else:
                 self._call_rpc(
                     context, lb, member, api_dict, 'create_member',
-                    the_port_id=the_port_id
                 )
         except Exception as e:
             LOG.error("Exception: member create: %s" % e.message)
