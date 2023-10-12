@@ -237,6 +237,20 @@ class LBaaSv2AgentRPC(object):
             topic=topic)
 
     @log_helpers.log_method_call
+    def create_bulk_member(
+        self, context, members, service, host
+    ):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'create_bulk_member',
+                members=members,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
     def update_member(self, context, old_member, member, service, host):
         topic = '%s.%s' % (self.topic, host)
         return self.cast(
@@ -257,6 +271,20 @@ class LBaaSv2AgentRPC(object):
             self.make_msg(
                 'delete_member',
                 member=member,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
+    def delete_bulk_member(
+        self, context, members, service, host
+    ):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'delete_bulk_member',
+                members=members,
                 service=service
             ),
             topic=topic)

@@ -163,7 +163,12 @@ class EntityManager(object):
         self.model = None
 
     def _log_entity(self, entity):
-        LOG.debug("Log the entity: %s", entity.to_api_dict())
+        # member bulk is a list
+        if isinstance(entity, list):
+            for en in entity:
+                LOG.debug("Log the entity: %s", en.to_api_dict())
+        else:
+            LOG.debug("Log the entity: %s", entity.to_api_dict())
 
     def _handle_entity_error(self, context, id, **kwargs):
         status = kwargs.get("status", plugin_constants.ERROR)
@@ -171,9 +176,15 @@ class EntityManager(object):
         if lb_id:
             self.driver.plugin.db.update_status(context, models.LoadBalancer,
                                                 lb_id, status)
+        # when create/delete bulk of members, the id is list type
         if self.model:
-            self.driver.plugin.db.update_status(context, self.model, id,
-                                                status)
+            if isinstance(id, list):
+                for res_id in id:
+                    self.driver.plugin.db.update_status(
+                        context, self.model, res_id, status)
+            else:
+                self.driver.plugin.db.update_status(
+                    context, self.model, id, status)
 
     def _call_rpc(self, context, loadbalancer, entity, api_dict,
                   rpc_method, **kwargs):
@@ -987,6 +998,100 @@ class MemberManager(EntityManager):
             LOG.error("Exception: member create: %s" % e.message)
             self._handle_entity_error(context, member.id,
                                       loadbalancer_id=lb.id)
+            raise e
+
+    @log_helpers.log_method_call
+    def create_bulk(self, context, members):
+
+        self._log_entity(members)
+        if len(members) == 0:
+            return
+
+        # all members are belong to one subnet
+        # NOTE: this member is a sample, use it to check tenant and
+        # build service body
+        member = members[0]
+
+        lb = member.pool.loadbalancer
+        driver = self.driver
+
+        # Refuse to create member along with another tenant's subnet
+        # all members are belong to one subnet
+        subnet = driver.plugin.db._core_plugin.get_subnet(
+            context, member.subnet_id
+        )
+        if member.tenant_id != subnet["tenant_id"]:
+            network = driver.plugin.db._core_plugin.get_network(
+                context, subnet["network_id"]
+            )
+            if not network["shared"]:
+                raise Exception(
+                    "Member and subnet are not belong to the same tenant"
+                )
+        api_dict = [mb.to_dict(pool=False) for mb in members]
+
+        def append_pools_monitors(context, loadbalancer, service):
+            self._append_pools_monitors(context, service, member.pool)
+
+        try:
+            if cfg.CONF.f5_driver_perf_mode in (2, 3):
+                # Utilize default behavior to append all members
+                self._call_rpc(
+                    context, lb, member, api_dict, 'create_bulk_member',
+                    append_listeners=lambda *args: None,
+                    append_pools_monitors=append_pools_monitors,
+                    append_l7policies_rules=lambda *args: None,
+                )
+            else:
+                self._call_rpc(
+                    context, lb, member, api_dict, 'create_bulk_member',
+                )
+        except Exception as e:
+            LOG.error("Exception: bulk of members create: %s" % e.message)
+
+            ids = [mb.id for mb in members]
+            self._handle_entity_error(
+                context, id=ids, loadbalancer_id=lb.id)
+            raise e
+
+    @log_helpers.log_method_call
+    def delete_bulk(self, context, members):
+
+        self._log_entity(members)
+
+        if len(members) == 0:
+            return
+
+        # all members are belong to one subnet
+        # NOTE: this member is a sample, use it to check tenant and
+        # build service body
+        member = members[0]
+
+        lb = member.pool.loadbalancer
+        api_dict = [mb.to_dict(pool=False) for mb in members]
+
+        def append_pools_monitors(context, loadbalancer, service):
+            self._append_pools_monitors(context, service, member.pool)
+
+        try:
+            if cfg.CONF.f5_driver_perf_mode in (2, 3):
+                # Utilize default behavior to append all members
+                self._call_rpc(
+                    context, lb, member, api_dict, 'delete_bulk_member',
+                    append_listeners=lambda *args: None,
+                    append_pools_monitors=append_pools_monitors,
+                    append_l7policies_rules=lambda *args: None,
+                )
+            else:
+                self._call_rpc(
+                    context, lb, member, api_dict, 'delete_bulk_member',
+                )
+        except Exception as e:
+            LOG.error("Exception: bulk of members delete: %s" % e.message)
+
+            ids = [mb.id for mb in members]
+            self._handle_entity_error(
+                context, id=ids, loadbalancer_id=lb.id)
             raise e
 
     @log_helpers.log_method_call
