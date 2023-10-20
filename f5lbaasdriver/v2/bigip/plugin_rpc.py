@@ -29,6 +29,7 @@ from neutron_lbaas.services.loadbalancer.data_models import LoadBalancer
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as neutron_const
+from neutron_lib import context as ncontext
 from neutron_lib import exceptions as q_exc
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
@@ -291,6 +292,30 @@ class LBaaSv2PluginCallbacksRPC(object):
             except Exception as e:
                 LOG.error('Exception: update_loadbalancer_status: %s',
                           e.message)
+
+    @log_helpers.log_method_call
+    def occupy_device(self, context, device_id, expire=5):
+        """Agent attempt to occupy the device."""
+        # Switch to admin context, so that caller can query
+        # devices onboared by admin when processing user request
+        if context.is_admin:
+            admin_ctx = context
+        else:
+            admin_ctx = ncontext.get_admin_context()
+        return self.driver.inventory_plugin.occupy_device(
+            admin_ctx, device_id, expire, context.request_id)
+
+    @log_helpers.log_method_call
+    def release_device(self, context, device_id):
+        """Agent confirmation to release the device."""
+        # Switch to admin context, so that caller can query
+        # devices onboared by admin when processing user request
+        if context.is_admin:
+            admin_ctx = context
+        else:
+            admin_ctx = ncontext.get_admin_context()
+        return self.driver.inventory_plugin.release_device(
+            admin_ctx, device_id, context.request_id)
 
     @log_helpers.log_method_call
     def loadbalancer_destroyed(self, context, loadbalancer_id=None):
