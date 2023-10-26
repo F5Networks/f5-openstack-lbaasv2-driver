@@ -4,6 +4,25 @@
 
 Release Notes
 =============
+v212.6.8 (Pike)
+--------------
+
+Added Functionality
+```````````````````
+* [OPENSTACK-2900] add bulk member create/delete
+* [OPENSTACK-2787] Occupy device
+* [OPENSTACK-2900] remove pool_port_<member-id>
+* [OPENSTACK-2897] Add debug log of loading network data
+* [OPENSTACK-2884] Remove network cache
+* [OPENSTACK-2827] enable to rebuild a lb or all resource of the lb
+* [OPENSTACK-2865] enable acl rebuild function
+* [OPENSTACK-2840] add parameter to update lb_mac
+
+Bug Fixes
+`````````
+
+Release Notes
+=============
 v212.6.7 (Pike)
 --------------
 
