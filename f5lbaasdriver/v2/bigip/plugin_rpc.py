@@ -792,6 +792,21 @@ class LBaaSv2PluginCallbacksRPC(object):
         )
 
     @log_helpers.log_method_call
+    def get_network_by_name(self, context, name=None):
+        """Delete network."""
+        networks = []
+        if name:
+            filters = {
+                'name': [name]
+            }
+            networks = self.driver.plugin.db._core_plugin.get_networks(
+                context,
+                filters=filters
+            )
+
+        return networks
+
+    @log_helpers.log_method_call
     def delete_network_by_name(self, context, name=None):
         """Delete network."""
         networks = []
@@ -895,9 +910,17 @@ class LBaaSv2PluginCallbacksRPC(object):
     def attach_subnet_to_router(self, context, router_id=None, subnet_id=None):
         """Attach a subnet to a router."""
         if router_id and subnet_id:
-            self.driver.plugin.db._l3_plugin.add_router_interface(
-                context, router_id, {'subnet_id': subnet_id}
-            )
+            try:
+                self.driver.plugin.db._l3_plugin.add_router_interface(
+                    context, router_id, {'subnet_id': subnet_id}
+                )
+            except q_exc.BadRequest as ex:
+                ignore_msg = "Router already has a port on subnet " + subnet_id
+                if hasattr(ex, "msg") and ignore_msg in ex.msg:
+                    LOG.debug("Router is already attached to subnet %s",
+                              subnet_id)
+                else:
+                    raise
 
     @log_helpers.log_method_call
     def detach_subnet_from_router(self, context, router_id=None,
