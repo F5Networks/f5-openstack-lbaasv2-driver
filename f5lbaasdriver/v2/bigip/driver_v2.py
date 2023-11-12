@@ -17,7 +17,7 @@ u"""F5 Networks® LBaaSv2 Driver Implementation."""
 import os
 import random
 import sys
-from time import sleep
+import time
 
 from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
@@ -62,7 +62,7 @@ def _sem_down():
             sem = sem - 1
             break
         else:
-            sleep(0)
+            time.sleep(0)
 
 
 def _sem_up():
@@ -354,7 +354,7 @@ class EntityManager(object):
                     # Wait up to 1 second
                     wait += interval
                     attempt += 1
-                    sleep(interval)
+                    time.sleep(interval)
                 else:
                     LOG.debug("Cannot get db lock after %s attempts", attempt)
                     raise device_scheduler.DeviceSchedulerBusy(
@@ -1000,11 +1000,24 @@ class MemberManager(EntityManager):
                                       loadbalancer_id=lb.id)
             raise e
 
+    def _append_bulk_members(self, members):
+        dict_members = members
+
+        # TODO(x): network_map and subnet_map never used for ng. remove
+        # them.
+        def set_delta_members_for_service(
+                context, loadbalancer, service, network_map, subnet_map):
+            service['members'] = dict_members
+        return set_delta_members_for_service
+
     @log_helpers.log_method_call
     def create_bulk(self, context, members):
+        # NOTE(x): when bulk create the members argument type is
+        # models.MemberV2 type, when bulk delete the members type is
+        # models.MemberV2.to_api_dict
 
-        self._log_entity(members)
         if len(members) == 0:
+            LOG.info("bulk of members create: no member found %s" % members)
             return
 
         # all members are belong to one subnet
@@ -1013,6 +1026,33 @@ class MemberManager(EntityManager):
         member = members[0]
 
         lb = member.pool.loadbalancer
+        if isinstance(lb, models.LoadBalancer):
+            lb = lb._as_dict()
+            lb['tenant_id'] = lb.pop('project_id')
+            lb = data_models.LoadBalancer(**lb)
+
+        member_objs = []
+        api_dict = []
+        for mb in members:
+            if isinstance(mb, models.MemberV2):
+                pool = mb.pool
+
+                mb = mb._as_dict()
+                mb['tenant_id'] = mb.pop('project_id')
+                mb = data_models.Member(**mb)
+
+                if pool:
+                    pool = pool._as_dict()
+                    pool['tenant_id'] = pool.pop('project_id')
+                    mb.pool = data_models.Pool(**pool)
+            member_objs.append(mb)
+            api_dict.append(mb.to_dict(pool=False))
+
+        members = member_objs
+        member = members[0]
+
+        self._log_entity(members)
+
         driver = self.driver
 
         # Refuse to create member along with another tenant's subnet
@@ -1028,7 +1068,7 @@ class MemberManager(EntityManager):
                 raise Exception(
                     "Member and subnet are not belong to the same tenant"
                 )
-        api_dict = [mb.to_dict(pool=False) for mb in members]
+        append_bulk_members = self._append_bulk_members(api_dict)
 
         def append_pools_monitors(context, loadbalancer, service):
             self._append_pools_monitors(context, service, member.pool)
@@ -1039,6 +1079,7 @@ class MemberManager(EntityManager):
                 self._call_rpc(
                     context, lb, member, api_dict, 'create_bulk_member',
                     append_listeners=lambda *args: None,
+                    append_members=append_bulk_members,
                     append_pools_monitors=append_pools_monitors,
                     append_l7policies_rules=lambda *args: None,
                 )
@@ -1049,26 +1090,42 @@ class MemberManager(EntityManager):
         except Exception as e:
             LOG.error("Exception: bulk of members create: %s" % e.message)
 
-            ids = [mb.id for mb in members]
+            ids = [m.id for m in members]
             self._handle_entity_error(
                 context, id=ids, loadbalancer_id=lb.id)
             raise e
 
     @log_helpers.log_method_call
     def delete_bulk(self, context, members):
+        # NOTE(x): when bulk create the members argument type is
+        # models.MemberV2 type, when bulk delete the members type is
+        # models.MemberV2.to_api_dict
+
+        if len(members) == 0:
+            LOG.info("bulk of members delete: no member found %s" % members)
+            return
+
+        member_objs = []
+        api_dict = []
+        for mb in members:
+            if isinstance(mb, dict):
+                mb = data_models.Member(**mb)
+            member_objs.append(mb)
+            api_dict.append(mb.to_dict(pool=False))
+
+        members = member_objs
 
         self._log_entity(members)
 
-        if len(members) == 0:
-            return
-
+        driver = self.driver
         # all members are belong to one subnet
         # NOTE: this member is a sample, use it to check tenant and
         # build service body
         member = members[0]
+        member.pool = driver.plugin.db.get_pool(context, member.pool_id)
 
         lb = member.pool.loadbalancer
-        api_dict = [mb.to_dict(pool=False) for mb in members]
+        append_bulk_members = self._append_bulk_members(api_dict)
 
         def append_pools_monitors(context, loadbalancer, service):
             self._append_pools_monitors(context, service, member.pool)
@@ -1078,6 +1135,7 @@ class MemberManager(EntityManager):
                 # Utilize default behavior to append all members
                 self._call_rpc(
                     context, lb, member, api_dict, 'delete_bulk_member',
+                    append_members=append_bulk_members,
                     append_listeners=lambda *args: None,
                     append_pools_monitors=append_pools_monitors,
                     append_l7policies_rules=lambda *args: None,
@@ -1089,7 +1147,7 @@ class MemberManager(EntityManager):
         except Exception as e:
             LOG.error("Exception: bulk of members delete: %s" % e.message)
 
-            ids = [mb.id for mb in members]
+            ids = [m.id for m in members]
             self._handle_entity_error(
                 context, id=ids, loadbalancer_id=lb.id)
             raise e
