@@ -159,6 +159,8 @@ class LBaaSv2ServiceBuilder(object):
         service['pools'], service['healthmonitors'] = \
             self._get_pools_and_healthmonitors(context, loadbalancer)
 
+    # TODO(x): why do we set network_map and subnet_map for service again?
+    # _get_members never use these two arguments
     @log_helpers.log_method_call
     def _append_members(self, context, loadbalancer, service,
                         network_map, subnet_map):
@@ -462,12 +464,16 @@ class LBaaSv2ServiceBuilder(object):
 
         return pools, healthmonitors
 
+    # TODO(x) subnet_map and network_map are never used in ng.
     @log_helpers.log_method_call
     def _get_members(self, context, loadbalancer, pools,
                      subnet_map, network_map):
         pool_members = []
 
         def get_db_members():
+            # NOTE(x): normally, there is only one pending updated pool in
+            # 'pools' list.
+
             if cfg.CONF.f5_driver_perf_mode in (1, 3):
                 members = []
                 for p1 in loadbalancer.pools:
