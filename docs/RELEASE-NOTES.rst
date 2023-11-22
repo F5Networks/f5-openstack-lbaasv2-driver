@@ -9,6 +9,7 @@ v212.6.8 (Pike)
 
 Added Functionality
 ```````````````````
+* [OPENSTACK-2915] New implementation of flavor 21
 * [OPENSTACK-2900] add bulk member create/delete
 * [OPENSTACK-2787] Occupy device
 * [OPENSTACK-2900] remove pool_port_<member-id>
@@ -20,6 +21,7 @@ Added Functionality
 
 Bug Fixes
 `````````
+* [OPENSTACK-2925] fix bulk create and delete to fit the input args.
 
 Release Notes
 =============
