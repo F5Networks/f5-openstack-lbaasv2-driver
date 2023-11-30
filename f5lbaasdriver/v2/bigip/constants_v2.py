@@ -28,7 +28,6 @@ RPC_API_NAMESPACE = None
 
 # service builder constants
 VIF_TYPE = 'f5'
-NET_CACHE_SECONDS = 1800
 
 # SUPPORTED PROVIDERNET TUNNEL NETWORK TYPES
 TUNNEL_TYPES = ['vxlan', 'gre']
