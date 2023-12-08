@@ -33,6 +33,7 @@ from neutron_lib.plugins import constants as pg_const
 from neutron_lib.plugins import directory
 
 from neutron_lbaas import agent_scheduler
+from neutron_lbaas.db.loadbalancer import loadbalancer_dbv2 as ldbv2
 from neutron_lbaas.db.loadbalancer import models
 from neutron_lbaas.services.loadbalancer import data_models
 
@@ -160,15 +161,19 @@ class EntityManager(object):
 
     def __init__(self, driver):
         self.driver = driver
+        self.db = ldbv2.LoadBalancerPluginDbv2()
         self.model = None
+        self.data_model = None
 
     def _log_entity(self, entity):
         # member bulk is a list
         if isinstance(entity, list):
             for en in entity:
                 LOG.debug("Log the entity: %s", en.to_api_dict())
+        elif isinstance(entity, dict):
+            LOG.debug("Log the dict entity: %s", entity)
         else:
-            LOG.debug("Log the entity: %s", entity.to_api_dict())
+            LOG.debug("Log the obj entity: %s", entity.to_api_dict())
 
     def _handle_entity_error(self, context, id, **kwargs):
         status = kwargs.get("status", plugin_constants.ERROR)
@@ -956,12 +961,19 @@ class ListenerManager(EntityManager):
     def __init__(self, driver):
         super(ListenerManager, self).__init__(driver)
         self.model = models.Listener
+        self.data_model = data_models.Listener
+
+    def translate_dict_entity_to_obj(self, context, listener):
+        if isinstance(listener, dict):
+            return self.db.get_listener(context, listener['id'])
+        return listener
 
     @log_helpers.log_method_call
     def create(self, context, listener):
         """Create a listener."""
 
         self._log_entity(listener)
+        listener = self.translate_dict_entity_to_obj(context, listener)
 
         lb = listener.loadbalancer
         api_dict = listener.to_dict(loadbalancer=False, default_pool=False)
@@ -996,6 +1008,22 @@ class ListenerManager(EntityManager):
                                       loadbalancer_id=lb.id)
             raise e
 
+    def _translate_old_listener(self, old_listener):
+        if not isinstance(old_listener, dict):
+            old_listener = old_listener.to_dict(loadbalancer=False,
+                                                default_pool=False)
+        return old_listener
+
+    def _get_tls_sni_id(self, listener):
+        if not isinstance(listener, dict):
+            return
+        if 'sni_container_refs' in listener:
+            listener['sni_containers'] = [{'tls_container_id': t_id} for t_id
+                                          in listener['sni_container_refs']]
+        if 'default_tls_container_ref' in listener:
+            listener['default_tls_container_id'] =\
+                listener['default_tls_container_ref']
+
     @log_helpers.log_method_call
     def update(self, context, old_listener, listener):
         """Update a listener."""
@@ -1003,14 +1031,18 @@ class ListenerManager(EntityManager):
         self._log_entity(old_listener)
         self._log_entity(listener)
 
+        old_listener = self._translate_old_listener(old_listener)
+        self._get_tls_sni_id(old_listener)
+        listener = self.translate_dict_entity_to_obj(context, listener)
+        self._get_tls_sni_id(listener)
+
         driver = self.driver
         lb = listener.loadbalancer
         try:
             agent_host, service = self._setup_crud(context, lb, listener)
             driver.agent_rpc.update_listener(
                 context,
-                old_listener.to_dict(loadbalancer=False,
-                                     default_pool=False),
+                old_listener,
                 listener.to_dict(loadbalancer=False, default_pool=False),
                 service,
                 agent_host
@@ -1026,6 +1058,7 @@ class ListenerManager(EntityManager):
         """Delete a listener."""
 
         self._log_entity(listener)
+        listener = self.translate_dict_entity_to_obj(context, listener)
 
         lb = listener.loadbalancer
         api_dict = listener.to_dict(loadbalancer=False, default_pool=False)
@@ -1060,8 +1093,16 @@ class PoolManager(EntityManager):
     def __init__(self, driver):
         super(PoolManager, self).__init__(driver)
         self.model = models.PoolV2
+        self.data_model = data_models.Pool
+
+    def translate_dict_entity_to_obj(self, context, pool):
+        if isinstance(pool, dict):
+            return self.db.get_pool(context, pool['id'])
+        return pool
 
     def _get_pool_dict(self, pool):
+        if isinstance(pool, dict):
+            return pool
         pool_dict = pool.to_dict(
             healthmonitor=False,
             listener=False,
@@ -1084,6 +1125,7 @@ class PoolManager(EntityManager):
         """Create a pool."""
 
         self._log_entity(pool)
+        pool = self.translate_dict_entity_to_obj(context, pool)
 
         lb = pool.loadbalancer
         api_dict = self._get_pool_dict(pool)
@@ -1125,6 +1167,7 @@ class PoolManager(EntityManager):
 
         self._log_entity(old_pool)
         self._log_entity(pool)
+        pool = self.translate_dict_entity_to_obj(context, pool)
 
         driver = self.driver
         lb = pool.loadbalancer
@@ -1148,6 +1191,7 @@ class PoolManager(EntityManager):
         """Delete a pool."""
 
         self._log_entity(pool)
+        pool = self.translate_dict_entity_to_obj(context, pool)
 
         lb = pool.loadbalancer
         api_dict = self._get_pool_dict(pool)
@@ -1187,12 +1231,19 @@ class MemberManager(EntityManager):
     def __init__(self, driver):
         super(MemberManager, self).__init__(driver)
         self.model = models.MemberV2
+        self.data_model = data_models.Member
+
+    def translate_dict_entity_to_obj(self, context, member):
+        if isinstance(member, dict):
+            return self.db.get_pool_member(context, member['id'])
+        return member
 
     @log_helpers.log_method_call
     def create(self, context, member):
         """Create a member."""
 
         self._log_entity(member)
+        member = self.translate_dict_entity_to_obj(context, member)
 
         driver = self.driver
         lb = member.pool.loadbalancer
@@ -1392,6 +1443,9 @@ class MemberManager(EntityManager):
 
         self._log_entity(old_member)
         self._log_entity(member)
+        if not isinstance(old_member, dict):
+            old_member = old_member.to_dict(pool=False)
+        member = self.translate_dict_entity_to_obj(context, member)
 
         driver = self.driver
         lb = member.pool.loadbalancer
@@ -1399,7 +1453,7 @@ class MemberManager(EntityManager):
             agent_host, service = self._setup_crud(context, lb, member)
             driver.agent_rpc.update_member(
                 context,
-                old_member.to_dict(pool=False),
+                old_member,
                 member.to_dict(pool=False),
                 service,
                 agent_host
@@ -1415,6 +1469,7 @@ class MemberManager(EntityManager):
         """Delete a member."""
 
         self._log_entity(member)
+        member = self.translate_dict_entity_to_obj(context, member)
 
         lb = member.pool.loadbalancer
         driver = self.driver
@@ -1449,12 +1504,20 @@ class HealthMonitorManager(EntityManager):
     def __init__(self, driver):
         super(HealthMonitorManager, self).__init__(driver)
         self.model = models.HealthMonitorV2
+        self.data_model = data_models.HealthMonitor
+
+    def translate_dict_entity_to_obj(self, context, health_monitor):
+        if isinstance(health_monitor, dict):
+            return self.db.get_healthmonitor(context, health_monitor['id'])
+        return health_monitor
 
     @log_helpers.log_method_call
     def create(self, context, health_monitor):
         """Create a health monitor."""
 
         self._log_entity(health_monitor)
+        health_monitor = self.translate_dict_entity_to_obj(context,
+                                                           health_monitor)
 
         lb = health_monitor.pool.loadbalancer
         api_dict = health_monitor.to_dict(pool=False)
@@ -1488,13 +1551,18 @@ class HealthMonitorManager(EntityManager):
         self._log_entity(old_health_monitor)
         self._log_entity(health_monitor)
 
+        if not isinstance(old_health_monitor, dict):
+            old_health_monitor = old_health_monitor.to_dict(pool=False)
+        health_monitor = self.translate_dict_entity_to_obj(
+            context, health_monitor)
+
         driver = self.driver
         lb = health_monitor.pool.loadbalancer
         try:
             agent_host, service = self._setup_crud(context, lb, health_monitor)
             driver.agent_rpc.update_health_monitor(
                 context,
-                old_health_monitor.to_dict(pool=False),
+                old_health_monitor,
                 health_monitor.to_dict(pool=False),
                 service,
                 agent_host
@@ -1510,6 +1578,8 @@ class HealthMonitorManager(EntityManager):
         """Delete a health monitor."""
 
         self._log_entity(health_monitor)
+        health_monitor = self.translate_dict_entity_to_obj(
+            context, health_monitor)
 
         lb = health_monitor.pool.loadbalancer
         api_dict = health_monitor.to_dict(pool=False)
@@ -1543,12 +1613,19 @@ class L7PolicyManager(EntityManager):
     def __init__(self, driver):
         super(L7PolicyManager, self).__init__(driver)
         self.model = models.L7Policy
+        self.data_model = data_models.L7Policy
+
+    def translate_dict_entity_to_obj(self, context, policy):
+        if isinstance(policy, dict):
+            return self.db.get_l7policy(context, policy['id'])
+        return policy
 
     @log_helpers.log_method_call
     def create(self, context, policy):
         """Create an L7 policy."""
 
         self._log_entity(policy)
+        policy = self.translate_dict_entity_to_obj(context, policy)
 
         lb = policy.listener.loadbalancer
         api_dict = policy.to_dict(listener=False, rules=False)
@@ -1586,13 +1663,17 @@ class L7PolicyManager(EntityManager):
         self._log_entity(old_policy)
         self._log_entity(policy)
 
+        if not isinstance(old_policy, dict):
+            old_policy = old_policy.to_dict(listener=False)
+        policy = self.translate_dict_entity_to_obj(context, policy)
+
         driver = self.driver
         lb = policy.listener.loadbalancer
         try:
             agent_host, service = self._setup_crud(context, lb, policy)
             driver.agent_rpc.update_l7policy(
                 context,
-                old_policy.to_dict(listener=False),
+                old_policy,
                 policy.to_dict(listener=False),
                 service,
                 agent_host
@@ -1608,6 +1689,7 @@ class L7PolicyManager(EntityManager):
         """Delete a policy."""
 
         self._log_entity(policy)
+        policy = self.translate_dict_entity_to_obj(context, policy)
 
         lb = policy.listener.loadbalancer
         api_dict = policy.to_dict(listener=False, rules=False)
@@ -1645,12 +1727,20 @@ class L7RuleManager(EntityManager):
     def __init__(self, driver):
         super(L7RuleManager, self).__init__(driver)
         self.model = models.L7Rule
+        self.data_model = data_models.L7Rule
+
+    def translate_dict_entity_to_obj(self, context, rule):
+        if isinstance(rule, dict):
+            return self.db.get_l7policy_rule(context, rule['id'],
+                                             rule['policies'][0]['id'])
+        return rule
 
     @log_helpers.log_method_call
     def create(self, context, rule):
         """Create an L7 rule."""
 
         self._log_entity(rule)
+        rule = self.translate_dict_entity_to_obj(context, rule)
 
         lb = rule.policy.listener.loadbalancer
         api_dict = rule.to_dict(policy=False)
@@ -1687,13 +1777,17 @@ class L7RuleManager(EntityManager):
         self._log_entity(old_rule)
         self._log_entity(rule)
 
+        if not isinstance(old_rule, dict):
+            old_rule = old_rule.to_dict(policy=False)
+        rule = self.translate_dict_entity_to_obj(context, rule)
+
         driver = self.driver
         lb = rule.policy.listener.loadbalancer
         try:
             agent_host, service = self._setup_crud(context, lb, rule)
             driver.agent_rpc.update_l7rule(
                 context,
-                old_rule.to_dict(policy=False),
+                old_rule,
                 rule.to_dict(policy=False),
                 service,
                 agent_host
@@ -1709,6 +1803,7 @@ class L7RuleManager(EntityManager):
         """Delete a rule."""
 
         self._log_entity(rule)
+        rule = self.translate_dict_entity_to_obj(context, rule)
 
         lb = rule.policy.listener.loadbalancer
         api_dict = rule.to_dict(policy=False)
