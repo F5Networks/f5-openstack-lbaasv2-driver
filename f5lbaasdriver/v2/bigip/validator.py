@@ -112,7 +112,7 @@ class SnatIPValidator(LoadBalancerValidator):
 
     def validate_create(self, context, lb):
         flavor = lb.flavor
-        if flavor in [7, 8]:
+        if flavor not in [11, 12, 13]:
             return
 
         v4_r, v6_r = self._calculate_snat(lb)
@@ -131,13 +131,13 @@ class SnatIPValidator(LoadBalancerValidator):
         flavor = lb.flavor
         old_flavor = old_lb.flavor
 
-        if flavor in [7, 8]:
+        if flavor not in [11, 12, 13]:
             return
 
         v4_r, v6_r = self._calculate_snat(lb)
         old_v4_r, old_v6_r = self._calculate_snat(old_lb)
 
-        if old_flavor not in [7, 8]:
+        if old_flavor in [11, 12, 13]:
             v4_r -= old_v4_r
             v6_r -= old_v6_r
 

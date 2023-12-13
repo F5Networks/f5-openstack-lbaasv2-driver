@@ -472,8 +472,9 @@ class LoadBalancerManager(EntityManager):
         super(LoadBalancerManager, self).__init__(driver)
         self.model = models.LoadBalancer
         self.validators = [
-            validator.FlavorValidator(),
-            validator.SnatIPValidator(driver)
+            validator.FlavorValidator()
+            # NOTE(qzhao): Disable SNAT validation until we need it again
+            # validator.SnatIPValidator(driver)
         ]
 
     @log_helpers.log_method_call
