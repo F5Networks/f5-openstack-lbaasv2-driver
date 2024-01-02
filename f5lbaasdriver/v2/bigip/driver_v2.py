@@ -361,6 +361,74 @@ class EntityManager(object):
 
         return agent, device
 
+    def _validate_device(self, device, loadbalancer, device_id):
+
+        if not device:
+            raise device_scheduler.LbaasDeviceDisappeared(
+                loadbalancer_id=loadbalancer.id,
+                device_id=device_id)
+
+        if not device["admin_state_up"]:
+            name = loadbalancer.name
+            if (
+                name
+                and cfg.CONF.special_lb_name_prefix
+                and cfg.CONF.special_lb_name_prefix in name
+            ):
+                id_prefix = device_id[:8]
+                match_regex = cfg.CONF.special_lb_name_prefix + id_prefix
+                if match_regex in name:
+                    LOG.debug("choose inactive device here %s ", device_id)
+                    return True
+
+        if not device["admin_state_up"]:
+            raise device_scheduler.LbaasDeviceDisabled(
+                loadbalancer_id=loadbalancer.id,
+                device_id=device_id)
+
+    def _schedule_migrate_agent_device(
+            self, context, bond, loadbalancer, device_id):
+
+        LAB = agent_scheduler.LoadbalancerAgentBinding
+
+        agent = bond["agent"]
+        if not agent["alive"] or not agent["admin_state_up"]:
+            # Agent is not alive or is disabled. Attempt to
+            # reschedule this loadbalancer to a new agent.
+            LOG.info("Reschedule loadbalancer %s", loadbalancer.id)
+            agent = self.driver.agent_scheduler.schedule(
+                self.driver.plugin,
+                context,
+                loadbalancer,
+                self.driver.env
+            )
+            # Update binding table
+            with context.session.begin(subtransactions=True):
+                query = context.session.query(LAB)
+                binding = query.get(loadbalancer.id)
+                binding.agent_id = agent["id"]
+            LOG.info("Loadbalancer %s is rescheduled to agent %s",
+                     loadbalancer.id, agent.id)
+
+        # Load device info and return
+        device = self.driver.device_scheduler.load_device(context,
+                                                          device_id)
+        self._validate_device(device, loadbalancer, device_id)
+
+        # Update binding table
+        with context.session.begin(subtransactions=True):
+            query = context.session.query(LAB)
+            binding = query.get(loadbalancer.id)
+            binding.agent_id = agent["id"]
+            binding.device_id = device["id"]
+            LOG.info("Loadbalancer %s is migrate to device %s",
+                     loadbalancer.id, device["id"])
+
+        LOG.info("LB %s is migrate to agent %s device %s",
+                 loadbalancer.id, agent["id"], device["id"])
+
+        return agent, device
+
     def _schedule_agent_and_device(self, context, loadbalancer,
                                    entity=None, **kwargs):
         '''Schedule agent --used for most managers.
@@ -374,8 +442,15 @@ class EntityManager(object):
             context, loadbalancer.id)
 
         if result:
-            agent, device = self._schedule_bond_agent_device(
-                context, result, loadbalancer)
+
+            device_id = kwargs.get("device_id")
+            if not device_id:
+                agent, device = self._schedule_bond_agent_device(
+                    context, result, loadbalancer)
+            else:
+                agent, device = self._schedule_migrate_agent_device(
+                    context, result, loadbalancer, device_id)
+
             return agent, device
 
         agent, device = self._schedule_new_agent_device(context, loadbalancer)
@@ -634,14 +709,16 @@ class LoadBalancerManager(EntityManager):
 
         lbext = body['loadbalancerext']
         loadbalancer = lbext['loadbalancer']
+        device_id = lbext.get("device_id")
         rebuild_all = lbext['all']
 
         self._log_entity(loadbalancer)
 
         driver = self.driver
+
         try:
-            agent, device = self._schedule_agent_and_device(context,
-                                                            loadbalancer)
+            agent, device = self._schedule_agent_and_device(
+                context, loadbalancer, device_id=device_id)
             # NOTE(qzhao): Call agent to rebuild LB.
             service = self._create_service(context, loadbalancer, agent)
             service["device"] = device
