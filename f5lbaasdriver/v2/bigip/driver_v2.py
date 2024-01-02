@@ -221,67 +221,24 @@ class EntityManager(object):
     def _schedule_agent_and_device(self, context, loadbalancer,
                                    entity=None, **kwargs):
         '''Schedule agent --used for most managers.
-
         :param context: auth context for performing crud operation
         :returns: agent object
         '''
-
-        LAB = agent_scheduler.LoadbalancerAgentBinding
 
         # If LB is already hosted on an agent, return this agent and device
         result = self.driver.plugin.db.get_agent_hosting_loadbalancer(
             context, loadbalancer.id)
 
         if result:
-            agent = result["agent"]
-            if not agent["alive"] or not agent["admin_state_up"]:
-                # Agent is not alive or is disabled. Attempt to
-                # reschedule this loadbalancer to a new agent.
-                LOG.info("Reschedule loadbalancer %s", loadbalancer.id)
-                agent = self.driver.agent_scheduler.schedule(
-                    self.driver.plugin,
-                    context,
-                    loadbalancer,
-                    self.driver.env
-                )
-                # Update binding table
-                with context.session.begin(subtransactions=True):
-                    query = context.session.query(LAB)
-                    binding = query.get(loadbalancer.id)
-                    binding.agent_id = agent["id"]
-                LOG.info("Loadbalancer %s is rescheduled to agent %s",
-                         loadbalancer.id, agent.id)
+            agent, device = self._schedule_bond_agent_device(
+                context, result, loadbalancer)
+            return agent, device
 
-            # Load device info and return
-            device_id = result["device_id"]
-            device = self.driver.device_scheduler.load_device(context,
-                                                              device_id)
-            if device and device["admin_state_up"]:
-                LOG.debug("choose active device here %s ", device_id)
-                return agent, device
+        agent, device = self._schedule_new_agent_device(context, loadbalancer)
 
-            if device and not device["admin_state_up"]:
-                name = loadbalancer.name
-                if (
-                    name
-                    and cfg.CONF.special_lb_name_prefix
-                    and cfg.CONF.special_lb_name_prefix in name
-                ):
-                    id_prefix = device_id[:8]
-                    match_regex = cfg.CONF.special_lb_name_prefix + id_prefix
-                    if match_regex in name:
-                        LOG.debug("choose inactive device here %s ", device_id)
-                        return agent, device
+        return agent, device
 
-            if not device:
-                raise device_scheduler.LbaasDeviceDisappeared(
-                    loadbalancer_id=loadbalancer.id,
-                    device_id=device_id)
-
-            if not device["admin_state_up"]:
-                raise device_scheduler.LbaasDeviceDisabled(
-                    loadbalancer_id=loadbalancer.id,
-                    device_id=device_id)
+    def _schedule_new_agent_device(self, context, loadbalancer):
 
         # If no binding
         if loadbalancer.provisioning_status == n_const.PENDING_CREATE:
@@ -313,6 +270,7 @@ class EntityManager(object):
         # 2. performance: Enable semaphore. No db lock.
         perf_mode = self.driver.device_scheduler_perf_mode
 
+        LAB = agent_scheduler.LoadbalancerAgentBinding
         binding = LAB()
         binding.loadbalancer_id = loadbalancer.id
         binding.agent_id = agent["id"]
@@ -328,8 +286,8 @@ class EntityManager(object):
                 with context.session.begin(subtransactions=True):
                     if perf_mode == "quality":
                         # Lock the table, refuse inserting
-                        query = context.session.query(LAB).populate_existing(
-                            ).with_for_update().filter_by(device_id="unknown")
+                        context.session.query(LAB).populate_existing(
+                        ).with_for_update().filter_by(device_id="unknown")
 
                     # Schedule device
                     device = self.driver.device_scheduler.schedule(
@@ -364,6 +322,62 @@ class EntityManager(object):
 
         LOG.info("LB %s is scheduled to agent %s device %s",
                  loadbalancer.id, agent["id"], device["id"])
+
+        return agent, device
+
+    def _schedule_bond_agent_device(self, context, bond, loadbalancer):
+
+        LAB = agent_scheduler.LoadbalancerAgentBinding
+
+        agent = bond["agent"]
+        if not agent["alive"] or not agent["admin_state_up"]:
+            # Agent is not alive or is disabled. Attempt to
+            # reschedule this loadbalancer to a new agent.
+            LOG.info("Reschedule loadbalancer %s", loadbalancer.id)
+            agent = self.driver.agent_scheduler.schedule(
+                self.driver.plugin,
+                context,
+                loadbalancer,
+                self.driver.env
+            )
+            # Update binding table
+            with context.session.begin(subtransactions=True):
+                query = context.session.query(LAB)
+                binding = query.get(loadbalancer.id)
+                binding.agent_id = agent["id"]
+            LOG.info("Loadbalancer %s is rescheduled to agent %s",
+                     loadbalancer.id, agent.id)
+
+        # Load device info and return
+        device_id = bond["device_id"]
+        device = self.driver.device_scheduler.load_device(context,
+                                                          device_id)
+        if device and device["admin_state_up"]:
+            LOG.debug("choose active device here %s ", device_id)
+            return agent, device
+
+        if device and not device["admin_state_up"]:
+            name = loadbalancer.name
+            if (
+                name
+                and cfg.CONF.special_lb_name_prefix
+                and cfg.CONF.special_lb_name_prefix in name
+            ):
+                id_prefix = device_id[:8]
+                match_regex = cfg.CONF.special_lb_name_prefix + id_prefix
+                if match_regex in name:
+                    LOG.debug("choose inactive device here %s ", device_id)
+                    return agent, device
+
+        if not device:
+            raise device_scheduler.LbaasDeviceDisappeared(
+                loadbalancer_id=loadbalancer.id,
+                device_id=device_id)
+
+        if not device["admin_state_up"]:
+            raise device_scheduler.LbaasDeviceDisabled(
+                loadbalancer_id=loadbalancer.id,
+                device_id=device_id)
 
         return agent, device
 
