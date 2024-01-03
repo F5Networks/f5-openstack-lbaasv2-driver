@@ -632,7 +632,8 @@ class LBaaSv2PluginCallbacksRPC(object):
         self, context, port_id, port_name=None,
         subnet_id=None, mac_address=None,
         fixed_address_count=0,
-        binding_profile=None
+        binding_profile=None,
+        device_owner=None
     ):
         port = {'port': {}}
 
@@ -650,6 +651,9 @@ class LBaaSv2PluginCallbacksRPC(object):
 
         if binding_profile is not None:
             port['port']['binding:profile'] = binding_profile
+
+        if device_owner is not None:
+            port['port']['device_owner'] = device_owner
 
         if not port['port']:
             return
