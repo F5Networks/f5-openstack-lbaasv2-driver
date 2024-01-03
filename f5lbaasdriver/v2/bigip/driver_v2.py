@@ -442,8 +442,8 @@ class EntityManager(object):
             context, loadbalancer.id)
 
         if result:
-
             device_id = kwargs.get("device_id")
+
             if not device_id:
                 agent, device = self._schedule_bond_agent_device(
                     context, result, loadbalancer)
@@ -581,7 +581,6 @@ class LoadBalancerManager(EntityManager):
             service = {}
             agent, device = self._schedule_agent_and_device(
                 context, loadbalancer)
-            agent_host = agent['host']
             agent_config = agent.get('configurations', {})
             LOG.debug("agent configurations: %s" % agent_config)
 
@@ -590,55 +589,14 @@ class LoadBalancerManager(EntityManager):
                 context.session.expire(agent, ['heartbeat_timestamp'])
                 LOG.info(agent)
 
-            # Update the port for the VIP to show ownership by this driver
-            port_data = {
-                'admin_state_up': True,
-                'device_owner': 'network:f5lbaasv2',
-                'status': n_const.PORT_STATUS_ACTIVE
-            }
-            port_data[portbindings.HOST_ID] = agent_host
-            port_data[portbindings.VNIC_TYPE] = "baremetal"
-
-            port_data[portbindings.PROFILE] = {}
-
-            device_info = device.get('device_info')
-
-            vip_masq_mac = device_info.get('masquerade_mac')
-            if not vip_masq_mac:
-                LOG.error(
-                    "Can not find masquerade_mac in device %s, when"
-                    " creating loadbalancer %s." % (
-                        device, loadbalancer
-                    )
-                )
-
-            # llinfo is a list of dict type
-            llinfo = device_info.get('local_link_information')
-
-            if llinfo:
-                link_info = llinfo[0]
-            else:
-                link_info = dict()
-                llinfo = [link_info]
-
-            link_info.update({"lb_mac": vip_masq_mac})
-
-            port_data[portbindings.PROFILE] = {
-                "local_link_information": llinfo
-            }
-
-            # pzhang migrate
-            driver.plugin.db._core_plugin.update_port(
-                context,
-                loadbalancer.vip_port_id,
-                {'port': port_data}
-            )
+            self.update_vipport_attrs(context, agent, device, loadbalancer)
 
             # NOTE(qzhao): Vlan id might be assigned after updating vip
             # port. Need to build service payload after updating port.
             service = self._create_service(context, loadbalancer, agent)
             service["device"] = device
 
+            agent_host = agent['host']
             driver.agent_rpc.create_loadbalancer(
                 context, loadbalancer.to_api_dict(), service, agent_host)
         except Exception as e:
@@ -702,7 +660,71 @@ class LoadBalancerManager(EntityManager):
             self._handle_entity_error(context, loadbalancer.id)
             raise e
 
-    # Temporarily utilize this interface to implement loadbalancer rebuild
+    def update_vipport_attrs(self, context, agent, device, loadbalancer):
+
+        driver = self.driver
+
+        agent_host = agent["host"]
+        # Update the port for the VIP to show ownership by this driver
+        port_data = {
+            'admin_state_up': True,
+            'device_owner': 'network:f5lbaasv2',
+            'status': n_const.PORT_STATUS_ACTIVE
+        }
+        port_data[portbindings.HOST_ID] = agent_host
+        port_data[portbindings.VNIC_TYPE] = "baremetal"
+        port_data[portbindings.PROFILE] = {}
+
+        device_info = device.get('device_info')
+
+        vip_masq_mac = device_info.get('masquerade_mac')
+        if not vip_masq_mac:
+            LOG.error(
+                "Can not find masquerade_mac in device %s, when"
+                " migrating loadbalancer %s." % (
+                    device, loadbalancer
+                )
+            )
+
+        # llinfo is a list of dict type
+        llinfo = device_info.get('local_link_information')
+
+        if llinfo:
+            link_info = llinfo[0]
+        else:
+            link_info = dict()
+            llinfo = [link_info]
+
+        link_info.update({"lb_mac": vip_masq_mac})
+
+        port_data[portbindings.PROFILE] = {
+            "local_link_information": llinfo
+        }
+
+        # pzhang migrate
+        driver.plugin.db._core_plugin.update_port(
+            context,
+            loadbalancer.vip_port_id,
+            {'port': port_data}
+        )
+
+    def migrate_vipport(self, context, agent, device, loadbalancer):
+
+        driver = self.driver
+
+        LOG.info("erase device_owner of vip port %s" %
+                 loadbalancer.vip_port_id)
+
+        driver.plugin.db._core_plugin.update_port(
+            context,
+            loadbalancer.vip_port_id,
+            {"port": {"device_owner": ""}}
+        )
+
+        LOG.info("reassign attributes of vip port %s" %
+                 loadbalancer.vip_port_id)
+        self.update_vipport_attrs(context, agent, device, loadbalancer)
+
     @log_helpers.log_method_call
     def refresh(self, context, body):
         """Refresh a loadbalancer."""
@@ -723,6 +745,9 @@ class LoadBalancerManager(EntityManager):
             service = self._create_service(context, loadbalancer, agent)
             service["device"] = device
             agent_host = agent['host']
+
+            if device_id:
+                self.migrate_vipport(context, agent, device, loadbalancer)
 
             if rebuild_all:
                 self._allocate_acl_groups(context, service)
