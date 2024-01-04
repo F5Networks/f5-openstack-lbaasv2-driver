@@ -410,9 +410,14 @@ class EntityManager(object):
             LOG.info("Loadbalancer %s is rescheduled to agent %s",
                      loadbalancer.id, agent.id)
 
-        # Load device info and return
-        device = self.driver.device_scheduler.load_device(context,
-                                                          device_id)
+        # Load source device info
+        from_device = self.driver.device_scheduler.load_device(
+            context, bond['device_id'])
+
+        # Load target device info
+        device = self.driver.device_scheduler.load_device(
+            context, device_id)
+
         self._validate_device(device, loadbalancer, device_id)
 
         # Update binding table
@@ -424,8 +429,11 @@ class EntityManager(object):
             LOG.info("Loadbalancer %s is migrate to device %s",
                      loadbalancer.id, device["id"])
 
-        LOG.info("LB %s is migrate to agent %s device %s",
-                 loadbalancer.id, agent["id"], device["id"])
+        LOG.info("Loadbalancer %s is migrate from device %s to device %s "
+                 "by agent %s", loadbalancer.id, from_device["id"],
+                 device["id"], agent["id"])
+
+        device["from_device"] = from_device
 
         return agent, device
 
