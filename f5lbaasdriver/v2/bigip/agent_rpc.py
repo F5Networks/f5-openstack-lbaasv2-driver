@@ -119,6 +119,18 @@ class LBaaSv2AgentRPC(object):
             topic=topic)
 
     @log_helpers.log_method_call
+    def purge_loadbalancer(self, context, loadbalancer, service, host):
+        topic = '%s.%s' % (self.topic, host)
+        return self.cast(
+            context,
+            self.make_msg(
+                'purge_loadbalancer',
+                loadbalancer=loadbalancer,
+                service=service
+            ),
+            topic=topic)
+
+    @log_helpers.log_method_call
     def delete_loadbalancer(self, context, loadbalancer, service, host):
         topic = '%s.%s' % (self.topic, host)
         return self.cast(

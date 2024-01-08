@@ -367,6 +367,64 @@ class EntityManager(object):
 
         return agent, device
 
+    # use separate schedule as the schedule becomes more complicated;
+    # it may reschedule agent; but use device even if admin_state_down
+    def _schedule_agent_and_device_4_purge(
+            self, context, loadbalancer, device_id_passed=None
+    ):
+        '''Schedule agent and device only used for purge'''
+
+        LAB = agent_scheduler.LoadbalancerAgentBinding
+
+        # If LB is already hosted on an agent, return this agent and device
+        result = self.driver.plugin.db.get_agent_hosting_loadbalancer(
+            context, loadbalancer.id)
+
+        if result:
+            agent = result["agent"]
+            if not agent["alive"] or not agent["admin_state_up"]:
+                # Agent is not alive or is disabled. Attempt to
+                # reschedule this loadbalancer to a new agent.
+                LOG.info("Reschedule loadbalancer %s", loadbalancer.id)
+                agent = self.driver.agent_scheduler.schedule(
+                    self.driver.plugin,
+                    context,
+                    loadbalancer,
+                    self.driver.env
+                )
+                # Update binding table
+                with context.session.begin(subtransactions=True):
+                    query = context.session.query(LAB)
+                    binding = query.get(loadbalancer.id)
+                    binding.agent_id = agent["id"]
+                LOG.info("Loadbalancer %s is rescheduled to agent %s",
+                         loadbalancer.id, agent.id)
+
+            # Load device info and return
+            if device_id_passed:
+                LOG.warn("using passed device %s to purge", device_id_passed)  # noqa
+                device_id = device_id_passed
+            else:
+                device_id = result["device_id"]
+
+            device = self.driver.device_scheduler.load_device(
+                context, device_id
+            )
+
+            # skipped checking admin_state_up based on discussion
+            if device:
+                LOG.debug("using device %s here for purge", device_id)
+                return agent, device
+            else:
+                raise device_scheduler.LbaasDeviceNotUsable(
+                    device_id=device_id
+                )
+        else:
+            raise Exception(
+                "No binding information for loadbalancer %s",
+                loadbalancer.id
+            )
+
     def _create_service(self, context, loadbalancer, agent,
                         entity=None, **kwargs):
         '''build service--used for most managers.
@@ -642,6 +700,55 @@ class LoadBalancerManager(EntityManager):
         except Exception as e:
             LOG.error("Exception: loadbalancer delete: %s" % e)
             self._handle_entity_error(context, loadbalancer.id)
+            raise e
+
+    @log_helpers.log_method_call
+    def purge(self, context, body):
+        """Purge a loadbalancer from device without touching DB data."""
+
+        lbext = body["loadbalancerext"]
+        loadbalancer = lbext["loadbalancer"]
+
+        self._log_entity(loadbalancer)
+        driver = self.driver
+
+        device_id_passed = None
+
+        try:
+            if lbext.get("device", None):
+                device_id_passed = lbext["device"]
+                LOG.warning('device passed from args. Trying to use it!')
+
+            agent, device = self._schedule_agent_and_device_4_purge(
+                context, loadbalancer, device_id_passed=device_id_passed
+            )
+
+            service = self._create_service(context, loadbalancer, agent)
+            service["device"] = device
+
+            agent_host = agent['host']
+            self._allocate_acl_groups(context, service)
+
+            driver.agent_rpc.purge_loadbalancer(
+                context, loadbalancer.to_api_dict(), service, agent_host
+            )
+
+        except device_scheduler.LbaasDeviceNotUsable:
+            LOG.error("device_id for the lb is not usable")
+            LOG.error("Pls check its status. Purge unsuccessful here.")
+            # update its status to active here although it's not purged
+            self.driver.plugin.db.update_status(
+                context, models.LoadBalancer,
+                loadbalancer.id, plugin_constants.ACTIVE
+            )
+            raise
+
+        except Exception as e:
+            LOG.error("Exception: loadbalancer purge: %s" % e.message)
+            self.driver.plugin.db.update_status(
+                context, models.LoadBalancer,
+                loadbalancer.id, plugin_constants.ERROR
+            )
             raise e
 
     def _allocate_acl_groups(self, context, service):
