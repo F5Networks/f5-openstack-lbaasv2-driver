@@ -709,7 +709,6 @@ class LoadBalancerManager(EntityManager):
             "local_link_information": llinfo
         }
 
-        # pzhang migrate
         driver.plugin.db._core_plugin.update_port(
             context,
             loadbalancer.vip_port_id,
@@ -740,6 +739,7 @@ class LoadBalancerManager(EntityManager):
         lbext = body['loadbalancerext']
         loadbalancer = lbext['loadbalancer']
         device_id = lbext.get("device_id")
+        rm_selfip_port = lbext.get("rm_selfip_port")
         rebuild_all = lbext['all']
 
         self._log_entity(loadbalancer)
@@ -751,6 +751,8 @@ class LoadBalancerManager(EntityManager):
                 context, loadbalancer, device_id=device_id)
             # NOTE(qzhao): Call agent to rebuild LB.
             service = self._create_service(context, loadbalancer, agent)
+
+            device["rm_selfip_port"] = rm_selfip_port
             service["device"] = device
             agent_host = agent['host']
 
