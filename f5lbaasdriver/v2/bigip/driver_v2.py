@@ -644,6 +644,72 @@ class LoadBalancerManager(EntityManager):
             self._handle_entity_error(context, loadbalancer.id)
             raise e
 
+    @log_helpers.log_method_call
+    def purge(self, context, body):
+        """Purge a loadbalancer from device without touching DB data."""
+
+        lbext = body["loadbalancerext"]
+        loadbalancer = lbext["loadbalancer"]
+
+        self._log_entity(loadbalancer)
+        driver = self.driver
+        try:
+            agent, device = self._schedule_agent_and_device(context,
+                                                            loadbalancer)
+
+            service = self._create_service(context, loadbalancer, agent)
+            service["device"] = device
+
+            if lbext.get("device", None):
+                device_id_passed = lbext["device"]
+                if device.get("id") != device_id_passed:
+                    LOG.warning('device passed from args. Trying to use it!')
+                    device_loaded = self.driver.device_scheduler.load_device(
+                        context, device_id_passed
+                    )
+
+                    if device_loaded and device_loaded["admin_state_up"]:
+                        LOG.debug("using device %s to purge", device_id_passed)
+                        LOG.debug('real device in db: %s', device.get("id"))
+                        # to double check if this will delete unexpected items.
+                        service["device"] = device_loaded
+                    else:
+                        LOG.error("the passed device %s not usable", device_id_passed)  # noqa
+                        LOG.error("Pls check its status. Purge not done here.")
+                        raise device_scheduler.LbaasDeviceNotUsable(
+                            device_id=device_id_passed
+                        )
+                else:
+                    LOG.debug("passed device same with that found in db")
+
+            agent_host = agent['host']
+            self._allocate_acl_groups(context, service)
+
+            driver.agent_rpc.purge_loadbalancer(
+                context, loadbalancer.to_api_dict(), service, agent_host
+            )
+
+        except (
+            device_scheduler.LbaasDeviceDisabled,
+            device_scheduler.LbaasDeviceNotUsable
+        ):
+            LOG.error("device_id for the lb is not usable")
+            LOG.error("Pls check its status. Purge unsuccessful here.")
+            # update its status to active here although it's not purged
+            self.driver.plugin.db.update_status(
+                context, models.LoadBalancer,
+                loadbalancer.id, plugin_constants.ACTIVE
+            )
+            raise
+
+        except Exception as e:
+            LOG.error("Exception: loadbalancer purge: %s" % e.message)
+            self.driver.plugin.db.update_status(
+                context, models.LoadBalancer,
+                loadbalancer.id, plugin_constants.ERROR
+            )
+            raise e
+
     def _allocate_acl_groups(self, context, service):
 
         # for compatibility with pipeline test only.

@@ -57,9 +57,14 @@ class LbaasDeviceDisappeared(nexception.Conflict):
                "is disappeared.")
 
 
-class LbaasDeviceDisabled(nexception.Conflict):
+class LbaasDeviceNotUsable(lbaas_agentschedulerv2.NoEligibleLbaasAgent):
+    message = ("Device %(device_id)s being passed is not usable, "
+               "Please check device status first. Purge unsuccessful. ")
+
+
+class LbaasDeviceDisabled(nexception.Conflict, lbaas_agentschedulerv2.NoEligibleLbaasAgent):  # noqa
     message = ("Device %(device_id)s for loadbalancer %(loadbalancer_id)s "
-               "is disabled.")
+               "is disabled and not usable. Operation unsuccessful.")
 
 
 class BadDeviceInventory(lbaas_agentschedulerv2.NoActiveLbaasAgent):
