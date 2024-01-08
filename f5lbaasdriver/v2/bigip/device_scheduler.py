@@ -278,7 +278,9 @@ class DeviceSchedulerNG(object):
                 lb_ids.append(binding.loadbalancer_id)
 
         filters = {"id": lb_ids}
+        LOG.debug("before db.get_loadbalancers")
         lbs = plugin.db.get_loadbalancers(context, filters=filters)
+        LOG.debug("after db.get_loadbalancers")
 
         # SDN vendor might modify db interface to return dict instead of
         # loadbalancer object. Convert them to dict in order to handle them
