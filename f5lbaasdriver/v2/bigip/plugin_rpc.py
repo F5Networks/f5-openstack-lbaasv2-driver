@@ -921,6 +921,19 @@ class LBaaSv2PluginCallbacksRPC(object):
                               subnet_id)
                 else:
                     raise
+            except Exception as ex:
+                # SDN vendor might have their own router exception type. We
+                # do not have exception definition, so that have to check
+                # the error message.
+                ignore_msg = "already has a port on subnet"
+                if hasattr(ex, "message") and ignore_msg in ex.message:
+                    LOG.debug("Router is already attached to subnet %s",
+                              subnet_id)
+                elif hasattr(ex, "msg") and ignore_msg in ex.msg:
+                    LOG.debug("Router is already attached to subnet %s",
+                              subnet_id)
+                else:
+                    raise
 
     @log_helpers.log_method_call
     def detach_subnet_from_router(self, context, router_id=None,
