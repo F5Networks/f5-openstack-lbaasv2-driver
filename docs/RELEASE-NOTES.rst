@@ -15,6 +15,7 @@ Added Functionality
 Bug Fixes
 `````````
 * [OPENSTACK-2925] Fix bulk create and delete to fit the input args
+* [OPENSTACK-2985] Fix RouterInterfaceDuplicateForSubnet exception
 
 v212.6.8 (Pike)
 --------------
