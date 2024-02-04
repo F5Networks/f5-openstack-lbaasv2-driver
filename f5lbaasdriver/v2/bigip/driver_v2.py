@@ -225,63 +225,27 @@ class EntityManager(object):
         :param context: auth context for performing crud operation
         :returns: agent object
         '''
-
-        LAB = agent_scheduler.LoadbalancerAgentBinding
-
         # If LB is already hosted on an agent, return this agent and device
         result = self.driver.plugin.db.get_agent_hosting_loadbalancer(
             context, loadbalancer.id)
 
         if result:
-            agent = result["agent"]
-            if not agent["alive"] or not agent["admin_state_up"]:
-                # Agent is not alive or is disabled. Attempt to
-                # reschedule this loadbalancer to a new agent.
-                LOG.info("Reschedule loadbalancer %s", loadbalancer.id)
-                agent = self.driver.agent_scheduler.schedule(
-                    self.driver.plugin,
-                    context,
-                    loadbalancer,
-                    self.driver.env
-                )
-                # Update binding table
-                with context.session.begin(subtransactions=True):
-                    query = context.session.query(LAB)
-                    binding = query.get(loadbalancer.id)
-                    binding.agent_id = agent["id"]
-                LOG.info("Loadbalancer %s is rescheduled to agent %s",
-                         loadbalancer.id, agent.id)
 
-            # Load device info and return
-            device_id = result["device_id"]
-            device = self.driver.device_scheduler.load_device(context,
-                                                              device_id)
-            if device and device["admin_state_up"]:
-                LOG.debug("choose active device here %s ", device_id)
-                return agent, device
+            device_id = kwargs.get("device_id")
+            if not device_id:
+                agent, device = self._schedule_bound_agent_device(
+                    context, result, loadbalancer)
+            else:
+                agent, device = self._schedule_migrate_agent_device(
+                    context, result, loadbalancer, device_id)
 
-            if device and not device["admin_state_up"]:
-                name = loadbalancer.name
-                if (
-                    name
-                    and cfg.CONF.special_lb_name_prefix
-                    and cfg.CONF.special_lb_name_prefix in name
-                ):
-                    id_prefix = device_id[:8]
-                    match_regex = cfg.CONF.special_lb_name_prefix + id_prefix
-                    if match_regex in name:
-                        LOG.debug("choose inactive device here %s ", device_id)
-                        return agent, device
+            return agent, device
 
-            if not device:
-                raise device_scheduler.LbaasDeviceDisappeared(
-                    loadbalancer_id=loadbalancer.id,
-                    device_id=device_id)
+        agent, device = self._schedule_new_agent_device(context, loadbalancer)
 
-            if not device["admin_state_up"]:
-                raise device_scheduler.LbaasDeviceDisabled(
-                    loadbalancer_id=loadbalancer.id,
-                    device_id=device_id)
+        return agent, device
+
+    def _schedule_new_agent_device(self, context, loadbalancer):
 
         # If no binding
         if loadbalancer.provisioning_status == n_const.PENDING_CREATE:
@@ -313,6 +277,7 @@ class EntityManager(object):
         # 2. performance: Enable semaphore. No db lock.
         perf_mode = self.driver.device_scheduler_perf_mode
 
+        LAB = agent_scheduler.LoadbalancerAgentBinding
         binding = LAB()
         binding.loadbalancer_id = loadbalancer.id
         binding.agent_id = agent["id"]
@@ -328,8 +293,8 @@ class EntityManager(object):
                 with context.session.begin(subtransactions=True):
                     if perf_mode == "quality":
                         # Lock the table, refuse inserting
-                        query = context.session.query(LAB).populate_existing(
-                            ).with_for_update().filter_by(device_id="unknown")
+                        context.session.query(LAB).populate_existing(
+                        ).with_for_update().filter_by(device_id="unknown")
 
                     # Schedule device
                     device = self.driver.device_scheduler.schedule(
@@ -364,6 +329,138 @@ class EntityManager(object):
 
         LOG.info("LB %s is scheduled to agent %s device %s",
                  loadbalancer.id, agent["id"], device["id"])
+
+        return agent, device
+
+    def _schedule_bound_agent_device(self, context, bond, loadbalancer):
+
+        LAB = agent_scheduler.LoadbalancerAgentBinding
+
+        agent = bond["agent"]
+        if not agent["alive"] or not agent["admin_state_up"]:
+            # Agent is not alive or is disabled. Attempt to
+            # reschedule this loadbalancer to a new agent.
+            LOG.info("Reschedule loadbalancer %s", loadbalancer.id)
+            agent = self.driver.agent_scheduler.schedule(
+                self.driver.plugin,
+                context,
+                loadbalancer,
+                self.driver.env
+            )
+            # Update binding table
+            with context.session.begin(subtransactions=True):
+                query = context.session.query(LAB)
+                binding = query.get(loadbalancer.id)
+                binding.agent_id = agent["id"]
+            LOG.info("Loadbalancer %s is rescheduled to agent %s",
+                     loadbalancer.id, agent.id)
+
+        # Load device info and return
+        device_id = bond["device_id"]
+        device = self.driver.device_scheduler.load_device(context,
+                                                          device_id)
+        if device and device["admin_state_up"]:
+            LOG.debug("choose active device here %s ", device_id)
+            return agent, device
+
+        if device and not device["admin_state_up"]:
+            name = loadbalancer.name
+            if (
+                name
+                and cfg.CONF.special_lb_name_prefix
+                and cfg.CONF.special_lb_name_prefix in name
+            ):
+                id_prefix = device_id[:8]
+                match_regex = cfg.CONF.special_lb_name_prefix + id_prefix
+                if match_regex in name:
+                    LOG.debug("choose inactive device here %s ", device_id)
+                    return agent, device
+
+        if not device:
+            raise device_scheduler.LbaasDeviceDisappeared(
+                loadbalancer_id=loadbalancer.id,
+                device_id=device_id)
+
+        if not device["admin_state_up"]:
+            raise device_scheduler.LbaasDeviceDisabled(
+                loadbalancer_id=loadbalancer.id,
+                device_id=device_id)
+
+        return agent, device
+
+    def _validate_device(self, device, loadbalancer, device_id):
+
+        if not device:
+            raise device_scheduler.LbaasDeviceDisappeared(
+                loadbalancer_id=loadbalancer.id,
+                device_id=device_id)
+
+        if not device["admin_state_up"]:
+            name = loadbalancer.name
+            if (
+                name
+                and cfg.CONF.special_lb_name_prefix
+                and cfg.CONF.special_lb_name_prefix in name
+            ):
+                id_prefix = device_id[:8]
+                match_regex = cfg.CONF.special_lb_name_prefix + id_prefix
+                if match_regex in name:
+                    LOG.debug("choose inactive device here %s ", device_id)
+                    return True
+
+        if not device["admin_state_up"]:
+            raise device_scheduler.LbaasDeviceDisabled(
+                loadbalancer_id=loadbalancer.id,
+                device_id=device_id)
+
+    def _schedule_migrate_agent_device(
+            self, context, bond, loadbalancer, device_id):
+
+        LAB = agent_scheduler.LoadbalancerAgentBinding
+
+        agent = bond["agent"]
+        if not agent["alive"] or not agent["admin_state_up"]:
+            # Agent is not alive or is disabled. Attempt to
+            # reschedule this loadbalancer to a new agent.
+            LOG.info("Reschedule loadbalancer %s", loadbalancer.id)
+            agent = self.driver.agent_scheduler.schedule(
+                self.driver.plugin,
+                context,
+                loadbalancer,
+                self.driver.env
+            )
+            # Update binding table
+            with context.session.begin(subtransactions=True):
+                query = context.session.query(LAB)
+                binding = query.get(loadbalancer.id)
+                binding.agent_id = agent["id"]
+            LOG.info("Loadbalancer %s is rescheduled to agent %s",
+                     loadbalancer.id, agent.id)
+
+        # Load source device info
+        from_device = self.driver.device_scheduler.load_device(
+            context, bond['device_id'])
+
+        # Load target device info
+        device = self.driver.device_scheduler.load_device(
+            context, device_id)
+
+        self._validate_device(device, loadbalancer, device_id)
+
+        # Update binding table
+        with context.session.begin(subtransactions=True):
+            query = context.session.query(LAB)
+            binding = query.get(loadbalancer.id)
+            binding.agent_id = agent["id"]
+            binding.device_id = device["id"]
+            LOG.info("Loadbalancer %s is migrate to device %s",
+                     loadbalancer.id, device["id"])
+
+        LOG.info("Loadbalancer %s is migrate from device %s to device %s "
+                 "by agent %s", loadbalancer.id, from_device["id"],
+                 device["id"], agent["id"])
+
+        device["from_device"] = from_device
 
         return agent, device
 
@@ -538,7 +635,6 @@ class LoadBalancerManager(EntityManager):
     @log_helpers.log_method_call
     def create(self, context, loadbalancer):
         """Create a loadbalancer."""
-
         self._log_entity(loadbalancer)
 
         driver = self.driver
@@ -549,7 +645,6 @@ class LoadBalancerManager(EntityManager):
             service = {}
             agent, device = self._schedule_agent_and_device(
                 context, loadbalancer)
-            agent_host = agent['host']
             agent_config = agent.get('configurations', {})
             LOG.debug("agent configurations: %s" % agent_config)
 
@@ -558,54 +653,14 @@ class LoadBalancerManager(EntityManager):
                 context.session.expire(agent, ['heartbeat_timestamp'])
                 LOG.info(agent)
 
-            # Update the port for the VIP to show ownership by this driver
-            port_data = {
-                'admin_state_up': True,
-                'device_owner': 'network:f5lbaasv2',
-                'status': n_const.PORT_STATUS_ACTIVE
-            }
-            port_data[portbindings.HOST_ID] = agent_host
-            port_data[portbindings.VNIC_TYPE] = "baremetal"
-
-            port_data[portbindings.PROFILE] = {}
-
-            device_info = device.get('device_info')
-
-            vip_masq_mac = device_info.get('masquerade_mac')
-            if not vip_masq_mac:
-                LOG.error(
-                    "Can not find masquerade_mac in device %s, when"
-                    " creating loadbalancer %s." % (
-                        device, loadbalancer
-                    )
-                )
-
-            # llinfo is a list of dict type
-            llinfo = device_info.get('local_link_information')
-
-            if llinfo:
-                link_info = llinfo[0]
-            else:
-                link_info = dict()
-                llinfo = [link_info]
-
-            link_info.update({"lb_mac": vip_masq_mac})
-
-            port_data[portbindings.PROFILE] = {
-                "local_link_information": llinfo
-            }
-
-            driver.plugin.db._core_plugin.update_port(
-                context,
-                loadbalancer.vip_port_id,
-                {'port': port_data}
-            )
+            self.update_vipport_attrs(context, agent, device, loadbalancer)
 
             # NOTE(qzhao): Vlan id might be assigned after updating vip
             # port. Need to build service payload after updating port.
             service = self._create_service(context, loadbalancer, agent)
             service["device"] = device
 
+            agent_host = agent['host']
             driver.agent_rpc.create_loadbalancer(
                 context, loadbalancer.to_api_dict(), service, agent_host)
         except Exception as e:
@@ -669,25 +724,96 @@ class LoadBalancerManager(EntityManager):
             self._handle_entity_error(context, loadbalancer.id)
             raise e
 
-    # Temporarily utilize this interface to implement loadbalancer rebuild
+    def update_vipport_attrs(self, context, agent, device, loadbalancer):
+
+        driver = self.driver
+
+        agent_host = agent["host"]
+        # Update the port for the VIP to show ownership by this driver
+        port_data = {
+            'admin_state_up': True,
+            'device_owner': 'network:f5lbaasv2',
+            'status': n_const.PORT_STATUS_ACTIVE
+        }
+        port_data[portbindings.HOST_ID] = agent_host
+        port_data[portbindings.VNIC_TYPE] = "baremetal"
+        port_data[portbindings.PROFILE] = {}
+
+        device_info = device.get('device_info')
+
+        vip_masq_mac = device_info.get('masquerade_mac')
+        if not vip_masq_mac:
+            LOG.error(
+                "Can not find masquerade_mac in device %s, when"
+                " migrating loadbalancer %s." % (
+                    device, loadbalancer
+                )
+            )
+
+        # llinfo is a list of dict type
+        llinfo = device_info.get('local_link_information')
+
+        if llinfo:
+            link_info = llinfo[0]
+        else:
+            link_info = dict()
+            llinfo = [link_info]
+
+        link_info.update({"lb_mac": vip_masq_mac})
+
+        port_data[portbindings.PROFILE] = {
+            "local_link_information": llinfo
+        }
+
+        driver.plugin.db._core_plugin.update_port(
+            context,
+            loadbalancer.vip_port_id,
+            {'port': port_data}
+        )
+
+    def migrate_vipport(self, context, agent, device, loadbalancer):
+
+        driver = self.driver
+
+        LOG.info("erase device_owner of vip port %s" %
+                 loadbalancer.vip_port_id)
+
+        driver.plugin.db._core_plugin.update_port(
+            context,
+            loadbalancer.vip_port_id,
+            {"port": {"device_owner": ""}}
+        )
+
+        LOG.info("reassign attributes of vip port %s" %
+                 loadbalancer.vip_port_id)
+        self.update_vipport_attrs(context, agent, device, loadbalancer)
+
     @log_helpers.log_method_call
     def refresh(self, context, body):
         """Refresh a loadbalancer."""
 
         lbext = body['loadbalancerext']
         loadbalancer = lbext['loadbalancer']
+        device_id = lbext.get("device_id")
+        rm_selfip_port = lbext.get("rm_selfip_port")
         rebuild_all = lbext['all']
 
         self._log_entity(loadbalancer)
 
         driver = self.driver
+
         try:
-            agent, device = self._schedule_agent_and_device(context,
-                                                            loadbalancer)
+            agent, device = self._schedule_agent_and_device(
+                context, loadbalancer, device_id=device_id)
             # NOTE(qzhao): Call agent to rebuild LB.
             service = self._create_service(context, loadbalancer, agent)
+
+            device["rm_selfip_port"] = rm_selfip_port
             service["device"] = device
             agent_host = agent['host']
+
+            if device_id:
+                self.migrate_vipport(context, agent, device, loadbalancer)
 
             if rebuild_all:
                 self._allocate_acl_groups(context, service)
