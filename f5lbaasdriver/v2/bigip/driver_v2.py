@@ -810,15 +810,16 @@ class LoadBalancerManager(EntityManager):
         try:
             agent, device = self._schedule_agent_and_device(
                 context, loadbalancer, device_id=device_id)
+
+            if device_id:
+                self.migrate_vipport(context, agent, device, loadbalancer)
+
             # NOTE(qzhao): Call agent to rebuild LB.
             service = self._create_service(context, loadbalancer, agent)
 
             device["rm_selfip_port"] = rm_selfip_port
             service["device"] = device
             agent_host = agent['host']
-
-            if device_id:
-                self.migrate_vipport(context, agent, device, loadbalancer)
 
             if rebuild_all:
                 self._allocate_acl_groups(context, service)
