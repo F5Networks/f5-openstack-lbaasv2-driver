@@ -284,7 +284,11 @@ class DeviceSchedulerNG(object):
 
         filters = {"id": lb_ids}
         LOG.debug("before db.get_loadbalancers")
-        lbs = plugin.db.get_loadbalancers(context, filters=filters)
+        if hasattr(plugin.db, 'get_loadbalancers_as_api_dict'):
+            lbs = plugin.db.get_loadbalancers_as_api_dict(context,
+                                                          filters=filters)
+        else:
+            lbs = plugin.db.get_loadbalancers(context, filters=filters)
         LOG.debug("after db.get_loadbalancers")
 
         # SDN vendor might modify db interface to return dict instead of
