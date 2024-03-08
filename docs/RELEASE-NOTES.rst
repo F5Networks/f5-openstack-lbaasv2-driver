@@ -4,23 +4,33 @@
 
 Release Notes
 =============
-v212.6.8.1 (Pike)
+v212.6.9 (Pike)
 --------------
 
 Added Functionality
 ```````````````````
-* [OPENSTACK-2915] New implementation of flavor 21
+* [OPENSTACK-2959] we need to update port before build service object
+* [OPENSTACK-2949] Get loadbalancers as api dict
+* [OPENSTACK-2949] Translate entity type from dict to obj
+* [OPENSTACK-2959] remove old selfip port
+* [OPENSTACK-2959] get from_device and to_device
+* [OPENSTACK-2959] add device_owner for update_port_on_subnet
+* [OPENSTACK-2959] add function to migrate vip port
+* [OPENSTACK-2959] add schedule functions for migrate
+* [OPENSTACK-2966] add purge interface in driver
+* [OPENSTACK-2961] add logs for parsing lb creation
 * [OPENSTACK-2936] Disable SNAT IP validation
 
 Bug Fixes
 `````````
-* [OPENSTACK-2925] Fix bulk create and delete to fit the input args
+* [OPENSTACK-2985] Fix RouterInterfaceDuplicateForSubnet exception
 
 v212.6.8 (Pike)
 --------------
 
 Added Functionality
 ```````````````````
+* [OPENSTACK-2915] New implementation of flavor 21
 * [OPENSTACK-2900] add bulk member create/delete
 * [OPENSTACK-2787] Occupy device
 * [OPENSTACK-2900] remove pool_port_<member-id>
@@ -32,6 +42,7 @@ Added Functionality
 
 Bug Fixes
 `````````
+* [OPENSTACK-2925] Fix bulk create and delete to fit the input args
 
 Release Notes
 =============
